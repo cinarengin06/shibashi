@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { CSSProperties, ReactNode, RefObject } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MovementCoach } from "@/components/tai-chi/MovementCoach";
@@ -1374,7 +1375,7 @@ export default function RitimKapisiOS() {
         </div>
 
         {onboardingComplete ? (
-          <nav className="bottom-nav" aria-label="Ana gezinme" style={{ "--nav-count": visibleTabs.length } as CSSProperties}>
+          <nav className="bottom-nav" aria-label="Ana gezinme" style={{ "--nav-count": visibleTabs.length + 1 } as CSSProperties}>
             {visibleTabs.map((tab) => (
               <button
                 className={`nav-button ${activeTab === tab.id ? "nav-button-active" : ""}`}
@@ -1386,6 +1387,10 @@ export default function RitimKapisiOS() {
                 {tab.label}
               </button>
             ))}
+            <Link className="nav-button" href="/yasayarak-ogren">
+              <strong>✦</strong>
+              Yaşayarak Öğren
+            </Link>
           </nav>
         ) : null}
       </div>

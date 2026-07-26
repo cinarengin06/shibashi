@@ -1,0 +1,76 @@
+.page {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(140, 207, 178, 0.16), transparent 30rem),
+    radial-gradient(circle at 88% 4%, rgba(233, 201, 121, 0.14), transparent 26rem),
+    linear-gradient(180deg, #101914 0%, #09110d 58%, #060b08 100%);
+  min-height: 100vh;
+  padding: 0 5vw 80px;
+}
+
+.topbar {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 239, 214, 0.1);
+  display: flex;
+  justify-content: space-between;
+  min-height: 82px;
+}
+
+.brand { color: inherit; display: grid; text-decoration: none; }
+.brand span { font-family: Georgia, "Times New Roman", serif; font-size: 1.15rem; font-weight: 800; letter-spacing: 0.19em; }
+.brand small { color: rgba(246, 239, 228, 0.45); font-size: 0.58rem; letter-spacing: 0.21em; margin-top: 3px; text-transform: uppercase; }
+
+.topbar nav { display: flex; gap: 8px; }
+.topbar nav a {
+  border-radius: 999px;
+  color: rgba(246, 239, 228, 0.64);
+  font-size: 0.77rem;
+  font-weight: 800;
+  padding: 10px 13px;
+  text-decoration: none;
+}
+.topbar nav a:last-child { border: 1px solid rgba(233, 201, 121, 0.18); color: #e9c979; }
+
+.hero {
+  align-items: end;
+  display: grid;
+  gap: 50px;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  margin: 0 auto;
+  max-width: 1440px;
+  padding: 90px 0 70px;
+}
+
+.kicker { color: #e9c979; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.18em; margin: 0 0 20px; text-transform: uppercase; }
+.hero h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(3.5rem, 7.6vw, 7.7rem); letter-spacing: -0.075em; line-height: 0.88; margin: 0; max-width: 1040px; }
+.intro { color: rgba(246, 239, 228, 0.62); font-size: clamp(1rem, 1.4vw, 1.22rem); line-height: 1.72; margin: 30px 0 0; max-width: 700px; }
+.heroActions { align-items: center; display: flex; flex-wrap: wrap; gap: 18px; margin-top: 30px; }
+.heroActions a { background: #e9c979; border-radius: 999px; color: #142017; font-size: 0.83rem; font-weight: 900; padding: 14px 19px; text-decoration: none; }
+.heroActions span { color: rgba(246, 239, 228, 0.42); font-size: 0.8rem; }
+
+.progressCard { background: rgba(255, 250, 238, 0.05); border: 1px solid rgba(255, 239, 214, 0.12); border-radius: 25px; padding: 24px; }
+.progressCard span { color: rgba(246, 239, 228, 0.46); font-size: 0.7rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
+.progressCard strong { display: block; font-family: Georgia, "Times New Roman", serif; font-size: 3.4rem; letter-spacing: -0.06em; margin-top: 10px; }
+.progressCard > div { background: rgba(255, 255, 255, 0.08); border-radius: 999px; height: 6px; margin-top: 12px; overflow: hidden; }
+.progressCard i { background: linear-gradient(90deg, #8ccfb2, #e9c979); border-radius: inherit; display: block; height: 100%; width: 11%; }
+.progressCard p { color: rgba(246, 239, 228, 0.48); font-size: 0.8rem; line-height: 1.5; margin: 14px 0 0; }
+
+.storyList { display: grid; gap: 42px; margin: 0 auto; max-width: 1440px; }
+
+.closing { align-items: center; background: rgba(255, 250, 238, 0.035); border: 1px dashed rgba(255, 239, 214, 0.13); border-radius: 28px; display: grid; justify-items: center; margin: 42px auto 0; max-width: 1440px; padding: 52px 24px; text-align: center; }
+.closing p { color: #8ccfb2; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.14em; margin: 0; text-transform: uppercase; }
+.closing h2 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.2rem, 4vw, 4rem); letter-spacing: -0.055em; margin: 12px 0 8px; }
+.closing span { color: rgba(246, 239, 228, 0.48); line-height: 1.5; }
+.closing button { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 999px; color: rgba(246,239,228,.38); margin-top: 22px; padding: 12px 20px; }
+
+@media (max-width: 850px) {
+  .page { padding-inline: 20px; }
+  .hero { grid-template-columns: 1fr; padding-top: 58px; }
+  .progressCard { max-width: 360px; }
+  .topbar nav a:not(:last-child) { display: none; }
+}
+
+@media (max-width: 520px) {
+  .topbar { min-height: 70px; }
+  .hero { gap: 34px; padding-bottom: 46px; }
+  .hero h1 { font-size: 3.35rem; }
+}

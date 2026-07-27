@@ -5741,7 +5741,8 @@ function JourneyScreen({
   const journeyXp = Math.min(800, practiceCount * 28 + postureCount * 42);
   const unlockedGates = Math.max(1, Math.min(8, 1 + Math.floor(journeyXp / 100)));
   const streak = Math.max(1, Math.min(21, practiceCount + Math.floor(postureCount / 2)));
-  const rotation = activeIndex * -45;
+  // The wheel stays anchored so selecting a direction never makes its controls jump.
+  const rotation = 0;
 
   useEffect(() => {
     setActiveIndex(recommendedIndex);
@@ -5839,7 +5840,7 @@ function JourneyScreen({
                       style={{
                         left: `${50 + Math.cos(radians) * orbitRadius}%`,
                         top: `${50 + Math.sin(radians) * orbitRadius}%`,
-                        "--node-counter-angle": `${-rotation}deg`,
+                        "--node-counter-angle": "0deg",
                         "--node-accent": direction.accent,
                       } as CSSProperties}
                       type="button"

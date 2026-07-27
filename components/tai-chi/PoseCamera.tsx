@@ -33,6 +33,7 @@ export function PoseCamera({
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const landmarkerRef = useRef<Awaited<ReturnType<typeof createPoseLandmarker>> | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastVideoTimeRef = useRef(-1);
   const lastAnalysisAtRef = useRef(0);
@@ -68,7 +69,11 @@ export function PoseCamera({
     lastVideoTimeRef.current = video.currentTime;
 
     try {
-      const landmarker = await createPoseLandmarker();
+      const landmarker = landmarkerRef.current;
+      if (!landmarker) {
+        rafRef.current = requestAnimationFrame(() => void analyze());
+        return;
+      }
       const result = landmarker.detectForVideo(video, now);
       const pose = result.landmarks[0] as PoseLandmark[] | undefined;
       if (pose?.length) {
@@ -119,7 +124,7 @@ export function PoseCamera({
       await video.play();
       setStatus("loading-model");
       setMessage("Hareket modeli yükleniyor…");
-      await createPoseLandmarker();
+      landmarkerRef.current = await createPoseLandmarker();
       if (!mountedRef.current) return;
       setStatus("open");
       setMessage("Kamera açık. Tüm bedenini kadraja al.");
@@ -147,6 +152,7 @@ export function PoseCamera({
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
+      landmarkerRef.current = null;
     };
   }, []);
 

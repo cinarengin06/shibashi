@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PoseCamera } from "@/components/tai-chi/PoseCamera";
 import { createRaiseArmsEvaluator } from "@/lib/pose/raiseArmsEvaluator";
 import type { PoseEvaluation, PoseLandmark, ScoreBreakdown } from "@/types/pose";
@@ -68,17 +68,30 @@ export function MovementCoach() {
   const onLandmarks = useCallback((landmarks: PoseLandmark[] | null, timestamp: number) => {
     const next = evaluatorRef.current.update(landmarks, timestamp);
     setEvaluation((current) => {
+      const scoresSame = SCORE_LABELS.every(([key]) => current.scores[key] === next.scores[key]);
+      const jointKeys = new Set([
+        ...Object.keys(current.jointStatus),
+        ...Object.keys(next.jointStatus),
+      ]);
+      const jointsSame = [...jointKeys].every((key) => {
+        const index = Number(key);
+        return current.jointStatus[index] === next.jointStatus[index];
+      });
       const same = current.stage === next.stage &&
         current.instruction === next.instruction &&
         current.liveScore === next.liveScore &&
         current.finalScore === next.finalScore &&
         current.holdRemainingSeconds === next.holdRemainingSeconds &&
-        JSON.stringify(current.scores) === JSON.stringify(next.scores) &&
-        JSON.stringify(current.jointStatus) === JSON.stringify(next.jointStatus);
+        scoresSame &&
+        jointsSame;
       return same ? current : next;
     });
     if (next.speech) speak(next.speech, next.stateChanged);
   }, [speak]);
+
+  useEffect(() => () => {
+    window.speechSynthesis?.cancel();
+  }, []);
 
   const onCameraClosed = useCallback(() => {
     window.speechSynthesis?.cancel();

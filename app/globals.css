@@ -56,6 +56,10 @@ body {
 .shen-theme-hun {
   --shen-accent: #b8e986;
   --shen-accent-2: #315f3a;
+  --shen-gold: #d8efaf;
+  --shen-button-start: #d8f28c;
+  --shen-button-end: #5b9a66;
+  --shen-button-ink: #102013;
   --card-clip: polygon(0 0, 92% 0, 100% 12%, 100% 100%, 8% 100%, 0 88%);
   --nav-radius: 26px 8px 26px 8px;
   --radius-xl: 44px 18px 44px 18px;
@@ -70,6 +74,10 @@ body {
 .shen-theme-shen {
   --shen-accent: #ff8a36;
   --shen-accent-2: #d93b1d;
+  --shen-gold: #ffd36f;
+  --shen-button-start: #ffb04f;
+  --shen-button-end: #e13d22;
+  --shen-button-ink: #210f07;
   --card-clip: none;
   --nav-radius: 999px;
   --radius-xl: 44px;
@@ -85,6 +93,10 @@ body {
 .shen-theme-yi {
   --shen-accent: #d9a441;
   --shen-accent-2: #7a5a2b;
+  --shen-gold: #f5d77e;
+  --shen-button-start: #f0c765;
+  --shen-button-end: #a36c24;
+  --shen-button-ink: #261704;
   --card-clip: polygon(7% 0, 93% 0, 100% 18%, 100% 82%, 93% 100%, 7% 100%, 0 82%, 0 18%);
   --nav-radius: 4px;
   --radius-xl: 4px;
@@ -99,6 +111,10 @@ body {
 .shen-theme-po {
   --shen-accent: #d8c7a3;
   --shen-accent-2: #5f837f;
+  --shen-gold: #e8ead6;
+  --shen-button-start: #e9e5ce;
+  --shen-button-end: #83a49a;
+  --shen-button-ink: #15302d;
   --card-clip: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
   --nav-radius: 0;
   --radius-xl: 0;
@@ -113,6 +129,10 @@ body {
 .shen-theme-zhi {
   --shen-accent: #7fc8dc;
   --shen-accent-2: #183d59;
+  --shen-gold: #b9efff;
+  --shen-button-start: #a7e8ef;
+  --shen-button-end: #378fbe;
+  --shen-button-ink: #062436;
   --card-clip: none;
   --nav-radius: 999px 18px 999px 18px;
   --radius-xl: 46px 14px 46px 14px;
@@ -12034,6 +12054,117 @@ button.progressive-step {
   color: #07100e;
   background: var(--shen-accent);
   box-shadow: 0 8px 20px color-mix(in srgb, var(--shen-accent) 28%, transparent);
+}
+
+/* The selected Shen is a full visual skin, not only a background tint. */
+.app-shell {
+  transition: background 520ms ease, color 320ms ease;
+}
+
+.primary-action {
+  background:
+    linear-gradient(135deg, var(--shen-button-start), var(--shen-button-end));
+  box-shadow:
+    0 20px 45px color-mix(in srgb, var(--shen-accent) 32%, transparent),
+    0 0 28px color-mix(in srgb, var(--shen-gold) 24%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  color: var(--shen-button-ink);
+  transition: transform 180ms ease, box-shadow 240ms ease, filter 240ms ease;
+}
+
+.primary-action:hover {
+  filter: saturate(1.12) brightness(1.06);
+  transform: translateY(-2px);
+}
+
+.primary-action:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.secondary-action,
+.sound-pill,
+.sound-test-button,
+.practice-control-button,
+.practice-camera-button,
+.practice-music-button {
+  border-color: color-mix(in srgb, var(--shen-accent) 52%, var(--shen-gold));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--shen-accent) 20%, transparent), color-mix(in srgb, var(--shen-accent-2) 22%, rgba(255, 250, 238, 0.08)));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--shen-gold) 20%, transparent);
+  transition: background 240ms ease, border-color 240ms ease, color 240ms ease, transform 180ms ease;
+}
+
+.secondary-action:hover,
+.practice-control-button:hover,
+.practice-camera-button:hover,
+.practice-music-button:hover {
+  border-color: var(--shen-gold);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.glass-card,
+.hero-card,
+.theme-selector,
+.journey-top,
+.journey-guide-summary,
+.profile-intro,
+.profile-settings-list {
+  border-color: color-mix(in srgb, var(--shen-accent) 38%, var(--shen-gold));
+  box-shadow:
+    0 24px 70px color-mix(in srgb, var(--shen-accent-2) 28%, var(--shadow)),
+    inset 0 1px 0 color-mix(in srgb, var(--shen-gold) 18%, transparent);
+  transition: border-color 360ms ease, box-shadow 360ms ease, background 420ms ease;
+}
+
+.theme-mode-active,
+.dock-button-active,
+.nav-button-active,
+.journey-view-switch button.active {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--shen-gold) 22%, transparent),
+    0 12px 30px color-mix(in srgb, var(--shen-accent) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.theme-mode-active {
+  border-color: var(--shen-gold);
+  transform: translateY(-3px) scale(1.015);
+}
+
+.theme-mode,
+.dock-button,
+.nav-button,
+.journey-view-switch button {
+  transition: transform 220ms ease, background 300ms ease, border-color 300ms ease, color 220ms ease, box-shadow 300ms ease;
+}
+
+.progress-fill,
+.progressive-step-active > span,
+.progressive-step-unlocked > span {
+  background: linear-gradient(90deg, var(--shen-button-start), var(--shen-accent));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--shen-accent) 48%, transparent);
+}
+
+.progressive-step-active,
+.progressive-step-unlocked {
+  border-color: color-mix(in srgb, var(--shen-gold) 68%, var(--shen-accent));
+}
+
+.app-shell[data-shen="hun"] .theme-selector,
+.app-shell[data-shen="hun"] .hero-card { animation: shen-skin-enter 560ms ease both; }
+.app-shell[data-shen="shen"] .theme-selector,
+.app-shell[data-shen="shen"] .hero-card { animation: shen-skin-enter 560ms ease both; }
+.app-shell[data-shen="yi"] .theme-selector,
+.app-shell[data-shen="yi"] .hero-card { animation: shen-skin-enter 560ms ease both; }
+.app-shell[data-shen="po"] .theme-selector,
+.app-shell[data-shen="po"] .hero-card { animation: shen-skin-enter 560ms ease both; }
+.app-shell[data-shen="zhi"] .theme-selector,
+.app-shell[data-shen="zhi"] .hero-card { animation: shen-skin-enter 560ms ease both; }
+
+@keyframes shen-skin-enter {
+  from { filter: saturate(0.72) brightness(0.82); transform: translateY(3px); }
+  to { filter: saturate(1) brightness(1); transform: translateY(0); }
 }
 
 .journey-view-switch button:active {

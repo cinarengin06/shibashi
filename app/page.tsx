@@ -1256,6 +1256,7 @@ export default function RitimKapisiOS() {
   return (
     <main
       className={`app-shell shen-theme-${selectedShen.id} device-mode-${deviceMode} ${deviceMode === "iphone" ? "phone-mode" : ""} ${deviceMode === "ipad" ? "tablet-mode" : ""}`}
+      data-shen={selectedShen.id}
       style={{ "--shen-accent": selectedShen.color, "--shen-accent-2": selectedShen.color2 } as CSSProperties}
     >
       <div className="ambient-field">

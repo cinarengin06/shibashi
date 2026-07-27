@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import type { CSSProperties, ReactNode, RefObject } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MovementCoach } from "@/components/tai-chi/MovementCoach";
+import { LivingLearningScreen } from "@/components/living-learning/LivingLearningScreen";
 
-type TabId = "home" | "practice" | "posture" | "journey" | "journal" | "profile";
+type TabId = "home" | "practice" | "posture" | "journey" | "learning" | "journal" | "profile";
 type ShenId = "hun" | "shen" | "yi" | "po" | "zhi";
 type DeviceMode = "desktop" | "iphone" | "ipad";
 type PostureRenderMode = "3d" | "2d";
@@ -395,6 +395,7 @@ const tabs: { id: TabId; label: string; icon: string }[] = [
   { id: "practice", label: "Pratik", icon: "◎" },
   { id: "posture", label: "Postür", icon: "↕" },
   { id: "journey", label: "Bagua", icon: "☯" },
+  { id: "learning", label: "Öğren", icon: "✦" },
   { id: "journal", label: "Günlük", icon: "◌" },
   { id: "profile", label: "Profil", icon: "☰" },
 ];
@@ -1354,6 +1355,7 @@ export default function RitimKapisiOS() {
             userName={userName}
           />
         ) : null}
+        {onboardingComplete && activeTab === "learning" ? <LivingLearningScreen embedded /> : null}
         {onboardingComplete && activeTab === "journal" ? (
           <JournalScreen
             gallery={practiceGallery}
@@ -1388,10 +1390,6 @@ export default function RitimKapisiOS() {
                 {tab.label}
               </button>
             ))}
-            <Link className="nav-button" href="/yasayarak-ogren">
-              <strong>✦</strong>
-              Yaşayarak Öğren
-            </Link>
           </nav>
         ) : null}
       </div>
@@ -6545,6 +6543,7 @@ function getTitle(tab: TabId): string {
     practice: "Ritüel",
     posture: "Postür",
     journey: "Yolculuğum",
+    learning: "Öğren",
     journal: "Günlük",
     profile: "Profil",
   };

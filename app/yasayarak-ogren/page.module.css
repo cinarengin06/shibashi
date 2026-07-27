@@ -7,6 +7,41 @@
   padding: 0 5vw 80px;
 }
 
+.inner {
+  margin: 0 auto;
+  max-width: 1440px;
+}
+
+.embedded {
+  background: transparent;
+  min-height: auto;
+  padding: 0;
+}
+
+.embedded .inner {
+  max-width: none;
+}
+
+.embedded .hero {
+  padding-top: 12px;
+}
+
+.embedded .hero h1 {
+  font-family: inherit;
+  letter-spacing: var(--title-spacing);
+}
+
+.embedded .heroActions a {
+  background: linear-gradient(135deg, var(--shen-button-start), var(--shen-button-end));
+  color: var(--shen-button-ink);
+}
+
+.embedded .progressCard,
+.embedded .closing {
+  background: color-mix(in srgb, var(--shen-accent-2) 18%, rgba(255, 250, 238, 0.05));
+  border-color: color-mix(in srgb, var(--shen-accent) 38%, var(--shen-gold));
+}
+
 .topbar {
   align-items: center;
   border-bottom: 1px solid rgba(255, 239, 214, 0.1);

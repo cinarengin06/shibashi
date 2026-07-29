@@ -1,9 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 
+const cormorant = Cormorant_Garamond({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const inter = Inter({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "SHIBASHI OS",
-  description: "AI destekli adaptif Tai Chi ve iç gelişim platformu.",
+  title: "Shibashi EFE — 5 Shen İçsel Yolculuk",
+  description: "Nefes, hareket ve farkındalıkla beş Shen'in dengeli yolculuğu.",
 };
 
 export const viewport: Viewport = {
@@ -21,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body>{children}</body>
+      <body className={`${cormorant.variable} ${inter.variable}`}>{children}</body>
     </html>
   );
 }

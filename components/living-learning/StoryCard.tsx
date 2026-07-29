@@ -20,19 +20,11 @@ export function StoryCard({ story }: StoryCardProps) {
           src={story.image}
         />
         <div className={styles.imageShade} />
-        <div className={styles.badges}>
-          <span>Bölüm {String(story.order).padStart(2, "0")}</span>
-          <span>{story.duration}</span>
-        </div>
-        <div className={styles.visualCopy}>
-          <p>{story.subtitle}</p>
-          <h2>{story.title}</h2>
-          <strong>{story.movementLabel}</strong>
-        </div>
       </div>
 
       <div className={styles.content}>
         <div>
+          <p className={styles.sceneContext}>Sahne {String(story.order).padStart(2, "0")} · {story.subtitle}</p>
           <p className={styles.eyebrow}>Hikâyenin hareketi</p>
           <blockquote>“{story.quote}”</blockquote>
           <p className={styles.description}>{story.description}</p>

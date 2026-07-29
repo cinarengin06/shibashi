@@ -1,0 +1,36 @@
+import {Ionicons} from '@expo/vector-icons';
+import {router,useLocalSearchParams} from 'expo-router';
+import {useEffect,useState} from 'react';
+import {ImageBackground,Pressable,StyleSheet,Text,View} from 'react-native';
+import {Card,Eyebrow,PrimaryButton,Screen,Title} from '../../components/ui';
+import {colors,radii} from '../../constants/theme';
+import {livingStories,livingStoryImages} from '../../data/livingLearning';
+import {movementImages} from '../../data/movementAssets';
+import {getShen} from '../../data/fiveShen';
+import {useApp} from '../../store/AppStore';
+
+export default function LivingStoryScreen(){
+ const{id}=useLocalSearchParams<{id:string}>();const story=livingStories.find(item=>item.id===id)??livingStories[0];
+ const{profile,completeStory,completedStories}=useApp();const shen=getShen(profile.selectedShenId);
+ const[mode,setMode]=useState<'story'|'practice'>('story'),[running,setRunning]=useState(false),[complete,setComplete]=useState(completedStories.includes(story.id)),[seconds,setSeconds]=useState(0);
+ useEffect(()=>{if(!running)return;const timer=setInterval(()=>setSeconds(v=>v+1),1000);return()=>clearInterval(timer)},[running]);
+ useEffect(()=>{if(seconds<18)return;setRunning(false);setComplete(true);completeStory(story.id)},[completeStory,seconds,story.id]);
+ const image=livingStoryImages[story.id]??movementImages[story.order];
+ if(mode==='practice')return <Screen>
+  <Pressable onPress={()=>setMode('story')} style={s.back}><Ionicons name="arrow-back" color={colors.cream} size={20}/><Text style={s.backText}>Sahneye dön</Text></Pressable>
+  <Eyebrow>EKRANI İZLE · SONRA BEDENİNLE EŞLEŞTİR</Eyebrow><Title>{story.quote}</Title>
+  <ImageBackground source={image} style={s.practiceVisual} imageStyle={s.image}><View style={s.shade}/><View style={[s.halo,{borderColor:shen.color}]}><View style={s.head}/><View style={s.body}/><View style={[s.arms,running&&{transform:[{rotate:'-12deg'}]}]}/><View style={s.legs}/></View><View style={s.breath}><Text style={[s.breathValue,{color:shen.color}]}>{complete?'TAMAMLANDI':running?`${seconds} sn`:'HAZIR'}</Text><Text style={s.breathText}>{complete?'Hareket yerini buldu':running?'Nefes al · yüksel · yumuşa':'Ayaklarını yere bırak'}</Text></View></ImageBackground>
+  <View style={s.steps}>{story.steps.map((item,index)=><Card key={item} style={s.step}><View style={[s.stepNo,{backgroundColor:index<=Math.floor(seconds/6)?shen.color:colors.surface2}]}><Text style={[s.stepNoText,index<=Math.floor(seconds/6)&&{color:colors.ink}]}>{index+1}</Text></View><Text style={s.stepText}>{item}</Text></Card>)}</View>
+  {complete?<><Card style={[s.completeCard,{borderColor:`${shen.color}66`}]}><Ionicons name="sparkles" color={shen.color} size={25}/><View style={{flex:1}}><Text style={[s.completeTitle,{color:shen.color}]}>Hikâye bedeninde</Text><Text style={s.small}>Bunu bir sonraki {story.subtitle.toLocaleLowerCase('tr-TR')} anında hatırla.</Text></View></Card><PrimaryButton label="Kamera ile pratik yap" icon="camera" onPress={()=>router.push(`/practice-session?movementId=${story.movementId}`)}/></>:<PrimaryButton label={running?'Akış sürüyor…':'Hareketi bedenimde dene'} icon={running?'hourglass-outline':'play'} disabled={running} onPress={()=>{setSeconds(0);setRunning(true)}}/>}
+ </Screen>;
+ return <Screen>
+  <Pressable onPress={()=>router.back()} style={s.back}><Ionicons name="arrow-back" color={colors.cream} size={20}/><Text style={s.backText}>Tüm hikâyeler</Text></Pressable>
+  <ImageBackground source={image} style={s.hero} imageStyle={s.image}><View style={s.shade}/><View style={s.heroBadge}><Text style={{color:shen.color,fontSize:10,fontWeight:'900'}}>BÖLÜM {String(story.order).padStart(2,'0')} · {story.duration} DK</Text></View><View><Text style={s.heroSub}>{story.subtitle}</Text><Text style={s.heroTitle}>{story.title}</Text></View></ImageBackground>
+  <Eyebrow>BUGÜN BUNU NEDEN YAPIYORUZ?</Eyebrow><Title>“{story.quote}”</Title><Text style={s.description}>{story.description}</Text>
+  <Card style={[s.lifeCard,{borderColor:`${shen.color}55`}]}><Text style={[s.lifeLabel,{color:shen.color}]}>GÜNDELİK KARŞILIĞI</Text><Text style={s.lifeTitle}>{story.lifeConnection}</Text></Card>
+  <View style={s.ambience}>{story.ambience.map(item=><View key={item} style={s.ambienceChip}><Ionicons name="musical-note-outline" color={shen.color} size={13}/><Text style={s.ambienceText}>{item}</Text></View>)}</View>
+  <PrimaryButton label="Hareketi bedenimde dene" icon="arrow-forward" onPress={()=>setMode('practice')}/>
+  <Pressable onPress={()=>router.push(`/practice-session?movementId=${story.movementId}`)} style={s.cameraLink}><Ionicons name="camera-outline" color={shen.color} size={20}/><Text style={[s.cameraLinkText,{color:shen.color}]}>Doğrudan kamerayla dene</Text></Pressable>
+ </Screen>;
+}
+const s=StyleSheet.create({back:{height:42,alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:7},backText:{color:colors.muted,fontSize:13,fontWeight:'700'},hero:{height:330,borderRadius:radii.lg,overflow:'hidden',padding:20,justifyContent:'space-between'},image:{borderRadius:radii.lg},shade:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(3,13,11,.42)'},heroBadge:{alignSelf:'flex-start',paddingHorizontal:10,paddingVertical:7,borderRadius:radii.pill,backgroundColor:'rgba(3,13,11,.72)'},heroSub:{color:colors.gold,fontSize:11,fontWeight:'900',letterSpacing:1.3},heroTitle:{color:colors.cream,fontSize:38,fontWeight:'800',marginTop:4},description:{color:colors.muted,fontSize:16,lineHeight:25,marginTop:-12},lifeCard:{gap:7},lifeLabel:{fontSize:9,fontWeight:'900',letterSpacing:1.3},lifeTitle:{color:colors.cream,fontSize:17,fontWeight:'800',lineHeight:24},ambience:{flexDirection:'row',flexWrap:'wrap',gap:7},ambienceChip:{height:36,borderRadius:radii.pill,backgroundColor:colors.surface,flexDirection:'row',alignItems:'center',gap:6,paddingHorizontal:11},ambienceText:{color:colors.muted,fontSize:11,fontWeight:'700'},cameraLink:{height:48,alignItems:'center',justifyContent:'center',flexDirection:'row',gap:7},cameraLinkText:{fontSize:14,fontWeight:'800'},practiceVisual:{height:350,borderRadius:radii.lg,overflow:'hidden',alignItems:'center',justifyContent:'center'},halo:{width:180,height:270,borderRadius:90,borderWidth:1,alignItems:'center'},head:{width:52,height:52,borderRadius:26,borderWidth:2,borderColor:colors.cream,marginTop:24},body:{width:2,height:105,backgroundColor:colors.cream},arms:{position:'absolute',top:125,width:145,height:2,backgroundColor:colors.cream},legs:{width:94,height:100,borderLeftWidth:2,borderRightWidth:2,borderColor:colors.cream,transform:[{rotate:'11deg'}]},breath:{position:'absolute',left:16,right:16,bottom:16,backgroundColor:'rgba(3,13,11,.78)',borderRadius:14,padding:12},breathValue:{fontSize:10,fontWeight:'900',letterSpacing:1.3},breathText:{color:colors.cream,fontSize:14,fontWeight:'700',marginTop:3},steps:{gap:8},step:{flexDirection:'row',alignItems:'center',gap:12,padding:12},stepNo:{width:32,height:32,borderRadius:16,alignItems:'center',justifyContent:'center'},stepNoText:{color:colors.muted,fontWeight:'900'},stepText:{color:colors.cream,fontSize:13,lineHeight:19,flex:1},completeCard:{flexDirection:'row',alignItems:'center',gap:12},completeTitle:{fontSize:15,fontWeight:'900'},small:{color:colors.muted,fontSize:12,lineHeight:17,marginTop:3}});

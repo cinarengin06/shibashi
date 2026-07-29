@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "Shibashi",
+    "slug": "shibashi",
+    "scheme": "shibashi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.shibashi.mobile"
+    },
+    "android": {
+      "package": "com.shibashi.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#071512",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Shibashi duruş rehberliği için kameraya erişmek istiyor.",
+          "microphonePermission": "Shibashi pratik kaydı için mikrofona erişmek istiyor.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      "expo-audio",
+      "expo-font",
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/shibashi-splash.png",
+          "imageWidth": 430,
+          "resizeMode": "contain",
+          "backgroundColor": "#020604",
+          "dark": {
+            "image": "./assets/shibashi-splash.png",
+            "backgroundColor": "#020604"
+          }
+        }
+      ],
+      "expo-video"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ee66e984-5cce-49cd-b5ba-155fd0133127"
+      }
+    }
+  }
+}

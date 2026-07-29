@@ -1,0 +1,24 @@
+import {Ionicons} from '@expo/vector-icons';
+import {Tabs} from 'expo-router';
+import {colors,fonts} from '../../constants/theme';
+import {useShenExperience} from '../../store/ShenExperience';
+
+const icons:Record<string,keyof typeof Ionicons.glyphMap>={index:'sunny-outline',journey:'compass-outline',practice:'play-circle',journal:'book-outline',profile:'person-outline'};
+
+export default function TabLayout(){
+ const{shen}=useShenExperience();
+ return <Tabs screenOptions={({route})=>({
+  headerShown:false,
+  tabBarActiveTintColor:shen.color,
+  tabBarInactiveTintColor:colors.muted,
+  tabBarStyle:{position:'absolute',height:82,paddingTop:9,paddingBottom:13,backgroundColor:'rgba(5,7,8,.96)',borderTopColor:`${shen.color}30`,borderTopWidth:1},
+  tabBarLabelStyle:{fontSize:10,fontFamily:fonts.sansStrong},
+  tabBarIcon:({color,size,focused})=><Ionicons name={icons[route.name]} size={route.name==='practice'&&focused?30:size} color={color}/>,
+ })}>
+  <Tabs.Screen name="index" options={{title:'Bugün'}}/>
+  <Tabs.Screen name="journey" options={{title:'Yolculuk'}}/>
+  <Tabs.Screen name="practice" options={{title:'Pratik'}}/>
+  <Tabs.Screen name="journal" options={{title:'Günlük'}}/>
+  <Tabs.Screen name="profile" options={{title:'Profil'}}/>
+ </Tabs>
+}

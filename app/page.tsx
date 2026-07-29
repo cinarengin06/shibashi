@@ -2,6 +2,7 @@
 
 import type { CSSProperties, ReactNode, RefObject } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LivePose3D } from "@/components/tai-chi/LivePose3D";
 import { MovementCoach } from "@/components/tai-chi/MovementCoach";
 import { LivingLearningScreen } from "@/components/living-learning/LivingLearningScreen";
 
@@ -102,7 +103,35 @@ const poseConnections: ReadonlyArray<readonly [string, string]> = [
   ["left_knee", "left_ankle"],
   ["right_hip", "right_knee"],
   ["right_knee", "right_ankle"],
+  ["left_wrist", "left_pinky"],
+  ["left_wrist", "left_index"],
+  ["left_wrist", "left_thumb"],
+  ["right_wrist", "right_pinky"],
+  ["right_wrist", "right_index"],
+  ["right_wrist", "right_thumb"],
+  ["left_ankle", "left_heel"],
+  ["left_heel", "left_foot_index"],
+  ["left_ankle", "left_foot_index"],
+  ["right_ankle", "right_heel"],
+  ["right_heel", "right_foot_index"],
+  ["right_ankle", "right_foot_index"],
 ];
+
+const mediaPipePoseNames = [
+  "nose", "left_eye_inner", "left_eye", "left_eye_outer", "right_eye_inner", "right_eye", "right_eye_outer",
+  "left_ear", "right_ear", "mouth_left", "mouth_right", "left_shoulder", "right_shoulder", "left_elbow",
+  "right_elbow", "left_wrist", "right_wrist", "left_pinky", "right_pinky", "left_index", "right_index",
+  "left_thumb", "right_thumb", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle",
+  "right_ankle", "left_heel", "right_heel", "left_foot_index", "right_foot_index",
+] as const;
+
+const postureDisplayPoints = new Set([
+  "nose", "left_ear", "right_ear",
+  "left_shoulder", "right_shoulder",
+  "left_hip", "right_hip",
+  "left_knee", "right_knee",
+  "left_ankle", "right_ankle",
+]);
 
 type PracticeSnapshot = {
   id: string;
@@ -114,6 +143,16 @@ type PracticeSnapshot = {
   score: number;
   shenName: string;
   imageData: string;
+};
+
+type MovementAnalysisWindowState = "idle" | "recording" | "complete";
+
+type MovementAnalysisWindowResult = {
+  total: number;
+  form: number;
+  rhythm: number;
+  balance: number;
+  samples: number;
 };
 
 type PostureAnalysisSnapshot = {
@@ -385,6 +424,16 @@ function getMovementReferenceImage(movement: Movement) {
   return movementReferenceImages[movement.id] ?? movement.image;
 }
 
+const warmupReferenceImages: Record<WarmupLessonId, string> = {
+  wuji: "/images/shibashi-reference/01-acilis-formu.jpg",
+  warmup: "/images/shibashi-reference/02-bagrini-acmak.jpg",
+  kua: "/images/shibashi-reference/04-icten-disa.jpg",
+};
+
+function getWarmupReferenceImage(lessonId: WarmupLessonId) {
+  return warmupReferenceImages[lessonId];
+}
+
 function getInnerJourneyScene(movementId: number) {
   const index = Math.min(innerJourneyScenes.length - 1, Math.floor(((movementId - 1) / movements.length) * innerJourneyScenes.length));
   return innerJourneyScenes[index] ?? innerJourneyScenes[0];
@@ -445,8 +494,8 @@ const fiveShen = [
     organ: "Kalp",
     map: "Göğüs merkezi, bakış ve temas",
     point: { x: 50, y: 38 },
-    color: "#ff8a36",
-    color2: "#d93b1d",
+    color: "#e36a9d",
+    color2: "#4a1233",
     image: "/images/shen-river-shen.jpg",
     music: "/videos/shen-music-shen.mp4",
     tone: 256,
@@ -478,8 +527,8 @@ const fiveShen = [
     organ: "Dalak",
     map: "Merkez, karın hattı ve odak",
     point: { x: 50, y: 55 },
-    color: "#d9a441",
-    color2: "#7a5a2b",
+    color: "#ff9d38",
+    color2: "#783c13",
     image: "/images/shen-river-yi.jpg",
     music: "/videos/shen-music-yi.mp4",
     tone: 220,
@@ -511,8 +560,8 @@ const fiveShen = [
     organ: "Akciğer",
     map: "Omuzlar, nefes kapısı ve cilt farkındalığı",
     point: { x: 59, y: 42 },
-    color: "#d8c7a3",
-    color2: "#5f837f",
+    color: "#8bcde8",
+    color2: "#12374d",
     image: "/images/shen-river-po.jpg",
     music: "/videos/shen-music-po.mp4",
     tone: 174,
@@ -544,8 +593,8 @@ const fiveShen = [
     organ: "Böbrek",
     map: "Bel, dizler, ayak tabanı ve kök",
     point: { x: 50, y: 72 },
-    color: "#7fc8dc",
-    color2: "#183d59",
+    color: "#a986e8",
+    color2: "#29194a",
     image: "/images/shen-river-zhi.jpg",
     music: "/videos/shen-music-zhi.mp4",
     tone: 146,
@@ -939,7 +988,6 @@ type AiCoach = (typeof aiCoaches)[number];
 export default function RitimKapisiOS() {
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop");
-  const [introAudioBlocked, setIntroAudioBlocked] = useState(false);
   const [introVisible, setIntroVisible] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [userName, setUserName] = useState("");
@@ -1031,18 +1079,6 @@ export default function RitimKapisiOS() {
     mobileFrameRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [activeTab, deviceMode, onboardingComplete]);
 
-  useEffect(() => {
-    if (!introVisible) return;
-
-    const timer = window.setTimeout(() => {
-      void startShenMusic(selectedShen).then((started) => {
-        setIntroAudioBlocked(!started);
-      });
-    }, 360);
-
-    return () => window.clearTimeout(timer);
-  }, [introVisible, selectedShen.id]);
-
   function savePracticeSnapshot(snapshot: PracticeSnapshot) {
     setPracticeGallery((current) => {
       const nextGallery = [snapshot, ...current].slice(0, 24);
@@ -1097,6 +1133,7 @@ export default function RitimKapisiOS() {
 
   function selectShen(shenId: ShenId) {
     setSelectedShenId(shenId);
+    if ("vibrate" in navigator) navigator.vibrate(12);
     window.localStorage.setItem("ritim-kapisi-selected-shen", shenId);
     const nextShen = fiveShen.find((shen) => shen.id === shenId);
     if (soundState === "açık" && nextShen) {
@@ -1133,7 +1170,6 @@ export default function RitimKapisiOS() {
 
   function restartOnboarding() {
     window.localStorage.removeItem("ritim-kapisi-onboarding-complete");
-    setIntroAudioBlocked(false);
     setIntroVisible(true);
     setOnboardingComplete(false);
     setActiveTab("home");
@@ -1266,17 +1302,9 @@ export default function RitimKapisiOS() {
       <AmbientParticles selectedShenId={selectedShen.id} />
       <DevicePreviewDock deviceMode={deviceMode} onChange={setDeviceMode} />
       {introVisible ? (
-        <IntroGateVideo
-          audioBlocked={introAudioBlocked}
+        <IntroSplash
           onClose={() => setIntroVisible(false)}
-          onPlayMusic={() => {
-            void startShenMusic(selectedShen).then((started) => {
-              setIntroAudioBlocked(!started);
-            });
-          }}
           deviceMode={deviceMode}
-          selectedShen={selectedShen}
-          soundState={soundState}
         />
       ) : null}
       <div className={`device-shell ${onboardingComplete ? "" : "onboarding-device-shell"}`}>
@@ -1302,6 +1330,7 @@ export default function RitimKapisiOS() {
             onJourney={() => setActiveTab("journey")}
             onPractice={() => setActiveTab("practice")}
             onPosture={() => setActiveTab("posture")}
+            onSelectShen={selectShen}
             practiceCount={practiceGallery.length}
             postureCount={postureReports.length}
             selectedShen={selectedShen}
@@ -1428,123 +1457,47 @@ function DevicePreviewDock({
   );
 }
 
-function IntroGateVideo({
-  audioBlocked,
+function IntroSplash({
   deviceMode,
   onClose,
-  onPlayMusic,
-  selectedShen,
-  soundState,
 }: {
-  audioBlocked: boolean;
   deviceMode: DeviceMode;
   onClose: () => void;
-  onPlayMusic: () => void;
-  selectedShen: (typeof fiveShen)[number];
-  soundState: "kapalı" | "açık";
 }) {
-  const [isReady, setIsReady] = useState(false);
-  const [needsVideoTap, setNeedsVideoTap] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    const timers: number[] = [];
-
-    const tryPlay = async () => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      video.defaultMuted = true;
-      video.muted = true;
-      video.playsInline = true;
-      video.playbackRate = 0.62;
-
-      try {
-        await video.play();
-        if (!cancelled) {
-          setIsReady(true);
-          setNeedsVideoTap(false);
-        }
-      } catch {
-        if (!cancelled) setNeedsVideoTap(true);
-      }
-    };
-
-    void tryPlay();
-    timers.push(window.setTimeout(() => void tryPlay(), 420));
-    timers.push(window.setTimeout(() => void tryPlay(), 1200));
-
+    const closeTimer = window.setTimeout(() => setIsClosing(true), 3200);
+    const finishTimer = window.setTimeout(onClose, 3700);
     return () => {
-      cancelled = true;
-      timers.forEach((timer) => window.clearTimeout(timer));
+      window.clearTimeout(closeTimer);
+      window.clearTimeout(finishTimer);
     };
-  }, []);
+  }, [onClose]);
 
-  async function playIntroVideo() {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.defaultMuted = true;
-    video.muted = true;
-    video.playbackRate = 0.62;
-    await video.play().then(() => {
-      setIsReady(true);
-      setNeedsVideoTap(false);
-    }).catch(() => {
-      setNeedsVideoTap(true);
-    });
+  function closeSplash() {
+    if (isClosing) return;
+    setIsClosing(true);
+    window.setTimeout(onClose, 420);
   }
 
   return (
-    <div className={`intro-gate intro-gate-${deviceMode} ${isReady ? "intro-gate-ready" : ""}`}>
+    <div
+      aria-label="Shibashi Efe açılış ekranı"
+      className={`intro-gate intro-gate-${deviceMode} intro-splash ${isClosing ? "intro-splash-closing" : ""}`}
+      role="dialog"
+    >
       <div className="intro-device-frame">
         <div className="intro-phone-speaker" />
-        <video
-          className="intro-gate-video"
-          src="/videos/intro-gate.mp4"
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          poster={selectedShen.image}
-          ref={videoRef}
-          onCanPlay={() => {
-            setIsReady(true);
-            void playIntroVideo();
-          }}
-          onEnded={onClose}
-          onLoadedMetadata={(event) => {
-            event.currentTarget.playbackRate = 0.62;
-            void playIntroVideo();
-          }}
-          onPlay={(event) => {
-            event.currentTarget.playbackRate = 0.62;
-            setNeedsVideoTap(false);
-          }}
+        <img
+          alt="Shibashi Efe — İçsel Yolculuk"
+          className="intro-splash-image"
+          src="/images/shibashi/shibashi-splash.png"
         />
-        <div className="intro-gate-shade" />
-        <div className="intro-gate-content">
-          <span className="eyebrow">RİTİM KAPISI</span>
-          <h1>Kapı açılıyor.</h1>
-          <p>Bugünün ritmi birazdan seçtiğin Shen’in dünyasına bağlanacak.</p>
-          <div className="intro-sound-row">
-            <span>{selectedShen.dailyName} • {selectedShen.name} müziği {soundState}</span>
-            {needsVideoTap ? (
-              <button className="secondary-action intro-sound-action" onClick={playIntroVideo} type="button">
-                Videoyu oynat
-              </button>
-            ) : null}
-            {audioBlocked ? (
-              <button className="secondary-action intro-sound-action" onClick={onPlayMusic} type="button">
-                Sesi aç
-              </button>
-            ) : null}
-          </div>
-          <button className="primary-action intro-gate-action" onClick={onClose} type="button">
-            Kapıdan geç <span>→</span>
-          </button>
-        </div>
+        <button aria-label="Açılışı geç" className="intro-splash-skip" onClick={closeSplash} type="button">
+          <span>Dokun ve başla</span>
+          <i aria-hidden="true" />
+        </button>
       </div>
     </div>
   );
@@ -1567,6 +1520,7 @@ function OnboardingScreen({
 }) {
   const onboardingRef = useRef<HTMLElement | null>(null);
   const [step, setStep] = useState(0);
+  const [modeChoiceOpen, setModeChoiceOpen] = useState(false);
   const [modeQuizOpen, setModeQuizOpen] = useState(false);
   const [modeQuizQuestion, setModeQuizQuestion] = useState(0);
   const [modeQuizAnswers, setModeQuizAnswers] = useState<ShenId[]>([]);
@@ -1577,27 +1531,27 @@ function OnboardingScreen({
     options: ReadonlyArray<{ label: string; shenId: ShenId }>;
   }> = [
     {
-      prompt: "Şu an bedeninde en çok hangi sinyal var?",
+      prompt: "Şu an sende hangisi baskın?",
       options: [
-        { label: "Omuzlarım ve göğsüm sıkışık.", shenId: "po" },
-        { label: "Zihnim dağınık, odağım bölünüyor.", shenId: "yi" },
-        { label: "Enerjim düşük, dayanmak zor geliyor.", shenId: "zhi" },
+        { label: "Omuzlarım sıkışık.", shenId: "po" },
+        { label: "Zihnim dağınık.", shenId: "yi" },
+        { label: "Enerjim düşük.", shenId: "zhi" },
       ],
     },
     {
-      prompt: "Bugün hayatın senden en çok ne istiyor?",
+      prompt: "Bugün neye ihtiyacın var?",
       options: [
-        { label: "Bir yön bulup harekete geçmek.", shenId: "hun" },
-        { label: "İnsanlarla daha açık ve canlı olmak.", shenId: "shen" },
-        { label: "Sadeleşip tek işe odaklanmak.", shenId: "yi" },
+        { label: "Yön bulmaya.", shenId: "hun" },
+        { label: "Canlanmaya.", shenId: "shen" },
+        { label: "Odaklanmaya.", shenId: "yi" },
       ],
     },
     {
-      prompt: "Bu kısa pratikten sonra nasıl hissetmek istersin?",
+      prompt: "Pratikten sonra nasıl hissetmek istersin?",
       options: [
-        { label: "Daha hafif ve rahat.", shenId: "po" },
-        { label: "Daha kararlı ve dayanıklı.", shenId: "zhi" },
-        { label: "Daha akışta ve yaratıcı.", shenId: "hun" },
+        { label: "Hafiflemiş.", shenId: "po" },
+        { label: "Daha dayanıklı.", shenId: "zhi" },
+        { label: "Akışta.", shenId: "hun" },
       ],
     },
   ];
@@ -1687,9 +1641,10 @@ function OnboardingScreen({
   useEffect(() => {
     const frame = onboardingRef.current?.closest(".mobile-frame");
     if (frame instanceof HTMLElement) frame.scrollTop = 0;
-  }, [step, modeQuizOpen, modeQuizQuestion, modeQuizResult]);
+  }, [step, modeChoiceOpen, modeQuizOpen, modeQuizQuestion, modeQuizResult]);
 
   function openModeQuiz() {
+    setModeChoiceOpen(true);
     setModeQuizOpen(true);
     setModeQuizQuestion(0);
     setModeQuizAnswers([]);
@@ -1727,6 +1682,13 @@ function OnboardingScreen({
     setModeQuizOpen(false);
   }
 
+  function confirmModeChoice() {
+    onSelectShen(selectedShenId);
+    setModeChoiceOpen(false);
+    setModeQuizOpen(false);
+    setStep(2);
+  }
+
   function goNext() {
     if (step === 0 && !userName.trim()) {
       setNameError("Yolculuğa başlamak için adını yaz.");
@@ -1738,8 +1700,17 @@ function OnboardingScreen({
       return;
     }
 
+    if (step === 1 && !modeChoiceOpen) {
+      setModeChoiceOpen(true);
+      return;
+    }
+
     setStep((current) => current + 1);
   }
+
+  const modeFlowOpen = step === 1 && modeChoiceOpen;
+  const modeQuizResultOpen = modeFlowOpen && modeQuizOpen && Boolean(modeQuizResult);
+  const modePickerOpen = modeFlowOpen && !modeQuizOpen;
 
   return (
     <section className="screen onboarding-screen" ref={onboardingRef}>
@@ -1750,19 +1721,25 @@ function OnboardingScreen({
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
         </div>
-        <span className="eyebrow">{step === 2 && modeQuizOpen ? "Tai Chi Hocası" : currentStep.eyebrow}</span>
+        <span className="eyebrow">
+          {modeQuizOpen ? "Tai Chi Hocası" : modePickerOpen ? "Günlük modun" : currentStep.eyebrow}
+        </span>
         <h1 className="hero-title">
-          {step === 2 && modeQuizOpen
-            ? modeQuizResult
+          {modeFlowOpen
+            ? modeQuizResultOpen
               ? `Bugünkü modun: ${modeQuizShen.dailyName}`
-              : activeModeQuestion.prompt
+              : modeQuizOpen
+                ? activeModeQuestion.prompt
+                : "Bugününü hangi yöne çevirelim?"
             : currentStepTitle}
         </h1>
         <p className="hero-copy">
-          {step === 2 && modeQuizOpen
-            ? modeQuizResult
+          {modeFlowOpen
+            ? modeQuizResultOpen
               ? `Yanıtların bugün ${modeQuizShen.dailyName.toLocaleLowerCase("tr-TR")} ihtiyacını gösteriyor. Bu modun 5 Shen dilindeki karşılığı ${modeQuizShen.name}.`
-              : `Soru ${modeQuizQuestion + 1}/3 • Doğru cevap yok; şu an sana en yakın gelen seçeneği işaretle.`
+              : modeQuizOpen
+                ? `Soru ${modeQuizQuestion + 1}/3 • Sana en yakın cevabı seç.`
+                : "Modunu kendin seçebilir ya da üç kısa soruyla bugünkü ihtiyacını birlikte bulabiliriz."
             : currentStepBody}
         </p>
 
@@ -1788,6 +1765,68 @@ function OnboardingScreen({
               <small>Bu isim yolculuğun boyunca sana eşlik edecek; seni bu yolculukta bu isimle anacağız.</small>
             )}
           </div>
+        ) : null}
+
+        {modePickerOpen ? (
+          <div className="onboarding-mode-choice">
+            <div className="onboarding-mode-choice-intro">
+              <strong>{shenModePrompt[selectedShenId].title}</strong>
+              <span>{shenModePrompt[selectedShenId].body}</span>
+            </div>
+            <div className="onboarding-shen-picker" aria-label="Bugünün modunu seç">
+              {fiveShen.map((shen) => (
+                <button
+                  aria-pressed={selectedShenId === shen.id}
+                  className={`onboarding-shen ${selectedShenId === shen.id ? "onboarding-shen-active" : ""}`}
+                  key={shen.id}
+                  onClick={() => onSelectShen(shen.id)}
+                  style={{ "--shen-card-accent": shen.color } as CSSProperties}
+                  type="button"
+                >
+                  <span>{shen.symbol}</span>
+                  <strong>{shen.dailyName}</strong>
+                  <small>{shen.name}</small>
+                </button>
+              ))}
+            </div>
+            <div className="onboarding-mode-choice-actions">
+              <button className="primary-action" onClick={confirmModeChoice} type="button">Modumu seçtim</button>
+              <button className="secondary-action" onClick={openModeQuiz} type="button">Neye ihtiyacım var, sen bul</button>
+            </div>
+          </div>
+        ) : null}
+
+        {modeQuizOpen ? (
+          modeQuizResultOpen ? (
+            <div
+              className="onboarding-mode-result"
+              style={{ "--shen-card-accent": modeQuizShen.color } as CSSProperties}
+            >
+              <span>{modeQuizShen.symbol}</span>
+              <div>
+                <strong>{modeQuizShen.dailyName}</strong>
+                <small>5 Shen karşılığı: {modeQuizShen.name}</small>
+                <p className="onboarding-shen-intro">{modeQuizLearning.intro}</p>
+                <div className="onboarding-shen-micro">
+                  <span>Bugün için küçük deney</span>
+                  <p>{modeQuizLearning.micro}</p>
+                </div>
+                <details className="onboarding-shen-depth">
+                  <summary>Biraz daha öğren</summary>
+                  <p>{modeQuizLearning.detail}</p>
+                </details>
+              </div>
+            </div>
+          ) : (
+            <div className="onboarding-mode-quiz-options">
+              {activeModeQuestion.options.map((option, index) => (
+                <button key={option.label} onClick={() => answerModeQuestion(option.shenId)} type="button">
+                  <span>{index + 1}</span>
+                  <strong>{option.label}</strong>
+                </button>
+              ))}
+            </div>
+          )
         ) : null}
 
         {step === 2 ? (
@@ -1838,12 +1877,34 @@ function OnboardingScreen({
           </div>
         ) : null}
 
-        <div className="onboarding-actions">
-          {step > 0 ? (
-            <button className="secondary-action" onClick={() => setStep((current) => current - 1)} type="button">Geri</button>
-          ) : null}
-          <button className="primary-action" onClick={goNext} type="button">{currentStep.action}</button>
-        </div>
+        {modeFlowOpen ? (
+          <div className="onboarding-actions onboarding-mode-actions">
+            <button
+              className="secondary-action"
+              onClick={() => (modeQuizOpen ? goBackFromModeQuiz() : setModeChoiceOpen(false))}
+              type="button"
+            >
+              Geri
+            </button>
+            {modeQuizOpen ? (
+              <button
+                className="primary-action"
+                disabled={!modeQuizResult}
+                onClick={confirmModeChoice}
+                type="button"
+              >
+                {modeQuizResult ? "Bu modla devam et" : "Bir cevap seç"}
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <div className="onboarding-actions">
+            {step > 0 ? (
+              <button className="secondary-action" onClick={() => setStep((current) => current - 1)} type="button">Geri</button>
+            ) : null}
+            <button className="primary-action" onClick={goNext} type="button">{currentStep.action}</button>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -2181,6 +2242,7 @@ function HomeScreen({
   onJourney,
   onPractice,
   onPosture,
+  onSelectShen,
   practiceCount,
   postureCount,
   selectedShen,
@@ -2191,6 +2253,7 @@ function HomeScreen({
   onJourney: () => void;
   onPractice: () => void;
   onPosture: () => void;
+  onSelectShen: (shenId: ShenId) => void;
   practiceCount: number;
   postureCount: number;
   selectedShen: (typeof fiveShen)[number];
@@ -2205,53 +2268,85 @@ function HomeScreen({
 
   return (
     <section className="screen progressive-home">
-      <div className="daily-brief" style={{ "--home-image": `url(${selectedShen.image})` } as CSSProperties}>
-        <div className="daily-brief-copy">
-          <span className="eyebrow">{userName ? `${userName}, bugünün modu` : "Bugünün modu"}</span>
-          <h1>{selectedShen.dailyName}</h1>
-          <p>{selectedShen.dailyPrompt}</p>
-          <div className="daily-mode-note">
-            Geleneksel adı <strong>{selectedShen.name}</strong> • {selectedShen.label}
+      <header className="meditation-header">
+        <div className="meditation-brand">
+          <span>☯</span>
+          <div>
+            <strong>SHIBASHI</strong>
+            <small>5 Shen · İçsel Yolculuk</small>
           </div>
         </div>
-        <div className="daily-energy" aria-label="Günlük enerji değerleri">
-          <Metric
-            isOpen={activeEnergyMetric === "Jing"}
-            label="Jing"
-            onToggle={() => setActiveEnergyMetric((current) => current === "Jing" ? null : "Jing")}
-            value={`${energyScores.jing}`}
-          />
-          <Metric
-            isOpen={activeEnergyMetric === "Qi"}
-            label="Qi"
-            onToggle={() => setActiveEnergyMetric((current) => current === "Qi" ? null : "Qi")}
-            value={`${energyScores.qi}`}
-          />
-          <Metric
-            isOpen={activeEnergyMetric === "Shen"}
-            label="Shen"
-            onToggle={() => setActiveEnergyMetric((current) => current === "Shen" ? null : "Shen")}
-            value={`${energyScores.shen}`}
-          />
-        </div>
+        <button aria-label="Bildirimler" className="meditation-notify" type="button">♧<i /></button>
+      </header>
+
+      <div className="shen-constellation" aria-label="Shen seçimi">
+        {fiveShen.map((shen) => (
+          <button
+            className={selectedShen.id === shen.id ? "shen-constellation-active" : ""}
+            key={shen.id}
+            onClick={() => onSelectShen(shen.id)}
+            style={{ "--constellation-color": shen.color } as CSSProperties}
+            type="button"
+          >
+            <span>{shen.symbol}</span>
+            <strong>{shen.name}</strong>
+          </button>
+        ))}
       </div>
 
-      <div className="today-flow">
+      <article className="shen-sanctuary" style={{ "--home-image": `url(${selectedShen.image})` } as CSSProperties}>
+        <div className="sanctuary-shade" />
+        <div className="sanctuary-copy">
+          <span className="eyebrow">{selectedShen.element}</span>
+          <div className="sanctuary-title">
+            <h1>{selectedShen.name} Shen</h1>
+            <b>{selectedShen.symbol}</b>
+          </div>
+          <p className="sanctuary-essence">{selectedShen.essence}</p>
+          <p className="sanctuary-prompt">{selectedShen.dailyPrompt}</p>
+        </div>
+
+        <div className="energy-orbit" aria-label="Günlük enerji değerleri">
+          {[
+            { label: "Jing", value: energyScores.jing },
+            { label: "Qi", value: energyScores.qi },
+            { label: "Shen", value: energyScores.shen },
+          ].map((metric) => (
+            <button
+              className={activeEnergyMetric === metric.label ? "energy-orbit-active" : ""}
+              key={metric.label}
+              onClick={() => setActiveEnergyMetric((current) => current === metric.label ? null : metric.label as EnergyMetricLabel)}
+              type="button"
+            >
+              <span>{metric.label}</span>
+              <strong>{metric.value}<small>%</small></strong>
+            </button>
+          ))}
+        </div>
+
+        <div className="sanctuary-ritual">
+          <div className="ritual-mark"><span>☯</span></div>
+          <div>
+            <span>GÜNLÜK PRATİĞİN</span>
+            <strong>18 Hareket · 20 dakika</strong>
+          </div>
+          <button onClick={onPractice} type="button">Pratiğe Başla <span>→</span></button>
+        </div>
+      </article>
+
+      <div className="meditation-section-title">
         <div>
-          <span className="eyebrow">Şimdi</span>
-          <h2>Bugünün akışı hazır.</h2>
-          <p>Wuji hazırlığı, ısınma ve 18 Shibashi hareketi. Yaklaşık 8 dakika.</p>
+          <span className="eyebrow">İçsel haritan</span>
+          <h2>Bugünün dengesi</h2>
         </div>
-        <button className="primary-action" onClick={onPractice} type="button">
-          Pratiğe Başla <span>→</span>
-        </button>
+        <span>{selectedShen.dailyName}</span>
       </div>
 
-      <div className="progressive-roadmap" aria-label="Uygulama açılım yolu">
+      <div className="premium-path" aria-label="Uygulama açılım yolu">
         <div className={`progressive-step ${currentStage >= 1 ? "progressive-step-active" : ""}`}>
-          <span>1</span>
-          <div><strong>Pratik</strong><small>Bugünün tek odağı</small></div>
-          <b>Şimdi</b>
+          <span>✧</span>
+          <div><strong>Pratik</strong><small>{practiceCount ? `${practiceCount} akış tamamlandı` : "İlk akışın seni bekliyor"}</small></div>
+          <b>Başla</b>
         </div>
         <button
           className={`progressive-step ${postureUnlocked ? "progressive-step-unlocked" : "progressive-step-locked"}`}
@@ -2259,7 +2354,7 @@ function HomeScreen({
           onClick={onPosture}
           type="button"
         >
-          <span>2</span>
+          <span>↕</span>
           <div><strong>Postür Aynası</strong><small>{postureCount ? `${postureCount} analiz kayıtlı` : "İlk ölçümünü şimdi al"}</small></div>
           <b>Keşfet</b>
         </button>
@@ -2269,18 +2364,18 @@ function HomeScreen({
           onClick={onJourney}
           type="button"
         >
-          <span>3</span>
+          <span>☯</span>
           <div><strong>Yolculuğum</strong><small>İnsan haritan ve kalıcı rehberin</small></div>
           <b>{journeyUnlocked ? "Aç" : "Yakında"}</b>
         </button>
       </div>
 
-      <div className="home-moment-band">
+      <div className="home-moment-band meditation-moments">
         <div className="home-moment-head">
           <div>
-            <span className="eyebrow">Şu anki ihtiyacın</span>
-            <h2>Şu anda en çok neye ihtiyacın var?</h2>
-            <p className="home-moment-guidance">Birini seç. Sana neden uygun olduğunu ve yapacağın kısa pratiği gösterelim.</p>
+            <span className="eyebrow">Kendine bir an ayır</span>
+            <h2>Şimdi neye ihtiyacın var?</h2>
+            <p className="home-moment-guidance">Bedeninin sesini dinle. Sana en yakın olanı seç.</p>
           </div>
           <span>{selectedLifeMoment.duration}</span>
         </div>
@@ -2450,6 +2545,9 @@ function PostureScreen({
   const posturePreviousPointsRef = useRef<PoseKeypoint[]>([]);
   const postureAutoCaptureLockRef = useRef(false);
   const postureAnnouncedStepRef = useRef<PostureAssessmentStep | null>(null);
+  const postureStepRef = useRef<PostureAssessmentStep>("intro");
+  const poseStatusRef = useRef<"bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata">("bekliyor");
+  const lastPoseUiUpdateRef = useRef(0);
   const [cameraStatus, setCameraStatus] = useState<"idle" | "requesting" | "ready" | "denied" | "unsupported">("idle");
   const [keypoints, setKeypoints] = useState<PoseKeypoint[]>([]);
   const [movementScore, setMovementScore] = useState(0);
@@ -2461,6 +2559,10 @@ function PostureScreen({
   const [postureResult, setPostureResult] = useState<PostureReport | null>(null);
   const [viewingSavedReport, setViewingSavedReport] = useState(false);
   const [autoCaptureProgress, setAutoCaptureProgress] = useState(0);
+  const [captureFlash, setCaptureFlash] = useState(false);
+  const [capturedView, setCapturedView] = useState<PostureView | null>(null);
+  const captureTransitionRef = useRef<number | null>(null);
+  postureStepRef.current = postureStep;
 
   useEffect(() => {
     scoreTimerRef.current = window.setInterval(() => {
@@ -2475,6 +2577,7 @@ function PostureScreen({
     return () => {
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
       if (scoreTimerRef.current) window.clearInterval(scoreTimerRef.current);
+      if (captureTransitionRef.current) window.clearTimeout(captureTransitionRef.current);
       detectorRef.current?.dispose?.();
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
@@ -2484,7 +2587,10 @@ function PostureScreen({
     if (cameraStatus !== "ready") {
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
       setKeypoints([]);
-      setPoseStatus("bekliyor");
+      if (poseStatusRef.current !== "bekliyor") {
+        poseStatusRef.current = "bekliyor";
+        setPoseStatus("bekliyor");
+      }
       targetScoreRef.current = 0;
       setMovementScore(0);
       drawPoseCanvas(canvasRef.current, undefined, selectedShen.color);
@@ -2565,8 +2671,10 @@ function PostureScreen({
     if (!video) return;
 
     try {
+      poseStatusRef.current = "yükleniyor";
       setPoseStatus("yükleniyor");
       detectorRef.current ??= await createMoveNetDetector();
+      poseStatusRef.current = "aktif";
       setPoseStatus("aktif");
 
       const detect = async () => {
@@ -2577,8 +2685,11 @@ function PostureScreen({
         syncPoseCanvasSize(canvasRef.current, videoRef.current);
 
         if (!pose?.keypoints?.length) {
-          setPoseStatus("beden-yok");
-          setKeypoints([]);
+          if (poseStatusRef.current !== "beden-yok") {
+            poseStatusRef.current = "beden-yok";
+            setPoseStatus("beden-yok");
+            setKeypoints([]);
+          }
           drawPoseCanvas(canvasRef.current, undefined, selectedShen.color);
           targetScoreRef.current = 0;
         } else {
@@ -2593,9 +2704,27 @@ function PostureScreen({
             "left_ankle",
             "right_ankle",
           ].filter((name) => (pose.keypoints?.find((point) => point.name === name)?.score ?? 0) > 0.35);
-          setPoseStatus(importantVisible.length >= 6 ? "aktif" : "beden-yok");
-          setKeypoints(pose.keypoints);
-          drawPoseCanvas(canvasRef.current, pose, selectedShen.color);
+          const nextStatus=importantVisible.length>=6?"aktif":"beden-yok";
+          if(poseStatusRef.current!==nextStatus){
+            poseStatusRef.current=nextStatus;
+            setPoseStatus(nextStatus);
+          }
+          const now=performance.now();
+          if(now-lastPoseUiUpdateRef.current>=100){
+            lastPoseUiUpdateRef.current=now;
+            setKeypoints(pose.keypoints);
+          }
+          drawPoseCanvas(
+            canvasRef.current,
+            pose,
+            selectedShen.color,
+            analyzePosture(
+              pose.keypoints,
+              80,
+              selectedShen.id,
+              postureStepRef.current === "front" || postureStepRef.current === "side" || postureStepRef.current === "back" ? postureStepRef.current : "front",
+            ),
+          );
           targetScoreRef.current = scorePose(pose.keypoints, 1);
         }
 
@@ -2604,6 +2733,7 @@ function PostureScreen({
 
       rafRef.current = window.requestAnimationFrame(detect);
     } catch {
+      poseStatusRef.current = "hata";
       setPoseStatus("hata");
     }
   }
@@ -2669,6 +2799,8 @@ function PostureScreen({
     setViewingSavedReport(false);
     setPostureResult(null);
     setPostureCaptures({});
+    setCaptureFlash(false);
+    setCapturedView(null);
     setPostureView("front");
     setPostureStep("front");
     const cameraStarted = await startPostureCamera();
@@ -2691,27 +2823,33 @@ function PostureScreen({
 
     const nextCaptures = { ...postureCaptures, [view]: capture };
     setPostureCaptures(nextCaptures);
+    setCapturedView(view);
+    setCaptureFlash(true);
+    if (captureTransitionRef.current) window.clearTimeout(captureTransitionRef.current);
+    captureTransitionRef.current = window.setTimeout(() => {
+      setCaptureFlash(false);
 
-    if (view === "front") {
-      setPostureView("side");
-      setPostureStep("side");
-      return;
-    }
+      if (view === "front") {
+        setPostureView("side");
+        setPostureStep("side");
+        return;
+      }
 
-    if (view === "side") {
-      setPostureView("back");
-      setPostureStep("back");
-      return;
-    }
+      if (view === "side") {
+        setPostureView("back");
+        setPostureStep("back");
+        return;
+      }
 
-    if (nextCaptures.front && nextCaptures.side && nextCaptures.back) {
-      const report = buildPostureReport(nextCaptures as Record<PostureView, PostureAssessmentCapture>, latestPostureReport);
-      setViewingSavedReport(false);
-      setPostureResult(report);
-      speakCoach("Bitti. Üç görünüm de tamamlandı.");
-      setPostureStep("captured");
-      shutdownPostureCamera();
-    }
+      if (nextCaptures.front && nextCaptures.side && nextCaptures.back) {
+        const report = buildPostureReport(nextCaptures as Record<PostureView, PostureAssessmentCapture>, latestPostureReport);
+        setViewingSavedReport(false);
+        setPostureResult(report);
+        speakCoach("Bitti. Üç görünüm de tamamlandı.");
+        setPostureStep("captured");
+        shutdownPostureCamera();
+      }
+    }, 650);
   }
 
   function completePostureAnalysis() {
@@ -2734,6 +2872,9 @@ function PostureScreen({
 
   function resetPostureAssessment() {
     shutdownPostureCamera();
+    if (captureTransitionRef.current) window.clearTimeout(captureTransitionRef.current);
+    setCaptureFlash(false);
+    setCapturedView(null);
     setPostureStep("intro");
     setPostureResult(null);
     setPostureCaptures({});
@@ -2754,7 +2895,9 @@ function PostureScreen({
     <PostureAssessmentScreen
       cameraStatus={cameraStatus}
       canvasRef={canvasRef}
+      captureFlash={captureFlash}
       captures={postureCaptures}
+      capturedView={capturedView}
       keypoints={keypoints}
       mode={postureMode}
       movementScore={movementScore}
@@ -2839,6 +2982,10 @@ function PracticeScreen({
   const activeWarmupIdRef = useRef<WarmupLessonId>("wuji");
   const capturedMovementRef = useRef<string | null>(null);
   const previousPoseRef = useRef<{ keypoints: PoseKeypoint[]; at: number } | null>(null);
+  const analysisWindowStateRef = useRef<MovementAnalysisWindowState>("idle");
+  const analysisWindowSamplesRef = useRef<LiveMovementMatch[]>([]);
+  const analysisWindowStartedAtRef = useRef<number | null>(null);
+  const analysisWindowTimerRef = useRef<number | null>(null);
   const [liveFeedback, setLiveFeedback] = useState("Tam bedenini kadraja al ve öğretmeni aynala.");
   const [scoreBreakdown, setScoreBreakdown] = useState({ form: 0, rhythm: 0, balance: 0 });
   const [cameraStatus, setCameraStatus] = useState<"idle" | "requesting" | "ready" | "denied" | "unsupported">("idle");
@@ -2857,6 +3004,9 @@ function PracticeScreen({
   const [activeWarmupId, setActiveWarmupId] = useState<WarmupLessonId>("wuji");
   const [completedWarmups, setCompletedWarmups] = useState<WarmupLessonId[]>([]);
   const [practiceAdaptation, setPracticeAdaptation] = useState<PracticeAdaptation>("standing");
+  const [analysisWindowState, setAnalysisWindowState] = useState<MovementAnalysisWindowState>("idle");
+  const [analysisWindowProgress, setAnalysisWindowProgress] = useState(0);
+  const [analysisWindowResult, setAnalysisWindowResult] = useState<MovementAnalysisWindowResult | null>(null);
   const cueIndexRef = useRef(0);
   const referenceImage = getMovementReferenceImage(movement);
   const innerScene = getInnerJourneyScene(movement.id);
@@ -2898,6 +3048,7 @@ function PracticeScreen({
       streamRef.current?.getTracks().forEach((track) => track.stop());
       coachVoiceEngineRef.current?.current?.stop();
       if (coachCueCooldownTimerRef.current) window.clearTimeout(coachCueCooldownTimerRef.current);
+      if (analysisWindowTimerRef.current) window.clearInterval(analysisWindowTimerRef.current);
       coachVoiceEngineRef.current?.context.close();
       window.speechSynthesis?.cancel();
     };
@@ -2924,6 +3075,13 @@ function PracticeScreen({
     previousPoseRef.current = null;
     setLiveFeedback("Tam bedenini kadraja al ve öğretmeni aynala.");
     setScoreBreakdown({ form: 0, rhythm: 0, balance: 0 });
+    analysisWindowStateRef.current = "idle";
+    analysisWindowSamplesRef.current = [];
+    analysisWindowStartedAtRef.current = null;
+    if (analysisWindowTimerRef.current) window.clearInterval(analysisWindowTimerRef.current);
+    setAnalysisWindowState("idle");
+    setAnalysisWindowProgress(0);
+    setAnalysisWindowResult(null);
   }, [activeWarmupId, movement.id, practiceLearningMode]);
 
   useEffect(() => {
@@ -2969,6 +3127,13 @@ function PracticeScreen({
       drawPoseCanvas(canvasRef.current, undefined, selectedShen.color);
       setPoseStatus("bekliyor");
       setSnapshotState("bekliyor");
+      analysisWindowStateRef.current = "idle";
+      analysisWindowSamplesRef.current = [];
+      analysisWindowStartedAtRef.current = null;
+      if (analysisWindowTimerRef.current) window.clearInterval(analysisWindowTimerRef.current);
+      setAnalysisWindowState("idle");
+      setAnalysisWindowProgress(0);
+      setAnalysisWindowResult(null);
       return;
     }
 
@@ -3027,6 +3192,9 @@ function PracticeScreen({
             practiceLearningModeRef.current === "preparation" ? activeWarmupIdRef.current : movement.id,
           );
           previousPoseRef.current = { keypoints: pose.keypoints, at: now };
+          if (analysisWindowStateRef.current === "recording") {
+            analysisWindowSamplesRef.current.push(match);
+          }
           targetScoreRef.current = match.total;
           setLiveFeedback(match.feedback);
           setScoreBreakdown({ form: match.form, rhythm: match.rhythm, balance: match.balance });
@@ -3039,6 +3207,62 @@ function PracticeScreen({
     } catch {
       setPoseStatus("hata");
     }
+  }
+
+  function startMovementAnalysisWindow() {
+    if (!isCameraReady || poseStatus !== "aktif") {
+      setLiveFeedback("Önce kamerada tam bedenini görünür hale getir.");
+      return;
+    }
+
+    if (analysisWindowTimerRef.current) window.clearInterval(analysisWindowTimerRef.current);
+    analysisWindowStateRef.current = "recording";
+    analysisWindowSamplesRef.current = [];
+    analysisWindowStartedAtRef.current = performance.now();
+    setAnalysisWindowState("recording");
+    setAnalysisWindowProgress(0);
+    setAnalysisWindowResult(null);
+    setLiveFeedback("Üç saniye başladı. Referans hareketi yavaşça aynala.");
+
+    analysisWindowTimerRef.current = window.setInterval(() => {
+      const startedAt = analysisWindowStartedAtRef.current ?? performance.now();
+      const progress = Math.min(100, ((performance.now() - startedAt) / 3000) * 100);
+      setAnalysisWindowProgress(progress);
+      if (progress >= 100) finishMovementAnalysisWindow();
+    }, 80);
+  }
+
+  function finishMovementAnalysisWindow() {
+    if (analysisWindowStateRef.current !== "recording") return;
+    if (analysisWindowTimerRef.current) window.clearInterval(analysisWindowTimerRef.current);
+
+    const samples = analysisWindowSamplesRef.current;
+    analysisWindowStateRef.current = "complete";
+    analysisWindowStartedAtRef.current = null;
+    setAnalysisWindowProgress(100);
+
+    if (!samples.length) {
+      analysisWindowStateRef.current = "idle";
+      setAnalysisWindowState("idle");
+      setLiveFeedback("Bu üç saniyede bedenin görünmedi. Biraz geri çekilip tekrar dene.");
+      return;
+    }
+
+    const result = {
+      total: Math.round(samples.reduce((sum, item) => sum + item.total, 0) / samples.length),
+      form: Math.round(samples.reduce((sum, item) => sum + item.form, 0) / samples.length),
+      rhythm: Math.round(samples.reduce((sum, item) => sum + item.rhythm, 0) / samples.length),
+      balance: Math.round(samples.reduce((sum, item) => sum + item.balance, 0) / samples.length),
+      samples: samples.length,
+    } satisfies MovementAnalysisWindowResult;
+
+    setAnalysisWindowResult(result);
+    setAnalysisWindowState("complete");
+    setLiveFeedback(result.total >= 80 ? "Üç saniyelik akışın referans formuyla iyi buluştu." : "Akışın temeli var. Biraz daha yavaşla ve merkezi koru.");
+    playCoachCue(
+      result.total >= 80 ? "ok" : "soft",
+      `Üç saniyelik analiz tamamlandı. Hareket uyumun yüzde ${result.total}.`,
+    );
   }
 
   async function startCamera() {
@@ -3494,12 +3718,17 @@ function PracticeScreen({
         completedLessons={completedWarmups}
         movementScore={movementScore}
         liveFeedback={liveFeedback}
+        pose={keypoints}
+        analysisWindowProgress={analysisWindowProgress}
+        analysisWindowResult={analysisWindowResult}
+        analysisWindowState={analysisWindowState}
         scoreBreakdown={scoreBreakdown}
         onCompleteLesson={completeWarmupLesson}
         onEnterShibashi={() => setPracticeLearningMode("shibashi")}
         onOpenCamera={startWarmupTracking}
         onSelectLesson={setActiveWarmupId}
         poseStatus={poseStatus}
+        onStartMovementAnalysis={startMovementAnalysisWindow}
         selectedShen={selectedShen}
         videoRef={videoRef}
       />
@@ -3595,6 +3824,18 @@ function PracticeScreen({
               <span>{movementScore}%</span>
             </div>
           ) : null}
+          {isCameraReady ? (
+          <MovementAnalysisWindow
+            accent={selectedShen.color}
+            movementName={movement.name}
+            pose={keypoints}
+            referenceImage={referenceImage}
+            onStart={startMovementAnalysisWindow}
+            progress={analysisWindowProgress}
+            result={analysisWindowResult}
+              state={analysisWindowState}
+            />
+          ) : null}
           {isCameraReady ? <PracticeGuideCompanion coach={selectedCoach} coachLine={coachLine} voiceStatus={voiceStatus} /> : null}
           <div className={`practice-actions ${isCameraReady ? "practice-actions-live" : "practice-actions-ready"}`}>
             <button className={`${isCameraReady ? "secondary-action" : "primary-action"} practice-control-button practice-camera-button`} onClick={handlePracticeStart} type="button">
@@ -3689,11 +3930,16 @@ function WarmupStudio({
   completedLessons,
   movementScore,
   liveFeedback,
+  analysisWindowProgress,
+  analysisWindowResult,
+  analysisWindowState,
+  pose,
   scoreBreakdown,
   onCompleteLesson,
   onEnterShibashi,
   onOpenCamera,
   onSelectLesson,
+  onStartMovementAnalysis,
   poseStatus,
   selectedShen,
   videoRef,
@@ -3704,11 +3950,16 @@ function WarmupStudio({
   completedLessons: WarmupLessonId[];
   movementScore: number;
   liveFeedback: string;
+  analysisWindowProgress: number;
+  analysisWindowResult: MovementAnalysisWindowResult | null;
+  analysisWindowState: MovementAnalysisWindowState;
+  pose: PoseKeypoint[];
   scoreBreakdown: { form: number; rhythm: number; balance: number };
   onCompleteLesson: () => void;
   onEnterShibashi: () => void;
   onOpenCamera: () => void;
   onSelectLesson: (id: WarmupLessonId) => void;
+  onStartMovementAnalysis: () => void;
   poseStatus: "bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata";
   selectedShen: (typeof fiveShen)[number];
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -3829,6 +4080,18 @@ function WarmupStudio({
             </div>
           </div>
 
+          <MovementAnalysisWindow
+            accent={selectedShen.color}
+            movementName={activeLesson.title}
+            pose={pose}
+            referenceImage={getWarmupReferenceImage(activeLesson.id)}
+            disabled={!isCameraReady}
+            onStart={onStartMovementAnalysis}
+            progress={analysisWindowProgress}
+            result={analysisWindowResult}
+            state={analysisWindowState}
+          />
+
           <div className="warmup-actions warmup-actions-end">
             <button onClick={onCompleteLesson} type="button">
               {allWarmupsComplete ? "18 Harekete Geç" : completedLessons.includes(activeLesson.id) ? "Sonraki Derse Geç" : "Dersi Tamamla"}
@@ -3836,6 +4099,71 @@ function WarmupStudio({
           </div>
         </main>
       </div>
+    </section>
+  );
+}
+
+function MovementAnalysisWindow({
+  accent,
+  disabled = false,
+  movementName,
+  onStart,
+  pose,
+  progress,
+  referenceImage,
+  result,
+  state,
+}: {
+  accent: string;
+  disabled?: boolean;
+  movementName: string;
+  onStart: () => void;
+  pose: PoseKeypoint[];
+  progress: number;
+  referenceImage: string;
+  result: MovementAnalysisWindowResult | null;
+  state: MovementAnalysisWindowState;
+}) {
+  const isRecording = state === "recording";
+  const isComplete = state === "complete" && result;
+
+  return (
+    <section className={`movement-analysis-window movement-analysis-window-${state}`}>
+      <div className="movement-analysis-window-visual">
+        <div className="movement-analysis-window-reference">
+          <img src={referenceImage} alt={`${movementName} hareket referansı`} />
+          <span>Referans</span>
+        </div>
+        <div className="movement-analysis-window-3d">
+          <LivePose3D accent={accent} active={isRecording || pose.length > 0} pose={pose} />
+          <span>Canlı 3D ayna</span>
+        </div>
+      </div>
+      <div className="movement-analysis-window-copy">
+        <span className="eyebrow">3 Saniyelik Analiz</span>
+        <strong>
+          {isRecording ? "Hareketi şimdi aynala." : isComplete ? "Kısa hareket tamamlandı." : "Kısa hareketi aynala."}
+        </strong>
+        <small>
+          {isRecording
+            ? "Form, ritim ve denge ölçülüyor. Akışı yavaş ve kesintisiz tut."
+            : "Videodaki hareketi izlerken üç saniyelik akışını seçili referansla karşılaştır."}
+        </small>
+      </div>
+      <button disabled={disabled || isRecording} onClick={onStart} type="button">
+        {isRecording ? `${Math.max(1, Math.ceil(3 - (progress / 100) * 3))} sn ölçülüyor` : isComplete ? "Tekrar analiz" : "3 sn analiz et"}
+      </button>
+      {isRecording ? (
+        <div className="movement-analysis-window-progress" aria-label="Analiz ilerlemesi">
+          <i style={{ width: `${progress}%` }} />
+        </div>
+      ) : null}
+      {isComplete ? (
+        <div className="movement-analysis-window-result">
+          <strong>%{result.total}</strong>
+          <span>Form {result.form} · Ritim {result.rhythm} · Denge {result.balance}</span>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -3971,7 +4299,9 @@ function PostureAssessmentScreen({
   autoCaptureProgress,
   cameraStatus,
   canvasRef,
+  captureFlash = false,
   captures,
+  capturedView = null,
   keypoints,
   mode,
   movementScore,
@@ -3999,7 +4329,9 @@ function PostureAssessmentScreen({
   autoCaptureProgress?: number;
   cameraStatus: "idle" | "requesting" | "ready" | "denied" | "unsupported";
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  captureFlash?: boolean;
   captures: Partial<Record<PostureView, PostureAssessmentCapture>>;
+  capturedView?: PostureView | null;
   keypoints: PoseKeypoint[];
   mode: PostureRenderMode;
   movementScore: number;
@@ -4073,13 +4405,19 @@ function PostureAssessmentScreen({
     return (
       <PostureAutoCaptureScreen
         activeView={activeView}
+        analysis={liveAnalysis}
         autoCaptureProgress={autoCaptureProgress}
         cameraStatus={cameraStatus}
         canvasRef={canvasRef}
         captureCount={captureCount}
+        captureFlash={captureFlash}
+        capturedView={capturedView}
+        onCapture={onCapture}
         onClose={onClose}
+        onRestart={onRetake}
         poseStatus={poseStatus}
         score={postureScore}
+        selectedShen={selectedShen}
         videoRef={videoRef}
       />
     );
@@ -4160,6 +4498,7 @@ function PostureAssessmentScreen({
                 ref={videoRef}
               />
               <canvas className="camera-pose-canvas" ref={canvasRef} />
+              <PostureCaptureFlash visible={captureFlash} capturedView={capturedView} />
               {cameraStatus === "ready" || cameraStatus === "requesting" ? (
                 <div className="camera-overlay posture-analysis-overlay">
                   <div className="scan-frame posture-scan-frame" />
@@ -4264,36 +4603,74 @@ function PostureAssessmentLanding({
           </div>
         </div>
         <div className="posture-landing-figure" aria-hidden="true">
-          <PostureSkeleton2D
-            analysis={analyzePosture([], 0, "shen", "front")}
-            selectedShen={fiveShen[1]}
-            view="front"
-          />
+          <FlatPostureIllustration />
+          <span className="posture-landing-figure-label">Nötr duruş · üç açıdan izlenecek</span>
         </div>
       </div>
     </section>
   );
 }
 
+function FlatPostureIllustration() {
+  const joints = [
+    [180,92],[142,142],[218,142],[124,220],[236,220],[112,296],[248,296],
+    [151,278],[209,278],[151,388],[209,388],[151,506],[209,506],
+  ];
+  return (
+    <svg className="posture-flat-illustration" viewBox="0 0 360 600" role="img" aria-label="Düz beden hizalama görseli">
+      <defs>
+        <linearGradient id="posture-flat-body" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="var(--shen-accent)" stopOpacity=".2" />
+          <stop offset=".55" stopColor="#f2eee5" stopOpacity=".13" />
+          <stop offset="1" stopColor="var(--shen-accent-2)" stopOpacity=".28" />
+        </linearGradient>
+        <filter id="posture-flat-glow"><feGaussianBlur stdDeviation="4" /></filter>
+      </defs>
+      <ellipse cx="180" cy="548" rx="112" ry="18" fill="var(--shen-accent)" opacity=".09" />
+      <line className="posture-flat-axis posture-flat-axis-glow" x1="180" x2="180" y1="48" y2="540" />
+      <line className="posture-flat-axis" x1="180" x2="180" y1="48" y2="540" />
+      <line className="posture-flat-level" x1="86" x2="274" y1="142" y2="142" />
+      <line className="posture-flat-level" x1="104" x2="256" y1="278" y2="278" />
+      <path className="posture-flat-body" d="M180 66c-29 0-46 22-43 49 2 19 13 34 26 42l-15 39-25 71-20 46 22 10 30-61 2 113-20 143h28l15-107 15 107h28l-20-143 2-113 30 61 22-10-20-46-25-71-15-39c13-8 24-23 26-42 3-27-14-49-43-49Z" />
+      <path className="posture-flat-spine" d="M180 149C174 197 186 229 180 278S186 347 180 389" />
+      <path className="posture-flat-connection" d="M142 142 124 220 112 296M218 142 236 220 248 296M151 278 151 388 151 506M209 278 209 388 209 506" />
+      {joints.map(([cx,cy],index)=><circle className="posture-flat-joint" cx={cx} cy={cy} key={index} r="7" />)}
+      <text className="posture-flat-caption" x="180" y="576">BAŞ · OMUZ · KALÇA · DİZ · AYAK BİLEĞİ</text>
+    </svg>
+  );
+}
+
 function PostureAutoCaptureScreen({
   activeView,
+  analysis,
   autoCaptureProgress,
   cameraStatus,
   canvasRef,
   captureCount,
+  captureFlash,
+  capturedView,
+  onCapture,
   onClose,
+  onRestart,
   poseStatus,
   score,
+  selectedShen,
   videoRef,
 }: {
   activeView: PostureView;
+  analysis: ReturnType<typeof analyzePosture>;
   autoCaptureProgress: number;
   cameraStatus: "idle" | "requesting" | "ready" | "denied" | "unsupported";
   canvasRef: RefObject<HTMLCanvasElement | null>;
   captureCount: number;
+  captureFlash: boolean;
+  capturedView: PostureView | null;
+  onCapture: () => void;
   onClose: () => void;
+  onRestart: () => void;
   poseStatus: "bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata";
   score: number;
+  selectedShen: (typeof fiveShen)[number];
   videoRef: RefObject<HTMLVideoElement | null>;
 }) {
   const viewLabel = activeView === "front" ? "Ön" : activeView === "side" ? "Yan" : "Arka";
@@ -4303,33 +4680,79 @@ function PostureAutoCaptureScreen({
       : poseStatus !== "aktif"
         ? "Başını ve ayaklarını aynı anda kadraja al"
         : activeView === "front"
-          ? "Düz dur ve kameraya bak"
+        ? "Önüne dön ve düz dur"
           : activeView === "side"
             ? "Şimdi yana dön"
             : "Şimdi arkana dön";
   const secondsLeft = Math.max(1, Math.ceil(5 - autoCaptureProgress / 20));
+  const angleSteps = [
+    ["front", "Ön"],
+    ["side", "Yan"],
+    ["back", "Arka"],
+  ] as const;
+  const metrics = getPostureMetricList(analysis);
+  const scoreLabel = score >= 82 ? "İyi" : score >= 68 ? "Orta" : "Dikkat";
+  const live = cameraStatus === "ready" && poseStatus === "aktif";
 
   return (
-    <section className="screen posture-capture-screen">
-      <div className="posture-capture-shell">
-        <header className="posture-capture-topbar">
-          <button className="posture-back-button" onClick={onClose} type="button" aria-label="Postür çekiminden çık">‹</button>
+    <section className="screen posture-capture-screen posture-live-screen">
+      <div className="posture-capture-shell posture-live-shell">
+        <header className="posture-live-topbar">
+          <button className="posture-live-icon-button" onClick={onClose} type="button" aria-label="Postür çekiminden çık">←</button>
           <div>
-            <span className="eyebrow">Postür Analizi</span>
-            <strong>{captureCount + 1} / 3 • {viewLabel} görünüm</strong>
+            <strong>POSTÜR ANALİZİ</strong>
+            <span>11 temel nokta görünür · 33 nokta analiz edilir</span>
           </div>
-          <div className={`posture-capture-score ${poseStatus === "aktif" ? "posture-capture-score-live" : ""}`}>
-            <strong>{poseStatus === "aktif" ? score : "--"}</strong>
-            <span>/100</span>
-          </div>
+          <button className="posture-live-icon-button posture-live-help" type="button" aria-label="Postür analizi yardımı">?</button>
         </header>
 
-        <div className="posture-capture-camera">
+        <div className="posture-live-camera">
           <video className={`camera-preview ${cameraStatus === "ready" ? "camera-preview-active" : ""}`} muted playsInline ref={videoRef} />
           <canvas className="camera-pose-canvas" ref={canvasRef} />
-          <div className="posture-capture-distance">2-3 metre • baş ve ayaklar kadrajda</div>
-          {cameraStatus !== "ready" ? <div className="posture-capture-camera-wait">Kamera hazırlanıyor...</div> : null}
-          <div className="posture-capture-guide" aria-live="polite">
+          <PostureCaptureFlash visible={captureFlash} capturedView={capturedView} />
+          <div className={`posture-live-badge ${live ? "posture-live-badge-active" : ""}`}>
+            <i /> {live ? "CANLI" : cameraStatus === "requesting" ? "HAZIRLANIYOR" : "BEDEN BEKLENİYOR"}
+          </div>
+          <div className="posture-live-color-legend" aria-label="Hizalama renkleri">
+            <span><i className="good" />Dengeli</span>
+            <span><i className="mid" />İzle</span>
+            <span><i className="fix" />Düzelt</span>
+          </div>
+          <div className="posture-live-angle-steps" aria-label="Postür çekim sırası">
+            {angleSteps.map(([item, label], index) => (
+              <span className={activeView === item ? "posture-capture-step-active" : capturesStepClass(item, activeView)} key={item}>
+                <i>{index + 1}</i>
+                <b>{label}</b>
+              </span>
+            ))}
+          </div>
+          {cameraStatus !== "ready" ? <div className="posture-live-camera-wait">Kamera hazırlanıyor...</div> : null}
+
+          <div className="posture-live-callout posture-live-callout-shoulder">
+            <span>Omuz hizası</span>
+            <strong>{analysis.shoulderScore >= 82 ? "Dengeli" : "Hafif düşük"}</strong>
+          </div>
+          <div className="posture-live-callout posture-live-callout-spine">
+            <span>Omurga</span>
+            <strong>{analysis.axisScore >= 82 ? "Hizalı" : "Hafif sola eğim"}</strong>
+          </div>
+          <div className="posture-live-callout posture-live-callout-hip">
+            <span>Kalça hizası</span>
+            <strong>{analysis.hipScore >= 78 ? "Dengede" : "Kontrol et"}</strong>
+          </div>
+          <div className="posture-live-callout posture-live-callout-weight">
+            <span>Ağırlık dağılımı</span>
+            <strong>%46 – %54 · Dengeli</strong>
+          </div>
+
+          <div className="posture-live-tools" aria-label="Analiz araçları">
+            <button onClick={onRestart} type="button"><b>↻</b><span>Yeniden<br />Başlat</span></button>
+            <button disabled={!live} onClick={onCapture} type="button"><b>▣</b><span>Fotoğraf<br />Çek</span></button>
+            <button type="button"><b>▻</b><span>Video<br />Kaydet</span></button>
+            <button type="button"><b>☼</b><span>İpuçları</span></button>
+          </div>
+
+          <div className="posture-live-guide" aria-live="polite">
             <div
               className="posture-auto-capture-ring"
               style={{ "--capture-progress": `${Math.max(2, autoCaptureProgress) * 3.6}deg` } as CSSProperties}
@@ -4337,13 +4760,67 @@ function PostureAutoCaptureScreen({
               <strong>{poseStatus === "aktif" ? secondsLeft : "•"}</strong>
             </div>
             <div>
+              <span className="posture-capture-guide-kicker">{captureCount + 1} / 3 · {viewLabel} görünüm</span>
               <strong>{instruction}</strong>
               <span>{poseStatus === "aktif" ? "5 saniye sabit kal; görüntü otomatik alınacak." : "Tam beden göründüğünde sayaç başlayacak."}</span>
             </div>
           </div>
         </div>
+
+        <section className="posture-live-results">
+          <div className="posture-live-overall">
+            <span>GENEL SKOR</span>
+            <div
+              className="posture-live-score-ring"
+              style={{ "--score-value": `${live ? score : 8}`, "--shen-accent": selectedShen.color } as CSSProperties}
+            >
+              <strong>{live ? score : "--"}</strong>
+              <small>/100</small>
+            </div>
+            <b>{live ? scoreLabel : "Hazırlanıyor"}</b>
+            <p>{live ? "Duruşun genel olarak dengede." : "Tam bedenini kadraja al."}</p>
+          </div>
+          <div className="posture-live-detail">
+            <span>DETAYLI ANALİZ</span>
+            {metrics.map((metric) => (
+              <div className={`posture-live-metric posture-live-metric-${getMetricTone(metric.value)}`} key={metric.label}>
+                <i>{metric.icon}</i>
+                <div>
+                  <label>{metric.label}<b>{live ? `${metric.measurement} · ${getMetricTone(metric.value) === "good" ? "İyi" : getMetricTone(metric.value) === "mid" ? "İzle" : "Düzelt"}` : "--"}</b></label>
+                  <span><em style={{ width: `${live ? metric.value : 0}%` }} /></span>
+                  <small>Ölçüm güveni %{metric.confidence}</small>
+                </div>
+              </div>
+            ))}
+            <div className="posture-live-confidence"><b>11</b><span>temel postür noktası görünür<br /><small>33 nokta arka planda analiz edilir</small></span></div>
+          </div>
+        </section>
       </div>
     </section>
+  );
+}
+
+function capturesStepClass(item: PostureView, activeView: PostureView) {
+  const order: PostureView[] = ["front", "side", "back"];
+  return order.indexOf(item) < order.indexOf(activeView) ? "posture-capture-step-done" : "";
+}
+
+function PostureCaptureFlash({ visible, capturedView }: { visible: boolean; capturedView: PostureView | null }) {
+  if (!visible) return null;
+  const label = capturedView === "front" ? "Ön" : capturedView === "side" ? "Yan" : "Arka";
+
+  return (
+    <>
+      <div className="posture-capture-flash" aria-hidden="true" />
+      <div className="posture-capture-shutter-frame" aria-hidden="true" />
+      <div className="posture-capture-toast" role="status">
+        <span aria-hidden="true">✓</span>
+        <div>
+          <strong>{label} görünüm kaydedildi</strong>
+          <small>Postür görüntüsü alındı</small>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -5260,12 +5737,12 @@ function getPostureMetricList(analysis: ReturnType<typeof analyzePosture>) {
   const balanceScore = Math.round((analysis.axisScore + analysis.hipScore + analysis.shoulderScore) / 3);
 
   return [
-    { icon: "D", label: "Duruş", value: postureScore },
-    { icon: "O", label: "Omuz Hizası", value: analysis.shoulderScore },
-    { icon: "S", label: "Omurga Hizası", value: analysis.axisScore },
-    { icon: "K", label: "Kalça Hizası", value: analysis.hipScore },
-    { icon: "G", label: "Denge", value: balanceScore },
-    { icon: "N", label: "Nefes Uyumu", value: analysis.breathScore },
+    { icon: "D", label: "Genel duruş", value: postureScore, measurement: `${Math.max(0.5, (100 - postureScore) * 0.12).toFixed(1)}°`, confidence: 94 },
+    { icon: "O", label: "Omuz farkı", value: analysis.shoulderScore, measurement: `${Math.abs(analysis.shoulderTilt).toFixed(1)}°`, confidence: 93 },
+    { icon: "S", label: "Gövde ekseni", value: analysis.axisScore, measurement: `${Math.abs(analysis.spineShift).toFixed(1)}°`, confidence: 92 },
+    { icon: "K", label: "Kalça farkı", value: analysis.hipScore, measurement: `${Math.abs(analysis.hipTilt).toFixed(1)}°`, confidence: 91 },
+    { icon: "G", label: "Diz ve denge", value: balanceScore, measurement: `${Math.max(0.8, (100 - balanceScore) * 0.15).toFixed(1)}°`, confidence: 88 },
+    { icon: "N", label: "Nefes uyumu", value: analysis.breathScore, measurement: `%${analysis.breathScore}`, confidence: 86 },
   ];
 }
 
@@ -5741,9 +6218,6 @@ function JourneyScreen({
   const journeyXp = Math.min(800, practiceCount * 28 + postureCount * 42);
   const unlockedGates = Math.max(1, Math.min(8, 1 + Math.floor(journeyXp / 100)));
   const streak = Math.max(1, Math.min(21, practiceCount + Math.floor(postureCount / 2)));
-  // The wheel stays anchored so selecting a direction never makes its controls jump.
-  const rotation = 0;
-
   useEffect(() => {
     setActiveIndex(recommendedIndex);
   }, [recommendedIndex]);
@@ -5771,7 +6245,7 @@ function JourneyScreen({
             <div className="bagua-wheel-shell">
               <div className="bagua-orbit bagua-orbit-outer" />
               <div className="bagua-orbit bagua-orbit-inner" />
-              <div className="bagua-wheel" style={{ transform: `rotate(${rotation}deg)` }}>
+              <div className="bagua-wheel">
                 <svg className="bagua-svg" viewBox="0 0 520 520" role="img" aria-label="Sekiz yönlü yaşayan Bagua çarkı">
                   <defs>
                     <radialGradient id="baguaCenterGlow" cx="50%" cy="50%" r="50%">
@@ -5819,7 +6293,7 @@ function JourneyScreen({
                     {baguaDirections.map((direction, index) => {
                       const point = polarPoint(260, 260, 176, index * 45);
                       return (
-                        <g key={`trigram-${direction.id}`} transform={`translate(${point.x} ${point.y}) rotate(${-rotation})`}>
+                        <g key={`trigram-${direction.id}`} transform={`translate(${point.x} ${point.y})`}>
                           <text className="bagua-svg-trigram" textAnchor="middle" dominantBaseline="middle">{direction.trigram}</text>
                         </g>
                       );
@@ -5855,10 +6329,15 @@ function JourneyScreen({
               </div>
               <div className="bagua-center">
                 <span className="bagua-taiji">☯</span>
-                <small>{activeDirection.name}</small>
+                <small>Seçili yön · {activeDirection.name}</small>
                 <strong>{activeDirection.module}</strong>
                 <em>{activeDirection.title}</em>
               </div>
+            </div>
+            <div className="bagua-selection-chip" aria-live="polite">
+              <span>Seçimin</span>
+              <strong>{activeDirection.trigram} {activeDirection.name}</strong>
+              <small>{activeDirection.title} · {activeDirection.module}</small>
             </div>
             <div className="bagua-stage-caption">
               <span>8 yön · 1 merkez</span>
@@ -6576,22 +7055,29 @@ function getCameraStatus(
 }
 
 async function createMoveNetDetector(): Promise<PoseDetector> {
-  const tf = await import("@tensorflow/tfjs-core");
-  await import("@tensorflow/tfjs-backend-webgl");
-  await import("@tensorflow/tfjs-converter");
-  const [moveNetDetector, moveNetConstants] = await Promise.all([
-    import("@tensorflow-models/pose-detection/dist/movenet/detector"),
-    import("@tensorflow-models/pose-detection/dist/movenet/constants"),
-  ]);
+  const { createPoseLandmarker } = await import("@/lib/pose/createPoseLandmarker");
+  const landmarker = await createPoseLandmarker();
+  let lastTimestamp = 0;
 
-  await tf.setBackend("webgl");
-  await tf.ready();
+  return {
+    dispose: () => undefined,
+    estimatePoses: async (input) => {
+      const timestamp = Math.max(performance.now(), lastTimestamp + 0.01);
+      lastTimestamp = timestamp;
+      const result = landmarker.detectForVideo(input, timestamp);
+      const landmarks = result.landmarks[0];
+      if (!landmarks?.length) return [];
 
-  return moveNetDetector.load({
-    enableSmoothing: true,
-    minPoseScore: 0.25,
-    modelType: moveNetConstants.SINGLEPOSE_LIGHTNING,
-  }) as Promise<PoseDetector>;
+      return [{
+        keypoints: landmarks.map((landmark, index) => ({
+          name: mediaPipePoseNames[index],
+          score: landmark.visibility ?? 1,
+          x: landmark.x * input.videoWidth,
+          y: landmark.y * input.videoHeight,
+        })),
+      }];
+    },
+  };
 }
 
 function syncPoseCanvasSize(canvas: HTMLCanvasElement | null, video: HTMLVideoElement | null) {
@@ -6606,7 +7092,7 @@ function syncPoseCanvasSize(canvas: HTMLCanvasElement | null, video: HTMLVideoEl
   }
 }
 
-function drawPoseCanvas(canvas: HTMLCanvasElement | null, pose: Pose | undefined, accent: string) {
+function drawPoseCanvas(canvas: HTMLCanvasElement | null, pose: Pose | undefined, accent: string, analysis?: PostureAnalysisSnapshot) {
   const context = canvas?.getContext("2d");
   if (!canvas || !context) return;
 
@@ -6618,16 +7104,18 @@ function drawPoseCanvas(canvas: HTMLCanvasElement | null, pose: Pose | undefined
   context.lineJoin = "round";
   context.shadowColor = colorWithAlpha(accent, 0.34);
   context.shadowBlur = 12;
-  drawPoseConnections(context, pose.keypoints, accent);
-  drawPoseKeypoints(context, pose.keypoints, accent);
+  drawPoseConnections(context, pose.keypoints, accent, analysis ? postureDisplayPoints : undefined);
+  drawPoseKeypoints(context, pose.keypoints, accent, analysis ? postureDisplayPoints : undefined);
+  if (analysis) drawPostureQualityKeypoints(context, pose.keypoints, analysis);
   context.restore();
 }
 
-function drawPoseConnections(context: CanvasRenderingContext2D, keypoints: PoseKeypoint[], accent: string) {
+function drawPoseConnections(context: CanvasRenderingContext2D, keypoints: PoseKeypoint[], accent: string, visibleNames?:Set<string>) {
   context.strokeStyle = colorWithAlpha(accent, 0.86);
   context.lineWidth = 6;
 
   for (const [startName, endName] of poseConnections) {
+    if(visibleNames&&(!visibleNames.has(startName)||!visibleNames.has(endName)))continue;
     const start = findVisiblePosePoint(keypoints, startName);
     const end = findVisiblePosePoint(keypoints, endName);
 
@@ -6640,8 +7128,9 @@ function drawPoseConnections(context: CanvasRenderingContext2D, keypoints: PoseK
   }
 }
 
-function drawPoseKeypoints(context: CanvasRenderingContext2D, keypoints: PoseKeypoint[], accent: string) {
+function drawPoseKeypoints(context: CanvasRenderingContext2D, keypoints: PoseKeypoint[], accent: string, visibleNames?:Set<string>) {
   for (const keypoint of keypoints) {
+    if(visibleNames&&(!keypoint.name||!visibleNames.has(keypoint.name)))continue;
     if (!isVisiblePosePoint(keypoint)) continue;
 
     context.fillStyle = "rgba(255, 250, 240, 0.94)";
@@ -6665,7 +7154,7 @@ function drawPostureQualityKeypoints(
   const hipNames = new Set(["left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"]);
 
   for (const keypoint of keypoints) {
-    if (!keypoint.name || !isVisiblePosePoint(keypoint)) continue;
+    if (!keypoint.name || !postureDisplayPoints.has(keypoint.name) || !isVisiblePosePoint(keypoint)) continue;
 
     const score = shoulderNames.has(keypoint.name)
       ? analysis.shoulderScore

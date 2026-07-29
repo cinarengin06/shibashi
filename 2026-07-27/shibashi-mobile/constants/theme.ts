@@ -1,6 +1,6 @@
 export const colors = {
-  ink:'#050708', deep:'#090C0E', surface:'#0D1113', surface2:'#14191B',
-  cream:'#F5F0E8', muted:'#8F9895', gold:'#D8B66A', amber:'#F0C87A',
+  ink:'#07100D', deep:'#0B130F', surface:'#101814', surface2:'#151F1A',
+  cream:'#F1EEE5', muted:'#A6ADA4', gold:'#C6A56A', amber:'#D2BE9C',
   jade:'#86C7A0', line:'rgba(245,240,232,0.10)', danger:'#E08373',
   white:'rgba(255,250,238,0.92)',
 };

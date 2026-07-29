@@ -1,24 +1,37 @@
-import {Ionicons} from '@expo/vector-icons';
 import {router} from 'expo-router';
-import {VideoView,useVideoPlayer} from 'expo-video';
-import {LinearGradient} from 'expo-linear-gradient';
-import {useState} from 'react';
-import {Pressable,StyleSheet,Text,View} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {colors,radii,spacing} from '../constants/theme';
-import {useShenExperience} from '../store/ShenExperience';
+import {useEffect,useRef} from 'react';
+import {Animated,Easing,Image,Pressable,StyleSheet,Text,View} from 'react-native';
+import {colors} from '../constants/theme';
 
-const introVideo=require('../assets/intro/intro-gate.mp4');
+const splashImage=require('../assets/shibashi-splash.png');
 export default function Welcome(){
- const[ready,setReady]=useState(false);const{shen,playing,toggleSound}=useShenExperience();
- const player=useVideoPlayer(introVideo,p=>{p.loop=true;p.muted=true;p.playbackRate=.62;p.play()});
+ const opacity=useRef(new Animated.Value(0)).current;
+ const scale=useRef(new Animated.Value(1.012)).current;
+
+ useEffect(()=>{
+  const motion=Animated.parallel([
+   Animated.timing(opacity,{toValue:1,duration:700,easing:Easing.out(Easing.cubic),useNativeDriver:true}),
+   Animated.timing(scale,{toValue:1.035,duration:5000,easing:Easing.inOut(Easing.cubic),useNativeDriver:true}),
+  ]);
+  motion.start();
+  const timer=setTimeout(()=>router.replace('/onboarding'),5000);
+  return()=>{clearTimeout(timer);motion.stop()};
+ },[opacity,scale]);
+
  return <View style={w.root}>
-  <VideoView player={player} style={StyleSheet.absoluteFill} nativeControls={false} contentFit="cover" onFirstFrameRender={()=>setReady(true)}/>
-  <LinearGradient colors={['rgba(2,11,9,.12)','rgba(3,13,11,.42)','rgba(3,13,11,.96)']} style={StyleSheet.absoluteFill}/>
-  <SafeAreaView style={w.safe}>
-   <View style={w.top}><Text style={w.brand}>SHIBASHI</Text><Pressable onPress={toggleSound} style={w.sound}><Ionicons name={playing?'volume-medium':'volume-mute'} color={shen.color} size={20}/></Pressable></View>
-   <View style={w.content}><View style={[w.gate,{borderColor:`${shen.color}88`}]}><Ionicons name="leaf-outline" color={shen.color} size={36}/></View><Text style={[w.eyebrow,{color:shen.color}]}>KENDİNE BİR AN AYIR</Text><Text style={w.title}>Günün içinde yeniden kendine dön.</Text><Text style={w.body}>Birkaç dakikalık yumuşak hareketler, sakin nefesler ve sana iyi gelecek küçük rutinler.</Text><Pressable onPress={()=>router.replace('/onboarding')} style={[w.enter,{backgroundColor:shen.color}]}><Text style={w.enterText}>Seni tanıyalım</Text><Ionicons name="arrow-forward" color={colors.ink} size={20}/></Pressable><Pressable onPress={()=>router.replace('/onboarding')}><Text style={w.skip}>{ready?'Videoyu geç':'Devam et'}</Text></Pressable></View>
-  </SafeAreaView>
+  <Animated.View style={[StyleSheet.absoluteFill,{opacity,transform:[{scale}]}]}>
+   <Image source={splashImage} resizeMode="cover" fadeDuration={0} style={StyleSheet.absoluteFill}/>
+  </Animated.View>
+  <Pressable accessibilityLabel="Açılışı geç" onPress={()=>router.replace('/onboarding')} style={w.skip}>
+   <Text style={w.skipText}>Dokun ve başla</Text>
+   <View style={w.progressTrack}><Animated.View style={[w.progress,{transform:[{scaleX:scale.interpolate({inputRange:[1.012,1.035],outputRange:[0,1]})}]}]}/></View>
+  </Pressable>
  </View>
 }
-const w=StyleSheet.create({root:{flex:1,backgroundColor:colors.ink},safe:{flex:1,justifyContent:'space-between',paddingHorizontal:spacing.lg},top:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},brand:{color:colors.cream,fontSize:13,fontWeight:'900',letterSpacing:3},sound:{width:44,height:44,borderRadius:22,backgroundColor:'rgba(3,13,11,.55)',alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:colors.line},content:{alignItems:'center',paddingBottom:4},gate:{width:86,height:86,borderRadius:43,borderWidth:1,alignItems:'center',justifyContent:'center',backgroundColor:'rgba(3,13,11,.48)',marginBottom:20},gateSymbol:{fontSize:38},eyebrow:{fontSize:11,fontWeight:'900',letterSpacing:2.2,marginBottom:10},title:{color:colors.cream,fontSize:36,lineHeight:42,fontWeight:'700',textAlign:'center',letterSpacing:-1},body:{color:colors.muted,fontSize:16,lineHeight:24,textAlign:'center',marginTop:13,marginBottom:26},enter:{height:56,borderRadius:radii.pill,paddingHorizontal:24,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,alignSelf:'stretch'},enterText:{color:colors.ink,fontSize:16,fontWeight:'900'},skip:{color:colors.muted,fontSize:13,fontWeight:'700',padding:16,marginBottom:4}});
+const w=StyleSheet.create({
+ root:{flex:1,backgroundColor:colors.ink,overflow:'hidden'},
+ skip:{position:'absolute',bottom:28,left:'50%',transform:[{translateX:-76}],width:152,minHeight:42,paddingHorizontal:14,borderRadius:24,borderWidth:1,borderColor:'rgba(239,197,93,.48)',backgroundColor:'rgba(3,10,6,.66)',alignItems:'center',justifyContent:'center',gap:5},
+ skipText:{color:'#f3d27a',fontSize:10,fontWeight:'800',letterSpacing:1.35,textTransform:'uppercase'},
+ progressTrack:{height:2,width:54,overflow:'hidden',borderRadius:2,backgroundColor:'rgba(243,210,122,.2)'},
+ progress:{height:2,width:54,borderRadius:2,backgroundColor:'#f3d27a',transformOrigin:'left'},
+});

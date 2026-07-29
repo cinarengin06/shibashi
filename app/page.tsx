@@ -461,8 +461,8 @@ const fiveShen = [
     organ: "Karaciğer",
     map: "Gözler, yan beden ve yön duygusu",
     point: { x: 41, y: 49 },
-    color: "#b8e986",
-    color2: "#315f3a",
+    color: "#78936a",
+    color2: "#20352b",
     image: "/images/shen-river-hun.jpg",
     music: "/videos/shen-music-hun.mp4",
     tone: 196,
@@ -494,8 +494,8 @@ const fiveShen = [
     organ: "Kalp",
     map: "Göğüs merkezi, bakış ve temas",
     point: { x: 50, y: 38 },
-    color: "#e36a9d",
-    color2: "#4a1233",
+    color: "#b96b5a",
+    color2: "#482724",
     image: "/images/shen-river-shen.jpg",
     music: "/videos/shen-music-shen.mp4",
     tone: 256,
@@ -527,8 +527,8 @@ const fiveShen = [
     organ: "Dalak",
     map: "Merkez, karın hattı ve odak",
     point: { x: 50, y: 55 },
-    color: "#ff9d38",
-    color2: "#783c13",
+    color: "#a9855d",
+    color2: "#3c3025",
     image: "/images/shen-river-yi.jpg",
     music: "/videos/shen-music-yi.mp4",
     tone: 220,
@@ -560,8 +560,8 @@ const fiveShen = [
     organ: "Akciğer",
     map: "Omuzlar, nefes kapısı ve cilt farkındalığı",
     point: { x: 59, y: 42 },
-    color: "#8bcde8",
-    color2: "#12374d",
+    color: "#8b9a9d",
+    color2: "#273136",
     image: "/images/shen-river-po.jpg",
     music: "/videos/shen-music-po.mp4",
     tone: 174,
@@ -593,8 +593,8 @@ const fiveShen = [
     organ: "Böbrek",
     map: "Bel, dizler, ayak tabanı ve kök",
     point: { x: 50, y: 72 },
-    color: "#a986e8",
-    color2: "#29194a",
+    color: "#527181",
+    color2: "#172631",
     image: "/images/shen-river-zhi.jpg",
     music: "/videos/shen-music-zhi.mp4",
     tone: 146,
@@ -984,6 +984,26 @@ const aiCoaches = [
 }>;
 
 type AiCoach = (typeof aiCoaches)[number];
+type CoachIntent = "scatter" | "courage" | "slow" | "start";
+
+const coachDialogues: Record<AiCoach["id"], { intro:string; lines:Record<CoachIntent,string> }> = {
+  he:{intro:"Seni zorlamadan yanında yürüyebilirim. Bugün bedeninde açılmaya hazır olan küçük yeri bulalım.",lines:{scatter:"Önce hiçbir şeyi düzeltme. Zemini hisset ve yalnızca bir nefeslik alan aç.",courage:"Yumuşaklık geri çekilmek değildir. Kökün sakinken hareketin cesur olabilir.",slow:"Bugün başarı, bir hareketin içinde gerçekten kalabilmek.",start:"İlk hareketi nefesin başlatsın, kolların değil."}},
+  han:{intro:"Her nefesin içinde henüz çalınmamış bir nota var. Bugün hareketini duymaya ne dersin?",lines:{scatter:"Bütün notaları aynı anda çalma. Birini seç ve ona yer aç.",courage:"Cesaret bazen tek bir temiz notayı sonuna kadar sürdürebilmektir.",slow:"Ritmi yarıya indir; nefes ve hareket aynı cümlede buluşsun.",start:"Önce dinle, sonra kolların nefesi takip etsin."}},
+  li:{intro:"Kusursuz olmayı bırak da başlayalım. Küçük bir adım bugün yeter.",lines:{scatter:"Bütün parçaları toplama. En yakındakini eline al.",courage:"Korku bacaklarını titretebilir; yine de bir adım atılır.",slow:"Yorgunsan dinlenerek çalış. Dinlenmek yolun nefesidir.",start:"Omuzları indir, dizleri kilitleme; beden dostluğu anlar."}},
+  lu:{intro:"Dikkat kılıç gibidir: savrulursa yorar, doğru tutulursa yolu açar.",lines:{scatter:"Ayak, merkez ve bakış için tek eksen seç.",courage:"Cesaret sonuçtan emin olmak değil, ilkeye sadık kalmaktır.",slow:"Hızı azalt fakat dikkati azaltma.",start:"Duruşunu kur, nefesi izle ve gereksiz olanı bırak."}},
+  zhang:{intro:"Belki cevap, aceleyle geçtiğin yerdedir. Bir kez de tersinden bakalım.",lines:{scatter:"Yeni bir şey ekleme. Önce bitir, sonra planla.",courage:"Kapıya koşma; arkasını dolaş ve gerçekten kapı mı bak.",slow:"Yavaşlamak yetmez. Nereye yetiştiğini de sor.",start:"İlk hareketi ilk kez görüyormuş gibi yap."}},
+  lan:{intro:"Hareketin düzgün görünmek zorunda değil. Önce canlı olanı bulalım.",lines:{scatter:"Bir dakika seçme; bedenin gitmek istediği yönü izle.",courage:"Oyun alanında hata, yeni bir yolun kapısıdır.",slow:"Bir çiçeği hızlandıramazsın ama ona yer açabilirsin.",start:"Müziği duymasan da ritim var. Ayaklarından başlat."}},
+  cao:{intro:"Bugün kendine küçük ama net bir söz verelim.",lines:{scatter:"Görevleri üçe indir: hazırlan, uygula, kapat.",courage:"Kendini kanıtlama; değerlerine uygun bir sonraki adımı at.",slow:"Kısa ve düzenli çalışma iradeyi korur.",start:"Süreyi belirle, alanı hazırla ve pratiğin içinde kal."}},
+  zhongli:{intro:"Güç sertleşmek değildir. İyi bir ateş hem dönüştürür hem ısıtır.",lines:{scatter:"Merkezine dön; nefesi karında topla ve bedene dağıt.",courage:"Korkuyu kovalamak yerine sıcaklığı büyüt.",slow:"Ateşi kıs, dinle ve yeniden besle.",start:"Ayaklarını yere ver ve ilk nefeste bedenine yer aç."}},
+};
+
+function inferCoachIntent(text:string):CoachIntent {
+  const value=text.toLocaleLowerCase("tr-TR");
+  if(/kork|cesa|güven|çekin/.test(value))return"courage";
+  if(/yavaş|yorgun|dinlen|sakin/.test(value))return"slow";
+  if(/dağ|karış|odak|zihin/.test(value))return"scatter";
+  return"start";
+}
 
 export default function RitimKapisiOS() {
   const [activeTab, setActiveTab] = useState<TabId>("home");
@@ -1024,9 +1044,18 @@ export default function RitimKapisiOS() {
 
   useEffect(() => {
     window.speechSynthesis?.getVoices();
+    const previewMode = new URLSearchParams(window.location.search).get("preview");
+    const isPreview = previewMode === "home" || previewMode === "posture";
+    if (isPreview) {
+      setIntroVisible(false);
+      setOnboardingComplete(true);
+      if (previewMode === "posture") setActiveTab("posture");
+    }
     // Başlangıç rehberi her yeni sayfa açılışında gösterilir.
-    window.localStorage.removeItem("ritim-kapisi-onboarding-complete");
-    setOnboardingComplete(false);
+    if (!isPreview) {
+      window.localStorage.removeItem("ritim-kapisi-onboarding-complete");
+      setOnboardingComplete(false);
+    }
     const savedUserName = window.localStorage.getItem("ritim-kapisi-user-name");
     if (savedUserName) setUserName(savedUserName);
     const savedShenId = window.localStorage.getItem("ritim-kapisi-selected-shen") as ShenId | null;
@@ -1296,6 +1325,15 @@ export default function RitimKapisiOS() {
       data-shen={selectedShen.id}
       style={{ "--shen-accent": selectedShen.color, "--shen-accent-2": selectedShen.color2 } as CSSProperties}
     >
+      <div aria-hidden="true" className="shen-image-stack shen-app-background">
+        {fiveShen.map((shen) => (
+          <span
+            className={`shen-image-layer ${selectedShen.id === shen.id ? "shen-image-layer-active" : ""}`}
+            key={shen.id}
+            style={{ backgroundImage: `url(${shen.image})` }}
+          />
+        ))}
+      </div>
       <div className="ambient-field">
         <div className="ambient-line" />
       </div>
@@ -1467,8 +1505,8 @@ function IntroSplash({
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
-    const closeTimer = window.setTimeout(() => setIsClosing(true), 3200);
-    const finishTimer = window.setTimeout(onClose, 3700);
+    const closeTimer = window.setTimeout(() => setIsClosing(true), 4500);
+    const finishTimer = window.setTimeout(onClose, 5000);
     return () => {
       window.clearTimeout(closeTimer);
       window.clearTimeout(finishTimer);
@@ -1780,7 +1818,10 @@ function OnboardingScreen({
                   className={`onboarding-shen ${selectedShenId === shen.id ? "onboarding-shen-active" : ""}`}
                   key={shen.id}
                   onClick={() => onSelectShen(shen.id)}
-                  style={{ "--shen-card-accent": shen.color } as CSSProperties}
+                  style={{
+                    "--shen-card-accent": shen.color,
+                    "--shen-card-accent-2": shen.color2,
+                  } as CSSProperties}
                   type="button"
                 >
                   <span>{shen.symbol}</span>
@@ -2289,28 +2330,38 @@ function HomeScreen({
             type="button"
           >
             <span>{shen.symbol}</span>
-            <strong>{shen.name}</strong>
+            <strong>{shen.name === "Shen" ? "Xin" : shen.name}</strong>
           </button>
         ))}
       </div>
 
-      <article className="shen-sanctuary" style={{ "--home-image": `url(${selectedShen.image})` } as CSSProperties}>
+      <article className="shen-sanctuary">
+        <div aria-hidden="true" className="shen-image-stack shen-sanctuary-background">
+          {fiveShen.map((shen) => (
+            <span
+              className={`shen-image-layer ${selectedShen.id === shen.id ? "shen-image-layer-active" : ""}`}
+              key={shen.id}
+              style={{ backgroundImage: `url(${shen.image})` }}
+            />
+          ))}
+        </div>
         <div className="sanctuary-shade" />
         <div className="sanctuary-copy">
-          <span className="eyebrow">{selectedShen.element}</span>
+          <span className="eyebrow">{selectedShen.name.toUpperCase()} · {selectedShen.element.split("•")[0].trim().toUpperCase()}</span>
           <div className="sanctuary-title">
             <h1>{selectedShen.name} Shen</h1>
             <b>{selectedShen.symbol}</b>
           </div>
-          <p className="sanctuary-essence">{selectedShen.essence}</p>
+          <p className="sanctuary-essence">{selectedShen.label}</p>
           <p className="sanctuary-prompt">{selectedShen.dailyPrompt}</p>
         </div>
 
         <div className="energy-orbit" aria-label="Günlük enerji değerleri">
+          <span className="energy-balance-title">İçsel Denge</span>
           {[
-            { label: "Jing", value: energyScores.jing },
-            { label: "Qi", value: energyScores.qi },
-            { label: "Shen", value: energyScores.shen },
+            { label: "Jing", familiar: "Beden", value: energyScores.jing },
+            { label: "Qi", familiar: "Canlılık", value: energyScores.qi },
+            { label: "Shen", familiar: "Zihin", value: energyScores.shen },
           ].map((metric) => (
             <button
               className={activeEnergyMetric === metric.label ? "energy-orbit-active" : ""}
@@ -2318,19 +2369,19 @@ function HomeScreen({
               onClick={() => setActiveEnergyMetric((current) => current === metric.label ? null : metric.label as EnergyMetricLabel)}
               type="button"
             >
-              <span>{metric.label}</span>
+              <span><b>{metric.familiar}</b><small>{metric.label}</small></span>
+              <i><em style={{ width: `${metric.value}%` }} /></i>
               <strong>{metric.value}<small>%</small></strong>
             </button>
           ))}
         </div>
 
         <div className="sanctuary-ritual">
-          <div className="ritual-mark"><span>☯</span></div>
           <div>
-            <span>GÜNLÜK PRATİĞİN</span>
-            <strong>18 Hareket · 20 dakika</strong>
+            <span>BUGÜNÜN AKIŞI</span>
+            <strong>18 hareket · 20 dakika</strong>
           </div>
-          <button onClick={onPractice} type="button">Pratiğe Başla <span>→</span></button>
+          <button onClick={onPractice} type="button">Günün Pratiğine Başla <span>→</span></button>
         </div>
       </article>
 
@@ -2544,6 +2595,7 @@ function PostureScreen({
   const postureStableSinceRef = useRef<number | null>(null);
   const posturePreviousPointsRef = useRef<PoseKeypoint[]>([]);
   const postureAutoCaptureLockRef = useRef(false);
+  const postureReadyAtRef = useRef(0);
   const postureAnnouncedStepRef = useRef<PostureAssessmentStep | null>(null);
   const postureStepRef = useRef<PostureAssessmentStep>("intro");
   const poseStatusRef = useRef<"bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata">("bekliyor");
@@ -2610,6 +2662,7 @@ function PostureScreen({
     postureStableSinceRef.current = null;
     posturePreviousPointsRef.current = [];
     postureAutoCaptureLockRef.current = false;
+    postureReadyAtRef.current = Date.now() + (postureStep === "front" ? 0 : 2200);
     setAutoCaptureProgress(0);
     window.scrollTo({ top: 0 });
     document.querySelector<HTMLElement>(".mobile-frame")?.scrollTo({ top: 0 });
@@ -2629,6 +2682,10 @@ function PostureScreen({
 
     const previousPoints = posturePreviousPointsRef.current;
     posturePreviousPointsRef.current = keypoints;
+    if (Date.now() < postureReadyAtRef.current) {
+      setAutoCaptureProgress(0);
+      return;
+    }
     if (!previousPoints.length || getPoseStabilityDistance(previousPoints, keypoints) > 8) {
       postureStableSinceRef.current = Date.now();
       setAutoCaptureProgress(0);
@@ -4603,7 +4660,7 @@ function PostureAssessmentLanding({
           </div>
         </div>
         <div className="posture-landing-figure" aria-hidden="true">
-          <FlatPostureIllustration />
+          <PremiumPosturePreview />
           <span className="posture-landing-figure-label">Nötr duruş · üç açıdan izlenecek</span>
         </div>
       </div>
@@ -4611,32 +4668,21 @@ function PostureAssessmentLanding({
   );
 }
 
-function FlatPostureIllustration() {
+function PremiumPosturePreview() {
   const joints = [
-    [180,92],[142,142],[218,142],[124,220],[236,220],[112,296],[248,296],
-    [151,278],[209,278],[151,388],[209,388],[151,506],[209,506],
-  ];
+    [110,40,"good"],[82,88,"warn"],[138,88,"warn"],[91,158,"good"],[129,158,"good"],
+    [94,218,"good"],[126,218,"good"],[94,272,"good"],[126,272,"good"],
+  ] as const;
   return (
-    <svg className="posture-flat-illustration" viewBox="0 0 360 600" role="img" aria-label="Düz beden hizalama görseli">
-      <defs>
-        <linearGradient id="posture-flat-body" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor="var(--shen-accent)" stopOpacity=".2" />
-          <stop offset=".55" stopColor="#f2eee5" stopOpacity=".13" />
-          <stop offset="1" stopColor="var(--shen-accent-2)" stopOpacity=".28" />
-        </linearGradient>
-        <filter id="posture-flat-glow"><feGaussianBlur stdDeviation="4" /></filter>
-      </defs>
-      <ellipse cx="180" cy="548" rx="112" ry="18" fill="var(--shen-accent)" opacity=".09" />
-      <line className="posture-flat-axis posture-flat-axis-glow" x1="180" x2="180" y1="48" y2="540" />
-      <line className="posture-flat-axis" x1="180" x2="180" y1="48" y2="540" />
-      <line className="posture-flat-level" x1="86" x2="274" y1="142" y2="142" />
-      <line className="posture-flat-level" x1="104" x2="256" y1="278" y2="278" />
-      <path className="posture-flat-body" d="M180 66c-29 0-46 22-43 49 2 19 13 34 26 42l-15 39-25 71-20 46 22 10 30-61 2 113-20 143h28l15-107 15 107h28l-20-143 2-113 30 61 22-10-20-46-25-71-15-39c13-8 24-23 26-42 3-27-14-49-43-49Z" />
-      <path className="posture-flat-spine" d="M180 149C174 197 186 229 180 278S186 347 180 389" />
-      <path className="posture-flat-connection" d="M142 142 124 220 112 296M218 142 236 220 248 296M151 278 151 388 151 506M209 278 209 388 209 506" />
-      {joints.map(([cx,cy],index)=><circle className="posture-flat-joint" cx={cx} cy={cy} key={index} r="7" />)}
-      <text className="posture-flat-caption" x="180" y="576">BAŞ · OMUZ · KALÇA · DİZ · AYAK BİLEĞİ</text>
-    </svg>
+    <div className="posture-premium-preview" role="img" aria-label="Arkadan görünen yarı saydam postür modeli">
+      <img src="/images/posture/posture-back-translucent.png" alt="" />
+      <svg viewBox="0 0 220 300" aria-hidden="true">
+        <line className="posture-preview-axis" x1="110" x2="110" y1="30" y2="280" />
+        <line className="posture-preview-measure posture-preview-shoulders" x1="72" x2="148" y1="88" y2="88" />
+        <line className="posture-preview-measure posture-preview-hips" x1="78" x2="142" y1="158" y2="158" />
+        {joints.map(([cx, cy, tone], index) => <circle className={`posture-preview-joint posture-preview-${tone}`} cx={cx} cy={cy} key={index} r={tone === "warn" ? 5 : 4.2} />)}
+      </svg>
+    </div>
   );
 }
 
@@ -4678,12 +4724,12 @@ function PostureAutoCaptureScreen({
     cameraStatus === "requesting"
       ? "Kamera izni bekleniyor"
       : poseStatus !== "aktif"
-        ? "Başını ve ayaklarını aynı anda kadraja al"
+        ? "Kadraja girin"
         : activeView === "front"
-        ? "Önüne dön ve düz dur"
+        ? "Hareketsiz durun"
           : activeView === "side"
-            ? "Şimdi yana dön"
-            : "Şimdi arkana dön";
+            ? "Şimdi yana dönün"
+            : "Şimdi arkanızı dönün";
   const secondsLeft = Math.max(1, Math.ceil(5 - autoCaptureProgress / 20));
   const angleSteps = [
     ["front", "Ön"],
@@ -4698,10 +4744,9 @@ function PostureAutoCaptureScreen({
     <section className="screen posture-capture-screen posture-live-screen">
       <div className="posture-capture-shell posture-live-shell">
         <header className="posture-live-topbar">
-          <button className="posture-live-icon-button" onClick={onClose} type="button" aria-label="Postür çekiminden çık">←</button>
-          <div>
-            <strong>POSTÜR ANALİZİ</strong>
-            <span>11 temel nokta görünür · 33 nokta analiz edilir</span>
+          <button className="posture-live-icon-button" onClick={onClose} type="button" aria-label="Postür çekiminden çık">×</button>
+          <div className="posture-live-progress-pill">
+            <strong>{captureCount + 1} / 3</strong><i /> <span>{viewLabel}den</span><b>⌄</b>
           </div>
           <button className="posture-live-icon-button posture-live-help" type="button" aria-label="Postür analizi yardımı">?</button>
         </header>
@@ -4710,91 +4755,23 @@ function PostureAutoCaptureScreen({
           <video className={`camera-preview ${cameraStatus === "ready" ? "camera-preview-active" : ""}`} muted playsInline ref={videoRef} />
           <canvas className="camera-pose-canvas" ref={canvasRef} />
           <PostureCaptureFlash visible={captureFlash} capturedView={capturedView} />
-          <div className={`posture-live-badge ${live ? "posture-live-badge-active" : ""}`}>
-            <i /> {live ? "CANLI" : cameraStatus === "requesting" ? "HAZIRLANIYOR" : "BEDEN BEKLENİYOR"}
-          </div>
-          <div className="posture-live-color-legend" aria-label="Hizalama renkleri">
-            <span><i className="good" />Dengeli</span>
-            <span><i className="mid" />İzle</span>
-            <span><i className="fix" />Düzelt</span>
+          {cameraStatus !== "ready" ? <div className="posture-live-camera-wait">Kamera hazırlanıyor...</div> : null}
+
+          <div className="posture-live-guide" aria-live="polite">
+            <strong className="posture-live-countdown">{poseStatus === "aktif" ? secondsLeft : "•"}</strong>
+            <div>
+              <strong>{instruction}</strong>
+              <span>{poseStatus === "aktif" ? "Ölçüm sürüyor" : "Tam beden göründüğünde sayaç başlayacak"}</span>
+            </div>
           </div>
           <div className="posture-live-angle-steps" aria-label="Postür çekim sırası">
             {angleSteps.map(([item, label], index) => (
               <span className={activeView === item ? "posture-capture-step-active" : capturesStepClass(item, activeView)} key={item}>
-                <i>{index + 1}</i>
-                <b>{label}</b>
+                <i>{index + 1}</i><b>{label}</b>
               </span>
             ))}
           </div>
-          {cameraStatus !== "ready" ? <div className="posture-live-camera-wait">Kamera hazırlanıyor...</div> : null}
-
-          <div className="posture-live-callout posture-live-callout-shoulder">
-            <span>Omuz hizası</span>
-            <strong>{analysis.shoulderScore >= 82 ? "Dengeli" : "Hafif düşük"}</strong>
-          </div>
-          <div className="posture-live-callout posture-live-callout-spine">
-            <span>Omurga</span>
-            <strong>{analysis.axisScore >= 82 ? "Hizalı" : "Hafif sola eğim"}</strong>
-          </div>
-          <div className="posture-live-callout posture-live-callout-hip">
-            <span>Kalça hizası</span>
-            <strong>{analysis.hipScore >= 78 ? "Dengede" : "Kontrol et"}</strong>
-          </div>
-          <div className="posture-live-callout posture-live-callout-weight">
-            <span>Ağırlık dağılımı</span>
-            <strong>%46 – %54 · Dengeli</strong>
-          </div>
-
-          <div className="posture-live-tools" aria-label="Analiz araçları">
-            <button onClick={onRestart} type="button"><b>↻</b><span>Yeniden<br />Başlat</span></button>
-            <button disabled={!live} onClick={onCapture} type="button"><b>▣</b><span>Fotoğraf<br />Çek</span></button>
-            <button type="button"><b>▻</b><span>Video<br />Kaydet</span></button>
-            <button type="button"><b>☼</b><span>İpuçları</span></button>
-          </div>
-
-          <div className="posture-live-guide" aria-live="polite">
-            <div
-              className="posture-auto-capture-ring"
-              style={{ "--capture-progress": `${Math.max(2, autoCaptureProgress) * 3.6}deg` } as CSSProperties}
-            >
-              <strong>{poseStatus === "aktif" ? secondsLeft : "•"}</strong>
-            </div>
-            <div>
-              <span className="posture-capture-guide-kicker">{captureCount + 1} / 3 · {viewLabel} görünüm</span>
-              <strong>{instruction}</strong>
-              <span>{poseStatus === "aktif" ? "5 saniye sabit kal; görüntü otomatik alınacak." : "Tam beden göründüğünde sayaç başlayacak."}</span>
-            </div>
-          </div>
         </div>
-
-        <section className="posture-live-results">
-          <div className="posture-live-overall">
-            <span>GENEL SKOR</span>
-            <div
-              className="posture-live-score-ring"
-              style={{ "--score-value": `${live ? score : 8}`, "--shen-accent": selectedShen.color } as CSSProperties}
-            >
-              <strong>{live ? score : "--"}</strong>
-              <small>/100</small>
-            </div>
-            <b>{live ? scoreLabel : "Hazırlanıyor"}</b>
-            <p>{live ? "Duruşun genel olarak dengede." : "Tam bedenini kadraja al."}</p>
-          </div>
-          <div className="posture-live-detail">
-            <span>DETAYLI ANALİZ</span>
-            {metrics.map((metric) => (
-              <div className={`posture-live-metric posture-live-metric-${getMetricTone(metric.value)}`} key={metric.label}>
-                <i>{metric.icon}</i>
-                <div>
-                  <label>{metric.label}<b>{live ? `${metric.measurement} · ${getMetricTone(metric.value) === "good" ? "İyi" : getMetricTone(metric.value) === "mid" ? "İzle" : "Düzelt"}` : "--"}</b></label>
-                  <span><em style={{ width: `${live ? metric.value : 0}%` }} /></span>
-                  <small>Ölçüm güveni %{metric.confidence}</small>
-                </div>
-              </div>
-            ))}
-            <div className="posture-live-confidence"><b>11</b><span>temel postür noktası görünür<br /><small>33 nokta arka planda analiz edilir</small></span></div>
-          </div>
-        </section>
       </div>
     </section>
   );
@@ -4924,7 +4901,7 @@ function PostureProcessingScreen({ report }: { report: PostureReport }) {
           <h1>Postürünüz analiz ediliyor.</h1>
           <p>Omuz, omurga, kalça ve denge hattın karşılaştırılıyor. Lütfen bekleyin.</p>
           <div className="posture-processing-progress"><i /></div>
-          <small>MoveNet eklem noktaları eşleştiriliyor</small>
+          <small>MediaPipe beden referansları eşleştiriliyor</small>
         </div>
       </div>
     </section>
@@ -5014,7 +4991,7 @@ function PostureResultDashboard({
               </button>
               <div className="posture-result-view-badge">
                 <strong>{activeLabel} görünüm</strong>
-                <span>{mode === "3d" ? "Derinlik ve eksen katmanı" : "MoveNet eklem katmanı"}</span>
+                <span>{mode === "3d" ? "Derinlik ve eksen katmanı" : "MediaPipe eklem katmanı"}</span>
               </div>
             </div>
 
@@ -5426,7 +5403,7 @@ function PostureAvatar({
     >
       <div className="posture-avatar-head">
         <div>
-          <span className="eyebrow">MoveNet Postür Aynası</span>
+          <span className="eyebrow">MediaPipe Postür Aynası</span>
           <strong>{avatarReady ? `${viewLabel} görünümde canlı beden` : "Tam beden kadrajı bekleniyor"}</strong>
         </div>
         <span className="avatar-score">{avatarReady ? analysis.axisScore : "..."}</span>
@@ -5454,55 +5431,7 @@ function PostureAvatar({
       </div>
 
       <div className={`avatar-stage avatar-stage-${mode}`} aria-label={`${mode.toUpperCase()} ${viewLabel.toLocaleLowerCase("tr-TR")} postür görünümü`}>
-        {mode === "3d" ? (
-          <>
-            <div className="avatar-orbit avatar-orbit-a" />
-            <div className="avatar-orbit avatar-orbit-b" />
-            {livePose ? (
-              <PostureLiveSkeleton mode="3d" pose={livePose} selectedShen={selectedShen} view={view} />
-            ) : (
-              <svg className="avatar-body" viewBox="0 0 220 300" role="img" aria-label="Hareketli 3D postür avatarı">
-                <defs>
-                  <linearGradient id="avatarLine" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor={selectedShen.color} />
-                    <stop offset="100%" stopColor="#fff4c8" />
-                  </linearGradient>
-                </defs>
-                <ellipse className="avatar-shadow" cx="110" cy="268" rx="60" ry="13" />
-                <path className="avatar-axis" d="M110 30 L110 254" />
-                <path className="avatar-flow-path" d={`M50 244 C96 216 ${92 + analysis.spineShift} 170 ${126 + analysis.spineShift} 142 C154 118 150 78 120 50`} />
-                <circle className="avatar-head-dot" cx="112" cy="48" r="18" />
-                <path className="avatar-spine" d={`M112 68 C${108 + analysis.spineShift * 0.4} 96 ${107 + analysis.spineShift} 122 ${112 + analysis.spineShift} 150 C${118 + analysis.spineShift} 181 116 207 108 236`} />
-                <path className="avatar-limb avatar-arm-left" d={`M107 92 C84 ${98 + analysis.shoulderTilt * 0.18} 66 113 50 136`} />
-                <path className="avatar-limb avatar-arm-right" d={`M116 94 C139 ${93 - analysis.shoulderTilt * 0.18} 158 84 176 68`} />
-                <path className="avatar-limb avatar-forearm-left" d="M50 136 C67 147 86 150 105 143" />
-                <path className="avatar-limb avatar-forearm-right" d="M176 68 C187 79 191 92 188 106" />
-                <path className="avatar-limb avatar-leg-left" d={`M109 154 C88 ${180 + analysis.hipTilt * 0.16} 72 207 56 240`} />
-                <path className="avatar-limb avatar-leg-right" d={`M115 154 C142 ${174 - analysis.hipTilt * 0.16} 161 200 178 236`} />
-                {[
-                  [112, 48],
-                  [108, 92 + analysis.shoulderTilt * 0.12],
-                  [116, 94 - analysis.shoulderTilt * 0.12],
-                  [50, 136],
-                  [176, 68],
-                  [105, 143],
-                  [188, 106],
-                  [109, 154 + analysis.hipTilt * 0.1],
-                  [115, 154 - analysis.hipTilt * 0.1],
-                  [56, 240],
-                  [178, 236],
-                ].map(([x, y]) => (
-                  <circle className="avatar-joint" cx={x} cy={y} key={`${x}-${y}`} r="4.5" />
-                ))}
-                <circle className="avatar-core" cx={112 + analysis.spineShift * 0.3} cy="142" r="9" />
-              </svg>
-            )}
-          </>
-        ) : livePose ? (
-          <PostureLiveSkeleton mode="2d" pose={livePose} selectedShen={selectedShen} view={view} />
-        ) : (
-          <PostureSkeleton2D analysis={analysis} selectedShen={selectedShen} view={view} />
-        )}
+        <PostureModelOverlay analysis={analysis} livePose={livePose} view={view} />
       </div>
 
       <div className="avatar-metrics posture-metrics">
@@ -5516,8 +5445,58 @@ function PostureAvatar({
         ))}
       </div>
       <div className="avatar-feedback">
-        {avatarReady ? analysis.feedback : "Kamerayı açınca MoveNet tam beden eklemlerini okuyacak. Boydan kadraj için telefonu biraz geriye al."}
+        {avatarReady ? analysis.feedback : "Kamerayı açınca MediaPipe tam beden referanslarını okuyacak. Boydan kadraj için telefonu biraz geriye al."}
       </div>
+    </div>
+  );
+}
+
+function PostureModelOverlay({
+  analysis,
+  livePose,
+  view,
+}: {
+  analysis: ReturnType<typeof analyzePosture>;
+  livePose: AvatarPose | null;
+  view: PostureView;
+}) {
+  const staticPoints: Record<string, [number, number]> = {
+    nose: [110 + analysis.spineShift * 0.15, 40],
+    left_shoulder: [82, 88 + analysis.shoulderTilt * 0.12],
+    right_shoulder: [138, 88 - analysis.shoulderTilt * 0.12],
+    left_hip: [91, 158 + analysis.hipTilt * 0.1],
+    right_hip: [129, 158 - analysis.hipTilt * 0.1],
+    left_knee: [94, 218],
+    right_knee: [126, 218],
+    left_ankle: [94, 272],
+    right_ankle: [126, 272],
+  };
+  const names = ["nose", "left_shoulder", "right_shoulder", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"];
+  const points = names.map((name) => {
+    const point = livePose?.points.get(name);
+    const [x, y] = staticPoints[name];
+    return { name, x: point?.x ?? x, y: point?.y ?? y, score: point?.score ?? 0.92 };
+  });
+  const shoulderPoints = points.filter((point) => point.name.includes("shoulder"));
+  const hipPoints = points.filter((point) => point.name.includes("hip"));
+  const shoulderY = shoulderPoints.reduce((sum, point) => sum + point.y, 0) / shoulderPoints.length;
+  const hipY = hipPoints.reduce((sum, point) => sum + point.y, 0) / hipPoints.length;
+
+  return (
+    <div className="posture-model-composite" data-view={view}>
+      <div className="posture-model-backlight" />
+      <img className="posture-model-image" src="/images/posture/posture-back-translucent.png" alt="Arkadan görünen yarı saydam beden postür modeli" />
+      <svg className="posture-model-overlay" viewBox="0 0 220 300" aria-hidden="true">
+        <line className="posture-model-axis" x1="110" x2="110" y1="34" y2="278" />
+        <line className="posture-model-measure posture-model-measure-shoulder" x1="72" x2="148" y1={shoulderY} y2={shoulderY} />
+        <line className="posture-model-measure posture-model-measure-hip" x1="78" x2="142" y1={hipY} y2={hipY} />
+        {points.map((point) => {
+          const isShoulder = point.name.includes("shoulder");
+          const isSpine = point.name === "nose" || point.name.includes("hip") || point.name.includes("knee") || point.name.includes("ankle");
+          return <circle className={`posture-model-joint ${isShoulder ? "posture-model-joint-warn" : isSpine ? "posture-model-joint-good" : ""}`} cx={point.x} cy={point.y} key={point.name} r={isShoulder ? 5 : 4.2} />;
+        })}
+      </svg>
+      <span className="posture-model-caption">HİZALAMA · {livePose ? "CANLI" : "REFERANS"}</span>
     </div>
   );
 }
@@ -5545,7 +5524,7 @@ function PostureLiveSkeleton({
   const className = mode === "3d" ? "avatar-body avatar-live-body" : "posture-skeleton-2d avatar-live-body avatar-live-body-2d";
 
   return (
-    <svg className={className} viewBox="0 0 220 300" role="img" aria-label="Canlı MoveNet postür aynası">
+    <svg className={className} viewBox="0 0 220 300" role="img" aria-label="Canlı MediaPipe postür aynası">
       <defs>
         <linearGradient id={gradientId} x1="0" x2="1" y1="0" y2="1">
           <stop offset="0%" stopColor={selectedShen.color} />
@@ -5828,7 +5807,7 @@ function analyzePosture(keypoints: PoseKeypoint[], movementScore: number, shenId
     return {
       axisScore: 0,
       breathScore: 0,
-      feedback: "MoveNet bekleniyor.",
+      feedback: "MediaPipe bekleniyor.",
       flags: ["Kamera bekleniyor", "Tam beden kadrajı gerekli", "Ayaklar görünmeli", "2-3 metre geri çekil"],
       hipScore: 0,
       hipTilt: 0,
@@ -6401,6 +6380,23 @@ function JourneyGuideSelector({
   selectedCoach: AiCoach;
   selectedCoachId: AiCoach["id"];
 }) {
+  type GuideMessage = { id: string; from: "coach" | "user"; text: string };
+  const dialogue=coachDialogues[selectedCoach.id];
+  const [input,setInput]=useState("");
+  const [messages,setMessages]=useState<GuideMessage[]>([{id:"intro",from:"coach",text:dialogue.intro}]);
+  useEffect(()=>setMessages([{id:`intro-${selectedCoach.id}`,from:"coach",text:dialogue.intro}]),[dialogue.intro,selectedCoach.id]);
+  const send=(text:string,intent?:CoachIntent)=>{
+    const clean=text.trim();if(!clean)return;
+    const reply=dialogue.lines[intent??inferCoachIntent(clean)];
+    const stamp = Date.now();
+    const additions: GuideMessage[] = [
+      { id: `u-${stamp}`, from: "user", text: clean },
+      { id: `c-${stamp}`, from: "coach", text: reply },
+    ];
+    setMessages(current=>[...current,...additions].slice(-8));
+    setInput("");
+  };
+  const lastCoachMessage=[...messages].reverse().find(item=>item.from==="coach")?.text??dialogue.intro;
   return (
     <div className="glass-card journey-guide-card">
       <div className="journey-guide-hero">
@@ -6428,6 +6424,17 @@ function JourneyGuideSelector({
             </button>
           );
         })}
+      </div>
+      <div className="journey-guide-chat">
+        <div className="journey-guide-chat-head"><span className="eyebrow">REHBERLE KONUŞ</span><button onClick={()=>speakCoach(lastCoachMessage,selectedCoach)} type="button">Sesi dinle ♪</button></div>
+        <div className="journey-guide-chat-log">{messages.map(message=><p className={`journey-guide-message journey-guide-message-${message.from}`} key={message.id}>{message.text}</p>)}</div>
+        <div className="journey-guide-intents">
+          {([["scatter","Bugün dağınığım"],["courage","Cesaret lazım"],["slow","Yavaşlamak istiyorum"],["start","Pratiğe başla"]] as const).map(([id,label])=><button key={id} onClick={()=>send(label,id)} type="button">{label}</button>)}
+        </div>
+        <form className="journey-guide-input" onSubmit={event=>{event.preventDefault();send(input)}}>
+          <input value={input} onChange={event=>setInput(event.target.value)} placeholder="Bugün nasıl hissettiğini yaz…" maxLength={180}/>
+          <button type="submit" aria-label="Mesajı gönder">→</button>
+        </form>
       </div>
     </div>
   );
@@ -7794,11 +7801,11 @@ function formatSnapshotTime(date: Date): string {
 
 function getPoseStatusText(status: "bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata"): string {
   const labels = {
-    bekliyor: "MoveNet bekliyor",
-    yükleniyor: "MoveNet yükleniyor",
-    aktif: "MoveNet aktif",
+    bekliyor: "MediaPipe bekliyor",
+    yükleniyor: "MediaPipe yükleniyor",
+    aktif: "MediaPipe aktif",
     "beden-yok": "Beden kadrajda değil",
-    hata: "MoveNet başlatılamadı",
+    hata: "MediaPipe başlatılamadı",
   };
 
   return labels[status];

@@ -2,20 +2,46 @@ import {Ionicons} from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import {LinearGradient} from 'expo-linear-gradient';
 import React,{PropsWithChildren,useEffect,useRef} from 'react';
-import {Animated,ImageBackground,Pressable,ScrollView,StyleProp,StyleSheet,Text,View,ViewStyle} from 'react-native';
+import {Animated,Pressable,ScrollView,StyleProp,StyleSheet,Text,View,ViewStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors,fonts,radii,spacing,type} from '../constants/theme';
+import {fiveShen} from '../data/fiveShen';
+import {shenBackgrounds} from '../data/shenAssets';
 import {useShenExperience} from '../store/ShenExperience';
 
 export function Screen({children,scroll=true,style}:{children:React.ReactNode;scroll?:boolean;style?:ViewStyle}){
- const{background}=useShenExperience();
  const body=<View style={[s.content,style]}>{children}</View>;
- return <ImageBackground source={background} style={s.safe} imageStyle={s.backgroundImage}>
+ return <View style={s.safe}>
+  <ShenBackdrop opacity={.22}/>
   <View style={s.scrim}/>
   <SafeAreaView style={s.safeClear} edges={['top']}>
    {scroll?<ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>{body}</ScrollView>:body}
   </SafeAreaView>
- </ImageBackground>;
+ </View>;
+}
+
+export function ShenBackdrop({opacity=1,borderRadius=0}:{opacity?:number;borderRadius?:number}){
+ const{shen}=useShenExperience();
+ const fades=useRef(Object.fromEntries(fiveShen.map(item=>[item.id,new Animated.Value(item.id===shen.id?opacity:0)]))).current;
+
+ useEffect(()=>{
+  const animation=Animated.parallel(fiveShen.map(item=>Animated.timing(fades[item.id],{
+   toValue:item.id===shen.id?opacity:0,
+   duration:420,
+   useNativeDriver:true,
+  })));
+  animation.start();
+  return()=>animation.stop();
+ },[fades,opacity,shen.id]);
+
+ return <View pointerEvents="none" style={[StyleSheet.absoluteFill,{borderRadius,overflow:'hidden'}]}>
+  {fiveShen.map(item=><Animated.Image
+   key={item.id}
+   resizeMode="cover"
+   source={shenBackgrounds[item.id]}
+   style={[StyleSheet.absoluteFill,s.backgroundImage,{opacity:fades[item.id]}]}
+  />)}
+ </View>;
 }
 
 export function Eyebrow({children}:PropsWithChildren){return <Text style={s.eyebrow}>{children}</Text>}
@@ -49,8 +75,8 @@ export function BreathOrb({small=false}:{small?:boolean}){
 const s=StyleSheet.create({
  safe:{flex:1,backgroundColor:colors.ink},
  safeClear:{flex:1},
- backgroundImage:{opacity:.34},
- scrim:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(4,6,8,.80)'},
+ backgroundImage:{height:'100%',width:'100%'},
+ scrim:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(7,16,13,.88)'},
  scroll:{paddingBottom:130},
  content:{paddingHorizontal:spacing.lg,gap:spacing.lg},
  section:{gap:12},
@@ -59,7 +85,7 @@ const s=StyleSheet.create({
  sectionHead:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
  sectionTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:type.h2,letterSpacing:-.2},
  action:{color:colors.gold,fontFamily:fonts.sansStrong,fontSize:13},
- card:{backgroundColor:'rgba(13,17,19,.92)',borderColor:'rgba(245,240,232,.11)',borderWidth:1,borderRadius:radii.lg,padding:spacing.md,shadowColor:'#000',shadowOpacity:.2,shadowRadius:18,shadowOffset:{width:0,height:10},elevation:5},
+ card:{backgroundColor:colors.surface,borderColor:'rgba(220,225,215,.10)',borderWidth:1,borderRadius:22,padding:spacing.md,shadowColor:'#000',shadowOpacity:.16,shadowRadius:18,shadowOffset:{width:0,height:10},elevation:4},
  button:{borderRadius:radii.pill,overflow:'hidden',minHeight:54,shadowColor:'#000',shadowOpacity:.22,shadowRadius:14,shadowOffset:{width:0,height:8},elevation:4},
  buttonPressed:{opacity:.84,transform:[{scale:.985}]},
  buttonDisabled:{opacity:.4},
@@ -68,7 +94,7 @@ const s=StyleSheet.create({
  metric:{flex:1,minWidth:92,gap:5,paddingVertical:14},
  metricValue:{fontFamily:fonts.displayStrong,fontSize:24},
  muted:{color:colors.muted,fontFamily:fonts.sans,fontSize:13,lineHeight:19},
- track:{height:7,borderRadius:4,backgroundColor:'rgba(243,235,221,.10)',overflow:'hidden'},
+ track:{height:5,borderRadius:4,backgroundColor:'rgba(241,238,229,.09)',overflow:'hidden'},
  fill:{height:'100%',borderRadius:4},
  orb:{width:116,height:116,borderRadius:58,backgroundColor:'rgba(105,181,141,.12)',borderColor:'rgba(105,181,141,.32)',borderWidth:1,alignItems:'center',justifyContent:'center'},
  orbSmall:{width:68,height:68,borderRadius:34},

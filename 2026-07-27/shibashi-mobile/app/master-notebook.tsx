@@ -1,0 +1,16 @@
+import {Ionicons} from '@expo/vector-icons';
+import {router} from 'expo-router';
+import {useMemo,useState} from 'react';
+import {Pressable,StyleSheet,Text,View} from 'react-native';
+import {masterSentences,shenProfiles,toLegacyShenId} from '../../../packages/shen-domain';
+import {Card,Eyebrow,Screen,Title} from '../components/ui';
+import {colors,radii} from '../constants/theme';
+import {useApp} from '../store/AppStore';
+
+export default function MasterNotebook(){
+ const{savedMasterSentences,removeMasterSentence}=useApp();const[filter,setFilter]=useState<'all'|typeof shenProfiles[number]['id']>('all');
+ const saved=useMemo(()=>savedMasterSentences.map(item=>({saved:item,sentence:masterSentences.find(sentence=>sentence.id===item.masterSentenceId)})).filter(item=>item.sentence&&(filter==='all'||item.sentence.shenId===filter)),[savedMasterSentences,filter]);
+ return <Screen><Pressable onPress={()=>router.back()} style={s.back}><Ionicons name="arrow-back" color={colors.cream} size={20}/><Text style={s.backText}>Yolculuğa dön</Text></Pressable><Eyebrow>USTANIN DEFTERİ</Eyebrow><Title>Yanında taşımak istediğin cümleler.</Title><View style={s.filters}><Filter active={filter==='all'} label="Tümü" onPress={()=>setFilter('all')}/>{shenProfiles.map(item=><Filter key={item.id} active={filter===item.id} label={item.name} onPress={()=>setFilter(item.id)}/>)}</View>{saved.length?saved.map(({saved:record,sentence})=><Card key={record.id} style={s.item}><View style={s.itemTop}><Text style={s.date}>{new Date(record.savedAt).toLocaleDateString('tr-TR')}</Text><Text style={s.shen}>{sentence?.shenId==='xin'?'Shen':sentence?.shenId}</Text></View><Text style={s.quote}>“{sentence?.text}”</Text>{record.note&&<Text style={s.note}>{record.note}</Text>}<Pressable onPress={()=>removeMasterSentence(record.masterSentenceId)}><Text style={s.remove}>Defterden çıkar</Text></Pressable></Card>):<Card style={s.empty}><Ionicons name="book-outline" color={colors.gold} size={30}/><Text style={s.emptyTitle}>Defterin henüz sessiz.</Text><Text style={s.note}>Pratik sonunda sana eşlik eden cümleyi buraya ekleyebilirsin.</Text></Card>}</Screen>
+}
+function Filter({active,label,onPress}:{active:boolean;label:string;onPress:()=>void}){return <Pressable onPress={onPress} style={[s.filter,active&&s.filterOn]}><Text style={[s.filterText,active&&s.filterTextOn]}>{label}</Text></Pressable>}
+const s=StyleSheet.create({back:{flexDirection:'row',alignItems:'center',gap:8},backText:{color:colors.cream,fontSize:13},filters:{flexDirection:'row',flexWrap:'wrap',gap:7},filter:{borderRadius:radii.pill,borderWidth:1,borderColor:colors.line,paddingHorizontal:11,paddingVertical:7},filterOn:{backgroundColor:colors.gold,borderColor:colors.gold},filterText:{color:colors.muted,fontSize:11,fontWeight:'700'},filterTextOn:{color:colors.ink},item:{gap:10},itemTop:{flexDirection:'row',justifyContent:'space-between'},date:{color:colors.muted,fontSize:10},shen:{color:colors.gold,fontSize:10,fontWeight:'800',textTransform:'uppercase'},quote:{color:colors.cream,fontSize:19,lineHeight:28,fontFamily:'DMSerifDisplay_400Regular'},note:{color:colors.muted,fontSize:13,lineHeight:19},remove:{color:colors.danger,fontSize:11,fontWeight:'700'},empty:{alignItems:'center',gap:9},emptyTitle:{color:colors.cream,fontSize:17,fontWeight:'700'}});

@@ -1,0 +1,1 @@
+-- Intentionally empty. Shibashi creates user data through the secured sync RPC.

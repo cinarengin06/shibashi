@@ -1,6 +1,8 @@
 # Shibashi Mobile
 
-Shibashi’nin Android odaklı, bağımsız Expo/React Native uygulaması. WebView içermez. Expo Router, TypeScript, Expo Camera, Haptics ve AsyncStorage kullanır.
+Shibashi’nin bağımsız Expo/React Native App’i. Expo Router, TypeScript, Expo
+Camera, MediaPipe Pose Landmarker, Apple Vision 3D, Haptics ve AsyncStorage
+kullanır.
 
 Proje, App Store’daki Expo Go ile fiziksel iPhone uyumluluğu için Expo SDK 54
 kullanır.
@@ -20,6 +22,18 @@ npx expo start --android
 ```
 
 Fiziksel cihazda kamera akışını test etmek için Expo Go ile QR kodunu okutun. Kamera izni reddedildiğinde uygulama açıklayıcı izin ekranını gösterir.
+
+Web senkronizasyon sunucusunu App ile aynı ağda çalıştırın:
+
+```bash
+cd /Users/cinarengin/Documents/Codex
+npm run dev:3005
+```
+
+Development build aynı ağdaki sunucuyu otomatik bulur. Production App için
+`EXPO_PUBLIC_SHIBASHI_SYNC_URL=https://alan-adiniz.example` değişkenini
+tanımlayın. Profil ekranındaki `XXXX-XXXX-XXXX` eşleştirme kodu Web ve App’te
+aynı girildiğinde geçmiş, seri, postür raporları ve yolculuk kayıtları birleşir.
 
 ### Fiziksel iPhone
 
@@ -53,11 +67,16 @@ npx expo run:android
 - `data/`: 18 hareket, rutinler ve 8 Bagua kapısı
 - `data/fiveShen.ts`: Hun, Shen, Yi, Po ve Zhi profilleri; element, organ,
   günlük görev ve pratik eşlemeleri
-- `services/pose/`: gerçek MediaPipe/TFLite adaptörünün yerine takılabileceği `PoseAnalyzer` arayüzü ve mock servis
-- `store/`: AsyncStorage kalıcılığı olan uygulama durumu
+- `services/pose/`: MediaPipe 33 noktalı analiz, postür metrikleri ve Apple Vision 3D adaptörü
+- `modules/shibashi-vision/`: iOS 17+ `VNDetectHumanBodyPose3DRequest` Expo native modülü
+- `services/sync/`: çevrimdışı kuyruklu App/Web senkronizasyon istemcisi
+- `store/`: AsyncStorage kalıcılığı ve otomatik backend eşitlemesi olan uygulama durumu
 - `types/`, `constants/`: veri modelleri ve merkezi tasarım tokenları
 
-Mock pose servisi geliştirme amaçlı olarak servis katmanında açıkça işaretlenmiştir. UI gerçek zamanlı skor akışını simüle eder; gerçek görüntü işleme eklenmeden build’i engellemez.
+Canlı pratik ve üç açılı postür taraması gerçek MediaPipe 33 nokta çıktısından
+puan üretir; sabit demo skor geri dönüşü yoktur. Apple Vision 3D yalnızca iOS
+17+ development/production build’de yüklenir. Expo Go, Android ve Web aynı
+ekranda otomatik olarak MediaPipe 33’e geri döner.
 
 ## 5 Shen
 

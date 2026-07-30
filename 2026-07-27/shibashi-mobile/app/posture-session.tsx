@@ -2,14 +2,16 @@ import {Ionicons} from '@expo/vector-icons';
 import {CameraView,useCameraPermissions} from 'expo-camera';
 import * as Speech from 'expo-speech';
 import {router} from 'expo-router';
-import {useEffect,useMemo,useRef,useState} from 'react';
-import {Pressable,ScrollView,StyleSheet,Text,View} from 'react-native';
+import {useEffect,useRef,useState} from 'react';
+import {ActivityIndicator,Pressable,ScrollView,StyleSheet,Text,View,type LayoutChangeEvent} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {PrimaryButton,ProgressBar} from '../components/ui';
+import Svg,{Circle,Line} from 'react-native-svg';
+import {PrimaryButton} from '../components/ui';
 import {colors,radii} from '../constants/theme';
 import {getShen} from '../data/fiveShen';
+import {analyzeWithAppleVision3D,isAppleVision3DAvailable} from '../services/pose/AppleVisionPose3D';
 import {MediaPipePoseBridge,MediaPipePoseBridgeRef,PoseLandmark} from '../services/pose/MediaPipePoseBridge';
-import {MockPoseAnalyzer} from '../services/pose/PoseAnalyzer';
+import {aggregatePostureCaptures,createPostureCapture,evaluatePoseFrame,getLandmarkMovement,isLandmarkVisible} from '../services/pose/PostureMetrics';
 import {useApp} from '../store/AppStore';
 import {PostureCapture,PostureReport,PostureView} from '../types';
 
@@ -21,93 +23,157 @@ const viewCopy:Record<PostureView,{title:string;instruction:string;icon:keyof ty
 };
 
 type Metric={label:string;icon:keyof typeof Ionicons.glyphMap;value:number;measurement:string;confidence:number};
+type ScanState='model-loading'|'find-body'|'wrong-angle'|'hold'|'capturing'|'turning'|'error';
+type FrameSize={width:number;height:number};
+
+const scanCopy:Record<PostureView,{start:string;turn:string;waiting:string}>={
+ front:{start:'Kameraya dön. Başın ve ayakların göründüğünde ölçüm başlayacak.',turn:'Kameraya dön.',waiting:'Önden görünümünü algılıyorum.'},
+ side:{start:'Şimdi yana dön. Yan duruşun algılandığında beş saniye bekle.',turn:'Şimdi yana dön.',waiting:'Yan görünümünü algılıyorum.'},
+ back:{start:'Şimdi arkanı dön. Arka görünüm algılandığında beş saniye bekle.',turn:'Şimdi arkanı dön.',waiting:'Arka görünümünü algılıyorum.'},
+};
 
 export default function PostureSession(){
  const[permission,requestPermission]=useCameraPermissions();
  const{profile,addPostureReport}=useApp();
  const shen=getShen(profile.selectedShenId);
- const analyzer=useMemo(()=>new MockPoseAnalyzer(),[]);
  const[index,setIndex]=useState(0);
  const[captures,setCaptures]=useState<PostureCapture[]>([]);
  const[result,setResult]=useState<PostureReport|null>(null);
- const[tick,setTick]=useState(0);
- const[stable,setStable]=useState(0);
  const[phase,setPhase]=useState<'scan'|'review'|'processing'>('scan');
- const[transitioning,setTransitioning]=useState(false);
+ const[scanState,setScanState]=useState<ScanState>('model-loading');
+ const[countdown,setCountdown]=useState(5);
+ const[liveLandmarks,setLiveLandmarks]=useState<PoseLandmark[]>([]);
+ const[analysisImageSize,setAnalysisImageSize]=useState<FrameSize>({width:1,height:1});
+ const[previewSize,setPreviewSize]=useState<FrameSize>({width:1,height:1});
+ const[frameConfidence,setFrameConfidence]=useState(0);
+ const[liveScore,setLiveScore]=useState<number|null>(null);
+ const[validSampleCount,setValidSampleCount]=useState(0);
  const[cameraReady,setCameraReady]=useState(false);
- const[analyzingCapture,setAnalyzingCapture]=useState(false);
  const[analysisError,setAnalysisError]=useState('');
+ const[vision3DActive,setVision3DActive]=useState(false);
  const[cameraError,setCameraError]=useState(false);
  const[tipVisible,setTipVisible]=useState(false);
  const view=views[index]??'front';
  const copy=viewCopy[view];
  const cameraRef=useRef<CameraView|null>(null);
  const poseBridgeRef=useRef<MediaPipePoseBridgeRef|null>(null);
+ const scanSessionRef=useRef(0);
+ const holdStartedAtRef=useRef<number|null>(null);
+ const previousLandmarksRef=useRef<PoseLandmark[]>([]);
+ const stableCapturesRef=useRef<PostureCapture[]>([]);
+ const capturesRef=useRef<PostureCapture[]>([]);
+ const speakingRef=useRef('');
 
- useEffect(()=>{
-  void analyzer.startAnalysis();
-  const timer=setInterval(()=>{void analyzer.processFrame();setTick(value=>value+1);setStable(value=>Math.min(5,value+1))},600);
-  return()=>{clearInterval(timer);analyzer.stopAnalysis()};
- },[analyzer]);
+ useEffect(()=>setVision3DActive(isAppleVision3DAvailable()),[]);
 
- const scores=analyzer.snapshot();
- void tick;
- const metrics:Metric[]=[
-  {label:'Gövde ekseni',icon:'body-outline',value:scores.flowScore,measurement:`${Math.max(0.6,(100-scores.flowScore)*.18).toFixed(1)}° sapma`,confidence:94},
-  {label:'Omuz farkı',icon:'fitness-outline',value:Math.max(50,scores.postureScore-4),measurement:`${Math.max(0.4,(100-scores.postureScore)*.12).toFixed(1)}°`,confidence:92},
-  {label:'Kalça farkı',icon:'resize-outline',value:scores.balanceScore,measurement:`${Math.max(0.5,(100-scores.balanceScore)*.1).toFixed(1)}°`,confidence:91},
-  {label:'Diz ekseni',icon:'git-compare-outline',value:Math.max(50,scores.balanceScore-3),measurement:`${Math.max(1,(100-scores.balanceScore)*.22).toFixed(1)}°`,confidence:88},
-  {label:'Baş öne eğimi',icon:'person-outline',value:Math.max(50,scores.flowScore-2),measurement:`${Math.max(1.5,(100-scores.flowScore)*.24).toFixed(1)}°`,confidence:86},
-  {label:'Ağırlık dengesi',icon:'scale-outline',value:Math.max(50,scores.balanceScore-2),measurement:'%46 / %54',confidence:90},
- ];
-
- useEffect(()=>{
-  const text=transitioning
-   ?(index===1?'Şimdi yana dönün.':'Şimdi arkanızı dönün.')
-   :phase==='review'
-   ?'Çekim hazır.'
-   :stable>=5
-    ?'Pozun sabit. Şimdi çekim yapabilirsin.'
-    :copy.instruction;
+ const speakOnce=(key:string,text:string)=>{
+  if(speakingRef.current===key)return;
+  speakingRef.current=key;
   Speech.stop();
-  void Speech.speak(text,{language:'tr-TR',rate:0.94,pitch:1.02});
-  return()=>{Speech.stop()};
- },[index,phase,stable,transitioning,copy.instruction]);
-
- const capture=async()=>{
-  if(analyzingCapture||!cameraRef.current||!cameraReady||transitioning)return;
-  setAnalyzingCapture(true);setAnalysisError('');
-  try{
-   const photo=await cameraRef.current.takePictureAsync({base64:true,quality:.72,skipProcessing:false});
-   if(!photo?.base64)throw new Error('Kamera görüntüsü alınamadı');
-   const analysis=await poseBridgeRef.current?.analyze(photo.base64);
-   if(!analysis)throw new Error('Poz modeli hazır değil');
-   const item=createRealCapture(view,analysis.landmarks,analysis.confidence);
-   const nextCaptures=[...captures.filter(saved=>saved.view!==view),item];
-   setCaptures(nextCaptures);
-   setStable(0);
-   if(index<2){
-    setTransitioning(true);
-    setIndex(value=>value+1);
-    setTimeout(()=>setTransitioning(false),2200);
-   }else{
-    setPhase('processing');
-    setTimeout(()=>{
-     const average=Math.round(nextCaptures.reduce((sum,saved)=>sum+saved.score,0)/Math.max(1,nextCaptures.length));
-     setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,summary:average>=82?'Beden eksenin dengeli ve sakin.':average>=68?'Temel hat dengeli; küçük ayarlar gelişimi hızlandırır.':'Merkez ve omuz hattı için yumuşak tekrar öneriliyor.',asymmetrySignal:average>=80?'Sağ-sol farkı düşük':'Omuz ve kalça hattını yeniden dengele'});
-     setPhase('scan');
-    },1400);
-   }
-  }catch(error){setAnalysisError(error instanceof Error?error.message:'Analiz tamamlanamadı')}
-  finally{setAnalyzingCapture(false)}
+  void Speech.speak(text,{language:'tr-TR',rate:0.9,pitch:1});
  };
 
- const save=()=>{if(!result)return;addPostureReport(result);router.replace('/posture')};
- const restart=()=>{setIndex(0);setCaptures([]);setResult(null);setStable(0);setTransitioning(false);setPhase('scan')};
+ useEffect(()=>{
+  if(!permission?.granted||!cameraReady||phase!=='scan')return;
+  speakOnce(`view-${view}`,scanCopy[view].start);
+ },[view,cameraReady,phase,permission?.granted]);
+
+ useEffect(()=>()=>{Speech.stop();scanSessionRef.current+=1},[]);
 
  useEffect(()=>{
-  if(cameraReady&&!analyzingCapture&&!transitioning&&phase==='scan'&&stable>=5) void capture();
- },[stable,cameraReady,analyzingCapture,transitioning,phase]);
+  if(!cameraReady||cameraError||phase!=='scan')return;
+  const session=scanSessionRef.current+1;
+  scanSessionRef.current=session;
+  holdStartedAtRef.current=null;
+  previousLandmarksRef.current=[];
+  stableCapturesRef.current=[];
+  setLiveLandmarks([]);
+  setLiveScore(null);
+  setValidSampleCount(0);
+  setCountdown(5);
+  setScanState('model-loading');
+  let timer:ReturnType<typeof setTimeout>|undefined;
+
+  const schedule=(delay=650)=>{timer=setTimeout(()=>void inspectFrame(),delay)};
+  const inspectFrame=async()=>{
+   if(scanSessionRef.current!==session||!cameraRef.current)return;
+   try{
+    const photo=await cameraRef.current.takePictureAsync({base64:true,quality:.38,skipProcessing:false,shutterSound:false});
+    if(!photo?.base64)throw new Error('Kamera karesi alınamadı');
+    const analysis=await poseBridgeRef.current?.analyze(photo.base64);
+    if(!analysis)throw new Error('MediaPipe modeli hazırlanıyor');
+    if(scanSessionRef.current!==session)return;
+    setLiveLandmarks(analysis.landmarks);
+    setAnalysisImageSize({width:analysis.imageWidth,height:analysis.imageHeight});
+    setFrameConfidence(analysis.confidence);
+    setAnalysisError('');
+    const frame=evaluatePoseFrame(analysis.landmarks,view);
+    if(!frame.bodyReady){
+     holdStartedAtRef.current=null;previousLandmarksRef.current=[];stableCapturesRef.current=[];
+     setLiveScore(null);setValidSampleCount(0);setCountdown(5);setScanState('find-body');schedule();return;
+    }
+    if(!frame.angleReady){
+     holdStartedAtRef.current=null;previousLandmarksRef.current=analysis.landmarks;stableCapturesRef.current=[];
+     setLiveScore(null);setValidSampleCount(0);setCountdown(5);setScanState('wrong-angle');schedule();return;
+    }
+    const movement=getLandmarkMovement(previousLandmarksRef.current,analysis.landmarks);
+    previousLandmarksRef.current=analysis.landmarks;
+    if(movement>.026){
+     holdStartedAtRef.current=Date.now();
+     stableCapturesRef.current=[];
+     setLiveScore(null);setValidSampleCount(0);setCountdown(5);setScanState('hold');schedule();return;
+    }
+    const frameCapture=createPostureCapture(view,analysis.landmarks,analysis.confidence);
+    stableCapturesRef.current=[...stableCapturesRef.current,frameCapture].slice(-12);
+    const rollingCapture=aggregatePostureCaptures(view,stableCapturesRef.current);
+    setLiveScore(rollingCapture.score);
+    setValidSampleCount(stableCapturesRef.current.length);
+    holdStartedAtRef.current??=Date.now();
+    const elapsed=Date.now()-holdStartedAtRef.current;
+    setCountdown(Math.max(0,Math.ceil((5000-elapsed)/1000)));
+    setScanState('hold');
+    if(elapsed<5000||stableCapturesRef.current.length<4){schedule();return}
+
+    setScanState('capturing');
+    const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
+    const source=vision3D?'vision-3d+mediapipe-33' as const:'mediapipe-33' as const;
+    const item={...aggregatePostureCaptures(view,stableCapturesRef.current),analysisSource:source,bodyHeightMeters:vision3D?.bodyHeightMeters};
+    const nextCaptures=[...capturesRef.current.filter(saved=>saved.view!==view),item];
+    capturesRef.current=nextCaptures;
+    setCaptures(nextCaptures);
+    if(index<2){
+     const nextIndex=index+1;
+     setScanState('turning');
+     timer=setTimeout(()=>setIndex(nextIndex),1400);
+     return;
+    }
+
+    speakOnce('complete','Bitti. Ön, yan ve arka ölçümlerin tamamlandı.');
+    setCameraReady(false);
+    setLiveLandmarks([]);
+    const average=Math.round(nextCaptures.reduce((sum,saved)=>sum+saved.score,0)/Math.max(1,nextCaptures.length));
+    setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,analysisSource:nextCaptures.some(saved=>saved.analysisSource==='vision-3d+mediapipe-33')?'vision-3d+mediapipe-33':'mediapipe-33',summary:average>=82?'Beden eksenin dengeli ve sakin.':average>=68?'Temel hat dengeli; küçük ayarlar gelişimi hızlandırır.':'Merkez ve omuz hattı için yumuşak tekrar öneriliyor.',asymmetrySignal:average>=80?'Sağ-sol farkı düşük':'Omuz ve kalça hattını yeniden dengele'});
+    setPhase('processing');
+   }catch(error){
+    if(scanSessionRef.current!==session)return;
+    const message=error instanceof Error?error.message:'Analiz tamamlanamadı';
+    if(message.includes('hazır'))setScanState('model-loading');
+    else{setScanState('error');setAnalysisError(message)}
+    schedule(900);
+   }
+  };
+  schedule(350);
+  return()=>{scanSessionRef.current+=1;if(timer)clearTimeout(timer)};
+ },[cameraReady,cameraError,index,phase,view]);
+
+ useEffect(()=>{
+  if(phase!=='processing'||!result)return;
+  const timer=setTimeout(()=>setPhase('review'),1700);
+  return()=>clearTimeout(timer);
+ },[phase,result]);
+
+ const save=()=>{if(!result)return;addPostureReport(result);router.replace('/posture')};
+ const restart=()=>{capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(5);setScanState('model-loading');setPhase('scan')};
 
  if(!permission)return <View style={styles.permission}/>;
  if(!permission.granted)return <SafeAreaView style={styles.permission}>
@@ -117,6 +183,8 @@ export default function PostureSession(){
   <PrimaryButton label="Kameraya izin ver" icon="camera" onPress={requestPermission}/>
   <Pressable onPress={()=>router.back()}><Text style={styles.cancel}>Şimdi değil</Text></Pressable>
  </SafeAreaView>;
+
+ if(phase==='processing')return <SafeAreaView style={styles.permission}><ActivityIndicator color={shen.color} size="large"/><Text style={styles.permissionTitle}>BİTTİ</Text><Text style={styles.permissionBody}>Üç gerçek ölçümün medyanını karşılaştırıyor; baş, omuz, gövde, kalça, diz ve ayak bileği raporunu hazırlıyoruz.</Text></SafeAreaView>;
 
  if(result)return <SafeAreaView style={styles.result}>
   <ScrollView contentContainerStyle={styles.resultContent}>
@@ -129,55 +197,84 @@ export default function PostureSession(){
   </ScrollView>
  </SafeAreaView>;
 
- if(phase==='processing')return <SafeAreaView style={styles.permission}><Ionicons name="scan-outline" size={52} color={shen.color}/><Text style={styles.permissionTitle}>Postürün işleniyor</Text><Text style={styles.permissionBody}>Baş, omuz, gövde, kalça, diz ve ayak bileği hattını üç açıdan karşılaştırıyoruz.</Text><ProgressBar value={72} color={shen.color}/></SafeAreaView>;
-
  return <SafeAreaView style={styles.root}>
   <View style={styles.topbar}>
     <Pressable onPress={()=>router.back()} style={styles.topButton}><Ionicons name="close" color={colors.cream} size={23}/></Pressable>
     <View style={styles.progressPill}><Text style={styles.progressNumber}>{index+1} / 3</Text><View style={styles.progressDotActive}/><Text style={styles.progressLabel}>{copy.title.replace(' görünüm','')}</Text><Text style={styles.progressChevron}>⌄</Text></View>
     <Pressable onPress={()=>setTipVisible(value=>!value)} style={styles.topButton}><Ionicons name="help-circle-outline" color={colors.gold} size={25}/></Pressable>
   </View>
-  <ScrollView contentContainerStyle={styles.sessionContent} showsVerticalScrollIndicator={false}>
-   <View style={[styles.cameraStage,{borderColor:`${shen.color}55`}]}>
+  <View style={styles.sessionContent}>
+   <View onLayout={(event:LayoutChangeEvent)=>{const{width,height}=event.nativeEvent.layout;setPreviewSize(current=>current.width===width&&current.height===height?current:{width,height})}} style={[styles.cameraStage,{borderColor:`${shen.color}55`}]}>
     <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active zoom={0} onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
     <View style={styles.cameraShade}/>
-    <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:cameraReady?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{cameraReady?'CANLI':'HAZIRLANIYOR'}</Text></View>
-    <PoseGuide posture={scores.postureScore} flow={scores.flowScore} balance={scores.balanceScore}/>
-    {(!cameraReady||cameraError||analyzingCapture||Boolean(analysisError))&&<View style={styles.cameraMessage}><Ionicons name={cameraError||analysisError?'warning-outline':analyzingCapture?'analytics-outline':'camera-outline'} size={22} color={shen.color}/><Text style={styles.cameraMessageText}>{analysisError||(analyzingCapture?'33 noktalı gerçek poz analizi yapılıyor…':cameraError?'Kamera açılamadı. Ayarlar içinden kamera iznini aç.':'Kamera hazırlanıyor…')}</Text></View>}
+    <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>
+    <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize}/>
+    {(!cameraReady||cameraError||scanState==='model-loading'||scanState==='error')&&<View style={styles.cameraMessage}><Ionicons name={cameraError||analysisError?'warning-outline':'analytics-outline'} size={22} color={shen.color}/><Text style={styles.cameraMessageText}>{analysisError||(cameraError?'Kamera açılamadı. Ayarlar içinden kamera iznini aç.':scanState==='model-loading'?'Gerçek 33 noktalı poz modeli hazırlanıyor…':'Kamera hazırlanıyor…')}</Text></View>}
+    <View style={styles.captureInstruction}>
+     <Text style={styles.mobileCountdown}>{scanState==='hold'?String(countdown):scanState==='capturing'?'✓':'•'}</Text>
+     <Text style={[styles.stepLabel,{color:shen.color}]}>{getScanInstruction(scanState,view)}</Text>
+     <Text style={styles.scanDetail}>{getScanDetail(scanState,view)}</Text>
+    </View>
+    <View style={styles.angleSteps}>{views.map((item)=><View key={item} style={[styles.angleStep,item===view&&styles.angleStepActive]}><Ionicons name={viewCopy[item].icon} color={item===view?colors.cream:colors.muted} size={17}/><Text style={styles.angleStepText}>{viewCopy[item].title.replace(' görünüm','')}</Text></View>)}</View>
    </View>
 
    {tipVisible&&<View style={styles.tip}><Text style={styles.tipTitle}>Doğru ölçüm için</Text><Text style={styles.tipText}>Telefonu yaklaşık 1,5–2 metre uzağa koy. Yeni geniş kadrajda başın ve ayakların aynı anda görünürken beş saniye sabit kal.</Text></View>}
-
-   <View style={styles.captureInstruction}>
-    <Text style={styles.mobileCountdown}>{cameraReady&&!transitioning&&stable>=5?'5':transitioning?'•':cameraReady?String(Math.max(1,5-stable)):'•'}</Text>
-    <View style={styles.flex}><Text style={[styles.stepLabel,{color:shen.color}]}>{transitioning?(index===1?'Şimdi yana dönün':'Şimdi arkanızı dönün'):cameraReady&&stable>=5?'Hareketsiz durun':'Kadraja girin'}</Text><Text style={styles.instruction}>{transitioning?'Hazır olduğunuzda sabit durun':'Tam bedeniniz görünür olduğunda ölçüm başlayacak'}</Text></View>
-   </View>
-
-   <View style={styles.angleSteps}>{views.map((item)=><View key={item} style={[styles.angleStep,item===view&&styles.angleStepActive]}><View style={styles.angleStepIcon}><Ionicons name={viewCopy[item].icon} color={item===view?colors.cream:colors.muted} size={18}/></View><Text style={styles.angleStepText}>{viewCopy[item].title.replace(' görünüm','')}</Text></View>)}</View>
-
-   <View style={styles.analysisCard}>
-    <View style={styles.scoreSection}>
-     <Text style={styles.sectionLabel}>GENEL SKOR</Text>
-     <View style={[styles.scoreRing,{borderColor:scoreTone(scores.postureScore)}]}><Text style={styles.scoreValue}>{scores.postureScore}</Text><Text style={styles.scoreUnit}>/100</Text></View>
-     <Text style={[styles.scoreStatus,{color:scoreTone(scores.postureScore)}]}>{scoreLabel(scores.postureScore)}</Text>
-    </View>
-    <View style={styles.detailsSection}>
-     <Text style={styles.sectionLabel}>DETAYLI ANALİZ</Text>
-     {metrics.map(metric=><MetricRow key={metric.label} metric={metric}/>)}
-    </View>
-   </View>
-   <View style={styles.confidenceCard}><Ionicons name="analytics-outline" color={shen.color} size={18}/><View style={styles.flex}><Text style={styles.confidenceTitle}>MediaPipe 33 noktalı ölçüm</Text><Text style={styles.confidenceText}>Çekim sırasında 33 anatomik referans cihazında analiz edilir. Sarı ve kırmızı noktalar dikkat isteyen bölgeleri gösterir.</Text></View></View>
    <MediaPipePoseBridge ref={poseBridgeRef}/>
-
-   <View style={styles.sessionNav}>
-    <Pressable onPress={()=>router.replace('/(tabs)')} style={styles.sessionNavItem}><Ionicons name="home-outline" color={colors.muted} size={22}/><Text style={styles.sessionNavText}>Ana Sayfa</Text></Pressable>
-    <Pressable onPress={()=>router.replace('/(tabs)/practice')} style={styles.sessionNavItem}><Ionicons name="play-circle-outline" color={colors.muted} size={23}/><Text style={styles.sessionNavText}>Pratik</Text></Pressable>
-    <View style={styles.sessionNavActive}><View style={[styles.sessionNavOrb,{borderColor:shen.color}]}><Ionicons name="body-outline" color={shen.color} size={25}/></View><Text style={[styles.sessionNavText,{color:shen.color}]}>Analiz</Text></View>
-    <Pressable onPress={()=>router.replace('/(tabs)/journal')} style={styles.sessionNavItem}><Ionicons name="book-outline" color={colors.muted} size={22}/><Text style={styles.sessionNavText}>Journal</Text></Pressable>
-    <Pressable onPress={()=>router.replace('/(tabs)/profile')} style={styles.sessionNavItem}><Ionicons name="person-outline" color={colors.muted} size={22}/><Text style={styles.sessionNavText}>Profil</Text></Pressable>
-   </View>
-  </ScrollView>
+  </View>
  </SafeAreaView>;
+}
+
+const livePoseConnections=[
+ [11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],
+] as const;
+const livePosePoints=[0,11,12,13,14,15,16,23,24,25,26,27,28] as const;
+
+function LivePoseOverlay({imageSize,landmarks,previewSize}:{imageSize:FrameSize;landmarks:PoseLandmark[];previewSize:FrameSize}){
+ if(landmarks.length<33||imageSize.width<=1||imageSize.height<=1||previewSize.width<=1||previewSize.height<=1)return null;
+ const scale=Math.max(previewSize.width/imageSize.width,previewSize.height/imageSize.height);
+ const renderedWidth=imageSize.width*scale;
+ const renderedHeight=imageSize.height*scale;
+ const offsetX=(previewSize.width-renderedWidth)/2;
+ const offsetY=(previewSize.height-renderedHeight)/2;
+ const project=(point:PoseLandmark)=>({
+  x:offsetX+point.x*renderedWidth,
+  y:offsetY+point.y*renderedHeight,
+ });
+ return <View pointerEvents="none" style={styles.realPoseOverlay}>
+  <Svg height="100%" viewBox={`0 0 ${previewSize.width} ${previewSize.height}`} width="100%" preserveAspectRatio="none">
+   {livePoseConnections.map(([startIndex,endIndex])=>{
+    const start=landmarks[startIndex],end=landmarks[endIndex];
+    if(!isLandmarkVisible(start)||!isLandmarkVisible(end))return null;
+    const a=project(start),b=project(end);
+    return <Line key={`${startIndex}-${endIndex}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#7FB46B" strokeWidth="2.1"/>;
+   })}
+   {livePosePoints.map(pointIndex=>{
+    const point=landmarks[pointIndex];
+    if(!isLandmarkVisible(point))return null;
+    const projected=project(point);
+    return <Circle key={pointIndex} cx={projected.x} cy={projected.y} r="4.3" fill="#A9D977" stroke="#F2EEE7" strokeWidth=".9"/>;
+   })}
+  </Svg>
+ </View>;
+}
+
+function getScanInstruction(state:ScanState,view:PostureView){
+ if(state==='model-loading')return'Analiz hazırlanıyor';
+ if(state==='find-body')return'Tam bedenini kadraja al';
+ if(state==='wrong-angle')return scanCopy[view].turn;
+ if(state==='hold')return'Hareketsiz kal';
+ if(state==='capturing')return`${viewCopy[view].title} kaydedildi`;
+ if(state==='turning')return'Görünüm tamamlandı';
+ if(state==='error')return'Analiz yeniden deneniyor';
+ return scanCopy[view].waiting;
+}
+
+function getScanDetail(state:ScanState,view:PostureView){
+ if(state==='find-body')return'Başın, omuzların, kalçan, dizlerin ve ayakların birlikte görünmeli.';
+ if(state==='wrong-angle')return`${viewCopy[view].title} henüz doğrulanmadı; doğru yöne geçince sayaç başlayacak.`;
+ if(state==='hold')return'Beş saniye boyunca aynı duruşu koru.';
+ if(state==='capturing'||state==='turning')return'Gerçek MediaPipe ölçümü alındı.';
+ return scanCopy[view].waiting;
 }
 
 function PoseGuide({posture,flow,balance}:{posture:number;flow:number;balance:number}){
@@ -197,36 +294,7 @@ function PoseGuide({posture,flow,balance}:{posture:number;flow:number;balance:nu
  </View>;
 }
 
-function createRealCapture(view:PostureView,points:PoseLandmark[],confidence:number):PostureCapture{
- if(points.length<33)throw new Error('Tam beden algılanamadı. Baş ve ayaklarını kadraja al.');
- const pairAngle=(left:number,right:number)=>{
-  const a=points[left],b=points[right];
-  return Math.abs(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI);
- };
- const horizontalDeviation=(angle:number)=>Math.min(angle,Math.abs(180-angle));
- const shoulderTilt=horizontalDeviation(pairAngle(11,12));
- const hipTilt=horizontalDeviation(pairAngle(23,24));
- const kneeTilt=horizontalDeviation(pairAngle(25,26));
- const shoulderCenter={x:(points[11].x+points[12].x)/2,y:(points[11].y+points[12].y)/2};
- const hipCenter={x:(points[23].x+points[24].x)/2,y:(points[23].y+points[24].y)/2};
- const axisTilt=Math.abs(Math.atan2(shoulderCenter.x-hipCenter.x,hipCenter.y-shoulderCenter.y)*180/Math.PI);
- const shoulderScore=Math.round(Math.max(30,100-shoulderTilt*7));
- const hipScore=Math.round(Math.max(30,100-hipTilt*8));
- const axisScore=Math.round(Math.max(30,100-axisTilt*6));
- const balanceScore=Math.round(Math.max(30,100-kneeTilt*5));
- const score=Math.round(shoulderScore*.28+hipScore*.25+axisScore*.32+balanceScore*.15);
- const confidencePercent=Math.round(confidence*100);
- return{
-  view,score,shoulderScore,axisScore,hipScore,
-  feedback:score>=82
-   ?`33 noktalı ölçümde beden ekseni dengeli · güven %${confidencePercent}`
-   :score>=68
-    ?`Küçük hizalama farkları var · omuz ${shoulderTilt.toFixed(1)}°, kalça ${hipTilt.toFixed(1)}°`
-    :`Eksen ${axisTilt.toFixed(1)}° sapıyor; çekimi daha dengeli bir duruşla tekrarla.`,
- };
-}
-
-function Joint({color,style}:{color:string;style?:object}){return <View style={[styles.joint,style,{backgroundColor:color,shadowColor:color}]}/>}
+function Joint({color,style}:{color:string;style?:object}){return <View style={[styles.joint,style,{backgroundColor:color}]}/>}
 
 function LegendDot({color,label}:{color:string;label:string}){return <View style={styles.legendItem}><View style={[styles.legendDot,{backgroundColor:color}]}/><Text style={styles.legendText}>{label}</Text></View>}
 
@@ -252,22 +320,23 @@ function scoreLabel(value:number){return value>=82?'İyi':value>=68?'Orta':'Dikk
 
 const styles=StyleSheet.create({
  root:{flex:1,backgroundColor:colors.ink},
- sessionContent:{gap:12,paddingBottom:28,paddingHorizontal:14},
- cameraStage:{aspectRatio:.58,backgroundColor:'#020403',borderRadius:24,borderWidth:1,overflow:'hidden',position:'relative',width:'100%'},
+ sessionContent:{flex:1,gap:12,paddingBottom:12,paddingHorizontal:12,paddingTop:8},
+ cameraStage:{flex:1,backgroundColor:'#020403',borderRadius:22,borderWidth:1,overflow:'hidden',position:'relative',width:'100%'},
  cameraShade:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(0,14,10,.25)'},
+ realPoseOverlay:{...StyleSheet.absoluteFillObject,zIndex:5},
  overlay:{flex:1},
  flex:{flex:1},
  topbar:{zIndex:8,flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:16,paddingTop:4},
- topButton:{width:46,height:46,borderRadius:15,backgroundColor:'rgba(5,13,8,.68)',borderWidth:1,borderColor:'rgba(216,169,88,.32)',alignItems:'center',justifyContent:'center'},
+ topButton:{width:46,height:46,borderRadius:15,backgroundColor:colors.surface,borderWidth:1,borderColor:colors.line,alignItems:'center',justifyContent:'center'},
  heading:{alignItems:'center',gap:4},
- progressPill:{alignItems:'center',backgroundColor:'rgba(5,8,6,.92)',borderRadius:999,flexDirection:'row',gap:8,paddingHorizontal:18,paddingVertical:10},
+ progressPill:{alignItems:'center',backgroundColor:colors.surface,borderColor:colors.line,borderWidth:1,borderRadius:16,flexDirection:'row',gap:8,paddingHorizontal:16,paddingVertical:10},
  progressNumber:{color:'#A8D973',fontSize:18,fontWeight:'500'},
  progressDotActive:{backgroundColor:'#A8D973',borderRadius:4,height:6,width:6},
  progressLabel:{color:colors.cream,fontSize:16,fontWeight:'500'},
  progressChevron:{color:colors.muted,fontSize:18},
  headingTitle:{color:colors.cream,fontSize:16,fontWeight:'600',letterSpacing:2},
  headingSubtitle:{color:'rgba(243,235,221,.62)',fontSize:11},
- livePill:{position:'absolute',zIndex:8,top:14,alignSelf:'center',height:32,paddingHorizontal:12,borderRadius:16,backgroundColor:'rgba(5,13,8,.72)',borderWidth:1,borderColor:'rgba(216,169,88,.32)',flexDirection:'row',alignItems:'center',gap:7},
+ livePill:{position:'absolute',zIndex:8,top:14,alignSelf:'center',height:30,paddingHorizontal:11,borderRadius:15,backgroundColor:'rgba(17,23,19,.82)',borderWidth:1,borderColor:colors.line,flexDirection:'row',alignItems:'center',gap:7},
  liveDot:{width:7,height:7,borderRadius:4},
  liveText:{color:colors.cream,fontSize:10,fontWeight:'800',letterSpacing:1.3},
  stageProgress:{flexDirection:'row',gap:7,marginHorizontal:10},
@@ -278,7 +347,7 @@ const styles=StyleSheet.create({
  shoulderLine:{position:'absolute',top:76,left:0,right:0,flexDirection:'row',alignItems:'center'},
  hipLine:{position:'absolute',top:190,left:'17%',right:'17%',flexDirection:'row',alignItems:'center'},
  guideLine:{height:1,flex:1,backgroundColor:'rgba(255,255,255,.82)'},
- joint:{width:14,height:14,borderRadius:7,borderWidth:2,borderColor:'#FFF',shadowOpacity:.95,shadowRadius:6,elevation:6},
+ joint:{width:12,height:12,borderRadius:6,borderWidth:1.5,borderColor:'rgba(242,238,231,.9)'},
  neckJoint:{position:'absolute',top:54,left:'50%',marginLeft:-7},
  chestJoint:{position:'absolute',top:120,left:'50%',marginLeft:-7},
  waistJoint:{position:'absolute',top:176,left:'50%',marginLeft:-7},
@@ -289,8 +358,8 @@ const styles=StyleSheet.create({
  leftAnkle:{position:'absolute',bottom:-3,left:'28%'},
  rightAnkle:{position:'absolute',bottom:-3,right:'28%'},
  legLines:{position:'absolute',top:200,bottom:0,left:'30%',right:'30%',flexDirection:'row',justifyContent:'space-between'},
- leg:{width:2,height:'100%',backgroundColor:'#72C83D'},
- arm:{borderColor:'#F5A623',borderLeftWidth:2,height:115,position:'absolute',top:82,width:20},
+ leg:{width:1.5,height:'100%',backgroundColor:'#7FB46B'},
+ arm:{borderColor:'#D7A85B',borderLeftWidth:1.5,height:115,position:'absolute',top:82,width:20},
  armLeft:{left:-18,transform:[{rotate:'17deg'}]},
  armRight:{right:-18,transform:[{rotate:'-17deg'}]},
  footLine:{borderBottomWidth:1,bottom:0,left:'14%',position:'absolute',right:'14%'},
@@ -317,7 +386,7 @@ const styles=StyleSheet.create({
  tipTitle:{color:colors.gold,fontSize:12,fontWeight:'800'},
  tipText:{color:colors.cream,fontSize:11,lineHeight:16,marginTop:4},
  bottomPanel:{paddingHorizontal:14,paddingTop:12,paddingBottom:10,gap:10,backgroundColor:'rgba(6,17,12,.97)',borderRadius:22,borderWidth:1,borderColor:'rgba(216,169,88,.3)'},
- captureInstruction:{flexDirection:'row',alignItems:'center',gap:9},
+ captureInstruction:{position:'absolute',bottom:92,left:20,right:20,zIndex:8,alignItems:'center',gap:2},
  actionArea:{gap:10},
  privacy:{color:colors.muted,flex:1,fontSize:9,lineHeight:13},
  sessionNav:{alignItems:'center',backgroundColor:'rgba(8,12,10,.96)',borderColor:'rgba(216,169,88,.24)',borderRadius:22,borderWidth:1,display:'none',flexDirection:'row',justifyContent:'space-around',marginTop:4,minHeight:76,paddingHorizontal:4},
@@ -326,10 +395,11 @@ const styles=StyleSheet.create({
  sessionNavOrb:{alignItems:'center',backgroundColor:'rgba(216,169,88,.08)',borderRadius:25,borderWidth:1,height:50,justifyContent:'center',marginTop:-22,shadowColor:colors.gold,shadowOpacity:.3,shadowRadius:12,width:50},
  sessionNavText:{color:colors.muted,fontSize:8},
  viewIcon:{width:38,height:38,borderRadius:19,alignItems:'center',justifyContent:'center'},
- stepLabel:{fontSize:8,fontWeight:'900',letterSpacing:1},
+ stepLabel:{fontSize:12,fontWeight:'700',letterSpacing:.2},
+ scanDetail:{color:colors.muted,fontSize:10,lineHeight:14,marginTop:3,maxWidth:300,textAlign:'center'},
  instruction:{color:colors.muted,fontSize:10,lineHeight:14,marginTop:2},
  mobileCountdown:{color:colors.cream,fontSize:52,fontWeight:'400',lineHeight:58,minWidth:60,textAlign:'center'},
- angleSteps:{alignItems:'center',backgroundColor:'rgba(8,12,10,.96)',borderColor:colors.line,borderRadius:20,borderWidth:1,flexDirection:'row',justifyContent:'space-around',paddingHorizontal:8,paddingVertical:10},
+ angleSteps:{position:'absolute',bottom:16,left:16,right:16,zIndex:8,alignItems:'center',backgroundColor:'rgba(17,23,19,.9)',borderColor:colors.line,borderRadius:16,borderWidth:1,flexDirection:'row',justifyContent:'space-around',paddingHorizontal:8,paddingVertical:9},
  angleStep:{alignItems:'center',flex:1,gap:4,opacity:.58},
  angleStepActive:{opacity:1},
  angleStepIcon:{alignItems:'center',backgroundColor:'rgba(255,255,255,.04)',borderRadius:20,height:38,justifyContent:'center',width:38},
@@ -359,7 +429,7 @@ const styles=StyleSheet.create({
  permission:{flex:1,backgroundColor:colors.ink,padding:28,alignItems:'center',justifyContent:'center',gap:20},
  permissionIcon:{width:90,height:90,borderRadius:45,backgroundColor:colors.surface,borderWidth:1,alignItems:'center',justifyContent:'center'},
  permissionTitle:{color:colors.cream,fontSize:26,fontWeight:'800',textAlign:'center'},
- permissionBody:{color:colors.muted,fontSize:16,lineHeight:24,textAlign:'center'},
+ permissionBody:{color:colors.muted,fontSize:16,lineHeight:24,maxWidth:360,textAlign:'center',width:'100%'},
  cancel:{color:colors.muted,fontWeight:'700',padding:12},
  result:{flex:1,backgroundColor:colors.ink},
  resultContent:{padding:24,gap:18},

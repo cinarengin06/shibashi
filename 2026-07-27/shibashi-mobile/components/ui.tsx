@@ -1,8 +1,7 @@
 import {Ionicons} from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import {LinearGradient} from 'expo-linear-gradient';
 import React,{PropsWithChildren,useEffect,useRef} from 'react';
-import {Animated,Pressable,ScrollView,StyleProp,StyleSheet,Text,View,ViewStyle} from 'react-native';
+import {Animated,Pressable,ScrollView,StyleProp,StyleSheet,Text,useWindowDimensions,View,ViewStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors,fonts,radii,spacing,type} from '../constants/theme';
 import {fiveShen} from '../data/fiveShen';
@@ -10,8 +9,9 @@ import {shenBackgrounds} from '../data/shenAssets';
 import {useShenExperience} from '../store/ShenExperience';
 
 export function Screen({children,scroll=true,style}:{children:React.ReactNode;scroll?:boolean;style?:ViewStyle}){
+ const{width}=useWindowDimensions();
  const body=<View style={[s.content,style]}>{children}</View>;
- return <View style={s.safe}>
+ return <View style={[s.safe,{width}]}>
   <ShenBackdrop opacity={.22}/>
   <View style={s.scrim}/>
   <SafeAreaView style={s.safeClear} edges={['top']}>
@@ -55,9 +55,9 @@ export function Card({children,style}:{children:React.ReactNode;style?:StyleProp
 export function PrimaryButton({label,onPress,icon='arrow-forward',disabled=false}:{label:string;onPress:()=>void;icon?:keyof typeof Ionicons.glyphMap;disabled?:boolean}){
  const{shen}=useShenExperience();
  return <Pressable disabled={disabled} onPress={()=>{Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);onPress()}} style={({pressed})=>[s.button,pressed&&s.buttonPressed,disabled&&s.buttonDisabled]}>
-  <LinearGradient colors={[shen.color2,shen.color]} start={{x:0,y:.5}} end={{x:1,y:.5}} style={s.buttonInner}>
-   <Text style={s.buttonText}>{label}</Text><Ionicons name={icon} size={20} color={colors.ink}/>
-  </LinearGradient>
+  <View style={[s.buttonInner,{backgroundColor:shen.color2,borderColor:shen.color}]}>
+   <Text style={s.buttonText}>{label}</Text><Ionicons name={icon} size={20} color={colors.cream}/>
+  </View>
  </Pressable>;
 }
 export function Metric({label,value,color=colors.jade}:{label:string;value:string|number;color?:string}){
@@ -73,24 +73,24 @@ export function BreathOrb({small=false}:{small?:boolean}){
 }
 
 const s=StyleSheet.create({
- safe:{flex:1,backgroundColor:colors.ink},
+ safe:{flex:1,backgroundColor:colors.ink,maxWidth:'100%',overflow:'hidden'},
  safeClear:{flex:1},
  backgroundImage:{height:'100%',width:'100%'},
  scrim:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(7,16,13,.88)'},
- scroll:{paddingBottom:130},
- content:{paddingHorizontal:spacing.lg,gap:spacing.lg},
+ scroll:{paddingBottom:130,width:'100%'},
+ content:{alignSelf:'center',gap:spacing.lg,maxWidth:'100%',overflow:'hidden',paddingHorizontal:spacing.lg,width:'100%'},
  section:{gap:12},
  eyebrow:{color:colors.gold,fontFamily:fonts.sansBold,fontSize:11,letterSpacing:1.8,textTransform:'uppercase'},
  title:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:type.h1,lineHeight:35,letterSpacing:-.6},
  sectionHead:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
  sectionTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:type.h2,letterSpacing:-.2},
  action:{color:colors.gold,fontFamily:fonts.sansStrong,fontSize:13},
- card:{backgroundColor:colors.surface,borderColor:'rgba(220,225,215,.10)',borderWidth:1,borderRadius:22,padding:spacing.md,shadowColor:'#000',shadowOpacity:.16,shadowRadius:18,shadowOffset:{width:0,height:10},elevation:4},
- button:{borderRadius:radii.pill,overflow:'hidden',minHeight:54,shadowColor:'#000',shadowOpacity:.22,shadowRadius:14,shadowOffset:{width:0,height:8},elevation:4},
- buttonPressed:{opacity:.84,transform:[{scale:.985}]},
+ card:{backgroundColor:colors.surface,borderColor:colors.line,borderWidth:1,borderRadius:20,padding:spacing.md,shadowColor:'#000',shadowOpacity:.12,shadowRadius:16,shadowOffset:{width:0,height:8},elevation:2},
+ button:{borderRadius:radii.md,overflow:'hidden',minHeight:54,shadowColor:'#000',shadowOpacity:.12,shadowRadius:10,shadowOffset:{width:0,height:6},elevation:2},
+ buttonPressed:{opacity:.88},
  buttonDisabled:{opacity:.4},
- buttonInner:{minHeight:54,paddingHorizontal:20,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10},
- buttonText:{color:colors.ink,fontFamily:fonts.sansBold,fontSize:15},
+ buttonInner:{minHeight:54,paddingHorizontal:20,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10,borderWidth:1,borderRadius:radii.md},
+ buttonText:{color:colors.cream,fontFamily:fonts.sansBold,fontSize:15},
  metric:{flex:1,minWidth:92,gap:5,paddingVertical:14},
  metricValue:{fontFamily:fonts.displayStrong,fontSize:24},
  muted:{color:colors.muted,fontFamily:fonts.sans,fontSize:13,lineHeight:19},

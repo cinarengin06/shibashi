@@ -24,13 +24,24 @@ export default function Today(){
  const shen=getShen(profile.selectedShenId);
  const practice=practices.find(item=>item.id===shen.practiceId)??practices[0];
  const completed=sessions.filter(item=>new Date(item.date).toDateString()===new Date().toDateString()).reduce((total,item)=>total+item.duration,0);
- const energy=[{label:'Beden',term:'Jing',value:68},{label:'Canlılık',term:'Qi',value:76},{label:'Zihin',term:'Shen',value:82}];
+ const recentSessions=sessions.slice(0,5);
+ const movementScore=recentSessions.length?Math.round(recentSessions.reduce((sum,item)=>sum+item.flowScore,0)/recentSessions.length):null;
+ const practiceDays=new Set(sessions.map(item=>new Date(item.date).toDateString()));
+ const consistencyScore=sessions.length?Math.round([...Array(7)].filter((_,offset)=>{const date=new Date();date.setDate(date.getDate()-offset);return practiceDays.has(date.toDateString())}).length/7*100):null;
+ const streak=calculatePracticeStreak(sessions.map(item=>item.date));
+ const measuredMetrics=[{label:'Postür',term:'Kamera',value:postureReports[0]?.score??null},{label:'Hareket',term:'Son 5 pratik',value:movementScore},{label:'Düzen',term:'Son 7 gün',value:consistencyScore}];
  const chooseShen=(id:Parameters<typeof saveProfile>[0]['selectedShenId'])=>{if(!id)return;void Haptics.selectionAsync();saveProfile({selectedShenId:id})};
 
  return <Screen>
   <View style={s.header}>
-   <View style={s.brand}><Text style={[s.brandMark,{color:shen.color}]}>☯</Text><View><Text style={s.brandName}>SHIBASHI</Text><Text style={s.brandMeta}>HAREKET · NEFES · GÜNLÜK DENGE</Text></View></View>
+   <View style={s.brand}><View style={[s.brandIcon,{borderColor:`${shen.color}66`}]}><Ionicons name="leaf-outline" color={shen.color} size={19}/></View><View><Text style={s.brandName}>Merhaba, {profile.name}</Text><Text style={s.brandMeta}>Bugün kendine kısa bir alan aç.</Text></View></View>
    <Pressable accessibilityLabel="Bildirimler" style={s.notify}><Ionicons name="notifications-outline" color={colors.cream} size={19}/><View style={[s.notifyDot,{backgroundColor:shen.color}]}/></Pressable>
+  </View>
+
+  <View style={s.dailyNotes}>
+   <View style={s.dailyNote}><Ionicons name="flame-outline" color={colors.gold} size={18}/><View><Text style={s.noteValue}>{streak?`${streak} gün`:'—'}</Text><Text style={s.noteLabel}>Gerçek seri</Text></View></View>
+   <View style={s.dailyNote}><Ionicons name="lock-open-outline" color={shen.color} size={18}/><View><Text style={s.noteValue}>{Math.max(1,completedStories.length+1)}. kapı</Text><Text style={s.noteLabel}>Son açılan</Text></View></View>
+   <View style={s.dailyNote}><Ionicons name="water-outline" color={colors.muted} size={18}/><View><Text style={s.noteValue}>4 nefes</Text><Text style={s.noteLabel}>Şimdi dene</Text></View></View>
   </View>
 
   <View style={s.modePicker}>{everydayModes.map(item=>{const active=item.id===shen.id;return <Pressable key={item.id} onPress={()=>chooseShen(item.id)} style={[s.modeChoice,active&&{backgroundColor:`${shen.color}18`}]}><Ionicons name={item.icon} color={active?colors.cream:colors.muted} size={15}/><Text style={[s.modeChoiceText,active&&s.modeChoiceTextActive]}>{item.label}</Text>{active?<View style={s.modeUnderline}/>:null}</Pressable>})}</View>
@@ -49,8 +60,8 @@ export default function Today(){
     </View>
 
     <View style={s.balanceCard}>
-     <Text style={s.balanceTitle}>İçsel Denge</Text>
-     {energy.map(item=><View key={item.label} style={s.balanceMetric}><View style={s.balanceLabel}><Text style={s.energyLabel}>{item.label}</Text><Text style={s.energyTerm}>{item.term}</Text></View><View style={s.balanceTrack}><View style={[s.balanceFill,{backgroundColor:shen.color,width:`${item.value}%`}]} /></View><Text style={s.energyValue}>{item.value}%</Text></View>)}
+     <Text style={s.balanceTitle}>Ölçülen ilerleme</Text>
+     {measuredMetrics.map(item=><View key={item.label} style={s.balanceMetric}><View style={s.balanceLabel}><Text style={s.energyLabel}>{item.label}</Text><Text style={s.energyTerm}>{item.term}</Text></View><View style={s.balanceTrack}>{item.value!==null?<View style={[s.balanceFill,{backgroundColor:shen.color,width:`${item.value}%`}]} />:null}</View><Text style={s.energyValue}>{item.value!==null?`${item.value}%`:'—'}</Text></View>)}
     </View>
 
     <View style={s.ritual}>
@@ -66,7 +77,7 @@ export default function Today(){
    <PathItem icon="sparkles-outline" title="Yaşayarak Öğren" detail={`${completedStories.length}/18 hikâye · gündelik sahneler`} color={shen.color} onPress={()=>router.push('/living-learning')}/>
    <PathItem icon="scan-outline" title="Postür Aynası" detail={postureReports.length?`${postureReports.length} analiz · son skor ${postureReports[0].score}`:'İlk üç açılı taramanı al'} color={shen.color} onPress={()=>router.push('/posture')}/>
    <PathItem icon="chatbubble-ellipses-outline" title="Yaşam Rehberleri" detail="İhtiyacına göre sekiz farklı rehberle konuş" color={shen.color} onPress={()=>router.push('/coaches')}/>
-   <PathItem icon="compass-outline" title="Yolculuk Haritan" detail={`${Math.max(1,Math.min(8,1+Math.floor((sessions.length*28+postureReports.length*42+completedStories.length*18)/100)))}/8 yaşam yönü açık · gelenekte Bagua`} color={shen.color} onPress={()=>router.push('/(tabs)/journey')}/>
+   <PathItem icon="compass-outline" title="Yolculuk Haritan" detail={`${sessions.length+postureReports.length+completedStories.length} gerçek kayıt · gelenekte Bagua`} color={shen.color} onPress={()=>router.push('/(tabs)/journey')}/>
   </View>
 
   <View style={[s.needCard,{borderColor:`${shen.color}30`}]}>
@@ -81,7 +92,6 @@ export default function Today(){
    </View>
   </View>
 
-  <Text style={[s.quote,{color:shen.color}]}>“{shen.hero}”</Text>
   <Text style={s.todayMeta}>{completed}/{profile.dailyGoal} dakika · bugünkü ritmin</Text>
  </Screen>
 }
@@ -90,33 +100,46 @@ function PathItem({icon,title,detail,color,onPress}:{icon:keyof typeof Ionicons.
  return <Pressable onPress={onPress} style={[s.pathItem,{borderColor:`${color}30`}]}><View style={[s.pathIcon,{backgroundColor:`${color}14`}]}><Ionicons name={icon} color={color} size={21}/></View><View style={s.pathCopy}><Text style={s.pathTitle}>{title}</Text><Text style={s.pathDetail}>{detail}</Text></View><Ionicons name="chevron-forward" color={color} size={17}/></Pressable>
 }
 
+function calculatePracticeStreak(dates:string[]){
+ const days=new Set(dates.map(value=>{const date=new Date(value);return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`}));
+ let streak=0;
+ for(let offset=0;offset<365;offset+=1){
+  const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()-offset);
+  const key=`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  if(days.has(key)){streak+=1;continue}
+  if(offset===0)continue;
+  break;
+ }
+ return streak;
+}
+
 const s=StyleSheet.create({
  header:{alignItems:'center',flexDirection:'row',justifyContent:'space-between',paddingTop:4},
  brand:{alignItems:'center',flexDirection:'row',gap:10},
- brandMark:{fontFamily:fonts.display,fontSize:29,textShadowColor:'rgba(255,255,255,.15)',textShadowRadius:12},
- brandName:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:19,letterSpacing:3.4},
- brandMeta:{color:colors.muted,fontFamily:fonts.sansStrong,fontSize:7,letterSpacing:1.5,marginTop:1},
- modePicker:{backgroundColor:colors.surface,borderColor:colors.line,borderRadius:18,borderWidth:1,flexDirection:'row',gap:2,padding:5},
+ brandIcon:{width:42,height:42,borderRadius:21,borderWidth:1,alignItems:'center',justifyContent:'center',backgroundColor:colors.surface},
+ brandName:{color:colors.cream,fontFamily:fonts.sansStrong,fontSize:16},
+ brandMeta:{color:colors.muted,fontFamily:fonts.sans,fontSize:11,marginTop:2},
+ modePicker:{backgroundColor:colors.surface,borderColor:colors.line,borderRadius:18,borderWidth:1,flexDirection:'row',gap:2,maxWidth:'100%',padding:5,width:'100%'},
  modeChoice:{alignItems:'center',borderRadius:13,flex:1,gap:3,justifyContent:'center',minHeight:54,padding:4,position:'relative'},
  modeChoiceText:{color:colors.muted,fontFamily:fonts.sansMedium,fontSize:9,textAlign:'center'},
  modeChoiceTextActive:{color:colors.cream},
  modeUnderline:{backgroundColor:colors.gold,borderRadius:2,bottom:2,height:2,left:'28%',position:'absolute',right:'28%'},
  notify:{alignItems:'center',backgroundColor:'rgba(5,7,8,.7)',borderColor:colors.line,borderRadius:21,borderWidth:1,height:42,justifyContent:'center',position:'relative',width:42},
  notifyDot:{borderRadius:3,height:5,position:'absolute',right:6,top:6,width:5},
- sanctuary:{borderColor:colors.line,borderRadius:24,borderWidth:1,minHeight:650,overflow:'hidden',shadowColor:'#000',shadowOffset:{width:0,height:20},shadowOpacity:.28,shadowRadius:28,elevation:8},
+ sanctuary:{borderColor:colors.line,borderRadius:24,borderWidth:1,maxWidth:'100%',minHeight:460,overflow:'hidden',shadowColor:'#000',shadowOffset:{width:0,height:14},shadowOpacity:.18,shadowRadius:22,elevation:4,width:'100%'},
  sanctuaryImage:{borderRadius:24},
- sanctuaryShade:{flex:1,minHeight:650,padding:spacing.lg},
+ sanctuaryShade:{flex:1,minHeight:460,padding:20},
  soundRow:{alignItems:'center',flexDirection:'row',justifyContent:'space-between'},
  eyebrow:{fontFamily:fonts.sansBold,fontSize:9,letterSpacing:1.8},
  sound:{alignItems:'center',backgroundColor:'rgba(7,16,13,.74)',borderColor:colors.line,borderRadius:18,borderWidth:1,height:36,justifyContent:'center',width:36},
  sanctuaryBody:{flex:1,justifyContent:'flex-end',paddingBottom:18},
  titleRow:{alignItems:'baseline',flexDirection:'row',gap:11},
- shenTitle:{color:colors.cream,fontFamily:fonts.displayRegular,fontSize:43,letterSpacing:-1.1,lineHeight:46},
+ shenTitle:{color:colors.cream,fontFamily:fonts.displayRegular,fontSize:40,letterSpacing:-.7,lineHeight:44},
  han:{borderColor:'rgba(198,165,106,.45)',borderRadius:8,borderWidth:1,color:colors.gold,fontFamily:fonts.display,fontSize:16,lineHeight:30,textAlign:'center',width:30},
  essence:{color:colors.cream,fontFamily:fonts.sansMedium,fontSize:16,letterSpacing:-.2,marginBottom:9},
  prompt:{color:colors.muted,fontFamily:fonts.sans,fontSize:13,lineHeight:20,maxWidth:330},
  tradition:{color:colors.muted,fontFamily:fonts.sans,fontSize:9,lineHeight:14,marginTop:8},
- balanceCard:{backgroundColor:'rgba(7,16,13,.90)',borderColor:colors.line,borderRadius:18,borderWidth:1,gap:8,marginBottom:12,padding:14},
+ balanceCard:{backgroundColor:'rgba(17,23,19,.94)',borderColor:colors.line,borderRadius:18,borderWidth:1,gap:8,marginBottom:12,padding:14},
  balanceTitle:{color:colors.cream,fontFamily:fonts.sansStrong,fontSize:11},
  balanceMetric:{alignItems:'center',flexDirection:'row',gap:10},
  balanceLabel:{width:54},
@@ -126,14 +149,14 @@ const s=StyleSheet.create({
  energyTerm:{color:colors.muted,fontFamily:fonts.sans,fontSize:7},
  energyValue:{color:colors.cream,fontFamily:fonts.sansMedium,fontSize:10,textAlign:'right',width:31},
  percent:{fontFamily:fonts.sansMedium,fontSize:8},
- ritual:{alignItems:'center',backgroundColor:'rgba(7,16,13,.94)',borderColor:colors.line,borderRadius:18,borderWidth:1,flexDirection:'row',gap:11,padding:12},
+ ritual:{alignItems:'center',backgroundColor:'rgba(17,23,19,.96)',borderColor:colors.line,borderRadius:18,borderWidth:1,flexDirection:'row',gap:11,padding:12},
  ritualIcon:{alignItems:'center',borderRadius:14,borderWidth:1,height:48,justifyContent:'center',width:48},
  ritualSymbol:{fontFamily:fonts.display,fontSize:22},
  ritualCopy:{flex:1,gap:2},
  ritualKicker:{color:colors.muted,fontFamily:fonts.sansStrong,fontSize:7,letterSpacing:1.1},
  ritualTitle:{color:colors.cream,fontFamily:fonts.sansStrong,fontSize:14},
  ritualMeta:{color:colors.muted,fontFamily:fonts.sans,fontSize:9},
- start:{alignItems:'center',borderColor:colors.gold,borderRadius:999,borderWidth:1,flexDirection:'row',gap:6,justifyContent:'center',minHeight:44,paddingHorizontal:13},
+ start:{alignItems:'center',backgroundColor:colors.surface2,borderColor:colors.gold,borderRadius:16,borderWidth:1,flexDirection:'row',gap:6,justifyContent:'center',minHeight:48,paddingHorizontal:13},
  startText:{color:colors.cream,fontFamily:fonts.sansStrong,fontSize:9},
  sectionHead:{alignItems:'flex-end',flexDirection:'row',justifyContent:'space-between',marginTop:4},
  sectionTitle:{color:colors.cream,fontFamily:fonts.display,fontSize:30,lineHeight:32},
@@ -149,6 +172,9 @@ const s=StyleSheet.create({
  needOptions:{flexDirection:'row',gap:7},
  needOption:{alignItems:'center',backgroundColor:'rgba(255,255,255,.025)',borderColor:colors.line,borderRadius:16,borderWidth:1,flex:1,gap:6,minHeight:72,justifyContent:'center',padding:6},
  needLabel:{color:colors.cream,fontFamily:fonts.sansMedium,fontSize:9,textAlign:'center'},
- quote:{fontFamily:fonts.display,fontSize:18,fontStyle:'italic',lineHeight:25,paddingHorizontal:20,textAlign:'center'},
+ dailyNotes:{flexDirection:'row',gap:8,maxWidth:'100%',width:'100%'},
+ dailyNote:{alignItems:'center',backgroundColor:colors.surface,borderColor:colors.line,borderRadius:16,borderWidth:1,flex:1,gap:4,justifyContent:'center',minHeight:70,minWidth:0,paddingHorizontal:5},
+ noteValue:{color:colors.cream,fontFamily:fonts.metric,fontSize:11,textAlign:'center'},
+ noteLabel:{color:colors.muted,fontFamily:fonts.sans,fontSize:8,marginTop:1,textAlign:'center'},
  todayMeta:{color:colors.muted,fontFamily:fonts.sans,fontSize:9,letterSpacing:.8,textAlign:'center'},
 });

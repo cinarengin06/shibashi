@@ -3,7 +3,7 @@ import {StyleSheet,View} from 'react-native';
 import {WebView,WebViewMessageEvent} from 'react-native-webview';
 
 export type PoseLandmark={x:number;y:number;z:number;visibility:number};
-export type PoseAnalysis={landmarks:PoseLandmark[];confidence:number};
+export type PoseAnalysis={landmarks:PoseLandmark[];confidence:number;imageWidth:number;imageHeight:number};
 export type MediaPipePoseBridgeRef={analyze:(base64:string)=>Promise<PoseAnalysis>;ready:boolean};
 
 const html=String.raw`<!doctype html>
@@ -30,7 +30,7 @@ async function analyze(raw){
     try {
       const result=landmarker.detect(image);
       const landmarks=result.landmarks?.[0]||[];
-      send({type:"result",id:request.id,landmarks});
+      send({type:"result",id:request.id,landmarks,imageWidth:image.naturalWidth,imageHeight:image.naturalHeight});
     } catch(error) { send({type:"result-error",id:request.id,message:String(error)}); }
   };
   image.onerror=()=>send({type:"result-error",id:request.id,message:"Görüntü okunamadı"});
@@ -40,27 +40,35 @@ async function analyze(raw){
 
 export const MediaPipePoseBridge=forwardRef<MediaPipePoseBridgeRef>(function MediaPipePoseBridge(_,ref){
  const webRef=useRef<WebView>(null);
- const pending=useRef(new Map<string,{resolve:(value:PoseAnalysis)=>void;reject:(error:Error)=>void}>());
+ const pending=useRef(new Map<string,{resolve:(value:PoseAnalysis)=>void;reject:(error:Error)=>void;timeout:ReturnType<typeof setTimeout>}>());
  const[ready,setReady]=useState(false);
+ const[loadError,setLoadError]=useState('');
  useImperativeHandle(ref,()=>({
   ready,
   analyze:(base64:string)=>new Promise((resolve,reject)=>{
+   if(loadError){reject(new Error(loadError));return}
    if(!ready){reject(new Error('MediaPipe modeli henüz hazır değil'));return}
    const id=`pose-${Date.now()}-${Math.random()}`;
-   pending.current.set(id,{resolve,reject});
+   const timeout=setTimeout(()=>{
+    pending.current.delete(id);
+    reject(new Error('Poz analizi zaman aşımına uğradı'));
+   },12000);
+   pending.current.set(id,{resolve,reject,timeout});
    webRef.current?.postMessage(JSON.stringify({type:'analyze',id,base64}));
   }),
- }),[ready]);
+ }),[ready,loadError]);
  const onMessage=(event:WebViewMessageEvent)=>{
-  const message=JSON.parse(event.nativeEvent.data) as {type:string;id?:string;landmarks?:PoseLandmark[];message?:string};
-  if(message.type==='ready'){setReady(true);return}
+  const message=JSON.parse(event.nativeEvent.data) as {type:string;id?:string;landmarks?:PoseLandmark[];imageWidth?:number;imageHeight?:number;message?:string};
+  if(message.type==='ready'){setLoadError('');setReady(true);return}
+  if(message.type==='error'){setLoadError(message.message||'MediaPipe modeli yüklenemedi');return}
   if(!message.id)return;
   const request=pending.current.get(message.id);
   if(!request)return;
   pending.current.delete(message.id);
+  clearTimeout(request.timeout);
   if(message.type==='result'&&message.landmarks?.length){
    const confidence=message.landmarks.reduce((sum,item)=>sum+(item.visibility??0),0)/message.landmarks.length;
-   request.resolve({landmarks:message.landmarks,confidence});
+   request.resolve({landmarks:message.landmarks,confidence,imageWidth:message.imageWidth??1,imageHeight:message.imageHeight??1});
   }else request.reject(new Error(message.message||'Poz algılanamadı'));
  };
  return <View pointerEvents="none" style={styles.hidden}><WebView ref={webRef} source={{html}} javaScriptEnabled onMessage={onMessage} originWhitelist={['*']}/></View>;

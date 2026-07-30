@@ -1,37 +1,73 @@
+import {useEventListener} from 'expo';
 import {router} from 'expo-router';
-import {useEffect,useRef} from 'react';
-import {Animated,Easing,Image,Pressable,StyleSheet,Text,View} from 'react-native';
+import {useVideoPlayer,VideoView} from 'expo-video';
+import {useCallback,useEffect,useRef,useState} from 'react';
+import {Image,Pressable,StyleSheet,Text,View} from 'react-native';
 import {colors} from '../constants/theme';
 
-const splashImage=require('../assets/shibashi-splash.png');
+const introVideo=require('../assets/intro/intro-gate.mp4');
+const introPoster=require('../assets/intro/intro-gate-poster-hq-v2.png');
+const VIDEO_PLAYBACK_RATE=0.82;
+const VIDEO_DURATION_MS=Math.round((10000/VIDEO_PLAYBACK_RATE)*1000);
+
 export default function Welcome(){
- const opacity=useRef(new Animated.Value(0)).current;
- const scale=useRef(new Animated.Value(1.012)).current;
+ const[firstFrameReady,setFirstFrameReady]=useState(false);
+ const navigationStarted=useRef(false);
+ const player=useVideoPlayer(introVideo,current=>{
+  current.loop=false;
+  current.muted=true;
+  current.playbackRate=VIDEO_PLAYBACK_RATE;
+ });
+ const finish=useCallback(()=>{
+  if(navigationStarted.current)return;
+  navigationStarted.current=true;
+  router.replace('/auth');
+ },[]);
+
+ useEventListener(player,'playToEnd',finish);
+ useEventListener(player,'statusChange',({status})=>{
+  if(status==='error')finish();
+ });
 
  useEffect(()=>{
-  const motion=Animated.parallel([
-   Animated.timing(opacity,{toValue:1,duration:700,easing:Easing.out(Easing.cubic),useNativeDriver:true}),
-   Animated.timing(scale,{toValue:1.035,duration:5000,easing:Easing.inOut(Easing.cubic),useNativeDriver:true}),
-  ]);
-  motion.start();
-  const timer=setTimeout(()=>router.replace('/onboarding'),5000);
-  return()=>{clearTimeout(timer);motion.stop()};
- },[opacity,scale]);
+  player.playbackRate=VIDEO_PLAYBACK_RATE;
+  player.play();
+  const timer=setTimeout(finish,VIDEO_DURATION_MS+1500);
+  return()=>{clearTimeout(timer)};
+ },[finish,player]);
 
  return <View style={w.root}>
-  <Animated.View style={[StyleSheet.absoluteFill,{opacity,transform:[{scale}]}]}>
-   <Image source={splashImage} resizeMode="cover" fadeDuration={0} style={StyleSheet.absoluteFill}/>
-  </Animated.View>
-  <Pressable accessibilityLabel="Açılışı geç" onPress={()=>router.replace('/onboarding')} style={w.skip}>
-   <Text style={w.skipText}>Dokun ve başla</Text>
-   <View style={w.progressTrack}><Animated.View style={[w.progress,{transform:[{scaleX:scale.interpolate({inputRange:[1.012,1.035],outputRange:[0,1]})}]}]}/></View>
+  <Image accessibilityIgnoresInvertColors source={introPoster} resizeMode="cover" style={StyleSheet.absoluteFill}/>
+  <VideoView
+   contentFit="cover"
+   nativeControls={false}
+   onFirstFrameRender={()=>setFirstFrameReady(true)}
+   player={player}
+   playsInline
+   style={[StyleSheet.absoluteFill,!firstFrameReady&&w.videoLoading]}
+   surfaceType="textureView"
+   useExoShutter={false}
+  />
+  <View style={w.scrim}/>
+  <Pressable accessibilityLabel="Onboarding videosunu geç" onPress={finish} style={w.skip}>
+   <Text style={w.skipText}>Atla</Text>
   </Pressable>
- </View>
+  <View style={w.copy}>
+   <Text style={w.eyebrow}>İÇSEL YOLCULUK</Text>
+   <Text style={w.title}>Günün ritmine yaklaş.</Text>
+   <Text style={w.body}>Suyu, nefesi ve hareketin doğal hızını izle. Birazdan sana uygun ilk adımı birlikte seçeceğiz.</Text>
+  </View>
+ </View>;
 }
+
 const w=StyleSheet.create({
- root:{flex:1,backgroundColor:colors.ink,overflow:'hidden'},
- skip:{position:'absolute',bottom:28,left:'50%',transform:[{translateX:-76}],width:152,minHeight:42,paddingHorizontal:14,borderRadius:24,borderWidth:1,borderColor:'rgba(239,197,93,.48)',backgroundColor:'rgba(3,10,6,.66)',alignItems:'center',justifyContent:'center',gap:5},
- skipText:{color:'#f3d27a',fontSize:10,fontWeight:'800',letterSpacing:1.35,textTransform:'uppercase'},
- progressTrack:{height:2,width:54,overflow:'hidden',borderRadius:2,backgroundColor:'rgba(243,210,122,.2)'},
- progress:{height:2,width:54,borderRadius:2,backgroundColor:'#f3d27a',transformOrigin:'left'},
+ root:{flex:1,backgroundColor:'#020604',overflow:'hidden'},
+ videoLoading:{opacity:0},
+ scrim:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(2,6,4,.18)',borderBottomWidth:260,borderBottomColor:'rgba(2,6,4,.52)'},
+ copy:{position:'absolute',bottom:58,left:24,right:24,gap:7},
+ eyebrow:{color:'#D8C394',fontSize:10,fontWeight:'900',letterSpacing:1.8},
+ title:{color:colors.cream,fontFamily:'DMSerifDisplay_400Regular',fontSize:34,lineHeight:38},
+ body:{color:colors.muted,fontSize:13,lineHeight:19,maxWidth:340},
+ skip:{position:'absolute',right:18,top:56,minHeight:38,minWidth:72,paddingHorizontal:16,borderRadius:20,borderWidth:1,borderColor:'rgba(239,197,93,.4)',backgroundColor:'rgba(3,10,6,.66)',alignItems:'center',justifyContent:'center'},
+ skipText:{color:'#F3D27A',fontSize:10,fontWeight:'800',letterSpacing:1.35,textTransform:'uppercase'},
 });

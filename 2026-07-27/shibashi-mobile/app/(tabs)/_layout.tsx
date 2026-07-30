@@ -11,9 +11,9 @@ export default function TabLayout(){
   headerShown:false,
   tabBarActiveTintColor:shen.color,
   tabBarInactiveTintColor:colors.muted,
-  tabBarStyle:{position:'absolute',height:82,paddingTop:9,paddingBottom:13,backgroundColor:'rgba(5,7,8,.96)',borderTopColor:`${shen.color}30`,borderTopWidth:1},
+  tabBarStyle:{position:'absolute',height:78,paddingTop:8,paddingBottom:12,backgroundColor:colors.deep,borderTopColor:colors.line,borderTopWidth:1},
   tabBarLabelStyle:{fontSize:10,fontFamily:fonts.sansStrong},
-  tabBarIcon:({color,size,focused})=><Ionicons name={icons[route.name]} size={route.name==='practice'&&focused?30:size} color={color}/>,
+  tabBarIcon:({color,size})=><Ionicons name={icons[route.name]} size={size} color={color}/>,
  })}>
   <Tabs.Screen name="index" options={{title:'Bugün'}}/>
   <Tabs.Screen name="journey" options={{title:'Yolculuk'}}/>

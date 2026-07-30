@@ -1,15 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { DM_Serif_Display, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 
-const cormorant = Cormorant_Garamond({
+const display = DM_Serif_Display({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "400",
 });
 
 const inter = Inter({
   variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const manrope = Manrope({
+  variable: "--font-metric",
   subsets: ["latin"],
 });
 
@@ -33,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body className={`${cormorant.variable} ${inter.variable}`}>{children}</body>
+      <body className={`${display.variable} ${inter.variable} ${manrope.variable}`}>{children}</body>
     </html>
   );
 }

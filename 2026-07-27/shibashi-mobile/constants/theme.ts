@@ -1,10 +1,12 @@
+import {palette,spacing as sharedSpacing,radii as sharedRadii} from '../../../packages/design-tokens';
+
 export const colors = {
-  ink:'#07100D', deep:'#0B130F', surface:'#101814', surface2:'#151F1A',
-  cream:'#F1EEE5', muted:'#A6ADA4', gold:'#C6A56A', amber:'#D2BE9C',
-  jade:'#86C7A0', line:'rgba(245,240,232,0.10)', danger:'#E08373',
-  white:'rgba(255,250,238,0.92)',
+  ink:palette.background, deep:palette.backgroundSecondary, surface:palette.card, surface2:palette.pressed,
+  cream:palette.text, muted:palette.textSecondary, gold:palette.gold, amber:'#D8C4A2',
+  jade:palette.success, line:palette.border, danger:palette.destructive,
+  white:'rgba(242,238,231,0.94)',
 };
-export const spacing={xs:6,sm:10,md:16,lg:24,xl:32,xxl:48};
-export const radii={sm:12,md:18,lg:26,pill:999};
-export const type={display:34,h1:28,h2:21,body:16,small:13};
-export const fonts={display:'CormorantGaramond_500Medium',displayRegular:'CormorantGaramond_400Regular',displayStrong:'CormorantGaramond_600SemiBold',sans:'Inter_400Regular',sansMedium:'Inter_500Medium',sansStrong:'Inter_600SemiBold',sansBold:'Inter_700Bold'};
+export const spacing={xs:sharedSpacing.x1,sm:sharedSpacing.x2,md:sharedSpacing.x4,lg:sharedSpacing.x6,xl:sharedSpacing.x8,xxl:sharedSpacing.x12};
+export const radii={sm:12,md:sharedRadii.control,lg:sharedRadii.cardLarge,pill:sharedRadii.round};
+export const type={display:40,h1:30,h2:22,body:16,small:13};
+export const fonts={display:'DMSerifDisplay_400Regular',displayRegular:'DMSerifDisplay_400Regular',displayStrong:'DMSerifDisplay_400Regular',sans:'Inter_400Regular',sansMedium:'Inter_500Medium',sansStrong:'Inter_600SemiBold',sansBold:'Inter_700Bold',metric:'Manrope_600SemiBold',metricStrong:'Manrope_700Bold'};

@@ -1,8 +1,12 @@
-node_modules
-.next
-.git
-.vercel
-*.zip
-*.log
-.DS_Store
-tsconfig.tsbuildinfo
+# The repository also contains the native Expo app; Vercel only needs the web app.
+2026-07-27/
+2026-07-29/
+node_modules/
+.next/
+android/
+ios/
+artifacts/
+.idea/
+.claude/
+*.tsbuildinfo
+package-lock 2.json

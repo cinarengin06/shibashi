@@ -13,16 +13,21 @@ const VIDEO_DURATION_MS=Math.round((10000/VIDEO_PLAYBACK_RATE)*1000);
 export default function Welcome(){
  const[firstFrameReady,setFirstFrameReady]=useState(false);
  const navigationStarted=useRef(false);
+ const mountedRef=useRef(true);
  const player=useVideoPlayer(introVideo,current=>{
   current.loop=false;
   current.muted=true;
   current.playbackRate=VIDEO_PLAYBACK_RATE;
  });
  const finish=useCallback(()=>{
-  if(navigationStarted.current)return;
+  if(navigationStarted.current||!mountedRef.current)return;
   navigationStarted.current=true;
+  // iOS can deliver the end event while the native player is already tearing
+  // down. Pause only while the shared object is still alive, and swallow the
+  // native exception if the route transition won the race.
+  try{if(player.playing)player.pause()}catch{}
   router.replace('/auth');
- },[]);
+ },[player]);
 
  useEventListener(player,'playToEnd',finish);
  useEventListener(player,'statusChange',({status})=>{
@@ -30,10 +35,13 @@ export default function Welcome(){
  });
 
  useEffect(()=>{
-  player.playbackRate=VIDEO_PLAYBACK_RATE;
-  player.play();
+  mountedRef.current=true;
+  try{
+   player.playbackRate=VIDEO_PLAYBACK_RATE;
+   if(player.status!=='error')player.play();
+  }catch{finish();return()=>{mountedRef.current=false}}
   const timer=setTimeout(finish,VIDEO_DURATION_MS+1500);
-  return()=>{clearTimeout(timer)};
+  return()=>{mountedRef.current=false;clearTimeout(timer)};
  },[finish,player]);
 
  return <View style={w.root}>

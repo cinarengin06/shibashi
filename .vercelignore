@@ -1,12 +1,11 @@
-# The repository also contains the native Expo app; Vercel only needs the web app.
-2026-07-27/
-2026-07-29/
-node_modules/
-.next/
-android/
-ios/
-artifacts/
-.idea/
-.claude/
+2026-07-27/shibashi-mobile
+2026-08-01
+posture-analysis-full
+posture-fix-package
+design
+node_modules
+.next
+.git
+*.zip
 *.tsbuildinfo
 package-lock 2.json

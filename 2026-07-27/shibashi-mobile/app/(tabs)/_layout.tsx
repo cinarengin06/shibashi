@@ -3,7 +3,7 @@ import {Tabs} from 'expo-router';
 import {colors,fonts} from '../../constants/theme';
 import {useShenExperience} from '../../store/ShenExperience';
 
-const icons:Record<string,keyof typeof Ionicons.glyphMap>={index:'sunny-outline',journey:'compass-outline',practice:'play-circle',journal:'book-outline',profile:'person-outline'};
+const icons:Record<string,keyof typeof Ionicons.glyphMap>={index:'sunny-outline',journey:'compass-outline',practice:'play-circle',pratik2:'analytics-outline',journal:'book-outline',profile:'person-outline'};
 
 export default function TabLayout(){
  const{shen}=useShenExperience();
@@ -18,6 +18,7 @@ export default function TabLayout(){
   <Tabs.Screen name="index" options={{title:'Bugün'}}/>
   <Tabs.Screen name="journey" options={{title:'Yolculuk'}}/>
   <Tabs.Screen name="practice" options={{title:'Pratik'}}/>
+  <Tabs.Screen name="pratik2" options={{title:'Pratik2'}}/>
   <Tabs.Screen name="journal" options={{title:'Günlük'}}/>
   <Tabs.Screen name="profile" options={{title:'Profil'}}/>
  </Tabs>

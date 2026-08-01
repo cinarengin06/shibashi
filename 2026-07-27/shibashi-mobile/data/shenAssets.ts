@@ -4,8 +4,8 @@ import {ShenId} from '../types';
 export const shenBackgrounds:Record<ShenId,ImageSourcePropType>={
  hun:require('../assets/shen/images/shen-river-hun.jpg'),
  shen:require('../assets/shen/images/shen-river-shen.jpg'),
- yi:require('../assets/shen/images/shen-river-yi.jpg'),
- po:require('../assets/shen/images/shen-river-po.jpg'),
+ yi:require('../assets/shen/images/shen-river-po.jpg'),
+ po:require('../assets/shen/images/shen-river-yi.jpg'),
  zhi:require('../assets/shen/images/shen-river-zhi.jpg'),
 };
 export const shenMusic:Record<ShenId,number>={

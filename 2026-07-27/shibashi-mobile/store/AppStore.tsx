@@ -50,7 +50,7 @@ type State=PersistedState&{
 };
 
 const initialProfile:UserProfile={name:'Gezgin',experience:'Yeni',dailyGoal:10,reminders:true,onboardingDone:false,onboardingVersion:0,selectedShenId:'shen',soundEnabled:true};
-const initialPreferences:PracticePreferences={ghostMode:'follow',traceMode:'compare',ghostOpacity:.28,voiceEnabled:true};
+const initialPreferences:PracticePreferences={ghostMode:'follow',traceMode:'compare',ghostOpacity:.58,voiceEnabled:true};
 const initialData:PersistedState={profile:initialProfile,sessions:[],entries:[],postureReports:[],completedStories:[],shenActivities:[],reflections:[],savedMasterSentences:[],practicePreferences:initialPreferences};
 const Context=createContext<State|null>(null);
 

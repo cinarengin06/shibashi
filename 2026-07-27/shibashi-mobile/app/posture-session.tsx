@@ -137,7 +137,14 @@ export default function PostureSession(){
     setScanState('capturing');
     const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
     const source=vision3D?'vision-3d+mediapipe-33' as const:'mediapipe-33' as const;
-    const item={...aggregatePostureCaptures(view,stableCapturesRef.current),analysisSource:source,bodyHeightMeters:vision3D?.bodyHeightMeters};
+    const item={
+     ...aggregatePostureCaptures(view,stableCapturesRef.current),
+     analysisSource:source,
+     bodyHeightMeters:vision3D?.bodyHeightMeters,
+     // Son sabit kareyi rapora ekle: geçmişteki model doğrudan kişinin kendi görüntüsünün üzerine oturur.
+     imageData:`data:image/jpeg;base64,${photo.base64}`,
+     landmarks:analysis.landmarks.map(point=>({x:point.x,y:point.y,z:point.z,visibility:point.visibility})),
+    };
     const nextCaptures=[...capturesRef.current.filter(saved=>saved.view!==view),item];
     capturesRef.current=nextCaptures;
     setCaptures(nextCaptures);

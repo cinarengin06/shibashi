@@ -10,6 +10,12 @@ export const ghostTeacherSequences:GhostTeacherSequence[]=[
  {id:'ghost-movement-1',movementId:'movement-1',durationMs:8000,recommendedView:'front',source:'reference-sequence',frames:[
   frame(0,'hazırlık',0,0),frame(1000,'yükselme',.25,0),frame(2000,'yükselme',.55,0),frame(3000,'açılma',.8,-.015),frame(4000,'açık',1,-.025),frame(5000,'iniş',.7,-.01),frame(6500,'iniş',.3,0),frame(8000,'kapanış',0,0),
  ]},
+ {id:'ghost-movement-2',movementId:'movement-2',durationMs:8000,recommendedView:'front',source:'reference-sequence',frames:[
+  frame(0,'hazırlık',0,0),frame(1000,'açılma',.35,-.01),frame(2000,'açılma',.7,-.02),frame(3000,'açık',1,-.03),frame(4200,'dönüş',.75,.02),frame(5400,'dönüş',.45,.035),frame(6800,'kapanış',.2,.01),frame(8000,'kapanış',0,0),
+ ]},
+ {id:'ghost-movement-3',movementId:'movement-3',durationMs:8000,recommendedView:'front',source:'reference-sequence',frames:[
+  frame(0,'hazırlık',0,0),frame(900,'yükselme',.3,.01),frame(1900,'yükselme',.65,.025),frame(3000,'uzama',.95,.04),frame(4300,'uzama',1,.05),frame(5600,'iniş',.6,.02),frame(6900,'iniş',.25,-.01),frame(8000,'kapanış',0,0),
+ ]},
 ];
 export const getGhostSequence=(movementId:string)=>ghostTeacherSequences.find(item=>item.movementId===movementId);
 export function getInterpolatedGhostFrame(sequence:GhostTeacherSequence|undefined,elapsedMs:number){

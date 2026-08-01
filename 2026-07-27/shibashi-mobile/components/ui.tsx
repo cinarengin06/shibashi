@@ -7,6 +7,7 @@ import {colors,fonts,radii,spacing,type} from '../constants/theme';
 import {fiveShen} from '../data/fiveShen';
 import {shenBackgrounds} from '../data/shenAssets';
 import {useShenExperience} from '../store/ShenExperience';
+import {shenThemes} from '../../../packages/design-tokens';
 
 export function Screen({children,scroll=true,style}:{children:React.ReactNode;scroll?:boolean;style?:ViewStyle}){
  const{width}=useWindowDimensions();
@@ -22,17 +23,18 @@ export function Screen({children,scroll=true,style}:{children:React.ReactNode;sc
 
 export function ShenBackdrop({opacity=1,borderRadius=0}:{opacity?:number;borderRadius?:number}){
  const{shen}=useShenExperience();
+ const personality=shenThemes[shen.id];
  const fades=useRef(Object.fromEntries(fiveShen.map(item=>[item.id,new Animated.Value(item.id===shen.id?opacity:0)]))).current;
 
  useEffect(()=>{
   const animation=Animated.parallel(fiveShen.map(item=>Animated.timing(fades[item.id],{
    toValue:item.id===shen.id?opacity:0,
-   duration:420,
+   duration:personality.transitionMs,
    useNativeDriver:true,
   })));
   animation.start();
   return()=>animation.stop();
- },[fades,opacity,shen.id]);
+ },[fades,opacity,personality.transitionMs,shen.id]);
 
  return <View pointerEvents="none" style={[StyleSheet.absoluteFill,{borderRadius,overflow:'hidden'}]}>
   {fiveShen.map(item=><Animated.Image
@@ -45,18 +47,20 @@ export function ShenBackdrop({opacity=1,borderRadius=0}:{opacity?:number;borderR
 }
 
 export function Eyebrow({children}:PropsWithChildren){return <Text style={s.eyebrow}>{children}</Text>}
-export function Title({children}:PropsWithChildren){return <Text style={s.title}>{children}</Text>}
+export function Title({children}:PropsWithChildren){const{shen}=useShenExperience();const personality=shenThemes[shen.id];return <Text style={[s.title,{fontFamily:personality.headingWeight==='600'?fonts.displayStrong:personality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular,letterSpacing:shen.id==='zhi'?.4:shen.id==='yi'?-.35:shen.id==='shen'?.6:0}]}>{children}</Text>}
 export function Section({title,action,children}:{title:string;action?:string;children:React.ReactNode}){
  return <View style={s.section}><View style={s.sectionHead}><Text style={s.sectionTitle}>{title}</Text>{action&&<Text style={s.action}>{action}</Text>}</View>{children}</View>;
 }
 export function Card({children,style}:{children:React.ReactNode;style?:StyleProp<ViewStyle>}){
- return <View style={[s.card,style]}>{children}</View>;
+ const{shen}=useShenExperience();const personality=shenThemes[shen.id];
+ return <View style={[s.card,{backgroundColor:personality.surface,borderColor:`${personality.primary}35`,borderRadius:Math.min(28,personality.controlRadius+8)},style]}>{children}</View>;
 }
 export function PrimaryButton({label,onPress,icon='arrow-forward',disabled=false}:{label:string;onPress:()=>void;icon?:keyof typeof Ionicons.glyphMap;disabled?:boolean}){
  const{shen}=useShenExperience();
- return <Pressable disabled={disabled} onPress={()=>{Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);onPress()}} style={({pressed})=>[s.button,pressed&&s.buttonPressed,disabled&&s.buttonDisabled]}>
-  <View style={[s.buttonInner,{backgroundColor:shen.color2,borderColor:shen.color}]}>
-   <Text style={s.buttonText}>{label}</Text><Ionicons name={icon} size={20} color={colors.cream}/>
+ const personality=shenThemes[shen.id];
+ return <Pressable disabled={disabled} onPress={()=>{Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);onPress()}} style={({pressed})=>[s.button,{borderRadius:personality.controlRadius},pressed&&s.buttonPressed,disabled&&s.buttonDisabled]}>
+  <View style={[s.buttonInner,{backgroundColor:personality.button,borderColor:personality.light,borderRadius:personality.controlRadius}]}>
+   <Text style={[s.buttonText,{color:personality.buttonInk}]}>{label}</Text><Ionicons name={icon} size={20} color={personality.buttonInk}/>
   </View>
  </Pressable>;
 }

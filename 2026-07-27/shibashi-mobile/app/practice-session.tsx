@@ -48,6 +48,7 @@ export default function PracticeSession(){
  const[trailVersion,setTrailVersion]=useState(0);
  const movement=movements.find(item=>item.id===list[index])||movements[0];
  const sequence=getGhostSequence(movement.id);
+ const locked=!sequence;
  const sentence=useMemo(()=>getMasterSentence(shenId,movement.order-1),[shenId,movement.order]);
  const referenceFrame=getInterpolatedGhostFrame(sequence,motionTime);
  secondsRef.current=seconds;
@@ -100,6 +101,7 @@ export default function PracticeSession(){
 
  if(!permission)return <View style={c.permission}/>;
  if(!permission.granted)return <SafeAreaView style={c.permission}><View style={c.permissionIcon}><Ionicons name="camera-outline" size={42} color={colors.gold}/></View><Text style={c.permissionTitle}>Kamera rehberini aç</Text><Text style={c.permissionBody}>Görüntün kaydedilmez veya sunucuya gönderilmez. Poz ölçümü cihazdaki akışta işlenir.</Text><PrimaryButton label="Kameraya izin ver" icon="camera" onPress={requestPermission}/><Pressable onPress={()=>router.back()}><Text style={c.cancel}>Şimdi değil</Text></Pressable></SafeAreaView>;
+ if(locked)return <SafeAreaView style={c.permission}><View style={c.permissionIcon}><Ionicons name="lock-closed" size={42} color={colors.gold}/></View><Text style={c.permissionTitle}>Bu hareket kilitli</Text><Text style={c.permissionBody}>Gerçek zamanlı analiz şu anda ilk üç harekette açık. Bu hareketin referans modeli hazır olduğunda otomatik açılacak.</Text><PrimaryButton label="Hareketlere dön" icon="arrow-back" onPress={()=>router.back()}/></SafeAreaView>;
 
  return <View style={c.root}>
   <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing={facing} active={!paused} mirror={facing==='front'}/>
@@ -118,15 +120,15 @@ export default function PracticeSession(){
 }
 
 function GhostCanvas({frame,ghostMode,traceMode,userPose,trails,opacity,sequence,timeMs}:{frame?:ReferencePoseFrame;ghostMode:GhostMode;traceMode:TraceMode;userPose:PoseKeypoint[];trails:Record<'left'|'right'|'center',TrailPoint[]>;trailVersion:number;opacity:number;sequence:ReturnType<typeof getGhostSequence>;timeMs:number}){
- const ghost=frame?.keypoints??[];const mirror=ghostMode==='mirror';
+ const ghost=frame?.keypoints??[];const mirror=ghostMode==='mirror',visibleOpacity=Math.max(.58,opacity);
  const point=(points:PoseKeypoint[],name:string)=>points.find(item=>item.name===name);
  const line=(points:PoseKeypoint[],start:string,end:string,color:string,width:number,key:string,alpha=1)=>{const a=point(points,start),b=point(points,end);if(!a||!b)return null;return <Line key={key} x1={(mirror?1-a.x:a.x)*100} y1={a.y*100} x2={(mirror?1-b.x:b.x)*100} y2={b.y*100} stroke={color} strokeOpacity={alpha} strokeWidth={width}/>};
  const trailPoints=(items:TrailPoint[],flip=false)=>items.map(item=>`${(flip?1-item.x:item.x)*100},${item.y*100}`).join(' ');
  const teacherTime=sequence?timeMs%sequence.durationMs:0;
  const teacherTrail=(name:string)=>sequence?.frames.filter(item=>item.timestampMs<=teacherTime&&teacherTime-item.timestampMs<=2500).flatMap(item=>item.keypoints.filter(point=>point.name===name).map(point=>({x:point.x,y:point.y,at:item.timestampMs})))??[];
- return <View pointerEvents="none" style={StyleSheet.absoluteFill}><Svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="none">
-  {frame&&ghostMode!=='trace'&&skeletonConnections.map(([a,b],index)=>line(ghost,a,b,'#C6A56A',.32,`g-${index}`,opacity))}
-  {frame&&ghostMode!=='trace'&&ghost.map(item=><Circle key={`gp-${item.name}`} cx={(mirror?1-item.x:item.x)*100} cy={item.y*100} r=".55" fill="#C6A56A" fillOpacity={opacity}/>)}
+ return <View pointerEvents="none" style={StyleSheet.absoluteFill}><Svg viewBox="5 2 90 96" width="100%" height="100%" preserveAspectRatio="none">
+  {frame&&ghostMode!=='trace'&&skeletonConnections.map(([a,b],index)=>line(ghost,a,b,'#F3CF8B',.58,`g-${index}`,visibleOpacity))}
+  {frame&&ghostMode!=='trace'&&ghost.map(item=><Circle key={`gp-${item.name}`} cx={(mirror?1-item.x:item.x)*100} cy={item.y*100} r=".82" fill="#FFF0BD" stroke="#F3CF8B" strokeWidth=".18" fillOpacity={visibleOpacity}/>)}
   {userPose.length>0&&skeletonConnections.map(([a,b],index)=>line(userPose,a,b,'#A9D977',.28,`u-${index}`,.85))}
   {(ghostMode==='trace'||traceMode==='teacher'||traceMode==='compare')&&frame?<><Polyline points={trailPoints(teacherTrail('left_wrist'),mirror)} fill="none" stroke="#C6A56A" strokeOpacity=".45" strokeWidth=".35"/><Polyline points={trailPoints(teacherTrail('right_wrist'),mirror)} fill="none" stroke="#C6A56A" strokeOpacity=".45" strokeWidth=".35"/></>:null}
   {(traceMode==='user'||traceMode==='compare')&&(['left','right','center']as const).map(name=><Polyline key={name} points={trailPoints(trails[name],true)} fill="none" stroke={name==='center'?'#F2EEE7':'#A9D977'} strokeOpacity={name==='center'?'.52':'.78'} strokeWidth={name==='center'?'.25':'.38'}/>)}

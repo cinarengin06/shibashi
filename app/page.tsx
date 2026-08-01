@@ -2,13 +2,16 @@
 
 import type { CSSProperties, Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LivePose3D } from "@/components/tai-chi/LivePose3D";
 import { MovementCoach } from "@/components/tai-chi/MovementCoach";
 import { LivingLearningScreen } from "@/components/living-learning/LivingLearningScreen";
+import { Practice2Screen } from "@/features/practice2/components/Practice2Screen";
+import { PremiumOnboarding } from "@/features/onboarding/components/PremiumOnboarding";
+import type { LivingPracticeResult } from "@/packages/living-learning";
 import { ShibashiAuthGate } from "@/components/shibashi-auth-gate";
 import {getBrowserSyncCode,setBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
 import { useShibashiAuth } from "@/lib/supabase-auth";
 import { shenThemes } from "@/packages/design-tokens";
+import { getExperienceLayer, getJourneyDay } from "@/packages/experience-design";
 import {
   breathingPatterns,
   calculateShenProgress,
@@ -37,7 +40,7 @@ import {
   type TraceMode,
 } from "@/packages/shen-domain";
 
-type TabId = "home" | "practice" | "posture" | "journey" | "learning" | "journal" | "profile";
+type TabId = "home" | "practice" | "practice2" | "posture" | "journey" | "learning" | "journal" | "profile";
 type ShenId = "hun" | "shen" | "yi" | "po" | "zhi";
 type DeviceMode = "desktop" | "iphone" | "ipad";
 type PostureRenderMode = "3d" | "2d";
@@ -262,7 +265,7 @@ function toWebPostureReport(record:SyncRecord):PostureReport|null {
   return{
    view,
    createdAt:date,
-   imageData:"/images/posture/posture-back-translucent.png",
+   imageData:"",
    analysis:{axisScore,confidence,shoulderScore,hipScore,shoulderTilt:Number.isFinite(shoulderTilt)?shoulderTilt:0,hipTilt:Number.isFinite(hipTilt)?hipTilt:0,spineShift:Number.isFinite(spineShift)?spineShift:0,flags:[],feedback:String(source?.feedback??"App ölçümü senkronize edildi.")},
   };
  };
@@ -518,16 +521,6 @@ function getMovementReferenceImage(movement: Movement) {
   return movementReferenceImages[movement.id] ?? movement.image;
 }
 
-const warmupReferenceImages: Record<WarmupLessonId, string> = {
-  wuji: "/images/shibashi-reference/01-acilis-formu.jpg",
-  warmup: "/images/shibashi-reference/02-bagrini-acmak.jpg",
-  kua: "/images/shibashi-reference/04-icten-disa.jpg",
-};
-
-function getWarmupReferenceImage(lessonId: WarmupLessonId) {
-  return warmupReferenceImages[lessonId];
-}
-
 function getInnerJourneyScene(movementId: number) {
   const index = Math.min(innerJourneyScenes.length - 1, Math.floor(((movementId - 1) / movements.length) * innerJourneyScenes.length));
   return innerJourneyScenes[index] ?? innerJourneyScenes[0];
@@ -536,6 +529,7 @@ function getInnerJourneyScene(movementId: number) {
 const tabs: { id: TabId; label: string; icon: string }[] = [
   { id: "home", label: "Bugün", icon: "◉" },
   { id: "practice", label: "Pratik", icon: "◎" },
+  { id: "practice2", label: "Pratik2", icon: "⌁" },
   { id: "posture", label: "Postür", icon: "↕" },
   { id: "journey", label: "Bagua", icon: "☯" },
   { id: "learning", label: "Öğren", icon: "✦" },
@@ -549,7 +543,7 @@ const fiveShen = [
   {
     id: "hun",
     name: "Hun",
-    label: "Vizyon ve akış",
+    label: "Yön ve umut",
     value: 64,
     note: "Bugün geniş bakış açık.",
     organ: "Karaciğer",
@@ -569,8 +563,8 @@ const fiveShen = [
     task: "Bir karar vermeden önce yönünü tek cümleyle yaz.",
     mapStage: 4,
     mapTitle: "Hun Ormanı",
-    world: "Orman, rüzgâr, yeşil ışık ve ejderha sisleri",
-    essence: "Vizyon • Akış • Büyüme",
+    world: "Gün doğumu, rüzgâr, açık ufuk ve büyüyen yeşil",
+    essence: "Vizyon • Büyüme • Umut",
     motif: "orman",
     symbol: "木",
     element: "Ağaç • Karaciğer",
@@ -582,7 +576,7 @@ const fiveShen = [
   {
     id: "shen",
     name: "Shen",
-    label: "Bilinç ve neşe",
+    label: "Huzur ve birlik",
     value: 48,
     note: "Sakinleşmeye alan aç.",
     organ: "Kalp",
@@ -602,8 +596,8 @@ const fiveShen = [
     task: "Bir konuşmada cevap vermeden önce üç nefes bekle.",
     mapStage: 3,
     mapTitle: "Kalp Tapınağı",
-    world: "Gün doğumu, altın/kızıl ışık, tapınaklar ve fenerler",
-    essence: "Farkındalık • Neşe • Bilinç",
+    world: "Bütün elementlerin birleştiği yumuşak altın ışık",
+    essence: "Huzur • Birlik • Farkındalık",
     motif: "ates",
     symbol: "火",
     element: "Ateş • Kalp",
@@ -615,7 +609,7 @@ const fiveShen = [
   {
     id: "yi",
     name: "Yi",
-    label: "Odak ve istikrar",
+    label: "Dikkat ve iç denge",
     value: 72,
     note: "Pratik hedefi net.",
     organ: "Dalak",
@@ -623,7 +617,7 @@ const fiveShen = [
     point: { x: 50, y: 55 },
     color: shenThemes.yi.primary,
     color2: shenThemes.yi.dark,
-    image: "/images/shen-river-yi.jpg",
+    image: "/images/shen-river-po.jpg",
     music: "/videos/shen-music-yi.mp4",
     tone: 220,
     hero: "Merkezini kur, ritmi sade ve kararlı tut.",
@@ -635,8 +629,8 @@ const fiveShen = [
     task: "Bugünkü pratiğin niyetini tek kelime seç.",
     mapStage: 2,
     mapTitle: "Yi Toprağı",
-    world: "Buğday tarlaları, sıcak toprak ve merkez avlusu",
-    essence: "Odak • İstikrar • Düşünce",
+    world: "Sis, yumuşak ışık, dikkat ve sessiz iç denge",
+    essence: "Dikkat • Odak • İç denge",
     motif: "dag",
     symbol: "土",
     element: "Toprak • Dalak",
@@ -648,7 +642,7 @@ const fiveShen = [
   {
     id: "po",
     name: "Po",
-    label: "Beden ve duyum",
+    label: "Güven ve sakin güç",
     value: 58,
     note: "Omuzlarda çözülme bekliyor.",
     organ: "Akciğer",
@@ -656,7 +650,7 @@ const fiveShen = [
     point: { x: 59, y: 42 },
     color: shenThemes.po.primary,
     color2: shenThemes.po.dark,
-    image: "/images/shen-river-po.jpg",
+    image: "/images/shen-river-yi.jpg",
     music: "/videos/shen-music-po.mp4",
     tone: 174,
     hero: "Bedenin duyumunu dinle, bırakış göl gibi yayılsın.",
@@ -668,8 +662,8 @@ const fiveShen = [
     task: "Omuzları yumuşatıp bir dakika sadece nefesi izle.",
     mapStage: 7,
     mapTitle: "Po Gölü",
-    world: "Sis, göl, beyaz/gri ışık ve sessiz alanlar",
-    essence: "Beden • Bırakma • Duyum",
+    world: "Toprak tonları, ağır nefes, güven ve sakin merkez",
+    essence: "Güven • Merkez • Sakin güç",
     motif: "gol",
     symbol: "金",
     element: "Metal • Akciğer",
@@ -681,7 +675,7 @@ const fiveShen = [
   {
     id: "zhi",
     name: "Zhi",
-    label: "Derinlik ve irade",
+    label: "Sessizlik ve irade",
     value: 69,
     note: "Kısa tekrar yeterli.",
     organ: "Böbrek",
@@ -701,8 +695,8 @@ const fiveShen = [
     task: "Günün zor işini küçük, bitirilebilir bir adıma indir.",
     mapStage: 0,
     mapTitle: "Zhi Okyanusu",
-    world: "Derin okyanus, gece mavisi, kaplumbağa ve yıldızlı boşluk",
-    essence: "İrade • Derinlik • Güç",
+    world: "Gece, ay ışığı, derin su ve sessiz irade",
+    essence: "Sessizlik • Derinlik • İrade",
     motif: "okyanus",
     symbol: "水",
     element: "Su • Böbrek",
@@ -1106,6 +1100,7 @@ export default function RitimKapisiOS() {
   const [introVisible, setIntroVisible] = useState(true);
   const [introVideoVisible, setIntroVideoVisible] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [experienceDay, setExperienceDay] = useState(1);
   const [posturePreviewLive, setPosturePreviewLive] = useState(false);
   const [userName, setUserName] = useState("");
   const [selectedShenId, setSelectedShenId] = useState<ShenId>("shen");
@@ -1136,9 +1131,9 @@ export default function RitimKapisiOS() {
   const selectedShen = fiveShen.find((shen) => shen.id === selectedShenId) ?? fiveShen[1];
   const selectedCoach = aiCoaches.find((coach) => coach.id === selectedCoachId) ?? aiCoaches[0];
   const completion = useMemo(() => Math.round(((selectedMovement + 1) / 18) * 100), [selectedMovement]);
-  const journalUnlocked = practiceGallery.length > 0;
-  const journeyUnlocked = practiceGallery.length >= 3 || postureReports.length > 0;
-  const visibleTabs = tabs.filter((tab) => tab.id !== "journal" || journalUnlocked).filter((tab) => tab.id !== "journey" || journeyUnlocked);
+  const journalUnlocked = true;
+  const journeyUnlocked = true;
+  const visibleTabs = tabs;
   const energyScores = useMemo(
     () => getEnergyScores({
       completion,
@@ -1157,7 +1152,8 @@ export default function RitimKapisiOS() {
       previewMode === "posture" ||
       previewMode === "posture-live" ||
       previewMode === "journey" ||
-      previewMode === "practice";
+      previewMode === "practice" ||
+      previewMode === "practice2";
     if (isPreview) {
       setIntroVisible(false);
       setIntroVideoVisible(false);
@@ -1166,11 +1162,16 @@ export default function RitimKapisiOS() {
       if (previewMode === "posture-live") setPosturePreviewLive(true);
       if (previewMode === "journey") setActiveTab("journey");
       if (previewMode === "practice") setActiveTab("practice");
+      if (previewMode === "practice2") setActiveTab("practice2");
     }
-    // Başlangıç rehberi her yeni sayfa açılışında gösterilir.
     if (!isPreview) {
-      window.localStorage.removeItem("ritim-kapisi-onboarding-complete");
-      setOnboardingComplete(false);
+      setOnboardingComplete(window.localStorage.getItem("ritim-kapisi-onboarding-complete") === "true");
+    }
+    try {
+      const firstCheckin = JSON.parse(window.localStorage.getItem("ritim-kapisi-first-checkin") ?? "null") as { createdAt?: string } | null;
+      setExperienceDay(getJourneyDay(firstCheckin?.createdAt));
+    } catch {
+      setExperienceDay(1);
     }
     const savedUserName = window.localStorage.getItem("ritim-kapisi-user-name");
     if (savedUserName) setUserName(savedUserName);
@@ -1347,6 +1348,27 @@ export default function RitimKapisiOS() {
     });
   }
 
+  useEffect(() => {
+    const receiveLivingPractice = (event: Event) => {
+      const result = (event as CustomEvent<LivingPracticeResult>).detail;
+      if (!result?.id || result.sampleCount < 1) return;
+      const createdAt = new Date(result.completedAt);
+      savePracticeSnapshot({
+        id: result.id,
+        dateKey: formatSnapshotDate(createdAt),
+        timeLabel: formatSnapshotTime(createdAt),
+        createdAt: result.completedAt,
+        movementId: 5,
+        movementName: "Önden Arkaya İtme",
+        score: result.movementScore,
+        shenName: "Yaşayarak Öğrenme",
+        imageData: "/images/living-learning/yeni-gun.png",
+      });
+    };
+    window.addEventListener("shibashi:living-practice-saved", receiveLivingPractice);
+    return () => window.removeEventListener("shibashi:living-practice-saved", receiveLivingPractice);
+  }, [selectedShenId]);
+
   function savePostureReport(report: PostureReport) {
     void savePostureReportToIndexedDb(report);
     setPostureReports((current) => {
@@ -1415,8 +1437,8 @@ export default function RitimKapisiOS() {
   function completeOnboarding() {
     const trimmedName = userName.trim();
     if (trimmedName) window.localStorage.setItem("ritim-kapisi-user-name", trimmedName);
-    // Tamamlandığında mevcut oturumda uygulamaya geç; sayfa yeniden
-    // açıldığında rehber tekrar başlar.
+    window.localStorage.setItem("ritim-kapisi-onboarding-complete", "true");
+    setExperienceDay(1);
     setOnboardingComplete(true);
     setActiveTab("home");
   }
@@ -1592,20 +1614,16 @@ export default function RitimKapisiOS() {
             <span className="phone-camera" />
           </div>
         {!onboardingComplete ? (
-          <OnboardingScreen
-            onFinish={completeOnboarding}
-            onSelectShen={selectShen}
-            onUserNameChange={setUserName}
-            selectedShen={selectedShen}
-            selectedShenId={selectedShenId}
-            userName={userName}
-          />
+          <PremiumOnboarding embedded onComplete={completeOnboarding} />
         ) : null}
         {onboardingComplete && activeTab === "home" ? (
-          <HomeScreen
+          <DojoHomeScreen
+            earnedXp={practiceGallery.reduce((total, item) => total + Math.round(item.score), 0)}
             energyScores={energyScores}
             journeyUnlocked={journeyUnlocked}
             onJourney={() => setActiveTab("journey")}
+            onJournal={() => setActiveTab("journal")}
+            onLearning={() => setActiveTab("learning")}
             onPractice={() => setActiveTab("practice")}
             onPosture={() => setActiveTab("posture")}
             onSelectShen={selectShen}
@@ -1650,6 +1668,7 @@ export default function RitimKapisiOS() {
             latestPostureReport={postureReports[0]}
           />
         ) : null}
+        {onboardingComplete && activeTab === "practice2" ? <Practice2Screen embedded /> : null}
         {onboardingComplete && activeTab === "posture" ? (
           <PostureScreen
             onDeletePostureReport={deletePostureReport}
@@ -1904,6 +1923,177 @@ function IntroGateVideo({
         </div>
       </div>
     </div>
+  );
+}
+
+function DojoOnboardingScreen({
+  onFinish,
+  onSelectShen,
+  onUserNameChange,
+  selectedShen,
+  selectedShenId,
+  userName,
+}: {
+  onFinish: () => void;
+  onSelectShen: (shen: ShenId) => void;
+  onUserNameChange: (name: string) => void;
+  selectedShen: (typeof fiveShen)[number];
+  selectedShenId: ShenId;
+  userName: string;
+}) {
+  const [step, setStep] = useState(0);
+  const [nameError, setNameError] = useState("");
+  const [dailyState, setDailyState] = useState({ body: 54, breath: 62, energy: 48 });
+  const personality = shenThemes[selectedShen.id];
+  const intentions: ReadonlyArray<{ id: ShenId; title: string; note: string }> = [
+    { id: "po", title: "Biraz hafiflemek", note: "Günün yükünü omuzlarından bırakmak" },
+    { id: "yi", title: "Zihnimi sakinleştirmek", note: "Düşüncelerin hızını yavaşlatmak" },
+    { id: "shen", title: "Enerjimi uyandırmak", note: "Güne daha canlı devam etmek" },
+    { id: "zhi", title: "Dengemi bulmak", note: "Daha sağlam ve güvende hissetmek" },
+    { id: "hun", title: "Yönümü duymak", note: "Kendimle yeniden bağlantı kurmak" },
+  ];
+
+  const next = () => {
+    if (step === 0 && !userName.trim()) {
+      setNameError("Sana nasıl hitap edelim?");
+      return;
+    }
+    if (step === 5) {
+      if (!window.localStorage.getItem("ritim-kapisi-first-checkin")) {
+        window.localStorage.setItem("ritim-kapisi-first-checkin", JSON.stringify({ ...dailyState, createdAt: new Date().toISOString() }));
+      }
+      onFinish();
+      return;
+    }
+    if ("vibrate" in navigator && (step === 0 || step === 4)) navigator.vibrate(10);
+    setStep((current) => current + 1);
+  };
+
+  return (
+    <section className="dojo-onboarding" style={{ "--dojo-accent": selectedShen.color, "--dojo-scene": `url(${selectedShen.image})`, "--shen-surface": personality.surface, "--shen-surface-raised": personality.surfaceRaised, "--shen-button-primary": personality.button, "--shen-button-ink": personality.buttonInk, "--shen-control-radius": `${personality.controlRadius}px`, "--shen-heading-weight": personality.headingWeight, "--shen-heading-tracking": personality.headingTracking, "--shen-transition": `${personality.transitionMs}ms` } as CSSProperties}>
+      <div className="dojo-onboarding-scene" />
+      <div className="dojo-onboarding-shade" />
+      <header className="dojo-onboarding-head">
+        <span>SHIBASHI EFE</span>
+        <div>{Array.from({ length: 6 }).map((_, index) => <i className={index <= step ? "active" : ""} key={index} />)}</div>
+      </header>
+
+      <div className="dojo-onboarding-stage" key={step}>
+        {step === 0 ? <>
+          <div className="dojo-enso"><i /></div>
+          <span className="dojo-kicker">ÖNCE SESSİZLİK</span>
+          <h1>Buraya yetişmen gerekmiyor.</h1>
+          <p>Bir an dur. Ekranı değil, bulunduğun yeri fark et.</p>
+          <label className="dojo-name"><span>Sana nasıl hitap edelim?</span><input autoFocus maxLength={32} onChange={(event) => { onUserNameChange(event.target.value); setNameError(""); }} placeholder="Adın" value={userName} />{nameError ? <small>{nameError}</small> : null}</label>
+        </> : null}
+
+        {step === 1 ? <>
+          <div className="dojo-breath"><i /></div>
+          <span className="dojo-kicker">NEFES</span>
+          <h1>Şimdi sadece nefes al.</h1>
+          <p>Halka genişlerken al. Yavaşça daralırken ver. Kusursuz yapmaya çalışma.</p>
+          <small className="dojo-breath-note">4 saniye al · 6 saniye ver</small>
+        </> : null}
+
+        {step === 2 ? <>
+          <span className="dojo-kicker">NİYET</span>
+          <h1>Bugün seni buraya getiren ne?</h1>
+          <p>Doğru cevap yok. Sana şu an en yakın geleni seç.</p>
+          <div className="dojo-intentions">{intentions.map((intention) => <button className={selectedShenId === intention.id ? "active" : ""} key={intention.id} onClick={() => onSelectShen(intention.id)} type="button"><i /><span><b>{intention.title}</b><small>{intention.note}</small></span>{selectedShenId === intention.id ? <em>✓</em> : null}</button>)}</div>
+        </> : null}
+
+        {step === 3 ? <>
+          <span className="dojo-kicker">BEDEN</span>
+          <h1>Bugün nasılsın?</h1>
+          <p>Birkaç saniye bedenini dinle. Noktaları hissettiğin yere getir.</p>
+          <div className="dojo-sliders">{([
+            ["Beden", "Gergin", "Rahat", "body"],
+            ["Nefes", "Yüzeysel", "Derin", "breath"],
+            ["Enerji", "Düşük", "Canlı", "energy"],
+          ] as const).map(([label, low, high, key]) => <label key={key}><span><b>{label}</b><em>{dailyState[key]}</em></span><input min="0" max="100" onChange={(event) => setDailyState((current) => ({ ...current, [key]: Number(event.target.value) }))} style={{ "--slider-value": `${dailyState[key]}%` } as CSSProperties} type="range" value={dailyState[key]} /><small><i>{low}</i><i>{high}</i></small></label>)}</div>
+        </> : null}
+
+        {step === 4 ? <>
+          <div className="dojo-body-mark"><span>♙</span><i /></div>
+          <span className="dojo-kicker">İLK BEDEN İZİ</span>
+          <h1>Önce nasıl durduğunu fark edeceğiz.</h1>
+          <p>Hazır olduğunda kamera seni önden, yandan ve arkadan dinler. Görüntün yalnızca analiz için kullanılır.</p>
+          <small className="dojo-quiet-note">Bugün atlayabilirsin. Yolculuğun eksik kalmaz.</small>
+        </> : null}
+
+        {step === 5 ? <>
+          <div className="dojo-first-flow"><div><span className="dojo-kicker">GÜN 1 · UYANIŞ</span><strong>İlk akışın hazır.</strong><small>8 dakika · yavaş · başlangıç</small></div></div>
+          <h1>Bugün tek bir adım yeter.</h1>
+          <p>Önce nefesi, sonra ağırlığını ve en son hareketi izleyeceğiz.</p>
+        </> : null}
+      </div>
+
+      <div className="dojo-onboarding-actions">{step > 0 ? <button aria-label="Geri" className="dojo-back" onClick={() => setStep((current) => current - 1)} type="button">←</button> : null}<button className="dojo-next" onClick={next} type="button">{step === 0 ? "İçeri gir" : step === 1 ? "Hazırım" : step === 5 ? "İlk akışıma başla" : "Devam et"}<span>→</span></button></div>
+    </section>
+  );
+}
+
+function DojoHomeScreen({
+  earnedXp,
+  journeyUnlocked,
+  onJourney,
+  onJournal,
+  onLearning,
+  onPractice,
+  onPosture,
+  onSelectShen,
+  practiceCount,
+  postureCount,
+  selectedShen,
+  userName,
+}: {
+  earnedXp: number;
+  energyScores: EnergyScores;
+  journeyUnlocked: boolean;
+  onJourney: () => void;
+  onJournal: () => void;
+  onLearning: () => void;
+  onPractice: () => void;
+  onPosture: () => void;
+  onSelectShen: (shenId: ShenId) => void;
+  practiceCount: number;
+  postureCount: number;
+  selectedShen: (typeof fiveShen)[number];
+  userName: string;
+}) {
+  const [journeyDay, setJourneyDay] = useState(1);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem("ritim-kapisi-first-checkin") ?? "null") as { createdAt?: string } | null;
+      setJourneyDay(getJourneyDay(saved?.createdAt));
+    } catch {
+      setJourneyDay(1);
+    }
+  }, []);
+  const layer = getExperienceLayer(journeyDay);
+  const personality = shenThemes[selectedShen.id];
+
+  return (
+    <section className="screen dojo-home" style={{ "--dojo-accent": selectedShen.color, "--shen-surface": personality.surface, "--shen-surface-raised": personality.surfaceRaised, "--shen-button-primary": personality.button, "--shen-button-ink": personality.buttonInk, "--shen-control-radius": `${personality.controlRadius}px`, "--shen-heading-weight": personality.headingWeight, "--shen-heading-tracking": personality.headingTracking, "--shen-transition": `${personality.transitionMs}ms` } as CSSProperties}>
+      <header className="dojo-home-head"><div><h1>Merhaba, {userName || "yol arkadaşım"}</h1><span>{new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span></div><div><b>{journeyDay}</b><small>GÜN</small></div></header>
+
+      <div className="dojo-worlds dojo-worlds-main" aria-label="5 Shen atmosferi">{fiveShen.map((shen) => { const world = shenThemes[shen.id]; return <button aria-label={`${shen.name} atmosferi`} className={selectedShen.id === shen.id ? "active" : ""} key={shen.id} onClick={() => onSelectShen(shen.id)} style={{ "--world-color": shen.color, "--world-radius": `${world.controlRadius}px`, "--world-surface": world.surfaceRaised } as CSSProperties} type="button"><i /><span>{shen.name}</span></button>; })}</div>
+
+      <article className="dojo-home-hero">
+        <div aria-hidden="true" className="shen-image-stack">{fiveShen.map((shen) => <span className={`shen-image-layer ${selectedShen.id === shen.id ? "shen-image-layer-active" : ""}`} key={shen.id} style={{ backgroundImage: `url(${shen.image})` }} />)}</div>
+        <div className="dojo-home-shade" />
+        <div className="dojo-home-copy"><div className="dojo-home-meta"><span>{layer.homeKicker}</span><small>{layer.familiarName}</small></div><div className="dojo-ritual-mark"><i /><b /></div><h2>{layer.homeTitle}</h2><p>{layer.homeBody}</p><button onClick={onPractice} type="button">Bugünün akışına başla <span>→</span></button><small>8 dakika · yavaş · başlangıç</small></div>
+      </article>
+
+      <div className="dojo-real-progress"><div><b>{practiceCount || "—"}</b><span>tamamlanan akış</span></div><i /><div><b>{postureCount || "—"}</b><span>beden izi</span></div><i /><div><b>{earnedXp}</b><span>gerçek XP</span></div></div>
+
+      <button className="dojo-path" onClick={onPosture} type="button"><span>↕</span><div><b>Bugün nasıl duruyorsun?</b><small>{postureCount ? "Son beden izini yeniden gör." : "İlk beden izini sakince kaydet."}</small></div><em>→</em></button>
+      <button className="dojo-path" onClick={onLearning} type="button"><span>✦</span><div><b>Hareketi yaşayarak öğren</b><small>Formun adından önce günlük hayattaki karşılığını hisset.</small></div><em>→</em></button>
+      <button className="dojo-path" onClick={onPractice} type="button"><span>♙</span><div><b>AI Ghost Teacher</b><small>Hareket sırasında yalnızca gerektiğinde görünür bir rehber.</small></div><em>→</em></button>
+
+      <div className="dojo-awareness"><span className="dojo-kicker">DOJO’NUN DİĞER ALANLARI</span><h2>İç dünyanı fark et.</h2>{journeyUnlocked ? <button className="dojo-path" onClick={onJourney} type="button"><span>◉</span><div><b>Bagua ve yolculuk haritan</b><small>Günlerinin ritmini ve açılan alanları gör.</small></div><em>→</em></button> : null}<button className="dojo-path" onClick={onJournal} type="button"><span>◌</span><div><b>Günün izi</b><small>Pratikten sonra sende kalan tek cümleyi yaz.</small></div><em>→</em></button></div>
+      <blockquote>“Yol, tek bir sakin adımla görünür olur.”</blockquote>
+    </section>
   );
 }
 
@@ -3544,9 +3734,10 @@ function PracticeScreen({
   const [analysisWindowResult, setAnalysisWindowResult] = useState<MovementAnalysisWindowResult | null>(null);
   const [ghostMode, setGhostMode] = useState<GhostMode>("follow");
   const [traceMode, setTraceMode] = useState<TraceMode>("compare");
-  const [ghostOpacity, setGhostOpacity] = useState(0.28);
+  const [ghostOpacity, setGhostOpacity] = useState(0.58);
   const cueIndexRef = useRef(0);
   const ghostSequence = getGhostSequence(`movement-${movement.id}`);
+  const movementLocked = !ghostSequence;
   const masterSentence = getMasterSentence(selectedShen.id, movement.id - 1);
   const referenceImage = getMovementReferenceImage(movement);
   const innerScene = getInnerJourneyScene(movement.id);
@@ -4318,7 +4509,6 @@ function PracticeScreen({
         completedLessons={completedWarmups}
         movementScore={movementScore}
         liveFeedback={liveFeedback}
-        pose={keypoints}
         analysisWindowProgress={analysisWindowProgress}
         analysisWindowResult={analysisWindowResult}
         analysisWindowState={analysisWindowState}
@@ -4390,7 +4580,7 @@ function PracticeScreen({
               <div className="practice-ghost-controls">
                 <button onClick={() => setGhostMode((current) => current === "follow" ? "mirror" : current === "mirror" ? "trace" : "follow")} type="button">Ghost · {ghostMode === "follow" ? "Takip" : ghostMode === "mirror" ? "Ayna" : "İz"}</button>
                 <button onClick={() => setTraceMode((current) => current === "off" ? "teacher" : current === "teacher" ? "user" : current === "user" ? "compare" : "off")} type="button">İz · {traceMode === "off" ? "Kapalı" : traceMode === "teacher" ? "Öğretmen" : traceMode === "user" ? "Ben" : "İkisi"}</button>
-                <button onClick={() => setGhostOpacity((current) => current >= .34 ? .22 : current + .06)} type="button">Yoğunluk %{Math.round(ghostOpacity * 100)}</button>
+                <button onClick={() => setGhostOpacity((current) => current >= .72 ? .42 : current + .16)} type="button">Yoğunluk %{Math.round(ghostOpacity * 100)}</button>
               </div>
             </div>
           ) : null}
@@ -4445,21 +4635,17 @@ function PracticeScreen({
             </div>
           ) : null}
           {isCameraReady ? (
-          <MovementAnalysisWindow
-            accent={selectedShen.color}
-            movementName={movement.name}
-            pose={keypoints}
-            referenceImage={referenceImage}
-            onStart={startMovementAnalysisWindow}
-            progress={analysisWindowProgress}
-            result={analysisWindowResult}
+            <MovementAnalysisWindow
+              onStart={startMovementAnalysisWindow}
+              progress={analysisWindowProgress}
+              result={analysisWindowResult}
               state={analysisWindowState}
             />
           ) : null}
           {isCameraReady ? <PracticeGuideCompanion coach={selectedCoach} coachLine={coachLine} voiceStatus={voiceStatus} /> : null}
           <div className={`practice-actions ${isCameraReady ? "practice-actions-live" : "practice-actions-ready"}`}>
-            <button className={`${isCameraReady ? "secondary-action" : "primary-action"} practice-control-button practice-camera-button`} onClick={handlePracticeStart} type="button">
-              {cameraStatus === "requesting" ? "İzin Bekleniyor" : isCameraReady && phase !== "ready" ? "Canlı Başlat" : "Kamerayı Aç"}
+            <button disabled={movementLocked} className={`${isCameraReady ? "secondary-action" : "primary-action"} practice-control-button practice-camera-button`} onClick={handlePracticeStart} type="button">
+              {movementLocked ? "Kilitli · İlk 3 hareket hazır" : cameraStatus === "requesting" ? "İzin Bekleniyor" : isCameraReady && phase !== "ready" ? "Canlı Başlat" : "Kamerayı Aç"}
             </button>
             {!isCameraReady ? (
               <button className="secondary-action practice-control-button practice-music-button" onClick={togglePracticeMusic} type="button">
@@ -4524,8 +4710,9 @@ function MovementLibraryShowcase({
       <div className="movement-library-row">
         {visibleMovements.map((item) => (
           <button
-            className={`movement-library-card ${activeMovementId === item.id ? "movement-library-card-active" : ""}`}
+            className={`movement-library-card ${activeMovementId === item.id ? "movement-library-card-active" : ""} ${item.id > 3 ? "movement-library-card-locked" : ""}`}
             key={item.id}
+            disabled={item.id > 3}
             onClick={() => onSelectMovement(item.id)}
             type="button"
           >
@@ -4535,6 +4722,7 @@ function MovementLibraryShowcase({
               <small>{String(item.id).padStart(2, "0")} · {item.focus}</small>
               <strong>{item.name}</strong>
               <em>{item.english}</em>
+              {item.id > 3 ? <b>Kilitli</b> : null}
             </div>
           </button>
         ))}
@@ -4553,7 +4741,6 @@ function WarmupStudio({
   analysisWindowProgress,
   analysisWindowResult,
   analysisWindowState,
-  pose,
   scoreBreakdown,
   onCompleteLesson,
   onEnterShibashi,
@@ -4573,7 +4760,6 @@ function WarmupStudio({
   analysisWindowProgress: number;
   analysisWindowResult: MovementAnalysisWindowResult | null;
   analysisWindowState: MovementAnalysisWindowState;
-  pose: PoseKeypoint[];
   scoreBreakdown: { form: number; rhythm: number; balance: number };
   onCompleteLesson: () => void;
   onEnterShibashi: () => void;
@@ -4700,17 +4886,14 @@ function WarmupStudio({
             </div>
           </div>
 
-          <MovementAnalysisWindow
-            accent={selectedShen.color}
-            movementName={activeLesson.title}
-            pose={pose}
-            referenceImage={getWarmupReferenceImage(activeLesson.id)}
-            disabled={!isCameraReady}
-            onStart={onStartMovementAnalysis}
-            progress={analysisWindowProgress}
-            result={analysisWindowResult}
-            state={analysisWindowState}
-          />
+          {isCameraReady ? (
+            <MovementAnalysisWindow
+              onStart={onStartMovementAnalysis}
+              progress={analysisWindowProgress}
+              result={analysisWindowResult}
+              state={analysisWindowState}
+            />
+          ) : null}
 
           <div className="warmup-actions warmup-actions-end">
             <button onClick={onCompleteLesson} type="button">
@@ -4724,23 +4907,13 @@ function WarmupStudio({
 }
 
 function MovementAnalysisWindow({
-  accent,
-  disabled = false,
-  movementName,
   onStart,
-  pose,
   progress,
-  referenceImage,
   result,
   state,
 }: {
-  accent: string;
-  disabled?: boolean;
-  movementName: string;
   onStart: () => void;
-  pose: PoseKeypoint[];
   progress: number;
-  referenceImage: string;
   result: MovementAnalysisWindowResult | null;
   state: MovementAnalysisWindowState;
 }) {
@@ -4748,19 +4921,9 @@ function MovementAnalysisWindow({
   const isComplete = state === "complete" && result;
 
   return (
-    <section className={`movement-analysis-window movement-analysis-window-${state}`}>
-      <div className="movement-analysis-window-visual">
-        <div className="movement-analysis-window-reference">
-          <img src={referenceImage} alt={`${movementName} hareket referansı`} />
-          <span>Referans</span>
-        </div>
-        <div className="movement-analysis-window-3d">
-          <LivePose3D accent={accent} active={isRecording || pose.length > 0} pose={pose} />
-          <span>Canlı 3D ayna</span>
-        </div>
-      </div>
+    <section className={`movement-analysis-window movement-analysis-window-compact movement-analysis-window-${state}`}>
       <div className="movement-analysis-window-copy">
-        <span className="eyebrow">3 Saniyelik Analiz</span>
+        <span className="eyebrow">Canlı hareket karşılaştırması</span>
         <strong>
           {isRecording ? "Hareketi şimdi aynala." : isComplete ? "Kısa hareket tamamlandı." : "Kısa hareketi aynala."}
         </strong>
@@ -4770,7 +4933,7 @@ function MovementAnalysisWindow({
             : "Videodaki hareketi izlerken üç saniyelik akışını seçili referansla karşılaştır."}
         </small>
       </div>
-      <button disabled={disabled || isRecording} onClick={onStart} type="button">
+      <button disabled={isRecording} onClick={onStart} type="button">
         {isRecording ? `${Math.max(1, Math.ceil(3 - (progress / 100) * 3))} sn ölçülüyor` : isComplete ? "Tekrar analiz" : "3 sn analiz et"}
       </button>
       {isRecording ? (
@@ -4826,6 +4989,7 @@ function WebGhostTeacherOverlay({
   videoHeight: number;
   videoWidth: number;
 }) {
+  const visibleOpacity = Math.max(.52, opacity);
   const [elapsed, setElapsed] = useState(0);
   const userTrailsRef = useRef<Record<"left" | "right" | "center", Array<{ x: number; y: number; at: number }>>>({ left: [], right: [], center: [] });
   useEffect(() => {
@@ -4867,9 +5031,9 @@ function WebGhostTeacherOverlay({
       {ghostConnections.map(([startName, endName]) => {
         const start = frameByName.get(startName)!;
         const end = frameByName.get(endName)!;
-        return <line key={`${startName}-${endName}`} x1={transformX(start.x)} y1={start.y * 100} x2={transformX(end.x)} y2={end.y * 100} style={{ opacity }} />;
+        return <line key={`${startName}-${endName}`} x1={transformX(start.x)} y1={start.y * 100} x2={transformX(end.x)} y2={end.y * 100} style={{ opacity: visibleOpacity }} />;
       })}
-      {ghostMode !== "trace" ? frame.keypoints.map((point) => <circle key={point.name} cx={transformX(point.x)} cy={point.y * 100} r=".5" style={{ opacity }} />) : null}
+      {ghostMode !== "trace" ? frame.keypoints.map((point) => <circle key={point.name} cx={transformX(point.x)} cy={point.y * 100} r=".78" style={{ opacity: visibleOpacity }} />) : null}
       {(ghostMode === "trace" || traceMode === "teacher" || traceMode === "compare") ? <>
         <polyline className="teacher-trace" points={trailPoints(teacherTrail("left_wrist"), mirror)} />
         <polyline className="teacher-trace" points={trailPoints(teacherTrail("right_wrist"), mirror)} />
@@ -5488,7 +5652,7 @@ function PostureCaptureReadyScreen({
         <div className="posture-capture-ready-images">
           {(["front", "side", "back"] as const).map((view) => (
             <figure key={view}>
-              <img src={report.captures[view].imageData} alt={`${view === "front" ? "Ön" : view === "side" ? "Yan" : "Arka"} postür kaydı`} />
+              {report.captures[view].imageData ? <img src={report.captures[view].imageData} alt={`${view === "front" ? "Ön" : view === "side" ? "Yan" : "Arka"} postür kaydı`} /> : <span className="posture-result-capture-empty">Görüntü yok</span>}
               <figcaption>{view === "front" ? "Ön" : view === "side" ? "Yan" : "Arka"}</figcaption>
             </figure>
           ))}
@@ -5550,7 +5714,7 @@ function PostureProcessingScreen({ report }: { report: PostureReport }) {
         <div className="posture-processing-visual" aria-hidden="true">
           {(["front", "side", "back"] as const).map((view, index) => (
             <div key={view} style={{ "--processing-index": index } as CSSProperties}>
-              <img src={report.captures[view].imageData} alt="" />
+              {report.captures[view].imageData ? <img src={report.captures[view].imageData} alt="" /> : <span className="posture-result-capture-empty">Görüntü yok</span>}
               <span>{view === "front" ? "Ön" : view === "side" ? "Yan" : "Arka"}</span>
             </div>
           ))}
@@ -5608,7 +5772,7 @@ function PostureResultDashboard({
           </button>
           <div>
             <h1>Postür Analizi</h1>
-            <p>Tai Chi 24 Form - Hareket 3 • {report.dateKey} {report.timeLabel}</p>
+            <p>Gerçek postür ölçüm kaydı • {report.dateKey} {report.timeLabel}</p>
           </div>
           <div className="posture-result-top-actions">
             <button className="posture-result-retake-button" onClick={onRetake} type="button">
@@ -5638,7 +5802,7 @@ function PostureResultDashboard({
             </div>
 
             <div className={`posture-result-capture-stage posture-result-capture-${mode} ${isReviewPlaying ? "posture-result-review-playing" : ""}`}>
-              <img src={capture.imageData} alt={`${activeLabel} postür analizi`} />
+              {capture.imageData ? <img src={capture.imageData} alt={`${activeLabel} postür analizi`} /> : <div className="posture-result-capture-empty">Bu kayda ait kamera görüntüsü bu cihazda saklanmamış.</div>}
               <div className="posture-result-depth-grid" aria-hidden="true" />
               <div className="posture-result-center-axis" aria-hidden="true" />
               <div className="posture-quality-legend posture-result-quality-legend">
@@ -5655,20 +5819,17 @@ function PostureResultDashboard({
               </div>
             </div>
 
-            <div className="posture-result-timeline">
+            <div className="posture-result-timeline posture-result-timeline-real">
               <button onClick={() => setIsReviewPlaying((playing) => !playing)} type="button" aria-label={isReviewPlaying ? "İncelemeyi durdur" : "İncelemeyi oynat"}>
                 {isReviewPlaying ? "Ⅱ" : "▶"}
               </button>
-              <span>00:12</span>
-              <i><b className={isReviewPlaying ? "posture-timeline-running" : ""} /></i>
-              <span>00:25</span>
-              <small>Kare 128 / 250</small>
+              <span>{isReviewPlaying ? "Canlı ölçüm katmanı" : "Kayıtlı ölçüm"}</span>
             </div>
 
             <div className="posture-result-capture-strip" aria-label="Üç açıdan postür kayıtları">
               {(["front", "side", "back"] as const).map((item) => (
                 <button className={activeView === item ? "posture-result-capture-active" : ""} key={item} onClick={() => setActiveView(item)} type="button">
-                  <img src={report.captures[item].imageData} alt="" />
+                  {report.captures[item].imageData ? <img src={report.captures[item].imageData} alt="" /> : <span className="posture-result-capture-empty posture-result-capture-empty-thumb">Görüntü yok</span>}
                   <span>{item === "front" ? "Ön" : item === "side" ? "Yan" : "Arka"}</span>
                 </button>
               ))}
@@ -5738,11 +5899,11 @@ function PostureSavedReportsGallery({
               <button className="posture-saved-report-open" onClick={() => onOpenReport(report)} type="button">
                 <div className="posture-saved-gallery-images">
                   {(["front", "side", "back"] as const).map((view) => (
-                    <img
+                    report.captures[view].imageData ? <img
                       alt={`${report.dateKey} ${view === "front" ? "ön" : view === "side" ? "yan" : "arka"} postür kaydı`}
                       key={view}
                       src={report.captures[view].imageData}
-                    />
+                    /> : <span className="posture-result-capture-empty" key={view}>Görüntü yok</span>
                   ))}
                 </div>
                 <div className="posture-saved-gallery-meta">
@@ -5957,7 +6118,7 @@ function PostureReportPanel({
       <div className="posture-report-views">
         {(["front", "side", "back"] as const).map((item) => (
           <article key={item}>
-            <img src={report.captures[item].imageData} alt={`${item} postür kaydı`} />
+            {report.captures[item].imageData ? <img src={report.captures[item].imageData} alt={`${item} postür kaydı`} /> : <span className="posture-result-capture-empty">Görüntü yok</span>}
             <span>{item === "front" ? "Ön" : item === "side" ? "Yan" : "Arka"}</span>
           </article>
         ))}
@@ -6133,15 +6294,15 @@ function PostureModelOverlay({
     right_ankle: [126, 272],
   };
   const names = ["nose", "left_shoulder", "right_shoulder", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"];
-  const points = names.map((name) => {
+  const points = livePose ? names.map((name) => {
     const point = livePose?.points.get(name);
     const [x, y] = staticPoints[name];
     return { name, x: point?.x ?? x, y: point?.y ?? y, score: point?.score ?? 0.92 };
-  });
+  }) : [];
   const shoulderPoints = points.filter((point) => point.name.includes("shoulder"));
   const hipPoints = points.filter((point) => point.name.includes("hip"));
-  const shoulderY = shoulderPoints.reduce((sum, point) => sum + point.y, 0) / shoulderPoints.length;
-  const hipY = hipPoints.reduce((sum, point) => sum + point.y, 0) / hipPoints.length;
+  const shoulderY = shoulderPoints.length ? shoulderPoints.reduce((sum, point) => sum + point.y, 0) / shoulderPoints.length : 0;
+  const hipY = hipPoints.length ? hipPoints.reduce((sum, point) => sum + point.y, 0) / hipPoints.length : 0;
 
   return (
     <div className="posture-model-composite" data-view={view}>
@@ -6157,7 +6318,7 @@ function PostureModelOverlay({
           return <circle className={`posture-model-joint ${isShoulder ? "posture-model-joint-warn" : isSpine ? "posture-model-joint-good" : ""}`} cx={point.x} cy={point.y} key={point.name} r={isShoulder ? 5 : 4.2} />;
         })}
       </svg>
-      <span className="posture-model-caption">HİZALAMA · {livePose ? "CANLI" : "REFERANS"}</span>
+      <span className="posture-model-caption">HİZALAMA · {livePose ? "CANLI" : "KAMERA BEKLENİYOR"}</span>
     </div>
   );
 }
@@ -7956,6 +8117,7 @@ function getTitle(tab: TabId): string {
   const titles: Record<TabId, string> = {
     home: "Bugün",
     practice: "Ritüel",
+    practice2: "Pratik2",
     posture: "Postür",
     journey: "Yolculuğum",
     learning: "Öğren",
@@ -8450,18 +8612,17 @@ function evaluateWebPostureFrame(keypoints: PoseKeypoint[], view: PostureView) {
     const point = byName.get(name);
     return Boolean(point && (point.score ?? 0) >= threshold);
   };
-  const required = [
-    "left_shoulder",
-    "right_shoulder",
-    "left_hip",
-    "right_hip",
-    "left_knee",
-    "right_knee",
-    "left_ankle",
-    "right_ankle",
-  ];
   const headReady = ["nose", "left_ear", "right_ear"].some((name) => visible(name, 0.28));
-  const bodyReady = headReady && required.every((name) => visible(name));
+  const pairReady = (left: string, right: string, threshold: number) =>
+    view === "side"
+      ? visible(left, threshold) || visible(right, threshold)
+      : visible(left, threshold) && visible(right, threshold);
+  const bodyReady =
+    headReady &&
+    pairReady("left_shoulder", "right_shoulder", 0.42) &&
+    pairReady("left_hip", "right_hip", 0.42) &&
+    pairReady("left_knee", "right_knee", 0.36) &&
+    pairReady("left_ankle", "right_ankle", 0.3);
   if (!bodyReady) return { bodyReady: false, angleReady: false };
 
   const leftShoulder = byName.get("left_shoulder")!;
@@ -8477,7 +8638,7 @@ function evaluateWebPostureFrame(keypoints: PoseKeypoint[], view: PostureView) {
   const anatomicalOrder = leftShoulder.x - rightShoulder.x;
   const angleReady =
     view === "side"
-      ? shoulderWidthRatio < 0.3
+      ? shoulderWidthRatio < 0.42
       : view === "front"
         ? shoulderWidthRatio >= 0.25 && faceConfidence >= 0.5 && anatomicalOrder > -bodyHeight * 0.04
         : shoulderWidthRatio >= 0.25 && (faceConfidence < 0.5 || anatomicalOrder < bodyHeight * 0.04);

@@ -10,9 +10,14 @@ export function isLandmarkVisible(point:PoseLandmark|undefined,threshold=.38){
 export function evaluatePoseFrame(points:PoseLandmark[],view:PostureView):PoseFrameReadiness{
  if(points.length<33)return{bodyReady:false,angleReady:false};
  const headReady=[0,7,8].some(index=>isLandmarkVisible(points[index],.25));
- const torsoReady=[11,12,23,24].every(index=>isLandmarkVisible(points[index],.48));
- const legReady=[25,26].every(index=>isLandmarkVisible(points[index],.4));
- const feetReady=[27,28].every(index=>isLandmarkVisible(points[index],.34));
+ const pairReady=(left:number,right:number,threshold:number)=>view==='side'
+  ?[left,right].some(index=>isLandmarkVisible(points[index],threshold))
+  :[left,right].every(index=>isLandmarkVisible(points[index],threshold));
+ // Yan çekimde kameradan uzak kalan eklemler doğal olarak düşük güven alır.
+ // Görünen tek anatomik hattı kabul etmek, kullanıcı yana döndüğünde taramanın kilitlenmesini önler.
+ const torsoReady=pairReady(11,12,.42)&&pairReady(23,24,.42);
+ const legReady=pairReady(25,26,.36);
+ const feetReady=pairReady(27,28,.3);
  const bodyReady=headReady&&torsoReady&&legReady&&feetReady;
  if(!bodyReady)return{bodyReady:false,angleReady:false};
  const shoulderCenterY=(points[11].y+points[12].y)/2;
@@ -23,7 +28,7 @@ export function evaluatePoseFrame(points:PoseLandmark[],view:PostureView):PoseFr
  const faceConfidence=[0,2,5,7,8].reduce((sum,index)=>sum+(points[index]?.visibility??0),0)/5;
  const anatomicalOrder=points[11].x-points[12].x;
  const angleReady=view==='side'
-  ?widthRatio<.28
+  ?widthRatio<.42
   :view==='front'
    ?widthRatio>=.24&&faceConfidence>=.5&&anatomicalOrder>-.025
    :widthRatio>=.24&&(faceConfidence<.5||anatomicalOrder<.025);

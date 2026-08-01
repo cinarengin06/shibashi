@@ -3,178 +3,79 @@ import * as Haptics from 'expo-haptics';
 import {LinearGradient} from 'expo-linear-gradient';
 import {router} from 'expo-router';
 import {Pressable,StyleSheet,Text,View} from 'react-native';
+import {getExperienceLayer,getJourneyDay} from '../../../../packages/experience-design';
 import {Screen,ShenBackdrop} from '../../components/ui';
-import {colors,fonts,radii,spacing} from '../../constants/theme';
+import {colors,fonts} from '../../constants/theme';
 import {practices} from '../../data/content';
 import {getShen} from '../../data/fiveShen';
 import {useApp} from '../../store/AppStore';
-import {useShenExperience} from '../../store/ShenExperience';
-
-const everydayModes=[
- {id:'hun' as const,label:'Hun',icon:'leaf-outline' as const},
- {id:'shen' as const,label:'Xin',icon:'heart-outline' as const},
- {id:'yi' as const,label:'Yi',icon:'ellipse-outline' as const},
- {id:'po' as const,label:'Po',icon:'moon-outline' as const},
- {id:'zhi' as const,label:'Zhi',icon:'water-outline' as const},
-];
+import {fiveShen} from '../../data/fiveShen';
+import {shenThemes} from '../../../../packages/design-tokens';
 
 export default function Today(){
- const{profile,saveProfile,sessions,postureReports,completedStories}=useApp();
- const{playing,toggleSound}=useShenExperience();
+ const{profile,saveProfile,sessions,postureReports}=useApp();
  const shen=getShen(profile.selectedShenId);
+ const personality=shenThemes[shen.id];
  const practice=practices.find(item=>item.id===shen.practiceId)??practices[0];
- const completed=sessions.filter(item=>new Date(item.date).toDateString()===new Date().toDateString()).reduce((total,item)=>total+item.duration,0);
- const recentSessions=sessions.slice(0,5);
- const movementScore=recentSessions.length?Math.round(recentSessions.reduce((sum,item)=>sum+item.flowScore,0)/recentSessions.length):null;
- const practiceDays=new Set(sessions.map(item=>new Date(item.date).toDateString()));
- const consistencyScore=sessions.length?Math.round([...Array(7)].filter((_,offset)=>{const date=new Date();date.setDate(date.getDate()-offset);return practiceDays.has(date.toDateString())}).length/7*100):null;
- const streak=calculatePracticeStreak(sessions.map(item=>item.date));
- const measuredMetrics=[{label:'Postür',term:'Kamera',value:postureReports[0]?.score??null},{label:'Hareket',term:'Son 5 pratik',value:movementScore},{label:'Düzen',term:'Son 7 gün',value:consistencyScore}];
- const chooseShen=(id:Parameters<typeof saveProfile>[0]['selectedShenId'])=>{if(!id)return;void Haptics.selectionAsync();saveProfile({selectedShenId:id})};
+ const journeyDay=getJourneyDay(profile.onboardingCheckin?.createdAt);
+ const layer=getExperienceLayer(journeyDay);
+ const todayKey=new Date().toDateString();
+ const todaySessions=sessions.filter(item=>new Date(item.date).toDateString()===todayKey);
+ const completedMinutes=todaySessions.reduce((total,item)=>total+item.duration,0);
+ const hasPracticedToday=todaySessions.length>0;
+ const earnedXp=sessions.reduce((total,item)=>total+(item.xp??0),0);
 
- return <Screen>
-  <View style={s.header}>
-   <View style={s.brand}><View style={[s.brandIcon,{borderColor:`${shen.color}66`}]}><Ionicons name="leaf-outline" color={shen.color} size={19}/></View><View><Text style={s.brandName}>Merhaba, {profile.name}</Text><Text style={s.brandMeta}>Bugün kendine kısa bir alan aç.</Text></View></View>
-   <Pressable accessibilityLabel="Bildirimler" style={s.notify}><Ionicons name="notifications-outline" color={colors.cream} size={19}/><View style={[s.notifyDot,{backgroundColor:shen.color}]}/></Pressable>
-  </View>
+ const startPractice=()=>{void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);router.push(`/practice-session?practiceId=${practice.id}`)};
 
-  <View style={s.dailyNotes}>
-   <View style={s.dailyNote}><Ionicons name="flame-outline" color={colors.gold} size={18}/><View><Text style={s.noteValue}>{streak?`${streak} gün`:'—'}</Text><Text style={s.noteLabel}>Gerçek seri</Text></View></View>
-   <View style={s.dailyNote}><Ionicons name="lock-open-outline" color={shen.color} size={18}/><View><Text style={s.noteValue}>{Math.max(1,completedStories.length+1)}. kapı</Text><Text style={s.noteLabel}>Son açılan</Text></View></View>
-   <View style={s.dailyNote}><Ionicons name="water-outline" color={colors.muted} size={18}/><View><Text style={s.noteValue}>4 nefes</Text><Text style={s.noteLabel}>Şimdi dene</Text></View></View>
-  </View>
+ return <Screen style={s.page}>
+  <View style={s.header}><View><Text style={s.greeting}>Merhaba, {profile.name}</Text><Text style={s.date}>{formatToday()}</Text></View><View style={s.dayMark}><Text style={s.dayNumber}>{journeyDay}</Text><Text style={s.dayLabel}>GÜN</Text></View></View>
 
-  <View style={s.modePicker}>{everydayModes.map(item=>{const active=item.id===shen.id;return <Pressable key={item.id} onPress={()=>chooseShen(item.id)} style={[s.modeChoice,active&&{backgroundColor:`${shen.color}18`}]}><Ionicons name={item.icon} color={active?colors.cream:colors.muted} size={15}/><Text style={[s.modeChoiceText,active&&s.modeChoiceTextActive]}>{item.label}</Text>{active?<View style={s.modeUnderline}/>:null}</Pressable>})}</View>
+  <View style={s.worldPicker}>{fiveShen.map(item=>{const itemPersonality=shenThemes[item.id];const active=item.id===shen.id;return <Pressable accessibilityLabel={`${item.name} atmosferini seç`} key={item.id} onPress={()=>{void Haptics.selectionAsync();saveProfile({selectedShenId:item.id})}} style={[s.worldChoice,{borderRadius:itemPersonality.controlRadius},active&&{backgroundColor:itemPersonality.surfaceRaised,borderColor:itemPersonality.primary}]}><View style={[s.worldDot,{backgroundColor:itemPersonality.primary},active&&{shadowColor:itemPersonality.primary,shadowOpacity:.8,shadowRadius:9}]}/><Text style={[s.worldName,active&&{color:itemPersonality.light,fontFamily:itemPersonality.headingWeight==='600'?fonts.displayStrong:itemPersonality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular}]}>{item.name}</Text></Pressable>})}</View>
 
-  <View style={[s.sanctuary,{borderColor:`${shen.color}42`}]}>
-   <ShenBackdrop borderRadius={24}/>
-   <LinearGradient colors={['rgba(7,16,13,.20)','rgba(7,16,13,.48)','rgba(7,16,13,.98)']} locations={[0,.42,1]} style={s.sanctuaryShade}>
-    <View style={s.soundRow}>
-     <Text style={[s.eyebrow,{color:shen.color}]}>{shen.name.toUpperCase()} · {shen.element.split('•')[0].trim().toUpperCase()}</Text>
-     <Pressable onPress={toggleSound} style={s.sound}><Ionicons name={playing?'pause':'musical-notes-outline'} color={colors.gold} size={15}/></Pressable>
-    </View>
-    <View style={s.sanctuaryBody}>
-     <View style={s.titleRow}><Text style={s.shenTitle}>{shen.dailyName}</Text><Text style={[s.han,{color:shen.color}]}>{shen.symbol}</Text></View>
-     <Text style={s.essence}>{shen.label}</Text>
-     <Text style={s.prompt}>{shen.dailyPrompt}</Text>
-    </View>
-
-    <View style={s.balanceCard}>
-     <Text style={s.balanceTitle}>Ölçülen ilerleme</Text>
-     {measuredMetrics.map(item=><View key={item.label} style={s.balanceMetric}><View style={s.balanceLabel}><Text style={s.energyLabel}>{item.label}</Text><Text style={s.energyTerm}>{item.term}</Text></View><View style={s.balanceTrack}>{item.value!==null?<View style={[s.balanceFill,{backgroundColor:shen.color,width:`${item.value}%`}]} />:null}</View><Text style={s.energyValue}>{item.value!==null?`${item.value}%`:'—'}</Text></View>)}
-    </View>
-
-    <View style={s.ritual}>
-     <View style={s.ritualCopy}><Text style={s.ritualKicker}>BUGÜNÜN AKIŞI</Text><Text style={s.ritualTitle}>{practice.title}</Text><Text style={s.ritualMeta}>{practice.movementIds.length} hareket · {practice.duration} dakika</Text></View>
-     <Pressable onPress={()=>{void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);router.push(`/practice-session?practiceId=${practice.id}`)}} style={s.start}><Text style={s.startText}>Günün Pratiğine Başla</Text><Ionicons name="arrow-forward" color={colors.gold} size={17}/></Pressable>
-    </View>
+  <View style={[s.hero,{borderColor:`${shen.color}70`,borderRadius:personality.controlRadius===999?34:Math.max(14,personality.controlRadius)}]}>
+   <ShenBackdrop borderRadius={personality.controlRadius===999?34:Math.max(14,personality.controlRadius)}/>
+   <LinearGradient colors={['rgba(11,14,18,.14)','rgba(11,14,18,.62)','rgba(11,14,18,.98)']} locations={[0,.44,1]} style={s.heroShade}>
+    <View style={s.heroTop}><Text style={s.kicker}>{layer.homeKicker}</Text><Text style={s.layerName}>{layer.familiarName}</Text></View>
+    <View style={s.heroSpace}/>
+    <View style={s.ritualMark}><View style={[s.ritualRing,{borderColor:shen.color}]}/><View style={[s.ritualPoint,{backgroundColor:shen.color}]}/></View>
+    <Text style={[s.title,{fontFamily:personality.headingWeight==='600'?fonts.displayStrong:personality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular,letterSpacing:shen.id==='zhi'?.5:shen.id==='yi'?-.4:shen.id==='shen'?.7:0}]}>{hasPracticedToday?'Bugünün pratiği sende kalsın.':layer.homeTitle}</Text>
+    <Text style={s.body}>{hasPracticedToday?'Bir şeyi tamamlamak, onu hızla geride bırakmak değildir. Birkaç nefes daha burada kal.':layer.homeBody}</Text>
+    <Pressable onPress={startPractice} style={[s.primary,{backgroundColor:personality.button,borderRadius:personality.controlRadius}]}><Text style={[s.primaryText,{color:personality.buttonInk}]}>{hasPracticedToday?'Yeniden akışa dön':'Bugünün akışına başla'}</Text><Ionicons name="arrow-forward" color={personality.buttonInk} size={18}/></Pressable>
+    <Text style={s.practiceMeta}>{practice.duration} dakika · {practice.movementIds.length} yumuşak hareket</Text>
    </LinearGradient>
   </View>
 
-  <View style={s.sectionHead}><View><Text style={[s.eyebrow,{color:shen.color}]}>İÇSEL HARİTAN</Text><Text style={s.sectionTitle}>Bugünün dengesi</Text></View><Text style={[s.mode,{color:shen.color}]}>{shen.dailyName}</Text></View>
-
-  <View style={s.path}>
-   <PathItem icon="sparkles-outline" title="Yaşayarak Öğren" detail={`${completedStories.length}/18 hikâye · gündelik sahneler`} color={shen.color} onPress={()=>router.push('/living-learning')}/>
-   <PathItem icon="scan-outline" title="Postür Aynası" detail={postureReports.length?`${postureReports.length} analiz · son skor ${postureReports[0].score}`:'İlk üç açılı taramanı al'} color={shen.color} onPress={()=>router.push('/posture')}/>
-   <PathItem icon="chatbubble-ellipses-outline" title="Yaşam Rehberleri" detail="İhtiyacına göre sekiz farklı rehberle konuş" color={shen.color} onPress={()=>router.push('/coaches')}/>
-   <PathItem icon="compass-outline" title="Yolculuk Haritan" detail={`${sessions.length+postureReports.length+completedStories.length} gerçek kayıt · gelenekte Bagua`} color={shen.color} onPress={()=>router.push('/(tabs)/journey')}/>
+  <View style={s.realProgress}>
+   <View><Text style={s.progressValue}>{completedMinutes||'—'}</Text><Text style={s.progressLabel}>bugün dakika</Text></View>
+   <View style={s.divider}/>
+   <View><Text style={s.progressValue}>{sessions.length||'—'}</Text><Text style={s.progressLabel}>tamamlanan akış</Text></View>
+   <View style={s.divider}/>
+   <View><Text style={s.progressValue}>{postureReports.length||'—'}</Text><Text style={s.progressLabel}>beden izi</Text></View>
+   <View style={s.divider}/>
+   <View><Text style={[s.progressValue,{color:personality.primary}]}>{earnedXp}</Text><Text style={s.progressLabel}>gerçek XP</Text></View>
   </View>
 
-  <View style={[s.needCard,{borderColor:`${shen.color}30`}]}>
-   <Text style={[s.eyebrow,{color:shen.color}]}>ŞİMDİKİ İHTİYACIN</Text>
-   <Text style={s.needTitle}>Kendine nasıl bir alan açmak istersin?</Text>
-   <View style={s.needOptions}>
-    {[
-     {icon:'leaf-outline' as const,label:'Sakinleşmek'},
-     {icon:'sunny-outline' as const,label:'Canlanmak'},
-     {icon:'moon-outline' as const,label:'Bırakmak'},
-    ].map(item=><Pressable key={item.label} onPress={()=>router.push(`/practice-session?practiceId=${practice.id}`)} style={s.needOption}><Ionicons name={item.icon} color={shen.color} size={19}/><Text style={s.needLabel}>{item.label}</Text></Pressable>)}
-   </View>
+  <QuietPath icon="body-outline" title="Bugün nasıl duruyorsun?" note={postureReports.length?'Son beden izini yeniden gör.':'İlk beden izini sakince kaydet.'} onPress={()=>router.push('/posture')}/>
+  <QuietPath icon="sparkles-outline" title="Hareketi yaşayarak öğren" note="Formun adından önce günlük hayattaki karşılığını hisset." onPress={()=>router.push('/living-learning')}/>
+  <QuietPath icon="accessibility-outline" title="AI Ghost Teacher" note="Hareket sırasında yalnızca gerektiğinde görünür bir rehber." onPress={()=>router.push('/(tabs)/practice')}/>
+
+  <View style={s.awareness}>
+   <Text style={s.kicker}>DOJO’NUN DİĞER ALANLARI</Text><Text style={s.sectionTitle}>İç dünyanı fark et.</Text>
+   <QuietPath icon="compass-outline" title="Yolculuk haritan" note="Günlerinin ritmini ve açılan alanları gör." onPress={()=>router.push('/(tabs)/journey')}/>
+   <QuietPath icon="book-outline" title="Günün izi" note="Pratikten sonra sende kalan tek cümleyi yaz." onPress={()=>router.push('/(tabs)/journal')}/>
+   <QuietPath icon="chatbubble-ellipses-outline" title="Yaşam rehberleri" note="Günlük ihtiyacına göre bir öğretmenle konuş." onPress={()=>router.push('/coaches')}/>
   </View>
 
-  <Text style={s.todayMeta}>{completed}/{profile.dailyGoal} dakika · bugünkü ritmin</Text>
- </Screen>
+  <Text style={s.closing}>“Yol, tek bir sakin adımla görünür olur.”</Text>
+ </Screen>;
 }
 
-function PathItem({icon,title,detail,color,onPress}:{icon:keyof typeof Ionicons.glyphMap;title:string;detail:string;color:string;onPress:()=>void}){
- return <Pressable onPress={onPress} style={[s.pathItem,{borderColor:`${color}30`}]}><View style={[s.pathIcon,{backgroundColor:`${color}14`}]}><Ionicons name={icon} color={color} size={21}/></View><View style={s.pathCopy}><Text style={s.pathTitle}>{title}</Text><Text style={s.pathDetail}>{detail}</Text></View><Ionicons name="chevron-forward" color={color} size={17}/></Pressable>
+function QuietPath({icon,note,onPress,title}:{icon:keyof typeof Ionicons.glyphMap;note:string;onPress:()=>void;title:string}){
+ return <Pressable onPress={onPress} style={s.path}><Ionicons name={icon} color={colors.gold} size={21}/><View style={s.pathCopy}><Text style={s.pathTitle}>{title}</Text><Text style={s.pathNote}>{note}</Text></View><Ionicons name="arrow-forward" color={colors.muted} size={17}/></Pressable>;
 }
 
-function calculatePracticeStreak(dates:string[]){
- const days=new Set(dates.map(value=>{const date=new Date(value);return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`}));
- let streak=0;
- for(let offset=0;offset<365;offset+=1){
-  const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()-offset);
-  const key=`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-  if(days.has(key)){streak+=1;continue}
-  if(offset===0)continue;
-  break;
- }
- return streak;
-}
+function formatToday(){return new Intl.DateTimeFormat('tr-TR',{weekday:'long',day:'numeric',month:'long'}).format(new Date())}
 
 const s=StyleSheet.create({
- header:{alignItems:'center',flexDirection:'row',justifyContent:'space-between',paddingTop:4},
- brand:{alignItems:'center',flexDirection:'row',gap:10},
- brandIcon:{width:42,height:42,borderRadius:21,borderWidth:1,alignItems:'center',justifyContent:'center',backgroundColor:colors.surface},
- brandName:{color:colors.cream,fontFamily:fonts.sansStrong,fontSize:16},
- brandMeta:{color:colors.muted,fontFamily:fonts.sans,fontSize:11,marginTop:2},
- modePicker:{backgroundColor:colors.surface,borderColor:colors.line,borderRadius:18,borderWidth:1,flexDirection:'row',gap:2,maxWidth:'100%',padding:5,width:'100%'},
- modeChoice:{alignItems:'center',borderRadius:13,flex:1,gap:3,justifyContent:'center',minHeight:54,padding:4,position:'relative'},
- modeChoiceText:{color:colors.muted,fontFamily:fonts.sansMedium,fontSize:9,textAlign:'center'},
- modeChoiceTextActive:{color:colors.cream},
- modeUnderline:{backgroundColor:colors.gold,borderRadius:2,bottom:2,height:2,left:'28%',position:'absolute',right:'28%'},
- notify:{alignItems:'center',backgroundColor:'rgba(5,7,8,.7)',borderColor:colors.line,borderRadius:21,borderWidth:1,height:42,justifyContent:'center',position:'relative',width:42},
- notifyDot:{borderRadius:3,height:5,position:'absolute',right:6,top:6,width:5},
- sanctuary:{borderColor:colors.line,borderRadius:24,borderWidth:1,maxWidth:'100%',minHeight:460,overflow:'hidden',shadowColor:'#000',shadowOffset:{width:0,height:14},shadowOpacity:.18,shadowRadius:22,elevation:4,width:'100%'},
- sanctuaryImage:{borderRadius:24},
- sanctuaryShade:{flex:1,minHeight:460,padding:20},
- soundRow:{alignItems:'center',flexDirection:'row',justifyContent:'space-between'},
- eyebrow:{fontFamily:fonts.sansBold,fontSize:9,letterSpacing:1.8},
- sound:{alignItems:'center',backgroundColor:'rgba(7,16,13,.74)',borderColor:colors.line,borderRadius:18,borderWidth:1,height:36,justifyContent:'center',width:36},
- sanctuaryBody:{flex:1,justifyContent:'flex-end',paddingBottom:18},
- titleRow:{alignItems:'baseline',flexDirection:'row',gap:11},
- shenTitle:{color:colors.cream,fontFamily:fonts.displayRegular,fontSize:40,letterSpacing:-.7,lineHeight:44},
- han:{borderColor:'rgba(198,165,106,.45)',borderRadius:8,borderWidth:1,color:colors.gold,fontFamily:fonts.display,fontSize:16,lineHeight:30,textAlign:'center',width:30},
- essence:{color:colors.cream,fontFamily:fonts.sansMedium,fontSize:16,letterSpacing:-.2,marginBottom:9},
- prompt:{color:colors.muted,fontFamily:fonts.sans,fontSize:13,lineHeight:20,maxWidth:330},
- tradition:{color:colors.muted,fontFamily:fonts.sans,fontSize:9,lineHeight:14,marginTop:8},
- balanceCard:{backgroundColor:'rgba(17,23,19,.94)',borderColor:colors.line,borderRadius:18,borderWidth:1,gap:8,marginBottom:12,padding:14},
- balanceTitle:{color:colors.cream,fontFamily:fonts.sansStrong,fontSize:11},
- balanceMetric:{alignItems:'center',flexDirection:'row',gap:10},
- balanceLabel:{width:54},
- balanceTrack:{backgroundColor:'rgba(241,238,229,.09)',borderRadius:3,flex:1,height:4,overflow:'hidden'},
- balanceFill:{borderRadius:3,height:'100%'},
- energyLabel:{color:colors.cream,fontFamily:fonts.sansMedium,fontSize:9},
- energyTerm:{color:colors.muted,fontFamily:fonts.sans,fontSize:7},
- energyValue:{color:colors.cream,fontFamily:fonts.sansMedium,fontSize:10,textAlign:'right',width:31},
- percent:{fontFamily:fonts.sansMedium,fontSize:8},
- ritual:{alignItems:'center',backgroundColor:'rgba(17,23,19,.96)',borderColor:colors.line,borderRadius:18,borderWidth:1,flexDirection:'row',gap:11,padding:12},
- ritualIcon:{alignItems:'center',borderRadius:14,borderWidth:1,height:48,justifyContent:'center',width:48},
- ritualSymbol:{fontFamily:fonts.display,fontSize:22},
- ritualCopy:{flex:1,gap:2},
- ritualKicker:{color:colors.muted,fontFamily:fonts.sansStrong,fontSize:7,letterSpacing:1.1},
- ritualTitle:{color:colors.cream,fontFamily:fonts.sansStrong,fontSize:14},
- ritualMeta:{color:colors.muted,fontFamily:fonts.sans,fontSize:9},
- start:{alignItems:'center',backgroundColor:colors.surface2,borderColor:colors.gold,borderRadius:16,borderWidth:1,flexDirection:'row',gap:6,justifyContent:'center',minHeight:48,paddingHorizontal:13},
- startText:{color:colors.cream,fontFamily:fonts.sansStrong,fontSize:9},
- sectionHead:{alignItems:'flex-end',flexDirection:'row',justifyContent:'space-between',marginTop:4},
- sectionTitle:{color:colors.cream,fontFamily:fonts.display,fontSize:30,lineHeight:32},
- mode:{fontFamily:fonts.displayStrong,fontSize:14},
- path:{gap:9},
- pathItem:{alignItems:'center',backgroundColor:colors.surface,borderRadius:19,borderWidth:1,flexDirection:'row',gap:12,minHeight:78,padding:12},
- pathIcon:{alignItems:'center',borderRadius:22,height:44,justifyContent:'center',width:44},
- pathCopy:{flex:1,gap:3},
- pathTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:17},
- pathDetail:{color:colors.muted,fontFamily:fonts.sans,fontSize:10},
- needCard:{backgroundColor:colors.surface,borderRadius:22,borderWidth:1,gap:13,padding:spacing.lg},
- needTitle:{color:colors.cream,fontFamily:fonts.display,fontSize:25,lineHeight:28},
- needOptions:{flexDirection:'row',gap:7},
- needOption:{alignItems:'center',backgroundColor:'rgba(255,255,255,.025)',borderColor:colors.line,borderRadius:16,borderWidth:1,flex:1,gap:6,minHeight:72,justifyContent:'center',padding:6},
- needLabel:{color:colors.cream,fontFamily:fonts.sansMedium,fontSize:9,textAlign:'center'},
- dailyNotes:{flexDirection:'row',gap:8,maxWidth:'100%',width:'100%'},
- dailyNote:{alignItems:'center',backgroundColor:colors.surface,borderColor:colors.line,borderRadius:16,borderWidth:1,flex:1,gap:4,justifyContent:'center',minHeight:70,minWidth:0,paddingHorizontal:5},
- noteValue:{color:colors.cream,fontFamily:fonts.metric,fontSize:11,textAlign:'center'},
- noteLabel:{color:colors.muted,fontFamily:fonts.sans,fontSize:8,marginTop:1,textAlign:'center'},
- todayMeta:{color:colors.muted,fontFamily:fonts.sans,fontSize:9,letterSpacing:.8,textAlign:'center'},
+ page:{gap:24,paddingBottom:42},header:{alignItems:'center',flexDirection:'row',justifyContent:'space-between',paddingTop:6},greeting:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:25},date:{color:colors.muted,fontFamily:fonts.sans,fontSize:11,marginTop:3,textTransform:'capitalize'},dayMark:{alignItems:'center',borderColor:colors.line,borderRadius:24,borderWidth:1,height:48,justifyContent:'center',width:48},dayNumber:{color:colors.gold,fontFamily:fonts.metricStrong,fontSize:15},dayLabel:{color:colors.muted,fontFamily:fonts.sansBold,fontSize:6,letterSpacing:1.2},worldPicker:{borderBottomColor:colors.line,borderTopColor:colors.line,borderBottomWidth:1,borderTopWidth:1,flexDirection:'row',gap:5,paddingVertical:9},worldChoice:{alignItems:'center',borderColor:'transparent',borderWidth:1,flex:1,gap:5,minHeight:51,justifyContent:'center',paddingHorizontal:3},worldDot:{borderRadius:5,height:10,width:10},worldName:{color:colors.muted,fontFamily:fonts.displayMedium,fontSize:12},hero:{borderRadius:30,borderWidth:1,minHeight:540,overflow:'hidden'},heroShade:{flex:1,minHeight:540,padding:22},heroTop:{alignItems:'center',flexDirection:'row',justifyContent:'space-between'},kicker:{color:colors.gold,fontFamily:fonts.sansBold,fontSize:8,letterSpacing:2},layerName:{color:colors.ivory,fontFamily:fonts.sansMedium,fontSize:9},heroSpace:{flex:1,minHeight:170},ritualMark:{alignItems:'center',alignSelf:'flex-start',height:48,justifyContent:'center',marginBottom:12,width:48},ritualRing:{borderLeftColor:'transparent',borderRadius:24,borderWidth:1.2,height:48,transform:[{rotate:'18deg'}],width:48},ritualPoint:{borderRadius:3,height:6,position:'absolute',width:6},title:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:39,lineHeight:42,maxWidth:320},body:{color:colors.muted,fontFamily:fonts.sans,fontSize:13,lineHeight:21,marginTop:12,maxWidth:315},primary:{alignItems:'center',alignSelf:'stretch',backgroundColor:colors.ivory,borderRadius:28,flexDirection:'row',gap:10,justifyContent:'center',marginTop:22,minHeight:56,paddingHorizontal:18},primaryText:{color:colors.ink,fontFamily:fonts.sansStrong,fontSize:12},practiceMeta:{color:colors.muted,fontFamily:fonts.sans,fontSize:9,letterSpacing:.4,marginTop:11,textAlign:'center'},realProgress:{alignItems:'center',borderBottomColor:colors.line,borderTopColor:colors.line,borderBottomWidth:1,borderTopWidth:1,flexDirection:'row',justifyContent:'space-around',paddingVertical:17},realProgressItem:{alignItems:'center'},progressValue:{color:colors.cream,fontFamily:fonts.metricStrong,fontSize:15,textAlign:'center'},progressLabel:{color:colors.muted,fontFamily:fonts.sans,fontSize:7,marginTop:3,textAlign:'center'},divider:{backgroundColor:colors.line,height:28,width:1},path:{alignItems:'center',borderBottomColor:colors.line,borderBottomWidth:1,flexDirection:'row',gap:14,minHeight:82,paddingVertical:14},pathCopy:{flex:1,gap:5},pathTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:20},pathNote:{color:colors.muted,fontFamily:fonts.sans,fontSize:10,lineHeight:16},firstWeekNote:{gap:8,paddingVertical:12},firstWeekTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:24},firstWeekBody:{color:colors.muted,fontFamily:fonts.sans,fontSize:11,lineHeight:18},awareness:{gap:3,marginTop:4},sectionTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:28,marginBottom:8},closing:{color:'rgba(232,222,205,.52)',fontFamily:fonts.display,fontSize:17,fontStyle:'italic',lineHeight:24,paddingVertical:16,textAlign:'center'},
 });

@@ -15,6 +15,6 @@ export function migrateShenLocalState(value:Partial<ShenLocalState>|undefined):S
   shenActivities:Array.isArray(value?.shenActivities)?value.shenActivities:[],
   reflections:Array.isArray(value?.reflections)?value.reflections:[],
   savedMasterSentences:Array.isArray(value?.savedMasterSentences)?value.savedMasterSentences:[],
-  practicePreferences:{ghostMode:value?.practicePreferences?.ghostMode??'follow',traceMode:value?.practicePreferences?.traceMode??'compare',ghostOpacity:value?.practicePreferences?.ghostOpacity??.28,voiceEnabled:value?.practicePreferences?.voiceEnabled??true},
+  practicePreferences:{ghostMode:value?.practicePreferences?.ghostMode??'follow',traceMode:value?.practicePreferences?.traceMode??'compare',ghostOpacity:Math.max(.52,value?.practicePreferences?.ghostOpacity??.58),voiceEnabled:value?.practicePreferences?.voiceEnabled??true},
  };
 }

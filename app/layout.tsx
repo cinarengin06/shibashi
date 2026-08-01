@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Serif_Display, Inter, Manrope } from "next/font/google";
+import { Cormorant_Garamond, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 
-const display = DM_Serif_Display({
+const display = Cormorant_Garamond({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600"],
 });
 
 const inter = Inter({
@@ -27,7 +27,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#101813",
+  themeColor: "#0B0E12",
   colorScheme: "dark",
 };
 

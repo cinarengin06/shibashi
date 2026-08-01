@@ -34,7 +34,7 @@ export default function Profile(){
     <View style={p.pairRow}><TextInput autoCapitalize="characters" autoCorrect={false} maxLength={14} onChangeText={setPairCode} placeholder="XXXX-XXXX-XXXX" placeholderTextColor={colors.muted} style={p.codeInput} value={pairCode}/><Pressable disabled={!pairCode} onPress={()=>void connect()} style={[p.connect,{backgroundColor:pairCode?shen.color:colors.surface2}]}><Text style={p.connectText}>Bağla</Text></Pressable></View>
    </Card>
   </Section>
-  <Section title="Sana iyi gelen mod" action="Günlük önerilerini belirler">
+  <Section title="Sana iyi gelen dünya" action="Günlük atmosferini belirler">
    <FiveShenSelector selected={profile.selectedShenId} onSelect={selectedShenId=>saveProfile({selectedShenId})}/>
    <Pressable onPress={()=>router.push(`/shen/${shen.id}`)}><Card style={[p.shenCard,{borderColor:`${shen.color}66`}]}><View style={[p.shenSymbol,{backgroundColor:`${shen.color}18`}]}><Text style={{color:shen.color,fontSize:27}}>{shen.symbol}</Text></View><View style={{flex:1,gap:3}}><Text style={[p.shenMode,{color:shen.color}]}>{shen.dailyName.toUpperCase()}</Text><Text style={p.shenTitle}>{shen.label}</Text><Text style={p.muted}>{shen.note}</Text><Text style={[p.term,{color:shen.color}]}>Geleneksel adı: {shen.name} Shen · {shen.organ}</Text></View><Ionicons name="chevron-forward" color={shen.color} size={20}/></Card></Pressable>
   </Section>

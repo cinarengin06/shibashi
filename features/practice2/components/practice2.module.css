@@ -1,0 +1,1008 @@
+.page {
+  --ink: #0a0f0c;
+  --surface: #111713;
+  --card: #171d19;
+  --cream: #f2eee7;
+  --muted: #a7ada6;
+  --gold: #c6a56a;
+  --green: #a9d977;
+  min-height: 100vh;
+  padding: 18px 22px 70px;
+  background:
+    radial-gradient(
+      circle at 50% -20%,
+      rgba(198, 165, 106, 0.11),
+      transparent 40rem
+    ),
+    #0a0f0c;
+  color: var(--cream);
+  font-family: Inter, sans-serif;
+}
+.embedded {
+  min-height: auto;
+  padding: 8px 0 40px;
+  background: transparent;
+}
+.header {
+  max-width: 1500px;
+  height: 72px;
+  margin: 0 auto 16px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  border-bottom: 1px solid rgba(198, 165, 106, 0.2);
+}
+.header > div {
+  text-align: center;
+}
+.header h1 {
+  margin: 0;
+  font:
+    500 28px "Cormorant Garamond",
+    serif;
+  letter-spacing: 0.08em;
+}
+.header p {
+  margin: 3px 0;
+  color: #d8bb88;
+  font:
+    500 14px "Cormorant Garamond",
+    serif;
+}
+.header > a:last-child {
+  justify-self: end;
+  padding: 10px 15px;
+  border: 1px solid rgba(198, 165, 106, 0.22);
+  border-radius: 999px;
+  color: var(--cream);
+  font-size: 10px;
+  text-decoration: none;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cream);
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-decoration: none;
+}
+.brand i {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--gold);
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+.brand span {
+  color: var(--gold);
+}
+.embeddedTitle {
+  text-align: center;
+  margin: 4px 0 18px;
+}
+.embeddedTitle p {
+  margin: 0;
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+.embeddedTitle h1 {
+  margin: 4px 0;
+  font:
+    500 38px "Cormorant Garamond",
+    serif;
+}
+.embeddedTitle span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.segment {
+  position: relative;
+  z-index: 10;
+  max-width: 620px;
+  margin: 0 auto 16px;
+  padding: 5px;
+  display: flex;
+  border: 1px solid rgba(198, 165, 106, 0.2);
+  border-radius: 999px;
+  background: #111713;
+}
+.segment button {
+  flex: 1;
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 10px;
+}
+.segment .segmentActive {
+  background: linear-gradient(135deg, #d2b270, #b99150);
+  color: #11150f;
+  font-weight: 800;
+}
+.singleScreen {
+  max-width: 1320px;
+  margin: auto;
+}
+.module {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid rgba(198, 165, 106, 0.24);
+  border-radius: 22px;
+  background: linear-gradient(
+    180deg,
+    rgba(17, 23, 19, 0.97),
+    rgba(10, 16, 12, 0.98)
+  );
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.25);
+}
+.moduleHeader {
+  min-height: 58px;
+  padding: 2px 7px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.moduleHeader h2 {
+  margin: 0;
+  font:
+    500 15px "Cormorant Garamond",
+    serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.moduleHeader p {
+  margin: 6px 0;
+  color: var(--muted);
+  font-size: 9px;
+}
+.moduleHeader > span {
+  padding: 9px 14px;
+  border: 1px solid rgba(198, 165, 106, 0.2);
+  border-radius: 999px;
+  color: #dfc99e;
+  font-size: 9px;
+}
+.staticPicker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.staticPicker button {
+  min-width: 0;
+  height: 74px;
+  padding: 7px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(242, 238, 231, 0.08);
+  border-radius: 14px;
+  background: #121814;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+}
+.staticPicker img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 10px;
+  filter: saturate(0.55) brightness(0.65);
+}
+.staticPicker span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.staticPicker b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cream);
+  font-size: 8px;
+}
+.staticPicker small {
+  font-size: 7px;
+}
+.staticPicker .staticSelected {
+  border-color: var(--gold);
+  background: rgba(198, 165, 106, 0.13);
+  box-shadow: inset 0 0 24px rgba(198, 165, 106, 0.07);
+}
+.staticPicker .staticSelected img {
+  filter: none;
+}
+.flowPicker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.flowPicker button {
+  min-height: 112px;
+  padding: 13px;
+  border: 1px solid rgba(242, 238, 231, 0.09);
+  border-radius: 15px;
+  background: #121814;
+  color: var(--cream);
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  align-content: start;
+  gap: 5px;
+}
+.flowPicker button > span {
+  color: var(--gold);
+  font: 500 13px Manrope, sans-serif;
+}
+.flowPicker button strong {
+  font: 500 16px "Cormorant Garamond", serif;
+}
+.flowPicker button small,
+.flowPicker button em {
+  color: var(--muted);
+  font-size: 8px;
+  font-style: normal;
+}
+.flowPicker button em {
+  color: #dfc48f;
+}
+.flowPicker .flowSelected {
+  border-color: var(--gold);
+  background: linear-gradient(145deg, rgba(198, 165, 106, 0.18), rgba(18, 24, 20, 0.96));
+  box-shadow: inset 0 0 28px rgba(198, 165, 106, 0.06);
+}
+.storyboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 1.15fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.storyboard article,
+.storyboard > div {
+  position: relative;
+  min-height: 150px;
+  overflow: hidden;
+  border: 1px solid rgba(198, 165, 106, 0.16);
+  border-radius: 15px;
+  background: #171d19;
+}
+.storyboard article img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #090e0b;
+  filter: brightness(0.58) saturate(0.72);
+}
+.storyboard article span,
+.storyboard article strong,
+.storyboard article small {
+  position: absolute;
+  z-index: 2;
+  left: 12px;
+}
+.storyboard article span {
+  top: 11px;
+  color: var(--gold);
+  font: 500 9px Manrope, sans-serif;
+}
+.storyboard article strong {
+  bottom: 27px;
+  font: 500 14px "Cormorant Garamond", serif;
+}
+.storyboard article small {
+  bottom: 11px;
+  color: #d4d0c7;
+  font-size: 7px;
+}
+.storyboard > div {
+  padding: 17px;
+  display: grid;
+  align-content: center;
+  gap: 7px;
+}
+.storyboard > div small {
+  color: var(--gold);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+}
+.storyboard > div strong {
+  font: 500 23px "Cormorant Garamond", serif;
+}
+.storyboard > div span {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.staticStage {
+  position: relative;
+  height: min(64vh, 680px);
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid rgba(242, 238, 231, 0.09);
+  border-radius: 17px;
+  background: #171b18;
+}
+.stagePlaceholder,
+.cameraVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.stagePlaceholder {
+  object-fit: contain;
+  background: #090e0b;
+  filter: saturate(0.72) brightness(0.7);
+}
+.cameraVideo {
+  transform: scaleX(-1);
+}
+.poseCanvas {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.stageShade {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 8, 6, 0.08),
+    transparent 48%,
+    rgba(5, 8, 6, 0.66)
+  );
+}
+.cameraEmpty {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #292d29, #171b18);
+}
+.cameraEmpty span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.poseTarget {
+  position: absolute;
+  z-index: 5;
+  left: 14px;
+  top: 86px;
+  width: 145px;
+  height: 235px;
+  padding: 12px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  border: 1px solid rgba(198, 165, 106, 0.18);
+  border-radius: 15px;
+  background: rgba(10, 15, 12, 0.84);
+  text-align: center;
+}
+.poseTarget small,
+.stageBadge small {
+  color: var(--gold);
+  font-size: 7px;
+  letter-spacing: 0.13em;
+}
+.poseTarget svg {
+  width: 100%;
+  height: 100%;
+}
+.poseTarget span {
+  color: #d8d9d4;
+  font-size: 8px;
+}
+.stageBadge {
+  position: absolute;
+  z-index: 5;
+  left: 14px;
+  top: 14px;
+  width: 160px;
+  padding: 11px;
+  display: grid;
+  gap: 3px;
+  border-radius: 13px;
+  background: rgba(10, 15, 12, 0.74);
+}
+.stageBadge strong {
+  font:
+    500 13px "Cormorant Garamond",
+    serif;
+}
+.stageBadge span {
+  color: var(--muted);
+  font-size: 8px;
+}
+.stageTime,
+.liveTime {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 15px;
+  display: grid;
+  border-radius: 13px;
+  background: rgba(10, 15, 12, 0.74);
+  text-align: center;
+}
+.stageTime strong,
+.liveTime strong {
+  font:
+    500 21px Manrope,
+    sans-serif;
+}
+.stageTime small,
+.liveTime small {
+  color: var(--muted);
+  font-size: 7px;
+}
+.scoreRing {
+  --score: 0;
+  position: absolute;
+  z-index: 5;
+  right: 16px;
+  top: 14px;
+  width: 102px;
+  height: 102px;
+  display: grid;
+  place-content: center;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--green) calc(var(--score) * 1%),
+    rgba(242, 238, 231, 0.12) 0
+  );
+  text-align: center;
+}
+.scoreRing:before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: rgba(18, 24, 20, 0.92);
+}
+.scoreRing strong,
+.scoreRing small {
+  position: relative;
+}
+.scoreRing strong {
+  font:
+    500 23px Manrope,
+    sans-serif;
+}
+.scoreRing small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 7px;
+}
+.breathBar {
+  position: absolute;
+  z-index: 5;
+  left: 12px;
+  right: 12px;
+  bottom: 11px;
+  min-height: 48px;
+  padding: 8px 14px;
+  display: grid;
+  grid-template-columns: 70px 1fr 210px;
+  align-items: center;
+  border: 1px solid rgba(242, 238, 231, 0.1);
+  border-radius: 13px;
+  background: rgba(10, 15, 12, 0.78);
+}
+.breathBar span {
+  color: var(--gold);
+  font-size: 7px;
+  letter-spacing: 0.13em;
+}
+.breathBar strong {
+  font-size: 9px;
+}
+.breathBar i {
+  height: 22px;
+  background: radial-gradient(
+      ellipse at center,
+      transparent 44%,
+      rgba(169, 217, 119, 0.75) 46%,
+      transparent 50%
+    )
+    0 0/38px 22px;
+}
+.poseTarget svg line,
+.referenceFigure svg line,
+.phases svg line {
+  stroke: rgba(169, 217, 119, 0.8);
+  stroke-width: 0.8;
+}
+.poseTarget svg circle,
+.referenceFigure svg circle,
+.phases svg circle {
+  fill: #a9d977;
+}
+.lowerGrid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1.35fr 0.9fr;
+  gap: 10px;
+}
+.metricPanel,
+.feedbackPanel,
+.phases {
+  padding: 15px;
+  border: 1px solid rgba(198, 165, 106, 0.17);
+  border-radius: 15px;
+  background: rgba(17, 23, 19, 0.86);
+}
+.metricPanel h3,
+.feedbackPanel h3 {
+  margin: 0 0 10px;
+  color: #ead7b1;
+  font:
+    500 13px "Cormorant Garamond",
+    serif;
+  text-transform: uppercase;
+}
+.metricRow {
+  min-height: 39px;
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) 130px 34px;
+  gap: 9px;
+  align-items: center;
+  border-bottom: 1px solid rgba(242, 238, 231, 0.055);
+}
+.metricRow > div {
+  display: grid;
+}
+.metricRow strong {
+  font-size: 8px;
+}
+.metricRow small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 6.5px;
+}
+.metricRow > span {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(242, 238, 231, 0.09);
+}
+.metricRow > span i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #879d61, #b7c985);
+}
+.metricRow b {
+  font:
+    500 8px Manrope,
+    sans-serif;
+}
+.metricRow em {
+  grid-column: 2/4;
+  color: #8d928c;
+  font-size: 7px;
+  font-style: normal;
+}
+.metricTotal {
+  padding-top: 11px;
+  display: flex;
+  justify-content: space-between;
+  color: #e8d4aa;
+  font-size: 9px;
+}
+.feedbackPanel {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+}
+.feedbackPanel > p {
+  margin: 5px 0;
+  display: flex;
+  gap: 8px;
+  font-size: 8px;
+  line-height: 1.5;
+}
+.correction {
+  color: #e0c18b;
+}
+.positive {
+  color: #a9d977;
+}
+.master {
+  margin-top: auto;
+  padding-top: 12px;
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid rgba(242, 238, 231, 0.08);
+}
+.master small {
+  color: var(--gold);
+  font-size: 7px;
+  letter-spacing: 0.13em;
+}
+.master strong {
+  color: #d8d7d1;
+  font:
+    500 14px/1.45 "Cormorant Garamond",
+    serif;
+}
+.empty {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.5;
+}
+.actions {
+  min-height: 58px;
+  padding: 9px 7px 0;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+}
+.actions button {
+  min-width: 130px;
+  padding: 11px 15px;
+  border: 1px solid rgba(198, 165, 106, 0.22);
+  border-radius: 999px;
+  background: #2b2b26;
+  color: var(--cream);
+  font-size: 9px;
+  cursor: pointer;
+}
+.actions > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #ead7b1;
+  font:
+    500 10px Manrope,
+    sans-serif;
+}
+.actions > div button {
+  min-width: 22px;
+  padding: 2px;
+  border: 0;
+  background: none;
+}
+.actions .primary {
+  border-color: #7e955d;
+  background: #637848;
+  font-weight: 700;
+}
+.referenceRow {
+  display: grid;
+  grid-template-columns: 1.42fr 0.88fr;
+  gap: 10px;
+}
+.referenceMedia {
+  position: relative;
+  height: 285px;
+  overflow: hidden;
+  border: 1px solid rgba(242, 238, 231, 0.09);
+  border-radius: 15px;
+}
+.referenceMedia > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #090e0b;
+  animation: practice2ReferenceBreath 1500ms ease-in-out both;
+}
+
+@keyframes practice2ReferenceBreath {
+  0% { opacity: 0.35; transform: scale(0.985) translateY(4px); }
+  45% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1.015) translateY(0); }
+}
+.referenceLabel,
+.liveLabel {
+  position: absolute;
+  z-index: 5;
+  left: 12px;
+  top: 11px;
+  color: var(--gold);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+}
+.referenceFigure {
+  position: absolute;
+  z-index: 3;
+  left: 40%;
+  top: 12%;
+  width: 28%;
+  height: 70%;
+  opacity: 0.6;
+}
+.referenceFigure svg {
+  width: 100%;
+  height: 100%;
+}
+.referenceInfo {
+  position: absolute;
+  z-index: 4;
+  right: 11px;
+  top: 10px;
+  display: grid;
+  text-align: right;
+}
+.referenceInfo strong {
+  font-size: 8px;
+}
+.referenceInfo small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 7px;
+}
+.referenceControls {
+  position: absolute;
+  z-index: 4;
+  left: 11px;
+  right: 11px;
+  bottom: 9px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.referenceControls button {
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(242, 238, 231, 0.14);
+  border-radius: 50%;
+  background: rgba(10, 15, 12, 0.78);
+  color: var(--cream);
+}
+.referenceControls span {
+  font:
+    500 8px Manrope,
+    sans-serif;
+}
+.referenceControls div {
+  height: 3px;
+  flex: 1;
+  background: rgba(242, 238, 231, 0.18);
+}
+.referenceControls i {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+}
+.phases {
+  height: 285px;
+}
+.phases > p {
+  margin: 0 0 9px;
+  color: var(--gold);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+.phases > div {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+.phases article {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  color: var(--muted);
+}
+.phases article svg {
+  width: 100%;
+  height: 105px;
+  border: 1px solid rgba(242, 238, 231, 0.09);
+  border-radius: 10px;
+  background: rgba(242, 238, 231, 0.025);
+}
+.phases article > span {
+  font:
+    500 8px Manrope,
+    sans-serif;
+}
+.phases article small {
+  font-size: 6px;
+}
+.phases .phaseActive {
+  color: var(--gold);
+}
+.phases .phaseActive svg {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 18px rgba(198, 165, 106, 0.12);
+}
+.phases footer {
+  margin-top: 11px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 7px;
+}
+.phases footer strong {
+  color: var(--gold);
+}
+.dynamicLower {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1.42fr 0.88fr;
+  gap: 10px;
+}
+.dynamicCamera {
+  position: relative;
+  height: 430px;
+  overflow: hidden;
+  border: 1px solid rgba(242, 238, 231, 0.09);
+  border-radius: 15px;
+}
+.dynamicCamera .scoreRing {
+  width: 88px;
+  height: 88px;
+}
+.liveTime {
+  left: 48px;
+  transform: none;
+}
+.liveTimeline {
+  position: absolute;
+  z-index: 5;
+  left: 13px;
+  right: 13px;
+  bottom: 10px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.liveTimeline i {
+  height: 3px;
+  flex: 1;
+  background: rgba(242, 238, 231, 0.15);
+}
+.liveTimeline .timelineActive {
+  background: var(--gold);
+}
+.metricCompact {
+  height: 430px;
+  overflow: auto;
+}
+.detectorVideo {
+  position: fixed;
+  left: -10px;
+  top: -10px;
+  width: 1px;
+  height: 1px;
+  opacity: 0.001;
+}
+@media (max-width: 900px) {
+  .singleScreen {
+    max-width: 760px;
+  }
+  .staticPicker {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x mandatory;
+  }
+  .staticPicker button {
+    flex: 0 0 190px;
+    scroll-snap-align: start;
+  }
+  .flowPicker {
+    display: flex;
+    overflow-x: auto;
+  }
+  .flowPicker button {
+    flex: 0 0 190px;
+  }
+  .storyboard {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .storyboard > div {
+    grid-column: 1/-1;
+  }
+  .referenceRow,
+  .dynamicLower {
+    grid-template-columns: 1fr;
+  }
+  .referenceMedia {
+    height: 320px;
+  }
+  .phases {
+    height: auto;
+  }
+  .dynamicCamera {
+    height: 62vh;
+    min-height: 500px;
+  }
+  .metricCompact {
+    height: auto;
+  }
+}
+@media (max-width: 660px) {
+  .page {
+    padding: 12px 10px 38px;
+  }
+  .header {
+    grid-template-columns: 1fr auto;
+  }
+  .header > div {
+    display: none;
+  }
+  .embeddedTitle h1 {
+    font-size: 31px;
+  }
+  .segment {
+    position: sticky;
+    top: 4px;
+    margin-bottom: 12px;
+    background: rgba(17, 23, 19, 0.96);
+    backdrop-filter: blur(16px);
+  }
+  .segment button {
+    padding-inline: 8px;
+    font-size: 9px;
+  }
+  .staticStage {
+    height: 68vh;
+    min-height: 520px;
+  }
+  .lowerGrid {
+    grid-template-columns: 1fr;
+  }
+  .poseTarget {
+    width: 105px;
+    height: 178px;
+  }
+  .scoreRing {
+    width: 78px;
+    height: 78px;
+  }
+  .breathBar {
+    grid-template-columns: 55px 1fr;
+  }
+  .breathBar i {
+    display: none;
+  }
+  .metricRow {
+    grid-template-columns: minmax(110px, 1fr) 80px 27px;
+  }
+  .actions button {
+    min-width: 0;
+    flex: 1;
+    padding-inline: 8px;
+  }
+  .actions > div {
+    flex: 0 0 86px;
+    gap: 3px;
+  }
+  .actions > div button {
+    display: none;
+  }
+  .referenceMedia {
+    height: 265px;
+  }
+  .dynamicCamera {
+    height: 62vh;
+    min-height: 500px;
+  }
+  .moduleHeader > span {
+    display: none;
+  }
+  .storyboard {
+    grid-template-columns: 1fr;
+  }
+  .storyboard > div {
+    grid-column: auto;
+  }
+}

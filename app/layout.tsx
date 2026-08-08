@@ -1,14 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Inter, Manrope } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import "./intro.css";
 import "./design-system.css";
-
-const display = Cormorant_Garamond({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
 
 const inter = Inter({
   variable: "--font-sans",
@@ -40,7 +34,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body className={`${display.variable} ${inter.variable} ${manrope.variable}`}>{children}</body>
+      <body className={`${inter.variable} ${manrope.variable}`}>{children}</body>
     </html>
   );
 }

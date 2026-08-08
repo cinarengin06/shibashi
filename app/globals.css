@@ -1502,6 +1502,42 @@ img {
   transform: translateX(-50%);
   z-index: 4;
 }
+.intro-splash-audio {
+  align-items: center;
+  backdrop-filter: blur(18px);
+  background: rgba(3, 10, 7, 0.62);
+  border: 1px solid color-mix(in srgb, var(--shen-accent) 52%, rgba(255,255,255,.22));
+  border-radius: 999px;
+  color: #f5dfaa;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 13px 0 11px;
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  z-index: 8;
+  box-shadow: 0 8px 30px rgba(0,0,0,.25), 0 0 22px color-mix(in srgb, var(--shen-accent) 18%, transparent);
+}
+.intro-splash-audio span {
+  display: grid;
+  font-size: 17px;
+  height: 24px;
+  place-items: center;
+  width: 24px;
+}
+.intro-splash-audio small {
+  color: inherit;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.intro-splash-audio-muted {
+  border-color: rgba(255,255,255,.17);
+  color: rgba(242,238,231,.68);
+}
 
 .intro-splash-skip i {
   animation: splash-progress 4.5s linear both;

@@ -1590,6 +1590,8 @@ export default function RitimKapisiOS() {
         <IntroSplash
           onClose={() => setIntroVisible(false)}
           deviceMode={deviceMode}
+          musicLabel={selectedShen.name}
+          musicSrc={selectedShen.music}
         />
       ) : introVideoVisible ? (
         <IntroGateVideo
@@ -1778,12 +1780,35 @@ function DevicePreviewDock({
 
 function IntroSplash({
   deviceMode,
+  musicLabel,
+  musicSrc,
   onClose,
 }: {
   deviceMode: DeviceMode;
+  musicLabel: string;
+  musicSrc: string;
   onClose: () => void;
 }) {
   const [isClosing, setIsClosing] = useState(false);
+  const [soundOff, setSoundOff] = useState(false);
+  const splashAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio(musicSrc);
+    const savedMuted = window.localStorage.getItem("shibashi-splash-muted") === "true";
+    splashAudioRef.current = audio;
+    audio.loop = true;
+    audio.preload = "auto";
+    audio.volume = .3;
+    audio.muted = savedMuted;
+    setSoundOff(savedMuted);
+    void audio.play().catch(() => setSoundOff(true));
+    return () => {
+      audio.pause();
+      audio.src = "";
+      if (splashAudioRef.current === audio) splashAudioRef.current = null;
+    };
+  }, [musicSrc]);
 
   useEffect(() => {
     const closeTimer = window.setTimeout(() => setIsClosing(true), 4500);
@@ -1800,6 +1825,25 @@ function IntroSplash({
     window.setTimeout(onClose, 420);
   }
 
+  async function toggleSplashSound() {
+    const audio = splashAudioRef.current;
+    if (!audio) return;
+    if (soundOff || audio.paused) {
+      audio.muted = false;
+      try {
+        await audio.play();
+        setSoundOff(false);
+        window.localStorage.setItem("shibashi-splash-muted", "false");
+      } catch {
+        setSoundOff(true);
+      }
+      return;
+    }
+    audio.muted = true;
+    setSoundOff(true);
+    window.localStorage.setItem("shibashi-splash-muted", "true");
+  }
+
   return (
     <div
       aria-label="Shibashi Efe açılış ekranı"
@@ -1813,6 +1857,16 @@ function IntroSplash({
           className="intro-splash-image"
           src="/images/shibashi/shibashi-splash.png"
         />
+        <button
+          aria-label={soundOff ? `${musicLabel} müziğini aç` : `${musicLabel} müziğini sustur`}
+          aria-pressed={soundOff}
+          className={`intro-splash-audio ${soundOff ? "intro-splash-audio-muted" : ""}`}
+          onClick={() => void toggleSplashSound()}
+          type="button"
+        >
+          <span aria-hidden="true">{soundOff ? "⌁" : "♪"}</span>
+          <small>{soundOff ? "Sessiz" : musicLabel}</small>
+        </button>
         <button aria-label="Açılışı geç" className="intro-splash-skip" onClick={closeSplash} type="button">
           <span>Dokun ve başla</span>
           <i aria-hidden="true" />
@@ -3219,6 +3273,7 @@ function PostureScreen({
   const postureAutoCaptureLockRef = useRef(false);
   const postureReadyAtRef = useRef(0);
   const postureAnnouncedStepRef = useRef<PostureAssessmentStep | null>(null);
+  const postureAudioRef = useRef<HTMLAudioElement | null>(null);
   const postureStepRef = useRef<PostureAssessmentStep>("intro");
   const poseStatusRef = useRef<"bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata">("bekliyor");
   const lastPoseUiUpdateRef = useRef(0);
@@ -3346,7 +3401,7 @@ function PostureScreen({
     if (sample.confidence >= 50) {
       postureSampleAnalysesRef.current = [...postureSampleAnalysesRef.current.slice(-119), sample];
     }
-    const progress = Math.min(100, ((Date.now() - postureStableSinceRef.current) / 5000) * 100);
+    const progress = Math.min(100, ((Date.now() - postureStableSinceRef.current) / 3000) * 100);
     setAutoCaptureProgress(progress);
 
     if (progress >= 100 && !postureAutoCaptureLockRef.current) {
@@ -3360,14 +3415,16 @@ function PostureScreen({
     if (postureAnnouncedStepRef.current === postureStep) return;
 
     postureAnnouncedStepRef.current = postureStep;
-    const instruction =
-      postureStep === "front"
-        ? "Kameraya dön. Beş saniye sabit kal."
-        : postureStep === "side"
-          ? "Şimdi yana dön. Beş saniye sabit kal."
-          : "Şimdi arkana dön. Beş saniye sabit kal.";
-    const timer = window.setTimeout(() => speakCoach(instruction), 300);
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(() => {
+      postureAudioRef.current?.pause();
+      const audio = new Audio(`/audio/posture/tai/${postureStep}-3s.mp3`);
+      postureAudioRef.current = audio;
+      void audio.play().catch(() => undefined);
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+      postureAudioRef.current?.pause();
+    };
   }, [postureStep]);
 
   useEffect(() => {
@@ -3563,7 +3620,6 @@ function PostureScreen({
         const report = buildPostureReport(nextCaptures as Record<PostureView, PostureAssessmentCapture>, latestPostureReport);
         setViewingSavedReport(false);
         setPostureResult(report);
-        speakCoach("Bitti. Üç görünüm de tamamlandı.");
         setPostureStep("processing");
         shutdownPostureCamera();
       }
@@ -5393,10 +5449,10 @@ function PostureAssessmentScreen({
                     className="posture-auto-capture-ring"
                     style={{ "--capture-progress": `${Math.max(2, autoCaptureProgress) * 3.6}deg` } as CSSProperties}
                   >
-                    <strong>{autoCaptureProgress >= 100 ? "✓" : Math.max(1, Math.ceil(5 - autoCaptureProgress / 20))}</strong>
+                    <strong>{autoCaptureProgress >= 100 ? "✓" : Math.max(1, Math.ceil(3 - autoCaptureProgress / (100 / 3)))}</strong>
                   </div>
                   <span>{poseStatus === "aktif" ? autoCaptureInstruction : "Tam bedenini kadraja al"}</span>
-                  <small>{autoCaptureProgress >= 100 ? "Görüntü alındı" : "5 saniye sabit kalınca otomatik çekilecek"}</small>
+                  <small>{autoCaptureProgress >= 100 ? "Görüntü alındı" : "3 saniye sabit durunca otomatik çekilecek"}</small>
                 </div>
               ) : null}
               <button className="posture-stage-mode-button" onClick={() => onModeChange(mode === "3d" ? "2d" : "3d")} type="button">
@@ -5450,7 +5506,7 @@ function PostureAssessmentLanding({
         <div className="posture-landing-content">
           <span className="eyebrow">Beden Hattın</span>
           <h1>Postürünün bugünkü izini çıkar.</h1>
-          <p>Ön, yan ve arka görünümünü beş saniyelik sakin duruşlarla ölçelim; zaman içindeki değişimi birlikte görelim.</p>
+          <p>Ön, yan ve arka görünümünü üç saniyelik sakin duruşlarla ölçelim; zaman içindeki değişimi birlikte görelim.</p>
           <div className="posture-landing-actions">
             <button className="posture-landing-primary" onClick={onStart} type="button">
               <span>Postür Analizini Başlat</span>
@@ -5570,7 +5626,7 @@ function PostureAutoCaptureScreen({
               <strong>{instruction}</strong>
               <span>
                 {scanGuidance === "hold"
-                  ? "Gerçek ölçüm sürüyor; beş saniye aynı duruşu koruyun"
+                  ? "Gerçek ölçüm sürüyor; üç saniye aynı duruşu koruyun"
                   : scanGuidance === "wrong-angle"
                     ? `${viewLabel} görünüm doğrulanınca sayaç başlayacak`
                     : "Tam beden ve doğru yön algılandığında sayaç başlayacak"}

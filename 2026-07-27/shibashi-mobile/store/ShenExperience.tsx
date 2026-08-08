@@ -16,9 +16,9 @@ const getBackground=(id:Parameters<typeof getShen>[0])=>shenBackgrounds[getShen(
 const Context=createContext<ShenExperienceState|null>(null);
 
 export function ShenExperienceProvider({children}:PropsWithChildren){
- const{profile,saveProfile}=useApp();const shen=getShen(profile.selectedShenId);const player=useAudioPlayer(shenMusic[shen.id],{downloadFirst:true});const status=useAudioPlayerStatus(player);const[webAudioUnlocked,setWebAudioUnlocked]=useState(false);
+ const{profile,saveProfile}=useApp();const shen=getShen(profile.selectedShenId),musicShenId=shen.id;const player=useAudioPlayer(shenMusic[musicShenId],{downloadFirst:true});const status=useAudioPlayerStatus(player);const[webAudioUnlocked,setWebAudioUnlocked]=useState(false);
  useEffect(()=>{void setAudioModeAsync({playsInSilentMode:true,shouldPlayInBackground:false,interruptionMode:'mixWithOthers'})},[]);
- useEffect(()=>{player.pause();player.replace(shenMusic[shen.id]);player.loop=true;player.volume=.32;if(profile.soundEnabled&&(Platform.OS!=='web'||webAudioUnlocked))player.play()},[player,profile.soundEnabled,shen.id,webAudioUnlocked]);
+ useEffect(()=>{player.pause();player.replace(shenMusic[musicShenId]);player.loop=true;player.volume=.3;if(profile.soundEnabled&&(Platform.OS!=='web'||webAudioUnlocked))player.play()},[musicShenId,player,profile.soundEnabled,webAudioUnlocked]);
  const toggleSound=()=>{if(Platform.OS==='web'&&profile.soundEnabled&&!status.playing){setWebAudioUnlocked(true);player.play();return}saveProfile({soundEnabled:!profile.soundEnabled})};
  return <Context.Provider value={{shen,background:shenBackgrounds[shen.id],soundEnabled:profile.soundEnabled,playing:status.playing,toggleSound}}>{children}</Context.Provider>;
 }

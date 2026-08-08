@@ -1,5 +1,6 @@
 import {Ionicons} from '@expo/vector-icons';
 import {CameraView,useCameraPermissions} from 'expo-camera';
+import {useAudioPlayer} from 'expo-audio';
 import * as Speech from 'expo-speech';
 import {router} from 'expo-router';
 import {useEffect,useRef,useState} from 'react';
@@ -28,8 +29,8 @@ type FrameSize={width:number;height:number};
 
 const scanCopy:Record<PostureView,{start:string;turn:string;waiting:string}>={
  front:{start:'Kameraya dön. Başın ve ayakların göründüğünde ölçüm başlayacak.',turn:'Kameraya dön.',waiting:'Önden görünümünü algılıyorum.'},
- side:{start:'Şimdi yana dön. Yan duruşun algılandığında beş saniye bekle.',turn:'Şimdi yana dön.',waiting:'Yan görünümünü algılıyorum.'},
- back:{start:'Şimdi arkanı dön. Arka görünüm algılandığında beş saniye bekle.',turn:'Şimdi arkanı dön.',waiting:'Arka görünümünü algılıyorum.'},
+ side:{start:'Şimdi yana dön. Yan duruşun algılandığında üç saniye bekle.',turn:'Şimdi yana dön.',waiting:'Yan görünümünü algılıyorum.'},
+ back:{start:'Şimdi arkaya dön. Arka görünüm algılandığında üç saniye bekle.',turn:'Şimdi arkaya dön.',waiting:'Arka görünümünü algılıyorum.'},
 };
 
 export default function PostureSession(){
@@ -41,7 +42,7 @@ export default function PostureSession(){
  const[result,setResult]=useState<PostureReport|null>(null);
  const[phase,setPhase]=useState<'scan'|'review'|'processing'>('scan');
  const[scanState,setScanState]=useState<ScanState>('model-loading');
- const[countdown,setCountdown]=useState(5);
+ const[countdown,setCountdown]=useState(3);
  const[liveLandmarks,setLiveLandmarks]=useState<PoseLandmark[]>([]);
  const[analysisImageSize,setAnalysisImageSize]=useState<FrameSize>({width:1,height:1});
  const[previewSize,setPreviewSize]=useState<FrameSize>({width:1,height:1});
@@ -63,6 +64,9 @@ export default function PostureSession(){
  const stableCapturesRef=useRef<PostureCapture[]>([]);
  const capturesRef=useRef<PostureCapture[]>([]);
  const speakingRef=useRef('');
+ const frontVoice=useAudioPlayer(require('../assets/audio/posture/tai/front-3s.mp3'),{downloadFirst:true});
+ const sideVoice=useAudioPlayer(require('../assets/audio/posture/tai/side-3s.mp3'),{downloadFirst:true});
+ const backVoice=useAudioPlayer(require('../assets/audio/posture/tai/back-3s.mp3'),{downloadFirst:true});
 
  useEffect(()=>setVision3DActive(isAppleVision3DAvailable()),[]);
 
@@ -75,10 +79,15 @@ export default function PostureSession(){
 
  useEffect(()=>{
   if(!permission?.granted||!cameraReady||phase!=='scan')return;
-  speakOnce(`view-${view}`,scanCopy[view].start);
+  if(speakingRef.current===`view-${view}`)return;
+  speakingRef.current=`view-${view}`;
+  Speech.stop();
+  const player=view==='front'?frontVoice:view==='side'?sideVoice:backVoice;
+  frontVoice.pause();sideVoice.pause();backVoice.pause();
+  void player.seekTo(0).then(()=>player.play());
  },[view,cameraReady,phase,permission?.granted]);
 
- useEffect(()=>()=>{Speech.stop();scanSessionRef.current+=1},[]);
+ useEffect(()=>()=>{Speech.stop();frontVoice.pause();sideVoice.pause();backVoice.pause();scanSessionRef.current+=1},[]);
 
  useEffect(()=>{
   if(!cameraReady||cameraError||phase!=='scan')return;
@@ -90,7 +99,7 @@ export default function PostureSession(){
   setLiveLandmarks([]);
   setLiveScore(null);
   setValidSampleCount(0);
-  setCountdown(5);
+  setCountdown(3);
   setScanState('model-loading');
   let timer:ReturnType<typeof setTimeout>|undefined;
 
@@ -110,18 +119,18 @@ export default function PostureSession(){
     const frame=evaluatePoseFrame(analysis.landmarks,view);
     if(!frame.bodyReady){
      holdStartedAtRef.current=null;previousLandmarksRef.current=[];stableCapturesRef.current=[];
-     setLiveScore(null);setValidSampleCount(0);setCountdown(5);setScanState('find-body');schedule();return;
+     setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('find-body');schedule();return;
     }
     if(!frame.angleReady){
      holdStartedAtRef.current=null;previousLandmarksRef.current=analysis.landmarks;stableCapturesRef.current=[];
-     setLiveScore(null);setValidSampleCount(0);setCountdown(5);setScanState('wrong-angle');schedule();return;
+     setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('wrong-angle');schedule();return;
     }
     const movement=getLandmarkMovement(previousLandmarksRef.current,analysis.landmarks);
     previousLandmarksRef.current=analysis.landmarks;
     if(movement>.026){
      holdStartedAtRef.current=Date.now();
      stableCapturesRef.current=[];
-     setLiveScore(null);setValidSampleCount(0);setCountdown(5);setScanState('hold');schedule();return;
+     setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('hold');schedule();return;
     }
     const frameCapture=createPostureCapture(view,analysis.landmarks,analysis.confidence);
     stableCapturesRef.current=[...stableCapturesRef.current,frameCapture].slice(-12);
@@ -130,9 +139,9 @@ export default function PostureSession(){
     setValidSampleCount(stableCapturesRef.current.length);
     holdStartedAtRef.current??=Date.now();
     const elapsed=Date.now()-holdStartedAtRef.current;
-    setCountdown(Math.max(0,Math.ceil((5000-elapsed)/1000)));
+    setCountdown(Math.max(0,Math.ceil((3000-elapsed)/1000)));
     setScanState('hold');
-    if(elapsed<5000||stableCapturesRef.current.length<4){schedule();return}
+    if(elapsed<3000||stableCapturesRef.current.length<4){schedule();return}
 
     setScanState('capturing');
     const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
@@ -155,7 +164,6 @@ export default function PostureSession(){
      return;
     }
 
-    speakOnce('complete','Bitti. Ön, yan ve arka ölçümlerin tamamlandı.');
     setCameraReady(false);
     setLiveLandmarks([]);
     const average=Math.round(nextCaptures.reduce((sum,saved)=>sum+saved.score,0)/Math.max(1,nextCaptures.length));
@@ -180,7 +188,7 @@ export default function PostureSession(){
  },[phase,result]);
 
  const save=()=>{if(!result)return;addPostureReport(result);router.replace('/posture')};
- const restart=()=>{capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(5);setScanState('model-loading');setPhase('scan')};
+ const restart=()=>{capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
 
  if(!permission)return <View style={styles.permission}/>;
  if(!permission.granted)return <SafeAreaView style={styles.permission}>
@@ -225,7 +233,7 @@ export default function PostureSession(){
     <View style={styles.angleSteps}>{views.map((item)=><View key={item} style={[styles.angleStep,item===view&&styles.angleStepActive]}><Ionicons name={viewCopy[item].icon} color={item===view?colors.cream:colors.muted} size={17}/><Text style={styles.angleStepText}>{viewCopy[item].title.replace(' görünüm','')}</Text></View>)}</View>
    </View>
 
-   {tipVisible&&<View style={styles.tip}><Text style={styles.tipTitle}>Doğru ölçüm için</Text><Text style={styles.tipText}>Telefonu yaklaşık 1,5–2 metre uzağa koy. Yeni geniş kadrajda başın ve ayakların aynı anda görünürken beş saniye sabit kal.</Text></View>}
+   {tipVisible&&<View style={styles.tip}><Text style={styles.tipTitle}>Doğru ölçüm için</Text><Text style={styles.tipText}>Telefonu yaklaşık 1,5–2 metre uzağa koy. Başın ve ayakların aynı anda görünürken üç saniye hareketsiz dur.</Text></View>}
    <MediaPipePoseBridge ref={poseBridgeRef}/>
   </View>
  </SafeAreaView>;
@@ -279,7 +287,7 @@ function getScanInstruction(state:ScanState,view:PostureView){
 function getScanDetail(state:ScanState,view:PostureView){
  if(state==='find-body')return'Başın, omuzların, kalçan, dizlerin ve ayakların birlikte görünmeli.';
  if(state==='wrong-angle')return`${viewCopy[view].title} henüz doğrulanmadı; doğru yöne geçince sayaç başlayacak.`;
- if(state==='hold')return'Beş saniye boyunca aynı duruşu koru.';
+ if(state==='hold')return'Üç saniye boyunca aynı duruşu koru.';
  if(state==='capturing'||state==='turning')return'Gerçek MediaPipe ölçümü alındı.';
  return scanCopy[view].waiting;
 }

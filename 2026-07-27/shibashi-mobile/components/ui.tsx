@@ -9,12 +9,15 @@ import {shenBackgrounds} from '../data/shenAssets';
 import {useShenExperience} from '../store/ShenExperience';
 import {shenThemes} from '../../../packages/design-tokens';
 
-export function Screen({children,scroll=true,style}:{children:React.ReactNode;scroll?:boolean;style?:ViewStyle}){
+export function Screen({children,scroll=true,style}:{children:React.ReactNode;scroll?:boolean;style?:StyleProp<ViewStyle>}){
  const{width}=useWindowDimensions();
+ const{shen}=useShenExperience();
+ const personality=shenThemes[shen.id];
  const body=<View style={[s.content,style]}>{children}</View>;
- return <View style={[s.safe,{width}]}>
-  <ShenBackdrop opacity={.22}/>
-  <View style={s.scrim}/>
+ return <View style={[s.safe,{width,backgroundColor:personality.dark}]}>
+  <ShenBackdrop opacity={.34}/>
+  <View style={[s.themeWash,{backgroundColor:personality.surface}]}/>
+  <View style={[s.scrim,{backgroundColor:`${personality.dark}D8`}]}/>
   <SafeAreaView style={s.safeClear} edges={['top']}>
    {scroll?<ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>{body}</ScrollView>:body}
   </SafeAreaView>
@@ -80,6 +83,7 @@ const s=StyleSheet.create({
  safe:{flex:1,backgroundColor:colors.ink,maxWidth:'100%',overflow:'hidden'},
  safeClear:{flex:1},
  backgroundImage:{height:'100%',width:'100%'},
+ themeWash:{position:'absolute',top:0,right:0,bottom:0,left:0,opacity:.46},
  scrim:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(7,16,13,.88)'},
  scroll:{paddingBottom:130,width:'100%'},
  content:{alignSelf:'center',gap:spacing.lg,maxWidth:'100%',overflow:'hidden',paddingHorizontal:spacing.lg,width:'100%'},

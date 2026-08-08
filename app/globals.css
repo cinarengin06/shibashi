@@ -17879,3 +17879,313 @@ body { font-size: 16px; line-height: 1.55; }
   .dojo-home-actions button { font-family: var(--font-sans), Inter, sans-serif; font-size: 15px; font-weight: 700; }
   .dojo-shen-index button b { font-family: var(--font-sans), Inter, sans-serif; font-size: 15px; font-weight: 700; }
 }
+
+/* Five Shen state change: atmosphere, controls and surfaces move together. */
+.shen-theme-hun {
+  --shen-home-shade: linear-gradient(90deg, rgba(5, 18, 9, .96), rgba(15, 44, 24, .62) 39%, rgba(16, 45, 24, .08) 72%), linear-gradient(180deg, rgba(20, 54, 26, .18), transparent 42%, rgba(4, 17, 8, .9));
+  --shen-home-active: rgba(104, 146, 77, .19);
+  --shen-home-primary-start: #d5e4a6;
+  --shen-home-primary-end: #88a861;
+  --shen-home-secondary: #d8e8bc;
+  --shen-home-radius: 18px 4px 18px 4px;
+}
+
+.shen-theme-shen {
+  --shen-home-shade: linear-gradient(90deg, rgba(25, 12, 7, .96), rgba(94, 47, 24, .58) 40%, rgba(101, 57, 27, .08) 72%), linear-gradient(180deg, rgba(139, 76, 35, .2), transparent 40%, rgba(26, 12, 6, .9));
+  --shen-home-active: rgba(209, 146, 72, .2);
+  --shen-home-primary-start: #f0cf8a;
+  --shen-home-primary-end: #c17d3e;
+  --shen-home-secondary: #f0d9a6;
+  --shen-home-radius: 999px;
+}
+
+.shen-theme-yi {
+  --shen-home-shade: linear-gradient(90deg, rgba(18, 18, 16, .97), rgba(67, 63, 52, .63) 40%, rgba(84, 77, 60, .08) 72%), linear-gradient(180deg, rgba(207, 191, 158, .12), transparent 40%, rgba(17, 17, 15, .92));
+  --shen-home-active: rgba(225, 217, 198, .16);
+  --shen-home-primary-start: #f3efe5;
+  --shen-home-primary-end: #bfb6a4;
+  --shen-home-secondary: #eee8dc;
+  --shen-home-radius: 4px;
+}
+
+.shen-theme-po {
+  --shen-home-shade: linear-gradient(90deg, rgba(25, 15, 10, .97), rgba(76, 47, 29, .62) 40%, rgba(88, 58, 37, .08) 72%), linear-gradient(180deg, rgba(155, 101, 62, .14), transparent 42%, rgba(23, 13, 9, .93));
+  --shen-home-active: rgba(182, 132, 88, .19);
+  --shen-home-primary-start: #e4c69f;
+  --shen-home-primary-end: #a66f43;
+  --shen-home-secondary: #dcc7aa;
+  --shen-home-radius: 0;
+}
+
+.shen-theme-zhi {
+  --shen-home-shade: linear-gradient(90deg, rgba(4, 14, 22, .97), rgba(18, 54, 75, .65) 40%, rgba(29, 73, 96, .08) 72%), linear-gradient(180deg, rgba(75, 128, 154, .17), transparent 40%, rgba(3, 13, 21, .94));
+  --shen-home-active: rgba(79, 129, 154, .2);
+  --shen-home-primary-start: #c3deea;
+  --shen-home-primary-end: #5d91aa;
+  --shen-home-secondary: #b9d0da;
+  --shen-home-radius: 28px 8px 28px 8px;
+}
+
+.app-shell,
+.device-mode-desktop .screen,
+.device-mode-desktop .dojo-home-shade,
+.device-mode-desktop .dojo-home-actions button,
+.dojo-shen-index button,
+.dojo-editorial-card {
+  transition-duration: var(--shen-transition, 520ms);
+  transition-property: background, background-color, border-color, border-radius, box-shadow, color, filter;
+  transition-timing-function: cubic-bezier(.22, .8, .2, 1);
+}
+
+.device-mode-desktop .dojo-home-shade { background: var(--shen-home-shade); }
+
+.device-mode-desktop .dojo-home-actions button {
+  border-color: color-mix(in srgb, var(--shen-home-secondary) 58%, transparent);
+  border-radius: var(--shen-home-radius);
+  color: var(--shen-home-secondary);
+  padding-inline: 18px;
+}
+
+.device-mode-desktop .dojo-home-actions button:first-child {
+  background: linear-gradient(135deg, var(--shen-home-primary-start), var(--shen-home-primary-end));
+  border: 1px solid color-mix(in srgb, var(--shen-home-secondary) 52%, transparent);
+  border-radius: var(--shen-home-radius);
+  box-shadow: 0 18px 52px color-mix(in srgb, var(--shen-accent) 24%, transparent);
+}
+
+.dojo-shen-index button.active {
+  background: linear-gradient(180deg, var(--shen-home-active), color-mix(in srgb, var(--shen-home-active) 30%, transparent));
+  color: var(--shen-home-secondary);
+}
+
+.dojo-shen-index button.active::after {
+  background: var(--shen-home-primary-start);
+  box-shadow: 0 0 18px var(--shen-accent);
+}
+
+.device-mode-desktop .dojo-home-head > div:last-child {
+  background: var(--shen-home-active);
+  border-color: color-mix(in srgb, var(--shen-home-secondary) 36%, transparent);
+}
+
+.dojo-editorial-card {
+  border-bottom: 2px solid color-mix(in srgb, var(--shen-accent) 54%, transparent);
+  box-shadow: inset 0 -90px 100px color-mix(in srgb, var(--shen-accent-2) 22%, transparent);
+}
+
+.dojo-home-links {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--shen-surface) 52%, transparent), transparent 72%);
+  border-color: color-mix(in srgb, var(--shen-accent) 28%, transparent);
+}
+
+/* Premium editorial home — imagery, ritual and clear paths into the product. */
+.dojo-manifesto {
+  align-items: end;
+  border-bottom: 1px solid color-mix(in srgb, var(--shen-accent) 26%, rgba(242, 238, 231, .1));
+  border-top: 1px solid color-mix(in srgb, var(--shen-accent) 26%, rgba(242, 238, 231, .1));
+  display: grid;
+  gap: clamp(24px, 4vw, 72px);
+  grid-template-columns: .72fr 1.5fr .9fr;
+  padding: clamp(48px, 6vw, 92px) clamp(8px, 2vw, 30px);
+  position: relative;
+}
+.dojo-manifesto::after {
+  border: 1px solid color-mix(in srgb, var(--shen-accent) 40%, transparent);
+  border-radius: 50%;
+  content: "";
+  height: 130px;
+  opacity: .26;
+  position: absolute;
+  right: 30%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 130px;
+}
+.dojo-manifesto > * { margin: 0; position: relative; z-index: 1; }
+.dojo-manifesto > span { align-self: start; color: var(--shen-gold); font-size: .7rem; font-weight: 800; letter-spacing: .2em; }
+.dojo-manifesto h3 { font-size: clamp(2.4rem, 4.5vw, 5.4rem); font-weight: 680; letter-spacing: -.06em; line-height: .98; }
+.dojo-manifesto p { color: rgba(242, 238, 231, .62); font-size: clamp(.98rem, 1.2vw, 1.18rem); line-height: 1.75; }
+
+.dojo-experience-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(340px, .8fr);
+  min-height: 760px;
+}
+.dojo-experience-grid button,
+.dojo-movement-gallery button,
+.dojo-teacher-story button {
+  appearance: none;
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+}
+.dojo-experience-main,
+.dojo-experience-side > button,
+.dojo-teacher-story {
+  background: #090e0b;
+  overflow: hidden;
+  position: relative;
+  text-align: left;
+}
+.dojo-experience-main img,
+.dojo-experience-side img,
+.dojo-teacher-story > img,
+.dojo-movement-gallery img {
+  object-fit: cover;
+  transition: filter 700ms cubic-bezier(.2, .8, .2, 1), transform 1000ms cubic-bezier(.2, .8, .2, 1);
+}
+.dojo-experience-main img { object-position: center 35%; }
+.dojo-experience-side button:first-child img { object-fit: contain; object-position: right center; }
+.dojo-experience-side button:last-child img { object-position: center 34%; }
+.dojo-experience-main:hover img,
+.dojo-experience-side > button:hover img,
+.dojo-teacher-story:hover > img,
+.dojo-movement-gallery button:hover img { filter: saturate(1.06) brightness(1.04); transform: scale(1.035); }
+.dojo-visual-shade {
+  background: linear-gradient(180deg, rgba(3, 8, 6, .06), rgba(3, 8, 6, .18) 38%, rgba(3, 8, 6, .94) 100%);
+  inset: 0;
+  position: absolute;
+  z-index: 1;
+}
+.dojo-experience-main > div,
+.dojo-experience-side button > div {
+  bottom: 0;
+  display: grid;
+  gap: 12px;
+  left: 0;
+  padding: clamp(28px, 4vw, 64px);
+  position: absolute;
+  right: 0;
+  z-index: 2;
+}
+.dojo-experience-main small,
+.dojo-experience-side small,
+.dojo-teacher-story small {
+  color: var(--shen-gold);
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .2em;
+}
+.dojo-experience-main h3,
+.dojo-experience-side h3,
+.dojo-teacher-story h3 {
+  font-size: clamp(2.3rem, 4vw, 5.5rem);
+  font-weight: 690;
+  letter-spacing: -.055em;
+  line-height: .95;
+  margin: 0;
+}
+.dojo-experience-main p { color: rgba(242, 238, 231, .72); font-size: 1.05rem; margin: 0; max-width: 520px; }
+.dojo-experience-main b,
+.dojo-experience-side b {
+  align-items: center;
+  display: flex;
+  font-size: .86rem;
+  gap: 18px;
+  margin-top: 10px;
+}
+.dojo-experience-main i,
+.dojo-experience-side i { color: var(--shen-gold); font-style: normal; }
+.dojo-experience-side { display: grid; gap: 14px; grid-template-rows: 1fr 1fr; }
+.dojo-experience-side h3 { font-size: clamp(1.7rem, 2.35vw, 3rem); max-width: 480px; }
+.dojo-experience-side button > div { padding: clamp(24px, 2.6vw, 42px); }
+
+.dojo-movement-gallery { display: grid; gap: 30px; }
+.dojo-movement-gallery > header { align-items: end; display: flex; justify-content: space-between; }
+.dojo-movement-gallery > header span { color: var(--shen-gold); font-size: .68rem; font-weight: 850; letter-spacing: .2em; }
+.dojo-movement-gallery > header h3 { font-size: clamp(2rem, 3.2vw, 4rem); letter-spacing: -.05em; line-height: 1; margin: 12px 0 0; }
+.dojo-movement-gallery > header > button { background: transparent; border-bottom: 1px solid rgba(242, 238, 231, .3); display: flex; gap: 20px; padding: 14px 0; }
+.dojo-movement-gallery > div { display: grid; gap: 10px; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.dojo-movement-gallery > div > button { aspect-ratio: .72; background: #0a0f0c; overflow: hidden; position: relative; text-align: left; }
+.dojo-movement-gallery > div > button > span { background: linear-gradient(180deg, transparent 35%, rgba(3, 8, 6, .94)); inset: 0; position: absolute; z-index: 1; }
+.dojo-movement-gallery > div > button > small { color: var(--shen-gold); font-size: .7rem; left: 17px; position: absolute; top: 17px; z-index: 2; }
+.dojo-movement-gallery > div > button > div { bottom: 0; display: grid; gap: 5px; left: 0; padding: 18px; position: absolute; right: 0; z-index: 2; }
+.dojo-movement-gallery b { font-size: clamp(.9rem, 1.05vw, 1.1rem); }
+.dojo-movement-gallery em { color: rgba(242, 238, 231, .52); font-size: .72rem; font-style: normal; }
+
+.dojo-teacher-story { min-height: 660px; }
+.dojo-teacher-story > img { object-position: center 38%; }
+.dojo-teacher-story .dojo-visual-shade { background: linear-gradient(90deg, rgba(3, 8, 6, .96), rgba(3, 8, 6, .62) 42%, rgba(3, 8, 6, .08) 75%), linear-gradient(180deg, transparent 45%, rgba(3, 8, 6, .72)); }
+.dojo-teacher-story > div { display: grid; gap: 20px; left: clamp(28px, 5vw, 82px); max-width: 690px; position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; }
+.dojo-teacher-story h3 { font-size: clamp(3rem, 5.2vw, 6.4rem); }
+.dojo-teacher-story p { color: rgba(242, 238, 231, .7); font-size: clamp(1rem, 1.3vw, 1.2rem); line-height: 1.7; margin: 0; max-width: 580px; }
+.dojo-teacher-story button { align-items: center; align-self: start; background: var(--shen-home-primary-start); color: #0b0f0c; display: flex; font-weight: 800; gap: 28px; min-height: 54px; padding: 0 24px; }
+
+.dojo-energy-bars {
+  backdrop-filter: blur(18px) saturate(1.08);
+  background: linear-gradient(145deg, rgba(4, 10, 8, .91), rgba(9, 16, 13, .72));
+  border: 1px solid color-mix(in srgb, var(--shen-accent) 32%, rgba(242, 238, 231, .14));
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .32);
+  display: grid;
+  gap: 17px;
+  padding: 20px;
+  position: absolute;
+  right: clamp(22px, 3vw, 48px);
+  top: 132px;
+  width: min(250px, 22vw);
+  z-index: 4;
+}
+.dojo-energy-curtain {
+  background: linear-gradient(90deg, transparent, rgba(3, 9, 8, .72) 35%, rgba(3, 9, 8, .96) 82%);
+  bottom: 104px;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: min(330px, 27vw);
+  z-index: 3;
+}
+.dojo-energy-bars > header { display: grid; gap: 3px; }
+.dojo-energy-bars > header span { color: var(--shen-home-primary-start); font-size: .62rem; font-weight: 850; letter-spacing: .18em; }
+.dojo-energy-bars > header small { color: rgba(242, 238, 231, .46); font-size: .65rem; }
+.dojo-energy-bars > div { align-items: center; display: grid; gap: 8px 10px; grid-template-columns: 26px 1fr auto; }
+.dojo-energy-bars > div > b { color: var(--shen-home-primary-start); font-size: 1.15rem; font-weight: 500; grid-row: 1 / 3; text-shadow: 0 0 18px color-mix(in srgb, var(--shen-accent) 58%, transparent); }
+.dojo-energy-bars > div > span { display: grid; line-height: 1.12; }
+.dojo-energy-bars > div > span strong { color: rgba(242, 238, 231, .94); font-size: .78rem; }
+.dojo-energy-bars > div > span small { color: rgba(242, 238, 231, .46); font-size: .56rem; margin-top: 3px; }
+.dojo-energy-bars > div > em { color: rgba(242, 238, 231, .94); font-size: .76rem; font-style: normal; font-weight: 800; }
+.dojo-energy-bars > div > i { background: rgba(242, 238, 231, .13); border-radius: 99px; grid-column: 2 / 4; height: 5px; overflow: hidden; }
+.dojo-energy-bars > div > i > u { background: linear-gradient(90deg, var(--shen-home-primary-end), var(--shen-home-primary-start)); border-radius: inherit; box-shadow: 0 0 14px color-mix(in srgb, var(--shen-accent) 60%, transparent); display: block; height: 100%; min-width: 0; text-decoration: none; transition: width 900ms cubic-bezier(.2, .8, .2, 1); }
+.dojo-energy-bars > div.is-empty > b,
+.dojo-energy-bars > div.is-empty > em { opacity: .42; }
+
+@media (max-width: 1100px) {
+  .dojo-energy-bars { right: 22px; top: 112px; width: 220px; }
+  .dojo-manifesto { grid-template-columns: 1fr 2fr; }
+  .dojo-manifesto p { grid-column: 2; }
+  .dojo-experience-grid { grid-template-columns: 1fr; }
+  .dojo-experience-main { min-height: 620px; }
+  .dojo-experience-side { grid-template-columns: 1fr 1fr; grid-template-rows: none; min-height: 420px; }
+  .dojo-movement-gallery > div { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 699px) {
+  .dojo-energy-curtain { display: none; }
+  .dojo-energy-bars { gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); left: 22px; padding: 13px; right: 22px; top: 108px; width: auto; }
+  .dojo-energy-bars > header { align-items: center; display: flex; grid-column: 1 / -1; justify-content: space-between; }
+  .dojo-energy-bars > div { gap: 5px; grid-template-columns: auto 1fr auto; }
+  .dojo-energy-bars > div > b { font-size: .88rem; grid-row: auto; }
+  .dojo-energy-bars > div > span strong,
+  .dojo-energy-bars > div > em { font-size: .65rem; }
+  .dojo-energy-bars > div > span small { display: none; }
+  .dojo-energy-bars > div > i { grid-column: 1 / 4; }
+  .dojo-manifesto { align-items: start; gap: 18px; grid-template-columns: 1fr; padding: 46px 4px; }
+  .dojo-manifesto p { grid-column: auto; }
+  .dojo-manifesto::after { display: none; }
+  .dojo-manifesto h3 { font-size: clamp(2.35rem, 12vw, 4rem); }
+  .dojo-experience-grid { min-height: auto; }
+  .dojo-experience-main { min-height: 580px; }
+  .dojo-experience-main > div { padding: 26px 22px; }
+  .dojo-experience-side { display: grid; grid-template-columns: 1fr; min-height: auto; }
+  .dojo-experience-side > button { min-height: 390px; }
+  .dojo-movement-gallery > header { align-items: start; flex-direction: column; gap: 15px; }
+  .dojo-movement-gallery > div { display: flex; margin-inline: -16px; overflow-x: auto; padding: 0 16px 8px; scroll-snap-type: x mandatory; }
+  .dojo-movement-gallery > div > button { flex: 0 0 72vw; scroll-snap-align: center; }
+  .dojo-teacher-story { min-height: 680px; }
+  .dojo-teacher-story > div { left: 22px; max-width: calc(100% - 44px); right: 22px; }
+  .dojo-teacher-story h3 { font-size: 3rem; }
+  .dojo-home-links { margin-top: -16px; }
+}

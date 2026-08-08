@@ -35,15 +35,15 @@ export function LivingLearningScreen({ embedded = false }: { embedded?: boolean 
 
   return <main className={`${styles.page} ${embedded ? styles.embedded : ""}`}>
     {!embedded ? <header className={styles.topbar}><Link href="/" className={styles.topBrand}>SHIBASHI EFE</Link><span>Bir hareketi değil, yaşamdaki karşılığını öğren.</span><Link href="/">Uygulamaya dön</Link></header> : null}
-    <div className={styles.shell}>
+    <div className={`${styles.shell} ${mode === "camera" ? styles.cameraShell : ""}`}>
       {mode === "complete" && result ? <PracticeCompletion result={result} onSave={save} onRetry={retry} onHome={home} saved={saved} /> : <>
         <section className={styles.practiceColumn}>
           {mode === "camera" ? <LivingCameraPractice activeStep={timeline.activeStep} elapsedMs={timeline.elapsedMs} onClose={() => { timeline.reset(); setMode("watch"); }} onComplete={complete} onRestart={timeline.restart} onToggle={timeline.toggle} playing={timeline.playing} practice={selectedPractice} /> : <CinematicPracticeStage activeStep={timeline.activeStep} elapsedMs={timeline.elapsedMs} muted={muted} onCamera={() => { setMode("camera"); timeline.reset(); }} onMute={() => setMuted((value) => !value)} onRestart={timeline.restart} onToggle={timeline.toggle} playing={timeline.playing} practice={selectedPractice} scene={selectedScene} />}
-          <div className={styles.stageMeta}><article><small>Sahne</small><strong>{selectedScene.name}</strong></article><article><small>Hareket kalitesi</small><strong>{selectedScene.movementQuality}</strong></article><article><small>Süre</small><strong>28 saniye</strong></article><article><small>Ölçüm</small><strong>{mode === "camera" ? "MediaPipe 33 nokta" : "Kamera açılınca gerçek"}</strong></article></div>
+          {mode === "watch" ? <div className={styles.stageMeta}><article><small>Sahne</small><strong>{selectedScene.name}</strong></article><article><small>Hareket kalitesi</small><strong>{selectedScene.movementQuality}</strong></article><article><small>Süre</small><strong>28 saniye</strong></article><article><small>Ölçüm</small><strong>Kamera açılınca gerçek</strong></article></div> : null}
         </section>
 
-        <MovementStepRail activeStepId={timeline.activeStep.id} steps={selectedPractice.steps} />
-        <div className={styles.scenesWrap}><SceneSelector onSelect={setSelectedSceneId} scenes={livingScenes} selectedId={selectedSceneId} />
+        {mode === "watch" ? <MovementStepRail activeStepId={timeline.activeStep.id} steps={selectedPractice.steps} /> : null}
+        {mode === "watch" ? <div className={styles.scenesWrap}><SceneSelector onSelect={setSelectedSceneId} scenes={livingScenes} selectedId={selectedSceneId} />
           <section className={styles.experienceFlow}><p className={styles.eyebrow}>Pratik akışı</p><div>
             <article><span>01</span><strong>Sahneyi seç</strong><small>Bugün sana yaklaşan yaşam anını bul.</small></article>
             <article><span>02</span><strong>Hareketi izle</strong><small>Metaforun bedendeki karşılığını gör.</small></article>
@@ -51,7 +51,7 @@ export function LivingLearningScreen({ embedded = false }: { embedded?: boolean 
             <article><span>04</span><strong>Anlık geri bildirim</strong><small>Tek, sakin ve anlaşılır öneri al.</small></article>
             <article><span>05</span><strong>Akışı tamamla</strong><small>Hareketi gündelik hafızana kaydet.</small></article>
           </div></section>
-        </div>
+        </div> : null}
       </>}
     </div>
   </main>;

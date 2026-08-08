@@ -3,7 +3,7 @@ import {router} from 'expo-router';
 import {StatusBar} from 'expo-status-bar';
 import {useVideoPlayer,VideoView} from 'expo-video';
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {Image,Pressable,StyleSheet,Text,View} from 'react-native';
+import {Image,Pressable,StyleSheet,Text,useWindowDimensions,View} from 'react-native';
 import {colors} from '../constants/theme';
 
 const introVideo=require('../assets/intro/intro-gate.mp4');
@@ -12,6 +12,7 @@ const VIDEO_PLAYBACK_RATE=0.82;
 const VIDEO_DURATION_MS=Math.round((10000/VIDEO_PLAYBACK_RATE)*1000);
 
 export default function Welcome(){
+ const{height,width}=useWindowDimensions();
  const[firstFrameReady,setFirstFrameReady]=useState(false);
  const navigationStarted=useRef(false);
  const mountedRef=useRef(true);
@@ -45,16 +46,16 @@ export default function Welcome(){
   return()=>{mountedRef.current=false;clearTimeout(timer)};
  },[finish,player]);
 
- return <View style={w.root}>
+ return <View style={[w.root,{height,width}]}>
   <StatusBar hidden/>
-  <Image accessibilityIgnoresInvertColors source={introPoster} resizeMode="cover" style={w.media}/>
+  <Image accessibilityIgnoresInvertColors source={introPoster} resizeMode="cover" style={[w.media,{height,width}]}/>
   <VideoView
    contentFit="cover"
    nativeControls={false}
    onFirstFrameRender={()=>setFirstFrameReady(true)}
    player={player}
    playsInline
-   style={[w.media,!firstFrameReady&&w.videoLoading]}
+   style={[w.media,{height,width},!firstFrameReady&&w.videoLoading]}
    surfaceType="textureView"
    useExoShutter={false}
   />
@@ -71,8 +72,8 @@ export default function Welcome(){
 }
 
 const w=StyleSheet.create({
- root:{flex:1,width:'100%',height:'100%',backgroundColor:'#020604',overflow:'hidden'},
- media:{...StyleSheet.absoluteFillObject,width:'100%',height:'100%'},
+ root:{flex:1,position:'relative',backgroundColor:'#020604',overflow:'hidden'},
+ media:{position:'absolute',left:0,top:0},
  videoLoading:{opacity:0},
  scrim:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(2,6,4,.18)',borderBottomWidth:260,borderBottomColor:'rgba(2,6,4,.52)'},
  copy:{position:'absolute',bottom:58,left:24,right:24,gap:7},

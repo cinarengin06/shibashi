@@ -54,6 +54,7 @@ export default function PostureSession(){
  const[vision3DActive,setVision3DActive]=useState(false);
  const[cameraError,setCameraError]=useState(false);
  const[tipVisible,setTipVisible]=useState(false);
+ const[saving,setSaving]=useState(false);
  const view=views[index]??'front';
  const copy=viewCopy[view];
  const cameraRef=useRef<CameraView|null>(null);
@@ -187,7 +188,12 @@ export default function PostureSession(){
   return()=>clearTimeout(timer);
  },[phase,result]);
 
- const save=()=>{if(!result)return;addPostureReport(result);router.replace('/posture')};
+ const save=()=>{
+  if(!result||saving)return;
+  setSaving(true);
+  addPostureReport(result);
+  requestAnimationFrame(()=>router.dismissTo('/posture'));
+ };
  const restart=()=>{capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
 
  if(!permission)return <View style={styles.permission}/>;
@@ -207,7 +213,7 @@ export default function PostureSession(){
    <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text></View>
    <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}><View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View><View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
    <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişisel öneri</Text><Text style={styles.insightBody}>{result.asymmetrySignal}. Bir sonraki pratikte dizleri kilitlemeden omuzları aşağı bırak.</Text></View></View>
-   <PrimaryButton label="Analizi kaydet" icon="checkmark" onPress={save}/>
+   <PrimaryButton label={saving?'Kaydediliyor…':'Analizi kaydet'} icon="checkmark" onPress={save}/>
    <Pressable onPress={restart} style={styles.retake}><Text style={styles.retakeText}>Yeniden çek</Text></Pressable>
   </ScrollView>
  </SafeAreaView>;

@@ -334,6 +334,126 @@
   border-radius: 17px;
   background: #171b18;
 }
+.staticModule {
+  padding: 10px;
+}
+.staticModule .staticStage {
+  height: clamp(620px, calc(100vh - 265px), 880px);
+  min-height: 620px;
+  border-radius: 20px;
+}
+.staticReference small {
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.staticReference {
+  position: absolute;
+  z-index: 7;
+  top: 50%;
+  right: 24px;
+  width: clamp(210px, 20vw, 330px);
+  height: min(70%, 610px);
+  padding: 14px;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 8px;
+  overflow: hidden;
+  transform: translateY(-50%);
+  border: 1px solid rgba(198, 165, 106, 0.48);
+  border-radius: 22px;
+  background: rgba(8, 13, 10, 0.88);
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(16px);
+}
+.staticReference img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #0a0f0c;
+}
+.staticReference strong {
+  color: var(--cream);
+  font-size: 17px;
+}
+.staticReference span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.staticScore {
+  position: absolute;
+  z-index: 7;
+  top: 22px;
+  right: calc(clamp(210px, 20vw, 330px) + 48px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.staticScore .scoreRing {
+  position: relative;
+  top: auto;
+  right: auto;
+  width: 112px;
+  height: 112px;
+  flex: 0 0 auto;
+  background: conic-gradient(
+    var(--green) calc(var(--score) * 1%),
+    rgba(242, 238, 231, 0.14) 0
+  );
+}
+.staticScore > span {
+  max-width: 190px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  background: rgba(10, 15, 12, 0.76);
+  color: var(--cream);
+  font-size: 11px;
+  line-height: 1.45;
+  backdrop-filter: blur(12px);
+}
+.staticTime {
+  position: absolute;
+  z-index: 7;
+  top: 22px;
+  left: 50%;
+  padding: 11px 15px;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  transform: translateX(-50%);
+  border-radius: 14px;
+  background: rgba(10, 15, 12, 0.76);
+  backdrop-filter: blur(12px);
+}
+.staticTime strong {
+  font-size: 20px;
+}
+.staticTime span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.staticControl {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+}
+.staticControl button {
+  min-width: 230px;
+  min-height: 52px;
+  padding: 0 24px;
+  border: 1px solid rgba(232, 204, 148, 0.55);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d2b270, #b99150);
+  color: #10140f;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 850;
+}
 .stagePlaceholder,
 .cameraVideo {
   position: absolute;
@@ -942,6 +1062,13 @@
   .metricCompact {
     height: auto;
   }
+  .staticScore {
+    right: calc(clamp(190px, 30vw, 260px) + 34px);
+  }
+  .staticReference {
+    right: 16px;
+    width: clamp(190px, 30vw, 260px);
+  }
 }
 @media (max-width: 660px) {
   .page {
@@ -970,6 +1097,28 @@
   .staticStage {
     height: 68vh;
     min-height: 520px;
+  }
+  .staticModule .staticStage {
+    height: 72vh;
+    min-height: 560px;
+  }
+  .staticReference {
+    right: 12px;
+    top: 52%;
+    width: 42%;
+    height: 52%;
+  }
+  .staticScore {
+    top: 96px;
+    right: auto;
+    left: 12px;
+  }
+  .staticScore .scoreRing {
+    width: 84px;
+    height: 84px;
+  }
+  .staticScore > span {
+    display: none;
   }
   .lowerGrid {
     grid-template-columns: 1fr;

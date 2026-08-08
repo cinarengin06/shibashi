@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import type { CSSProperties, Dispatch, ReactNode, RefObject, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MovementCoach } from "@/components/tai-chi/MovementCoach";
@@ -1673,7 +1674,9 @@ export default function RitimKapisiOS() {
             onJourney={() => setActiveTab("journey")}
             onJournal={() => setActiveTab("journal")}
             onLearning={() => setActiveTab("learning")}
+            onMovementSelect={(movementId) => { setSelectedMovement(Math.max(0, Math.min(movements.length - 1, movementId - 1))); setPracticePhase("calibrate"); setActiveTab("practice"); }}
             onPractice={() => setActiveTab("practice")}
+            onPractice2={() => setActiveTab("practice2")}
             onPosture={() => setActiveTab("posture")}
             onSelectShen={selectShen}
             practiceCount={practiceGallery.length}
@@ -2019,11 +2022,14 @@ function DojoOnboardingScreen({
 
 function DojoHomeScreen({
   earnedXp,
+  energyScores,
   journeyUnlocked,
   onJourney,
   onJournal,
   onLearning,
+  onMovementSelect,
   onPractice,
+  onPractice2,
   onPosture,
   onSelectShen,
   practiceCount,
@@ -2037,7 +2043,9 @@ function DojoHomeScreen({
   onJourney: () => void;
   onJournal: () => void;
   onLearning: () => void;
+  onMovementSelect: (movementId: number) => void;
   onPractice: () => void;
+  onPractice2: () => void;
   onPosture: () => void;
   onSelectShen: (shenId: ShenId) => void;
   practiceCount: number;
@@ -2070,12 +2078,38 @@ function DojoHomeScreen({
           <p>{todayCopy.body}</p>
           <div className="dojo-home-actions"><button onClick={onPractice} type="button">Bugünün pratiğine başla <span>→</span></button><button onClick={onLearning} type="button">{selectedShen.name}’yi keşfet <span>→</span></button></div>
         </div>
+        <span aria-hidden="true" className="dojo-energy-curtain" />
+        <DojoEnergyBars scores={energyScores} />
         <nav className="dojo-shen-index" aria-label="Beş Shen seçimi">{fiveShen.map((shen) => { const copy = shenTodayCopy[shen.id]; return <button aria-label={`${shen.name}, ${copy.shortLabel}`} aria-pressed={selectedShen.id === shen.id} className={selectedShen.id === shen.id ? "active" : ""} key={shen.id} onClick={() => onSelectShen(shen.id)} style={{ "--world-color": shen.color } as CSSProperties} type="button"><span><i /><b>{shen.name}</b><small>— {copy.shortLabel.split(" · ")[0]}</small></span>{selectedShen.id === shen.id ? <em>{selectedShen.element} · Merkez</em> : null}</button>; })}</nav>
       </article>
 
-      <section className="dojo-editorial-grid">
-        <button className="dojo-editorial-card dojo-editorial-practice" onClick={onPractice} type="button"><span>BUGÜNÜN PRATİĞİ</span><h3>{todayCopy.practice}</h3><p>{todayCopy.motto}</p><small>8 dakika · yavaş akış <b>→</b></small></button>
-        <button className="dojo-editorial-card dojo-editorial-teacher" onClick={onLearning} type="button"><span>AYHAN GÜLER’DEN</span><h3>Hareketi yaşamın içinde öğren.</h3><p>Formun adından önce gündelik hayattaki karşılığını hisset.</p><small>Yaşayarak öğren <b>→</b></small></button>
+      <section className="dojo-manifesto">
+        <span>SHIBASHI EFE · BEDENİN İÇ HARİTASI</span>
+        <h3>Hareket yalnızca yaptığın şey değil; içinde açtığın alandır.</h3>
+        <p>18 hareket, Beş Shen, postür zekâsı ve gündelik hayatın içinden pratikler tek bir sakin yolculukta buluşuyor.</p>
+      </section>
+
+      <section className="dojo-experience-grid" aria-label="Öne çıkan deneyimler">
+        <button className="dojo-experience-main" onClick={onPractice} type="button">
+          <NextImage alt="Açılış Formu hareketi" fill sizes="(min-width: 900px) 66vw, 100vw" src="/images/shibashi-reference-web/ref-open-gate.jpg"/>
+          <span className="dojo-visual-shade"/>
+          <div><small>01 · BUGÜNÜN AKIŞI</small><h3>{todayCopy.practice}</h3><p>{todayCopy.motto}</p><b>Pratiğe gir <i>→</i></b></div>
+        </button>
+        <div className="dojo-experience-side">
+          <button onClick={onPractice2} type="button"><NextImage alt="Kamera ile statik duruş çalışması" fill sizes="(min-width: 900px) 34vw, 100vw" src="/images/practice2/static/03-raise-and-open.png"/><span className="dojo-visual-shade"/><div><small>02 · HASSAS ÇALIŞMA</small><h3>Pozunu referansla eşleştir.</h3><b>Pratik 2 <i>→</i></b></div></button>
+          <button onClick={onPosture} type="button"><NextImage alt="Postür ve beden haritası" fill sizes="(min-width: 900px) 34vw, 100vw" src="/images/inner-body-walk-3d.png"/><span className="dojo-visual-shade"/><div><small>03 · BEDEN AYNASI</small><h3>Duruşunun görünmeyen çizgisini gör.</h3><b>Postürü analiz et <i>→</i></b></div></button>
+        </div>
+      </section>
+
+      <section className="dojo-movement-gallery">
+        <header><div><span>18 HAREKET · TEK YOLCULUK</span><h3>Bugün hangi kapıdan girmek istersin?</h3></div><button onClick={onPractice} type="button">Tüm hareketleri gör <span>→</span></button></header>
+        <div>{movements.slice(0, 6).map((movement) => <button key={movement.id} onClick={() => onMovementSelect(movement.id)} type="button"><NextImage alt={movement.name} fill sizes="(min-width: 1100px) 17vw, (min-width: 700px) 33vw, 72vw" src={getMovementReferenceImage(movement)}/><span/><small>{String(movement.id).padStart(2, "0")}</small><div><b>{movement.name}</b><em>{movement.focus}</em></div></button>)}</div>
+      </section>
+
+      <section className="dojo-teacher-story">
+        <NextImage alt="Yaşayarak öğrenme sahnesi" fill sizes="100vw" src="/images/living-learning/curtains-opening.png"/>
+        <span className="dojo-visual-shade"/>
+        <div><small>AYHAN GÜLER İLE · YAŞAYARAK ÖĞREN</small><h3>Formu ezberleme.<br/>Hareketin hikâyesini yaşa.</h3><p>Perdeyi açmak, bir kapıyı itmek, bahçede yürümek… Shibashi hareketlerini gündelik imgelerle bedeninde anlaşılır kıl.</p><button onClick={onLearning} type="button">Hikâyelere gir <span>→</span></button></div>
       </section>
 
       <section className="dojo-home-links" aria-label="Diğer alanlar">
@@ -2086,6 +2120,33 @@ function DojoHomeScreen({
       <div className="dojo-editorial-stats"><span>{practiceCount || "—"} tamamlanan akış</span><i /><span>{postureCount || "—"} beden izi</span><i /><span>{earnedXp} deneyim puanı</span></div>
     </section>
   );
+}
+
+function DojoEnergyBars({ scores }: { scores: EnergyScores }) {
+  const metrics = [
+    { label: "Jing", value: scores.jing, symbol: "精", source: "Son postür ölçümü" },
+    { label: "Qi", value: scores.qi, symbol: "氣", source: "Son 5 pratik ortalaması" },
+    { label: "Shen", value: scores.shen, symbol: "神", source: "7 günlük devamlılık" },
+  ];
+
+  return <aside className="dojo-energy-bars" aria-label="Gerçek Jing, Qi ve Shen değerleri">
+    <header><span>CANLI BEDEN VERİSİ</span><small>Ölçümlerinden hesaplanır</small></header>
+    {metrics.map((metric) => <div
+      aria-label={`${metric.label}: ${metric.value === null ? "henüz ölçülmedi" : `yüzde ${metric.value}`}. ${metric.source}`}
+      aria-valuemax={100}
+      aria-valuemin={0}
+      aria-valuenow={metric.value ?? undefined}
+      className={metric.value === null ? "is-empty" : ""}
+      key={metric.label}
+      role="meter"
+      title={metric.source}
+    >
+      <b>{metric.symbol}</b>
+      <span><strong>{metric.label}</strong><small>{metric.source}</small></span>
+      <em>{metric.value === null ? "—" : `${metric.value}%`}</em>
+      <i aria-hidden="true"><u style={{ width: `${metric.value ?? 0}%` }} /></i>
+    </div>)}
+  </aside>;
 }
 
 function OnboardingScreen({

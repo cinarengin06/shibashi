@@ -150,6 +150,19 @@
   grid-area: practice;
   min-width: 0;
 }
+.cameraShell {
+  display: block;
+  max-width: 1560px;
+  padding-top: 16px;
+}
+.cameraShell .practiceColumn {
+  width: 100%;
+}
+.cameraShell .cameraStage {
+  height: min(82vh, 900px);
+  min-height: 680px;
+  border-radius: 28px;
+}
 .cinematicStage,
 .cameraStage {
   position: relative;
@@ -177,6 +190,7 @@
 }
 .cameraVideo {
   transform: scaleX(-1);
+  object-position: center 38%;
 }
 .stageShade {
   position: absolute;
@@ -643,14 +657,6 @@
   font-size: 10px;
   line-height: 1.55;
 }
-.poseCanvas {
-  position: absolute;
-  z-index: 3;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
 .cameraStage:after {
   content: "";
   position: absolute;
@@ -674,29 +680,79 @@
   padding: 9px 12px;
   border-radius: 99px;
 }
-.cameraGhost {
+.cameraTeacher {
+  position: absolute;
+  z-index: 3;
+  left: 7%;
+  top: 12%;
+  width: 31%;
+  height: 72%;
+  pointer-events: none;
+  animation: teacherArrives 640ms cubic-bezier(.2,.8,.2,1) both;
+}
+.cameraTeacherImage {
+  object-fit: contain;
+  object-position: center bottom;
+  filter: sepia(.08) saturate(.88) drop-shadow(0 10px 28px rgba(0,0,0,.42)) drop-shadow(0 0 17px rgba(243,207,139,.48));
+}
+.teacherHalo {
+  position: absolute;
+  z-index: -1;
+  inset: 7% 2% 4%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, rgba(255,235,189,.23), rgba(205,162,91,.08) 48%, transparent 72%);
+  filter: blur(9px);
+}
+.teacherGround {
   position: absolute;
   z-index: 2;
-  right: 3%;
-  top: 9%;
-  width: 36%;
-  height: 78%;
-  opacity: 0.72;
-  filter: drop-shadow(0 0 9px rgba(243, 207, 139, 0.58));
+  left: 14%;
+  right: 14%;
+  bottom: 1.5%;
+  height: 12px;
+  border: 1px solid rgba(243,207,139,.54);
+  border-radius: 50%;
+  background: rgba(243,207,139,.08);
+  box-shadow: 0 0 24px rgba(243,207,139,.3);
+}
+.cameraTeacher > small,
+.userFrame > small {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  bottom: -28px;
+  transform: translateX(-50%);
+  color: rgba(243,234,219,.7);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .18em;
+}
+.userFrame {
+  position: absolute;
+  z-index: 2;
+  right: 9%;
+  top: 12%;
+  width: 31%;
+  height: 72%;
+  border: 1.5px dashed rgba(169,217,119,.58);
+  border-radius: 48% 48% 42% 42% / 24% 24% 14% 14%;
+  background: linear-gradient(180deg, rgba(169,217,119,.018), rgba(169,217,119,.045));
+  box-shadow: inset 0 0 60px rgba(169,217,119,.025);
   pointer-events: none;
 }
 .cameraPrompt {
   position: absolute;
   z-index: 5;
-  top: 80px;
+  top: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: grid;
   text-align: center;
-  padding: 10px 16px;
-  border-radius: 15px;
-  background: rgba(10, 15, 12, 0.65);
-  backdrop-filter: blur(8px);
+  padding: 9px 18px;
+  border: 1px solid rgba(242,238,231,.12);
+  border-radius: 999px;
+  background: rgba(10, 15, 12, 0.76);
+  backdrop-filter: blur(12px);
 }
 .cameraPrompt small {
   color: var(--gold);
@@ -705,24 +761,31 @@
   letter-spacing: 0.14em;
 }
 .cameraPrompt strong {
-  font-family: "Cormorant Garamond", Georgia, serif;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 750;
   margin-top: 3px;
+}
+.cameraPrompt span {
+  color: rgba(243,234,219,.68);
+  font-size: 9px;
+  margin-top: 2px;
 }
 .liveFeedback {
   position: absolute;
   z-index: 5;
-  left: 22px;
-  bottom: 91px;
-  max-width: 330px;
-  padding: 13px 15px;
-  border-radius: 15px;
+  left: 50%;
+  bottom: 94px;
+  width: min(480px, calc(100% - 44px));
+  transform: translateX(-50%);
+  padding: 11px 15px;
+  border-radius: 999px;
   background: rgba(10, 15, 12, 0.8);
   border: 1px solid rgba(169, 217, 119, 0.24);
   backdrop-filter: blur(10px);
-  display: grid;
-  gap: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 .liveFeedback span {
   color: var(--green);
@@ -731,11 +794,14 @@
   letter-spacing: 0.14em;
 }
 .liveFeedback strong {
-  font-size: 12px;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.liveFeedback small {
-  font-size: 8px;
-  color: var(--muted);
+@keyframes teacherArrives {
+  from { opacity: 0; transform: translateY(12px) scale(.97); }
+  to { opacity: .96; transform: translateY(0) scale(1); }
 }
 .cameraBottom time {
   font:
@@ -994,14 +1060,27 @@
   .completion {
     padding: 30px 18px;
   }
-  .cameraGhost {
-    right: 1%;
-    top: 11%;
-    width: 43%;
-    height: 74%;
+  .cameraShell .cameraStage {
+    height: 82svh;
+    min-height: 620px;
+  }
+  .cameraTeacher {
+    left: 1%;
+    top: 18%;
+    width: 48%;
+    height: 60%;
+  }
+  .userFrame {
+    right: 2%;
+    top: 20%;
+    width: 46%;
+    height: 57%;
   }
   .cameraTop span {
     display: none;
+  }
+  .cameraPrompt {
+    top: 72px;
   }
 }
 @media (max-width: 520px) {

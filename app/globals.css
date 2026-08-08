@@ -1484,6 +1484,354 @@ img {
   }
 }
 
+/* Keep the approved desktop website shell after every legacy preview rule. */
+@media (min-width: 900px) {
+  .device-mode-desktop .mobile-frame {
+    max-width: 1760px;
+    padding: 88px clamp(24px, 3vw, 56px) 72px;
+  }
+
+  .device-mode-desktop .bottom-nav {
+    align-items: center;
+    backdrop-filter: blur(18px);
+    background: rgba(4, 9, 7, .88);
+    border: 0;
+    border-bottom: 1px solid rgba(242, 238, 231, .12);
+    border-radius: 0;
+    bottom: auto;
+    display: flex !important;
+    gap: clamp(12px, 1.7vw, 28px);
+    grid-template-columns: none;
+    height: 72px;
+    justify-content: flex-end;
+    left: 0;
+    max-width: none;
+    padding: 0 clamp(24px, 3.6vw, 64px);
+    right: 0;
+    top: 0;
+    transform: none;
+    width: 100%;
+  }
+
+  .device-mode-desktop .bottom-nav .nav-button {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: rgba(242, 238, 231, .66);
+    font-family: var(--font-display), serif;
+    font-size: .86rem;
+    min-height: 72px;
+    padding: 0;
+    width: auto;
+  }
+
+  .device-mode-desktop .bottom-nav .nav-button strong { display: none; }
+  .device-mode-desktop .bottom-nav .nav-button-active { box-shadow: inset 0 -2px var(--shen-gold); color: var(--ink); }
+  .device-mode-desktop .bottom-nav .nav-button:last-child { border: 1px solid rgba(198, 165, 106, .42); border-radius: 999px; min-height: 38px; padding: 0 16px; }
+  .device-mode-desktop .dojo-home-hero { min-height: min(760px, calc(100dvh - 112px)); }
+}
+
+/* Desktop editorial home — the landscape is the interface, not a card below it. */
+.device-mode-desktop .dojo-home {
+  background: transparent;
+  gap: clamp(42px, 5vw, 72px);
+  padding-bottom: 56px;
+}
+
+.device-mode-desktop .dojo-home-hero {
+  border: 0;
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 36px 110px rgba(0, 0, 0, 0.38);
+  min-height: min(760px, calc(100dvh - 112px));
+  overflow: hidden;
+  position: relative;
+}
+
+.device-mode-desktop .dojo-home-hero .shen-image-layer {
+  background-position: center 48%;
+  filter: saturate(.76) contrast(1.08) brightness(.84);
+}
+
+.device-mode-desktop .dojo-home-shade {
+  background:
+    linear-gradient(90deg, rgba(3, 8, 6, .94) 0%, rgba(3, 8, 6, .68) 36%, rgba(3, 8, 6, .12) 72%),
+    linear-gradient(180deg, rgba(3, 8, 6, .4) 0%, transparent 38%, rgba(3, 8, 6, .82) 100%);
+}
+
+.device-mode-desktop .dojo-home-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  left: clamp(34px, 4.4vw, 72px);
+  position: absolute;
+  right: clamp(34px, 4.4vw, 72px);
+  top: 34px;
+  z-index: 4;
+}
+
+.device-mode-desktop .dojo-home-head > div:first-child {
+  display: grid;
+  gap: 5px;
+}
+
+.device-mode-desktop .dojo-home-head > div:first-child > span {
+  color: var(--ink);
+  font-family: var(--font-display), serif;
+  font-size: 1.2rem;
+}
+
+.device-mode-desktop .dojo-home-head > div:first-child > small {
+  color: rgba(242, 238, 231, .58);
+  font-size: .72rem;
+  text-transform: capitalize;
+}
+
+.device-mode-desktop .dojo-home-head > div:last-child {
+  align-items: center;
+  background: rgba(5, 10, 8, .36);
+  border: 1px solid rgba(242, 238, 231, .16);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  height: 54px;
+  justify-content: center;
+  width: 54px;
+}
+
+.device-mode-desktop .dojo-home-copy {
+  bottom: 148px;
+  left: clamp(34px, 4.4vw, 72px);
+  padding: 0;
+  right: auto;
+  width: min(650px, 54%);
+  z-index: 3;
+}
+
+.device-mode-desktop .dojo-home-meta {
+  justify-content: flex-start;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.device-mode-desktop .dojo-home-meta span {
+  color: var(--shen-gold);
+  font-size: .7rem;
+  letter-spacing: .22em;
+}
+
+.device-mode-desktop .dojo-home-meta small {
+  border-left: 1px solid rgba(242, 238, 231, .24);
+  color: rgba(242, 238, 231, .64);
+  padding-left: 20px;
+}
+
+.device-mode-desktop .dojo-home-copy h2 {
+  font-size: clamp(4rem, 6.2vw, 6.6rem);
+  letter-spacing: -.055em;
+  line-height: .88;
+  max-width: 760px;
+}
+
+.device-mode-desktop .dojo-home-copy > p {
+  color: rgba(242, 238, 231, .76);
+  font-size: clamp(1rem, 1.35vw, 1.22rem);
+  line-height: 1.65;
+  margin: 24px 0 28px;
+  max-width: 520px;
+}
+
+.dojo-home-actions {
+  align-items: center;
+  display: flex;
+  gap: 28px;
+}
+
+.device-mode-desktop .dojo-home-actions button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(242, 238, 231, .45);
+  border-radius: 0;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--font-display), serif;
+  font-size: 1rem;
+  gap: 28px;
+  min-height: 48px;
+  padding: 0 0 2px;
+}
+
+.device-mode-desktop .dojo-home-actions button:first-child {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--shen-gold) 92%, #f3d59d), color-mix(in srgb, var(--dojo-accent) 68%, #b48a50));
+  border: 0;
+  color: #11150f;
+  min-height: 56px;
+  padding: 0 24px;
+}
+
+.dojo-home-bagua {
+  height: 330px;
+  left: clamp(70px, 9vw, 150px);
+  opacity: .13;
+  pointer-events: none;
+  position: absolute;
+  top: 116px;
+  width: 330px;
+  z-index: 2;
+}
+
+.dojo-home-bagua::before,
+.dojo-home-bagua::after {
+  border: 1px solid var(--shen-gold);
+  border-radius: 50%;
+  content: "";
+  inset: 42px;
+  position: absolute;
+  transform: rotate(22.5deg);
+}
+
+.dojo-home-bagua::after { inset: 112px; }
+.dojo-home-bagua span { color: var(--shen-gold); font-size: 2rem; left: 50%; position: absolute; top: 50%; transform: rotate(calc(var(--i, 0) * 45deg)) translateY(-145px) rotate(calc(var(--i, 0) * -45deg)); transform-origin: center; }
+.dojo-home-bagua span:nth-child(1) { --i: 0; }
+.dojo-home-bagua span:nth-child(2) { --i: 1; }
+.dojo-home-bagua span:nth-child(3) { --i: 2; }
+.dojo-home-bagua span:nth-child(4) { --i: 3; }
+.dojo-home-bagua span:nth-child(5) { --i: 4; }
+.dojo-home-bagua span:nth-child(6) { --i: 5; }
+.dojo-home-bagua span:nth-child(7) { --i: 6; }
+.dojo-home-bagua span:nth-child(8) { --i: 7; }
+.dojo-home-bagua b { color: var(--shen-gold); font-family: var(--font-display), serif; font-size: 3.6rem; left: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); }
+
+.dojo-shen-index {
+  align-items: stretch;
+  backdrop-filter: blur(13px);
+  background: rgba(3, 8, 6, .66);
+  border-top: 1px solid rgba(242, 238, 231, .14);
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  left: 0;
+  position: absolute;
+  right: 0;
+  z-index: 5;
+}
+
+.dojo-shen-index button {
+  background: transparent;
+  border: 0;
+  border-right: 1px solid rgba(242, 238, 231, .12);
+  color: rgba(242, 238, 231, .58);
+  cursor: pointer;
+  display: grid;
+  gap: 7px;
+  min-height: 104px;
+  padding: 22px clamp(14px, 2vw, 30px) 16px;
+  position: relative;
+  text-align: left;
+}
+
+.dojo-shen-index button::after { background: transparent; bottom: 0; content: ""; height: 2px; left: 16%; position: absolute; right: 16%; }
+.dojo-shen-index button.active::after { background: var(--shen-gold); }
+.dojo-shen-index button > span { align-items: center; display: flex; gap: 8px; }
+.dojo-shen-index button i { background: var(--world-color); border-radius: 50%; height: 10px; width: 10px; }
+.dojo-shen-index button b { color: var(--ink); font-family: var(--font-display), serif; font-size: 1rem; }
+.dojo-shen-index button small { color: inherit; font-size: .75rem; }
+.dojo-shen-index button em { color: color-mix(in srgb, var(--world-color) 66%, var(--ink)); font-size: .68rem; font-style: normal; padding-left: 18px; }
+
+.dojo-editorial-grid {
+  display: grid;
+  gap: clamp(24px, 3vw, 46px);
+  grid-template-columns: 1fr 1fr;
+}
+
+.dojo-editorial-card {
+  aspect-ratio: 16 / 8;
+  background-position: center;
+  background-size: cover;
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 340px;
+  overflow: hidden;
+  padding: clamp(28px, 3.5vw, 52px);
+  position: relative;
+  text-align: left;
+}
+
+.dojo-editorial-practice { background-image: linear-gradient(180deg, transparent 16%, rgba(4, 9, 7, .9) 92%), url("/images/shibashi-reference/01-acilis-formu.jpg"); }
+.dojo-editorial-teacher { background-image: linear-gradient(180deg, transparent 16%, rgba(4, 9, 7, .92) 92%), url("/images/living-learning/curtains-opening.png"); }
+.dojo-editorial-card > * { position: relative; z-index: 1; }
+.dojo-editorial-card > span { color: var(--shen-gold); font-size: .66rem; font-weight: 800; letter-spacing: .2em; }
+.dojo-editorial-card h3 { font-family: var(--font-display), serif; font-size: clamp(2rem, 3vw, 3.2rem); font-weight: 400; line-height: 1; margin: 14px 0 8px; max-width: 620px; }
+.dojo-editorial-card p { color: rgba(242, 238, 231, .65); line-height: 1.6; margin: 0; max-width: 480px; }
+.dojo-editorial-card small { align-items: center; display: flex; gap: 20px; margin-top: 22px; }
+.dojo-editorial-card small b { color: var(--shen-gold); }
+
+.dojo-home-links { border-bottom: 1px solid rgba(242, 238, 231, .12); border-top: 1px solid rgba(242, 238, 231, .12); display: grid; grid-template-columns: repeat(3, 1fr); }
+.dojo-home-links button { align-items: center; background: transparent; border: 0; border-right: 1px solid rgba(242, 238, 231, .12); color: var(--ink); cursor: pointer; display: grid; gap: 16px; grid-template-columns: auto 1fr auto; min-height: 118px; padding: 22px 28px; text-align: left; }
+.dojo-home-links button > span { color: var(--shen-gold); font-size: 1.6rem; }
+.dojo-home-links button div { display: grid; gap: 5px; }
+.dojo-home-links button b { font-family: var(--font-display), serif; font-size: 1.2rem; font-weight: 500; }
+.dojo-home-links button small { color: var(--ink-muted); }
+.dojo-home-links button em { color: var(--shen-gold); font-style: normal; }
+.dojo-editorial-stats { color: var(--ink-muted); display: flex; font-size: .72rem; gap: 18px; justify-content: center; letter-spacing: .06em; }
+.dojo-editorial-stats i { background: rgba(242, 238, 231, .2); height: 14px; width: 1px; }
+
+@media (min-width: 900px) {
+  .device-mode-desktop .mobile-frame { max-width: 1760px; padding: 88px clamp(24px, 3vw, 56px) 72px; }
+  .device-mode-desktop .bottom-nav {
+    align-items: center;
+    backdrop-filter: blur(18px);
+    background: rgba(4, 9, 7, .88);
+    border: 0;
+    border-bottom: 1px solid rgba(242, 238, 231, .12);
+    border-radius: 0;
+    display: flex !important;
+    gap: clamp(12px, 1.7vw, 28px);
+    height: 72px;
+    justify-content: flex-end;
+    left: 0;
+    max-width: none;
+    padding: 0 clamp(24px, 3.6vw, 64px);
+    right: 0;
+    top: 0;
+    transform: none;
+    width: 100%;
+  }
+  .device-mode-desktop .web-nav-brand { align-items: center; display: flex; gap: 16px; margin-right: auto; }
+  .device-mode-desktop .web-nav-brand i { border: 3px solid var(--ink); border-right-color: transparent; border-radius: 50%; height: 31px; transform: rotate(-20deg); width: 31px; }
+  .device-mode-desktop .web-nav-brand span { color: var(--ink); font-family: var(--font-display), serif; font-size: .86rem; letter-spacing: .18em; white-space: nowrap; }
+  .device-mode-desktop .nav-button { background: transparent; border: 0; border-radius: 0; color: rgba(242, 238, 231, .66); font-family: var(--font-display), serif; font-size: .86rem; min-height: 72px; padding: 0; width: auto; }
+  .device-mode-desktop .nav-button strong { display: none; }
+  .device-mode-desktop .nav-button-active { box-shadow: inset 0 -2px var(--shen-gold); color: var(--ink); }
+  .device-mode-desktop .nav-button:last-child { border: 1px solid rgba(198, 165, 106, .42); border-radius: 999px; min-height: 38px; padding: 0 16px; }
+}
+
+@media (max-width: 899px) {
+  .device-mode-desktop .dojo-home { gap: 24px; }
+  .device-mode-desktop .dojo-home-hero { border-radius: 24px; min-height: 690px; }
+  .device-mode-desktop .dojo-home-head { left: 20px; right: 20px; top: 20px; }
+  .device-mode-desktop .dojo-home-head > div:first-child > span { font-size: 1rem; }
+  .device-mode-desktop .dojo-home-bagua { height: 240px; left: 2px; top: 120px; width: 240px; }
+  .device-mode-desktop .dojo-home-bagua span { display: none; }
+  .device-mode-desktop .dojo-home-copy { bottom: 204px; left: 22px; right: 22px; width: auto; }
+  .device-mode-desktop .dojo-home-copy h2 { font-size: clamp(3rem, 14vw, 4.5rem); }
+  .device-mode-desktop .dojo-home-actions { align-items: stretch; flex-direction: column; gap: 8px; }
+  .device-mode-desktop .dojo-home-actions button { justify-content: space-between; width: 100%; }
+  .dojo-shen-index { grid-template-columns: repeat(5, minmax(104px, 1fr)); overflow-x: auto; }
+  .dojo-shen-index button { min-height: 130px; padding: 18px 14px; }
+  .dojo-shen-index button > span { align-items: flex-start; flex-direction: column; }
+  .dojo-editorial-grid { grid-template-columns: 1fr; }
+  .dojo-editorial-card { aspect-ratio: 4 / 3; min-height: 320px; }
+  .dojo-home-links { grid-template-columns: 1fr; }
+  .dojo-home-links button { border-bottom: 1px solid rgba(242, 238, 231, .12); border-right: 0; }
+  .dojo-editorial-stats { flex-wrap: wrap; }
+}
+
 /* Direct cinematic intro: poster and video share one stage, then the whole
    layer dissolves into the application without a flash. */
 .intro-video-gate {
@@ -17417,4 +17765,51 @@ body {
     transform: translateX(-50%);
     width: calc(100% - 20px);
   }
+}
+
+/* Approved editorial shell: intentionally last in the cascade. */
+@media (min-width: 900px) {
+  .device-mode-desktop .mobile-frame {
+    max-width: 1760px;
+    padding: 88px clamp(24px, 3vw, 56px) 72px;
+  }
+
+  .device-mode-desktop .bottom-nav {
+    align-items: center;
+    backdrop-filter: blur(18px);
+    background: rgba(4, 9, 7, .88);
+    border: 0;
+    border-bottom: 1px solid rgba(242, 238, 231, .12);
+    border-radius: 0;
+    bottom: auto;
+    display: flex !important;
+    gap: clamp(12px, 1.7vw, 28px);
+    grid-template-columns: none;
+    height: 72px;
+    justify-content: flex-end;
+    left: 0;
+    max-width: none;
+    padding: 0 clamp(24px, 3.6vw, 64px);
+    right: 0;
+    top: 0;
+    transform: none;
+    width: 100%;
+  }
+
+  .device-mode-desktop .bottom-nav .nav-button {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: rgba(242, 238, 231, .66);
+    font-family: var(--font-display), serif;
+    font-size: .86rem;
+    min-height: 72px;
+    padding: 0;
+    width: auto;
+  }
+
+  .device-mode-desktop .bottom-nav .nav-button strong { display: none; }
+  .device-mode-desktop .bottom-nav .nav-button-active { box-shadow: inset 0 -2px var(--shen-gold); color: var(--ink); }
+  .device-mode-desktop .bottom-nav .nav-button:last-child { border: 1px solid rgba(198, 165, 106, .42); border-radius: 999px; min-height: 38px; padding: 0 16px; }
+  .device-mode-desktop .dojo-home-hero { min-height: min(760px, calc(100dvh - 112px)); }
 }

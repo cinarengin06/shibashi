@@ -59,7 +59,7 @@ function ReportDetail({report,shen,onBack}:{report:PostureReport;shen:ReturnType
 type CaptureMetric={label:string;value:number;detail:string};
 const resultPosePoints=[0,11,12,13,14,15,16,23,24,25,26,27,28] as const;
 const resultPoseConnections=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]] as const;
-const pointTone=(value:number)=>value>=82?colors.jade:value>=68?colors.gold:colors.danger;
+const pointTone=(value:number)=>value>=82?colors.jade:value>=62?colors.gold:colors.danger;
 function CapturePoseOverlay({capture}:{capture:PostureCapture}){
  const landmarks=capture.landmarks??[];
  const shoulderTone=pointTone(capture.shoulderScore),hipTone=pointTone(capture.hipScore),axisTone=pointTone(capture.axisScore);
@@ -77,8 +77,8 @@ function getCaptureMetrics(capture:PostureCapture):CaptureMetric[]{
 }
 
 function MetricRow({metric,color}:{metric:CaptureMetric;color:string}){
- const tone=metric.value>=82?colors.jade:metric.value>=68?colors.gold:colors.danger;
- return <View style={p.metricRow}><View style={[p.metricIcon,{borderColor:`${color}45`}]}><Ionicons name="analytics-outline" color={tone} size={17}/></View><View style={{flex:1,gap:5}}><View style={p.metricTop}><Text style={p.metricName}>{metric.label}</Text><Text style={[p.metricValue,{color:tone}]}>{metric.value>=82?'İyi':metric.value>=68?'Orta':'Dikkat'}</Text></View><ProgressBar value={metric.value} color={tone}/><Text style={p.metricDetail}>{metric.detail} · %{metric.value}</Text></View></View>;
+ const tone=metric.value>=82?colors.jade:metric.value>=62?colors.gold:colors.danger;
+ return <View style={p.metricRow}><View style={[p.metricIcon,{borderColor:`${color}45`}]}><Ionicons name="analytics-outline" color={tone} size={17}/></View><View style={{flex:1,gap:5}}><View style={p.metricTop}><Text style={p.metricName}>{metric.label}</Text><Text style={[p.metricValue,{color:tone}]}>{metric.value>=82?'İyi':metric.value>=62?'Orta':'Düzelt'}</Text></View><ProgressBar value={metric.value} color={tone}/><Text style={p.metricDetail}>{metric.detail} · %{metric.value}</Text></View></View>;
 }
 
 const p=StyleSheet.create({

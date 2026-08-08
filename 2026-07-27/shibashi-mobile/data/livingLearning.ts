@@ -1,4 +1,5 @@
 import type {ImageSourcePropType} from 'react-native';
+import type {LivingStepId} from '../../../packages/living-learning';
 import {bedroomPushPractice,getLivingPractice,livingPractices,livingReferencePoses,livingScenes,livingStepAt} from '../../../packages/living-learning';
 
 export {bedroomPushPractice,getLivingPractice,livingPractices,livingReferencePoses,livingScenes,livingStepAt};
@@ -20,6 +21,14 @@ export const livingSceneMusic:Record<string,number>={
  garden:require('../assets/shen/music/shen-music-shen.mp4'),
  pottery:require('../assets/shen/music/shen-music-yi.mp4'),
  gate:require('../assets/shen/music/shen-music-po.mp4'),
+};
+
+export const livingGhostTeacherImages:Record<LivingStepId,ImageSourcePropType>={
+ prepare:require('../assets/living-learning/ghost-teacher/prepare.png'),
+ lift:require('../assets/living-learning/ghost-teacher/lift.png'),
+ push:require('../assets/living-learning/ghost-teacher/push.png'),
+ extend:require('../assets/living-learning/ghost-teacher/extend.png'),
+ release:require('../assets/living-learning/ghost-teacher/release.png'),
 };
 
 export function normalizeLivingSceneId(id?:string){

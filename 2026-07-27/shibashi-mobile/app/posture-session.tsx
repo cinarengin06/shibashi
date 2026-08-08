@@ -223,7 +223,7 @@ export default function PostureSession(){
     <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active zoom={0} onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
     <View style={styles.cameraShade}/>
     <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>
-    <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize}/>
+    <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize} view={view}/>
     {(!cameraReady||cameraError||scanState==='model-loading'||scanState==='error')&&<View style={styles.cameraMessage}><Ionicons name={cameraError||analysisError?'warning-outline':'analytics-outline'} size={22} color={shen.color}/><Text style={styles.cameraMessageText}>{analysisError||(cameraError?'Kamera açılamadı. Ayarlar içinden kamera iznini aç.':scanState==='model-loading'?'Gerçek 33 noktalı poz modeli hazırlanıyor…':'Kamera hazırlanıyor…')}</Text></View>}
     <View style={styles.captureInstruction}>
      <Text style={styles.mobileCountdown}>{scanState==='hold'?String(countdown):scanState==='capturing'?'✓':'•'}</Text>
@@ -240,11 +240,11 @@ export default function PostureSession(){
 }
 
 const livePoseConnections=[
- [11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],
+ [7,11],[8,12],[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,29],[29,31],[28,30],[30,32],
 ] as const;
-const livePosePoints=[0,11,12,13,14,15,16,23,24,25,26,27,28] as const;
+const livePosePoints=[0,7,8,11,12,13,14,15,16,23,24,25,26,27,28,29,30,31,32] as const;
 
-function LivePoseOverlay({imageSize,landmarks,previewSize}:{imageSize:FrameSize;landmarks:PoseLandmark[];previewSize:FrameSize}){
+function LivePoseOverlay({imageSize,landmarks,previewSize,view}:{imageSize:FrameSize;landmarks:PoseLandmark[];previewSize:FrameSize;view:PostureView}){
  if(landmarks.length<33||imageSize.width<=1||imageSize.height<=1||previewSize.width<=1||previewSize.height<=1)return null;
  const scale=Math.max(previewSize.width/imageSize.width,previewSize.height/imageSize.height);
  const renderedWidth=imageSize.width*scale;
@@ -255,20 +255,38 @@ function LivePoseOverlay({imageSize,landmarks,previewSize}:{imageSize:FrameSize;
   x:offsetX+point.x*renderedWidth,
   y:offsetY+point.y*renderedHeight,
  });
+ const readiness=evaluatePoseFrame(landmarks,view);
+ let quality:PostureCapture|null=null;
+ if(readiness.angleReady){
+  try{quality=createPostureCapture(view,landmarks,1)}catch{}
+ }
+ const scoreFor=(index:number)=>{
+  if(!quality)return null;
+  if(index===0||index===7||index===8||(index>=11&&index<=16))return quality.shoulderScore;
+  if(index===23||index===24)return quality.hipScore;
+  return quality.axisScore;
+ };
+ const colorFor=(score:number|null)=>score===null?'#7EC8D4':score>=82?'#79D69E':score>=62?'#F3B84F':'#FF5B57';
  return <View pointerEvents="none" style={styles.realPoseOverlay}>
   <Svg height="100%" viewBox={`0 0 ${previewSize.width} ${previewSize.height}`} width="100%" preserveAspectRatio="none">
+   <Line x1={previewSize.width/2} y1={previewSize.height*.06} x2={previewSize.width/2} y2={previewSize.height*.96} stroke="rgba(126,200,212,.58)" strokeDasharray="8 7" strokeWidth="1.1"/>
+   {view!=='side'?<><Line x1={previewSize.width*.1} y1={project(landmarks[11]).y} x2={previewSize.width*.9} y2={project(landmarks[11]).y} stroke="rgba(242,238,231,.24)" strokeDasharray="5 7" strokeWidth="1"/><Line x1={previewSize.width*.15} y1={project(landmarks[23]).y} x2={previewSize.width*.85} y2={project(landmarks[23]).y} stroke="rgba(242,238,231,.18)" strokeDasharray="5 7" strokeWidth="1"/></>:null}
    {livePoseConnections.map(([startIndex,endIndex])=>{
     const start=landmarks[startIndex],end=landmarks[endIndex];
     if(!isLandmarkVisible(start)||!isLandmarkVisible(end))return null;
     const a=project(start),b=project(end);
-    return <Line key={`${startIndex}-${endIndex}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#7FB46B" strokeWidth="2.1"/>;
+    const scores=[scoreFor(startIndex),scoreFor(endIndex)].filter((score):score is number=>score!==null);
+    const color=colorFor(scores.length?Math.min(...scores):null);
+    return <Line key={`${startIndex}-${endIndex}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={color} strokeWidth="2.5" strokeLinecap="round"/>;
    })}
    {livePosePoints.map(pointIndex=>{
     const point=landmarks[pointIndex];
     if(!isLandmarkVisible(point))return null;
     const projected=project(point);
-    return <Circle key={pointIndex} cx={projected.x} cy={projected.y} r="4.3" fill="#A9D977" stroke="#F2EEE7" strokeWidth=".9"/>;
+    const color=colorFor(scoreFor(pointIndex));
+    return <Circle key={pointIndex} cx={projected.x} cy={projected.y} r="7.5" fill={color} fillOpacity=".2" stroke={color} strokeWidth="1.2"/>;
    })}
+   {livePosePoints.map(pointIndex=>{const point=landmarks[pointIndex];if(!isLandmarkVisible(point))return null;const projected=project(point);return <Circle key={`core-${pointIndex}`} cx={projected.x} cy={projected.y} r="3.5" fill={colorFor(scoreFor(pointIndex))} stroke="#F2EEE7" strokeWidth=".8"/>})}
   </Svg>
  </View>;
 }

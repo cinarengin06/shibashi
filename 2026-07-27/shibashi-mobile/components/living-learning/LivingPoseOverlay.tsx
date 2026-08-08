@@ -1,5 +1,7 @@
+import {useEffect,useRef} from 'react';
+import {Animated,StyleSheet,View} from 'react-native';
 import Svg,{Circle,Line} from 'react-native-svg';
-import {livingReferencePoses,type LivingMovementStep,type LivingPosePoint} from '../../data/livingLearning';
+import {livingGhostTeacherImages,type LivingMovementStep,type LivingPosePoint} from '../../data/livingLearning';
 
 const connections=[['left_shoulder','right_shoulder'],['left_shoulder','left_elbow'],['left_elbow','left_wrist'],['right_shoulder','right_elbow'],['right_elbow','right_wrist'],['left_shoulder','left_hip'],['right_shoulder','right_hip'],['left_hip','right_hip'],['left_hip','left_knee'],['left_knee','left_ankle'],['right_hip','right_knee'],['right_knee','right_ankle']]as const;
 
@@ -13,10 +15,12 @@ export function LivingPoseOverlay({pose,width,height,imageWidth,imageHeight,mirr
 }
 
 export function LivingGhostOverlay({step,width=92,height=190}:{step:LivingMovementStep;width?:number;height?:number}){
- const pose=livingReferencePoses[step.referencePoseId]??[],get=(name:string)=>pose.find(item=>item.name===name);
- return <Svg width={width} height={height} viewBox="5 2 90 96" opacity={.72}>
-  <Circle cx={50} cy={18} r={5.4} fill="rgba(255,240,189,.16)" stroke="#FFF0BD" strokeWidth={1.6}/>
-  {connections.map(([a,b])=>{const p1=get(a),p2=get(b);return p1&&p2?<Line key={`${a}-${b}`} x1={p1.x*100} y1={p1.y*100} x2={p2.x*100} y2={p2.y*100} stroke="#FFF0BD" strokeWidth={2} strokeLinecap="round"/>:null})}
-  {pose.map(item=><Circle key={item.name} cx={item.x*100} cy={item.y*100} r={2} fill="#F3CF8B" stroke="#FFF0BD" strokeWidth={.35}/>)}
- </Svg>;
+ const opacity=useRef(new Animated.Value(.35)).current;
+ useEffect(()=>{opacity.setValue(.35);Animated.timing(opacity,{toValue:.92,duration:360,useNativeDriver:true}).start()},[opacity,step.id]);
+ return <View style={[g.stage,{width,height}]}>
+  <View style={g.halo}/><View style={g.ground}/>
+  <Animated.Image fadeDuration={0} resizeMode="contain" source={livingGhostTeacherImages[step.id]} style={[g.teacher,{opacity}]}/>
+ </View>;
 }
+
+const g=StyleSheet.create({stage:{alignItems:'center',justifyContent:'center',position:'relative'},halo:{position:'absolute',left:'11%',right:'11%',top:'8%',bottom:'9%',borderRadius:999,backgroundColor:'rgba(243,207,139,.07)',shadowColor:'#F3CF8B',shadowOpacity:.7,shadowRadius:24},ground:{position:'absolute',bottom:'5%',width:'58%',height:11,borderRadius:999,borderWidth:1,borderColor:'rgba(243,207,139,.58)',backgroundColor:'rgba(243,207,139,.08)',shadowColor:'#F3CF8B',shadowOpacity:.75,shadowRadius:13},teacher:{width:'100%',height:'100%',transform:[{scale:1.02}]}});

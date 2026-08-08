@@ -62,31 +62,49 @@ const jointAngle=(first:PoseLandmark,center:PoseLandmark,last:PoseLandmark)=>{
  return Math.acos(Math.max(-1,Math.min(1,(a.x*b.x+a.y*b.y)/denominator)))*180/Math.PI;
 };
 
+function getSideLandmarkLine(points:PoseLandmark[]){
+ const sides={
+  left:{ear:7,shoulder:11,hip:23,knee:25,ankle:27},
+  right:{ear:8,shoulder:12,hip:24,knee:26,ankle:28},
+ } as const;
+ const visibility=(side:(typeof sides)[keyof typeof sides])=>Object.values(side).reduce((sum,index)=>sum+(points[index]?.visibility??0),0);
+ const selected=visibility(sides.left)>=visibility(sides.right)?sides.left:sides.right;
+ return{
+  ear:points[selected.ear],
+  shoulder:points[selected.shoulder],
+  hip:points[selected.hip],
+  knee:points[selected.knee],
+  ankle:points[selected.ankle],
+ };
+}
+
 export function createPostureCapture(view:PostureView,points:PoseLandmark[],confidence:number,analysisSource:PostureCapture['analysisSource']='mediapipe-33'):PostureCapture{
  if(points.length<33)throw new Error('Tam beden algılanamadı. Baş ve ayaklarını kadraja al.');
  const confidencePercent=Math.round(confidence*100);
  if(view==='side'){
-  const best=(first:number,second:number)=>((points[first]?.visibility??0)>=(points[second]?.visibility??0)?points[first]:points[second]);
-  const ear=best(7,8),shoulder=best(11,12),hip=best(23,24),knee=best(25,26),ankle=best(27,28);
+  const{ear,shoulder,hip,knee,ankle}=getSideLandmarkLine(points);
   const verticalAngle=(upper:PoseLandmark,lower:PoseLandmark)=>Math.abs(Math.atan2(lower.x-upper.x,lower.y-upper.y)*180/Math.PI);
   const headAngle=verticalAngle(ear,shoulder);
   const torsoAngle=verticalAngle(shoulder,hip);
   const legAngle=verticalAngle(hip,ankle);
   const kneeAngle=jointAngle(hip,knee,ankle);
   const kneeDeviation=Math.abs(180-kneeAngle);
-  const shoulderScore=scoreDeviation(headAngle,3,24);
-  const torsoScore=scoreDeviation(torsoAngle,2,18);
-  const legScore=scoreDeviation(legAngle,2,16);
-  const kneeScore=scoreDeviation(kneeDeviation,3,24);
-  const axisScore=clampScore(torsoScore*.45+legScore*.25+kneeScore*.3);
-  const hipScore=scoreDeviation(Math.abs(torsoAngle-legAngle),2,16);
+  const headForward=Math.abs(headAngle-torsoAngle);
+  const lowerAxisDifference=Math.abs(torsoAngle-legAngle);
+  const shoulderScore=scoreDeviation(headForward,4.5,24);
+  const torsoScore=scoreDeviation(torsoAngle,3.5,20);
+  const legScore=scoreDeviation(lowerAxisDifference,4,22);
+  // Yumuşak Tai Chi duruşundaki doğal diz bükülmesini hata gibi cezalandırma.
+  const kneeScore=scoreDeviation(kneeDeviation,12,38);
+  const axisScore=clampScore(torsoScore*.6+legScore*.25+kneeScore*.15);
+  const hipScore=scoreDeviation(lowerAxisDifference,4,20);
   const score=Math.round(shoulderScore*.3+axisScore*.45+hipScore*.25);
   return{
    view,score,shoulderScore,axisScore,hipScore,analysisSource,landmarkCount:33,confidence,sampleCount:1,
-   measurements:{headForwardDegrees:headAngle,torsoLeanDegrees:torsoAngle,legLeanDegrees:legAngle,kneeFlexionDegrees:kneeDeviation},
+   measurements:{headForwardDegrees:headForward,torsoLeanDegrees:torsoAngle,legLeanDegrees:legAngle,kneeFlexionDegrees:kneeDeviation},
    feedback:score>=82
     ?`Yan eksende kulak, omuz, kalça ve ayak bileği dengeli · güven %${confidencePercent}`
-    :`Yan eksen: baş ${headAngle.toFixed(1)}°, gövde ${torsoAngle.toFixed(1)}°, diz sapması ${kneeDeviation.toFixed(1)}°`,
+    :`Yan eksen: baş farkı ${headForward.toFixed(1)}°, gövde ${torsoAngle.toFixed(1)}°, diz bükümü ${kneeDeviation.toFixed(1)}°`,
   };
  }
  const pairAngle=(left:number,right:number)=>{

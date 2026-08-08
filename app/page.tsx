@@ -163,9 +163,13 @@ const mediaPipePoseNames = [
 const postureDisplayPoints = new Set([
   "nose", "left_ear", "right_ear",
   "left_shoulder", "right_shoulder",
+  "left_elbow", "right_elbow",
+  "left_wrist", "right_wrist",
   "left_hip", "right_hip",
   "left_knee", "right_knee",
   "left_ankle", "right_ankle",
+  "left_heel", "right_heel",
+  "left_foot_index", "right_foot_index",
 ]);
 
 type PracticeSnapshot = {
@@ -201,6 +205,7 @@ type PostureAnalysisSnapshot = {
   shoulderTilt: number;
   sampleCount?: number;
   spineShift: number;
+  view?: PostureView;
 };
 
 type PostureAssessmentCapture = {
@@ -265,7 +270,7 @@ function toWebPostureReport(record:SyncRecord):PostureReport|null {
    view,
    createdAt:date,
    imageData:"",
-   analysis:{axisScore,confidence,shoulderScore,hipScore,shoulderTilt:Number.isFinite(shoulderTilt)?shoulderTilt:0,hipTilt:Number.isFinite(hipTilt)?hipTilt:0,spineShift:Number.isFinite(spineShift)?spineShift:0,flags:[],feedback:String(source?.feedback??"App ölçümü senkronize edildi.")},
+   analysis:{axisScore,confidence,shoulderScore,hipScore,shoulderTilt:Number.isFinite(shoulderTilt)?shoulderTilt:0,hipTilt:Number.isFinite(hipTilt)?hipTilt:0,spineShift:Number.isFinite(spineShift)?spineShift:0,flags:[],feedback:String(source?.feedback??"App ölçümü senkronize edildi."),view},
   };
  };
  const score=record.score;
@@ -2054,31 +2059,31 @@ function DojoHomeScreen({
 
   return (
     <section className="screen dojo-home" style={{ "--dojo-accent": selectedShen.color, "--shen-surface": personality.surface, "--shen-surface-raised": personality.surfaceRaised, "--shen-button-primary": personality.button, "--shen-button-ink": personality.buttonInk, "--shen-control-radius": `${personality.controlRadius}px`, "--shen-heading-weight": personality.headingWeight, "--shen-heading-tracking": personality.headingTracking, "--shen-transition": `${personality.transitionMs}ms` } as CSSProperties}>
-      <header className="dojo-home-head"><div><h1>Merhaba, {userName || "yol arkadaşım"}</h1><span>{new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span></div><div><b>{journeyDay}</b><small>GÜN</small></div></header>
-
-      <section className="dojo-shen-chooser" aria-labelledby="dojo-shen-chooser-label">
-        <span className="dojo-kicker" id="dojo-shen-chooser-label">BUGÜN HANGİ ALAN SANA EŞLİK ETSİN?</span>
-        <div className="dojo-worlds dojo-worlds-main" aria-label="Beş Shen seçimi">{fiveShen.map((shen) => { const world = shenThemes[shen.id]; const copy = shenTodayCopy[shen.id]; return <button aria-label={`${shen.name}, ${copy.shortLabel}`} aria-pressed={selectedShen.id === shen.id} className={selectedShen.id === shen.id ? "active" : ""} key={shen.id} onClick={() => onSelectShen(shen.id)} style={{ "--world-color": shen.color, "--world-radius": `${world.controlRadius}px`, "--world-surface": world.surfaceRaised } as CSSProperties} type="button"><span className="dojo-world-name"><i /><b>{shen.name}</b></span><small>({copy.shortLabel})</small></button>; })}</div>
-        <div className="dojo-shen-identity" style={{ "--identity-color": selectedShen.color } as CSSProperties}>
-          <span className="dojo-shen-symbol" aria-hidden="true">{selectedShen.symbol}</span>
-          <div><p><b>{selectedShen.name}</b> · {todayCopy.identity}</p><small>{selectedShen.element} · {selectedShen.map}</small></div>
-        </div>
-      </section>
-
       <article className="dojo-home-hero">
         <div aria-hidden="true" className="shen-image-stack">{fiveShen.map((shen) => <span className={`shen-image-layer ${selectedShen.id === shen.id ? "shen-image-layer-active" : ""}`} key={shen.id} style={{ backgroundImage: `url(${shen.image})` }} />)}</div>
         <div className="dojo-home-shade" />
-        <div className="dojo-home-copy"><div className="dojo-home-meta"><span>BUGÜN {selectedShen.name.toLocaleUpperCase("tr-TR")} SENİNLE</span><small>{selectedShen.dailyName}</small></div><div className="dojo-ritual-mark"><i /><b /></div><h2>{todayCopy.title}</h2><p>{todayCopy.body}</p><blockquote className="dojo-home-motto">“{todayCopy.motto}”</blockquote><button onClick={onPractice} type="button">{todayCopy.action} <span>→</span></button><small>{todayCopy.practice} · 8 dakika · yavaş</small></div>
+        <div aria-hidden="true" className="dojo-home-bagua"><span>☰</span><span>☱</span><span>☲</span><span>☳</span><span>☴</span><span>☵</span><span>☶</span><span>☷</span><b>{selectedShen.symbol}</b></div>
+        <header className="dojo-home-head"><div><span>İyi akşamlar, {userName || "yol arkadaşım"}</span><small>{new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</small></div><div><b>{journeyDay}</b><small>GÜN</small></div></header>
+        <div className="dojo-home-copy">
+          <div className="dojo-home-meta"><span>BUGÜN {selectedShen.name.toLocaleUpperCase("tr-TR")} SENİNLE</span><small>{selectedShen.dailyName}</small></div>
+          <h2>{todayCopy.title}</h2>
+          <p>{todayCopy.body}</p>
+          <div className="dojo-home-actions"><button onClick={onPractice} type="button">Bugünün pratiğine başla <span>→</span></button><button onClick={onLearning} type="button">{selectedShen.name}’yi keşfet <span>→</span></button></div>
+        </div>
+        <nav className="dojo-shen-index" aria-label="Beş Shen seçimi">{fiveShen.map((shen) => { const copy = shenTodayCopy[shen.id]; return <button aria-label={`${shen.name}, ${copy.shortLabel}`} aria-pressed={selectedShen.id === shen.id} className={selectedShen.id === shen.id ? "active" : ""} key={shen.id} onClick={() => onSelectShen(shen.id)} style={{ "--world-color": shen.color } as CSSProperties} type="button"><span><i /><b>{shen.name}</b><small>— {copy.shortLabel.split(" · ")[0]}</small></span>{selectedShen.id === shen.id ? <em>{selectedShen.element} · Merkez</em> : null}</button>; })}</nav>
       </article>
 
-      <div className="dojo-real-progress"><div><b>{practiceCount || "—"}</b><span>tamamlanan akış</span></div><i /><div><b>{postureCount || "—"}</b><span>beden izi</span></div><i /><div><b>{earnedXp}</b><span>gerçek XP</span></div></div>
+      <section className="dojo-editorial-grid">
+        <button className="dojo-editorial-card dojo-editorial-practice" onClick={onPractice} type="button"><span>BUGÜNÜN PRATİĞİ</span><h3>{todayCopy.practice}</h3><p>{todayCopy.motto}</p><small>8 dakika · yavaş akış <b>→</b></small></button>
+        <button className="dojo-editorial-card dojo-editorial-teacher" onClick={onLearning} type="button"><span>AYHAN GÜLER’DEN</span><h3>Hareketi yaşamın içinde öğren.</h3><p>Formun adından önce gündelik hayattaki karşılığını hisset.</p><small>Yaşayarak öğren <b>→</b></small></button>
+      </section>
 
-      <button className="dojo-path" onClick={onPosture} type="button"><span>↕</span><div><b>Bugün nasıl duruyorsun?</b><small>{postureCount ? "Son beden izini yeniden gör." : "İlk beden izini sakince kaydet."}</small></div><em>→</em></button>
-      <button className="dojo-path" onClick={onLearning} type="button"><span>✦</span><div><b>Hareketi yaşayarak öğren</b><small>Formun adından önce günlük hayattaki karşılığını hisset.</small></div><em>→</em></button>
-      <button className="dojo-path" onClick={onPractice} type="button"><span>♙</span><div><b>AI Ghost Teacher</b><small>Hareket sırasında yalnızca gerektiğinde görünür bir rehber.</small></div><em>→</em></button>
-
-      <div className="dojo-awareness"><span className="dojo-kicker">DOJO’NUN DİĞER ALANLARI</span><h2>İç dünyanı fark et.</h2>{journeyUnlocked ? <button className="dojo-path" onClick={onJourney} type="button"><span>◉</span><div><b>Bagua ve yolculuk haritan</b><small>Günlerinin ritmini ve açılan alanları gör.</small></div><em>→</em></button> : null}<button className="dojo-path" onClick={onJournal} type="button"><span>◌</span><div><b>Günün izi</b><small>Pratikten sonra sende kalan tek cümleyi yaz.</small></div><em>→</em></button></div>
-      <blockquote>“Yol, tek bir sakin adımla görünür olur.”</blockquote>
+      <section className="dojo-home-links" aria-label="Diğer alanlar">
+        <button onClick={onPosture} type="button"><span>↕</span><div><b>Postür aynası</b><small>{postureCount ? `${postureCount} beden izi kayıtlı` : "İlk beden izini kaydet"}</small></div><em>→</em></button>
+        {journeyUnlocked ? <button onClick={onJourney} type="button"><span>◉</span><div><b>Bagua haritan</b><small>Yolculuğundaki açılan alanları gör</small></div><em>→</em></button> : null}
+        <button onClick={onJournal} type="button"><span>◌</span><div><b>Günün izi</b><small>Pratikten kalan cümleyi yaz</small></div><em>→</em></button>
+      </section>
+      <div className="dojo-editorial-stats"><span>{practiceCount || "—"} tamamlanan akış</span><i /><span>{postureCount || "—"} beden izi</span><i /><span>{earnedXp} deneyim puanı</span></div>
     </section>
   );
 }
@@ -6173,6 +6178,7 @@ function getPostureReportCompositeAnalysis(report: PostureReport): ReturnType<ty
     shoulderScore: Math.round((front.shoulderScore + side.shoulderScore + back.shoulderScore) / 3),
     shoulderTilt: (front.shoulderTilt + back.shoulderTilt) / 2,
     spineShift: Math.max(-20, Math.min(20, (front.spineShift + side.spineShift + back.spineShift) / 3)),
+    view: "front",
   };
 }
 
@@ -6625,6 +6631,7 @@ function analyzePosture(keypoints: PoseKeypoint[], _movementScore: number, _shen
       shoulderScore: 0,
       shoulderTilt: 0,
       spineShift: 0,
+      view,
     };
   }
 
@@ -6685,20 +6692,18 @@ function analyzePosture(keypoints: PoseKeypoint[], _movementScore: number, _shen
     shoulderScore,
     shoulderTilt,
     spineShift,
+    view,
   };
 }
 
 function analyzeSidePosture(byName: Map<string | undefined, PoseKeypoint>) {
-  const bestVisible = (...names: string[]) =>
-    names
-      .map((name) => byName.get(name))
-      .filter((point): point is PoseKeypoint => Boolean(point))
-      .sort((first, second) => (second.score ?? 0) - (first.score ?? 0))[0];
-  const ear = bestVisible("left_ear", "right_ear");
-  const shoulder = bestVisible("left_shoulder", "right_shoulder");
-  const hip = bestVisible("left_hip", "right_hip");
-  const knee = bestVisible("left_knee", "right_knee");
-  const ankle = bestVisible("left_ankle", "right_ankle");
+  const sideLines = {
+    left: ["left_ear", "left_shoulder", "left_hip", "left_knee", "left_ankle"],
+    right: ["right_ear", "right_shoulder", "right_hip", "right_knee", "right_ankle"],
+  } as const;
+  const lineVisibility = (names: readonly string[]) => names.reduce((sum, name) => sum + (byName.get(name)?.score ?? 0), 0);
+  const line = lineVisibility(sideLines.left) >= lineVisibility(sideLines.right) ? sideLines.left : sideLines.right;
+  const [ear, shoulder, hip, knee, ankle] = line.map((name) => byName.get(name));
   const verticalAngle = (upper?: PoseKeypoint, lower?: PoseKeypoint) => {
     if (!isVisiblePosePoint(upper) || !isVisiblePosePoint(lower)) return 20;
     return Math.abs(Math.atan2(lower.x - upper.x, lower.y - upper.y) * 180 / Math.PI);
@@ -6716,17 +6721,19 @@ function analyzeSidePosture(byName: Map<string | undefined, PoseKeypoint>) {
   const torsoAngle = verticalAngle(shoulder, hip);
   const legAngle = verticalAngle(hip, ankle);
   const kneeAngle = jointFlexionDeviation(hip, knee, ankle);
-  const shoulderScore = scoreAngularDeviation(headAngle, 3, 24);
-  const torsoScore = scoreAngularDeviation(torsoAngle, 2, 18);
-  const legScore = scoreAngularDeviation(legAngle, 2, 16);
-  const kneeScore = scoreAngularDeviation(kneeAngle, 3, 24);
-  const axisScore = Math.round(torsoScore * 0.45 + legScore * 0.25 + kneeScore * 0.3);
-  const hipScore = scoreAngularDeviation(Math.abs(torsoAngle - legAngle), 2, 16);
+  const headForward = Math.abs(headAngle - torsoAngle);
+  const lowerAxisDifference = Math.abs(torsoAngle - legAngle);
+  const shoulderScore = scoreAngularDeviation(headForward, 4.5, 24);
+  const torsoScore = scoreAngularDeviation(torsoAngle, 3.5, 20);
+  const legScore = scoreAngularDeviation(lowerAxisDifference, 4, 22);
+  const kneeScore = scoreAngularDeviation(kneeAngle, 12, 38);
+  const axisScore = Math.round(torsoScore * 0.6 + legScore * 0.25 + kneeScore * 0.15);
+  const hipScore = scoreAngularDeviation(lowerAxisDifference, 4, 20);
   const spineShift = Math.max(-20, Math.min(20, torsoAngle));
   const fullBodyReady = [ear, shoulder, hip, knee, ankle].every((point) => isVisiblePosePoint(point));
   const confidence = getPoseMeasurementConfidence([ear, shoulder, hip, knee, ankle]);
   const flags = [
-    headAngle > 10 ? "Baş öne taşınıyor" : "Baş omuz hattında",
+    headForward > 10 ? "Baş öne taşınıyor" : "Baş omuz hattında",
     torsoAngle > 8 ? "Gövde dikeyden sapıyor" : "Gövde ekseni sakin",
     Math.abs(torsoAngle - legAngle) > 7 ? "Kalça-ayak bileği hattı ayrışıyor" : "Alt beden ekseni dengeli",
     fullBodyReady ? "Yan beden görünür" : "Yan kadrajı tamamla",
@@ -6738,14 +6745,15 @@ function analyzeSidePosture(byName: Map<string | undefined, PoseKeypoint>) {
     feedback:
       axisScore > 82 && shoulderScore > 78
         ? "Yan görünümde kulak, omuz, kalça ve ayak bileği dengeli bir hatta."
-        : `Yan eksende baş ${headAngle.toFixed(1)}°, gövde ${torsoAngle.toFixed(1)}° ve diz ${kneeAngle.toFixed(1)}° ölçüldü.`,
+        : `Yan eksende baş farkı ${headForward.toFixed(1)}°, gövde ${torsoAngle.toFixed(1)}° ve diz bükümü ${kneeAngle.toFixed(1)}° ölçüldü.`,
     flags,
     hipScore,
     hipTilt: torsoAngle - legAngle,
     lean: Math.max(-10, Math.min(10, torsoAngle / 2)),
     shoulderScore,
-    shoulderTilt: headAngle,
+    shoulderTilt: headForward,
     spineShift,
+    view: "side" as const,
   };
 }
 
@@ -8188,7 +8196,12 @@ function drawPoseCanvas(canvas: HTMLCanvasElement | null, pose: Pose | undefined
   context.lineCap = "round";
   context.lineJoin = "round";
   context.shadowBlur = 0;
-  drawPoseConnections(context, pose.keypoints, "#7FB46B", analysis ? postureDisplayPoints : undefined);
+  if (analysis) {
+    drawPostureReferenceGuides(context, pose.keypoints, analysis);
+    drawPostureQualityConnections(context, pose.keypoints, analysis);
+  } else {
+    drawPoseConnections(context, pose.keypoints, "#7FB46B");
+  }
   drawPoseKeypoints(context, pose.keypoints, "#A9D977", analysis ? postureDisplayPoints : undefined);
   if (analysis) drawPostureQualityKeypoints(context, pose.keypoints, analysis);
   context.restore();
@@ -8234,25 +8247,82 @@ function drawPostureQualityKeypoints(
   keypoints: PoseKeypoint[],
   analysis: PostureAnalysisSnapshot,
 ) {
-  const shoulderNames = new Set(["left_shoulder", "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist"]);
-  const hipNames = new Set(["left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"]);
-
   for (const keypoint of keypoints) {
     if (!keypoint.name || !postureDisplayPoints.has(keypoint.name) || !isVisiblePosePoint(keypoint)) continue;
 
-    const score = shoulderNames.has(keypoint.name)
-      ? analysis.shoulderScore
-      : hipNames.has(keypoint.name)
-        ? analysis.hipScore
-        : analysis.axisScore;
-    const color = score >= 80 ? "#7FB46B" : "#D7A85B";
+    const color = getPostureQualityColor(getPosturePointScore(keypoint.name, analysis));
 
     context.strokeStyle = color;
-    context.lineWidth = 2.5;
+    context.fillStyle = colorWithAlpha(color, 0.26);
+    context.lineWidth = 3;
+    context.beginPath();
+    context.arc(keypoint.x, keypoint.y, 12, 0, Math.PI * 2);
+    context.fill();
     context.beginPath();
     context.arc(keypoint.x, keypoint.y, 9, 0, Math.PI * 2);
     context.stroke();
   }
+}
+
+function getPosturePointScore(name: string, analysis: PostureAnalysisSnapshot) {
+  if (["nose", "left_ear", "right_ear", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist"].includes(name)) return analysis.shoulderScore;
+  if (name === "left_hip" || name === "right_hip") return analysis.hipScore;
+  return analysis.axisScore;
+}
+
+function getPostureQualityColor(score: number) {
+  if (score >= 82) return "#79D69E";
+  if (score >= 62) return "#F3B84F";
+  return "#FF5B57";
+}
+
+function drawPostureQualityConnections(context: CanvasRenderingContext2D, keypoints: PoseKeypoint[], analysis: PostureAnalysisSnapshot) {
+  for (const [startName, endName] of poseConnections) {
+    if (!postureDisplayPoints.has(startName) || !postureDisplayPoints.has(endName)) continue;
+    const start = findVisiblePosePoint(keypoints, startName);
+    const end = findVisiblePosePoint(keypoints, endName);
+    if (!start || !end) continue;
+    const score = Math.min(getPosturePointScore(startName, analysis), getPosturePointScore(endName, analysis));
+    const color = getPostureQualityColor(score);
+    context.strokeStyle = colorWithAlpha(color, 0.9);
+    context.shadowColor = colorWithAlpha(color, score < 62 ? 0.55 : 0.28);
+    context.shadowBlur = score < 62 ? 12 : 6;
+    context.lineWidth = score < 62 ? 5 : 4;
+    context.beginPath();
+    context.moveTo(start.x, start.y);
+    context.lineTo(end.x, end.y);
+    context.stroke();
+  }
+  context.shadowBlur = 0;
+}
+
+function drawPostureReferenceGuides(context: CanvasRenderingContext2D, keypoints: PoseKeypoint[], analysis: PostureAnalysisSnapshot) {
+  const leftAnkle = findVisiblePosePoint(keypoints, "left_ankle");
+  const rightAnkle = findVisiblePosePoint(keypoints, "right_ankle");
+  const shoulderCenter = getMidpoint(findVisiblePosePoint(keypoints, "left_shoulder"), findVisiblePosePoint(keypoints, "right_shoulder"));
+  const hipCenter = getMidpoint(findVisiblePosePoint(keypoints, "left_hip"), findVisiblePosePoint(keypoints, "right_hip"));
+  const ankleCenter = getMidpoint(leftAnkle, rightAnkle);
+  const sideAnkle = [leftAnkle, rightAnkle].filter((point): point is PoseKeypoint => Boolean(point)).sort((first, second) => (second.score ?? 0) - (first.score ?? 0))[0];
+  const plumbX = analysis.view === "side" ? sideAnkle?.x : ankleCenter?.x;
+  context.save();
+  context.setLineDash([10, 9]);
+  context.lineWidth = 1.5;
+  context.strokeStyle = "rgba(126, 200, 212, 0.62)";
+  context.beginPath();
+  context.moveTo(plumbX ?? context.canvas.width / 2, context.canvas.height * 0.06);
+  context.lineTo(plumbX ?? context.canvas.width / 2, context.canvas.height * 0.95);
+  context.stroke();
+  if (analysis.view !== "side") {
+    context.strokeStyle = "rgba(242, 238, 231, 0.28)";
+    for (const point of [shoulderCenter, hipCenter]) {
+      if (!point) continue;
+      context.beginPath();
+      context.moveTo(context.canvas.width * 0.12, point.y);
+      context.lineTo(context.canvas.width * 0.88, point.y);
+      context.stroke();
+    }
+  }
+  context.restore();
 }
 
 function findVisiblePosePoint(keypoints: PoseKeypoint[], name: string): PoseKeypoint | undefined {
@@ -8506,6 +8576,7 @@ function toPostureAnalysisSnapshot(analysis: ReturnType<typeof analyzePosture>):
     shoulderScore: analysis.shoulderScore,
     shoulderTilt: analysis.shoulderTilt,
     spineShift: analysis.spineShift,
+    view: analysis.view,
   };
 }
 
@@ -8562,8 +8633,9 @@ function createPostureCapture(
   context.lineJoin = "round";
   context.shadowColor = colorWithAlpha(accent, 0.38);
   context.shadowBlur = 14;
-  drawPoseConnections(context, mirroredKeypoints, accent);
-  drawPoseKeypoints(context, mirroredKeypoints, accent);
+  drawPostureReferenceGuides(context, mirroredKeypoints, analysis);
+  drawPostureQualityConnections(context, mirroredKeypoints, analysis);
+  drawPoseKeypoints(context, mirroredKeypoints, accent, postureDisplayPoints);
   drawPostureQualityKeypoints(context, mirroredKeypoints, analysis);
   context.restore();
 

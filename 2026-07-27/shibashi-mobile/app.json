@@ -47,8 +47,12 @@
       [
         "expo-splash-screen",
         {
+          "image": "./assets/shibashi-splash.png",
+          "imageWidth": 430,
+          "resizeMode": "contain",
           "backgroundColor": "#020604",
           "dark": {
+            "image": "./assets/shibashi-splash.png",
             "backgroundColor": "#020604"
           }
         }

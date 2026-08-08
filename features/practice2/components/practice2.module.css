@@ -432,6 +432,12 @@
   flex: 0 0 auto;
   background: conic-gradient(var(--green) calc(var(--score) * 1%), rgba(242, 238, 231, .14) 0);
 }
+.staticHud .liveTime {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+}
 .staticTime {
   padding: 11px 15px;
   display: flex;
@@ -1017,6 +1023,71 @@
   grid-template-columns: 1.42fr 0.88fr;
   gap: 10px;
 }
+.dynamicPracticeStage {
+  height: clamp(690px, calc(100vh - 265px), 900px);
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(260px, 380px);
+  gap: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(242, 238, 231, .09);
+  border-radius: 20px;
+  background: radial-gradient(circle at 35% 45%, rgba(169, 217, 119, .08), transparent 34rem), #0c120e;
+}
+.dynamicCameraPortrait {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 9 / 16;
+  max-width: 100%;
+  justify-self: center;
+  overflow: hidden;
+  border: 1px solid rgba(198, 165, 106, .3);
+  border-radius: 24px;
+  background: #171b18;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, .44);
+}
+.dynamicCameraPortrait .liveTimeline {
+  bottom: 174px;
+}
+.dynamicSidePanel {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px;
+  overflow: hidden;
+}
+.dynamicReference {
+  min-height: 0;
+  padding: 16px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  gap: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(198, 165, 106, .48);
+  border-radius: 22px;
+  background: rgba(8, 13, 10, .88);
+}
+.dynamicReference > small { color: var(--gold); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.dynamicReference > strong { font-size: 17px; }
+.dynamicReference > span { color: var(--muted); font-size: 11px; }
+.dynamicReferenceMedia {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #090e0b;
+}
+.dynamicReferenceMedia > img { width: 100%; height: 100%; object-fit: contain; }
+.dynamicReferenceMedia .referenceFigure { left: 10%; top: 4%; width: 80%; height: 88%; }
+.dynamicReference .referenceControls {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  height: 34px;
+}
+.dynamicSidePanel .metricPanel { max-height: 250px; overflow: auto; }
 .dynamicCamera {
   position: relative;
   height: 430px;
@@ -1108,6 +1179,7 @@
     height: auto;
   }
   .staticStage { grid-template-columns: minmax(320px, 1fr) minmax(210px, 260px); }
+  .dynamicPracticeStage { grid-template-columns: minmax(320px, 1fr) minmax(220px, 280px); }
 }
 @media (max-width: 660px) {
   .page {
@@ -1149,6 +1221,19 @@
     min-height: 620px;
   }
   .staticSidePanel { grid-template-rows: auto; }
+  .dynamicPracticeStage {
+    height: auto;
+    padding: 10px;
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+  .dynamicCameraPortrait {
+    width: 100%;
+    height: auto;
+    min-height: 620px;
+  }
+  .dynamicSidePanel { grid-template-rows: auto; overflow: visible; }
+  .dynamicReference { min-height: 460px; }
   .staticReference {
     min-height: 360px;
   }

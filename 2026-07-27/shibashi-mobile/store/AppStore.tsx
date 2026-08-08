@@ -38,6 +38,7 @@ type State=PersistedState&{
  setSyncCode:(code:string)=>Promise<boolean>;
  saveProfile:(p:Partial<UserProfile>)=>void;
  addSession:(s:PracticeSession)=>void;
+ setSessionTrainerVisibility:(sessionId:string,trainerVisible:boolean)=>void;
  addEntry:(e:JournalEntry)=>void;
  addPostureReport:(r:PostureReport)=>void;
  completeStory:(id:string)=>void;
@@ -74,16 +75,17 @@ function toSyncPayload(data:PersistedState):ShibashiSyncPayload{
   schemaVersion:SHIBASHI_SYNC_SCHEMA_VERSION,
   updatedAt:new Date().toISOString(),
   profile:{...data.profile},
-  history:{sessions:data.sessions as unknown as SyncRecord[],entries:data.entries as unknown as SyncRecord[],postureReports:data.postureReports as unknown as SyncRecord[]},
+  history:{sessions:data.sessions.map(session=>session.imageData&&!session.trainerVisible?{...session,imageData:undefined}:session) as unknown as SyncRecord[],entries:data.entries as unknown as SyncRecord[],postureReports:data.postureReports as unknown as SyncRecord[]},
   journey:{completedStories:data.completedStories,shenActivities:data.shenActivities as unknown as SyncRecord[],reflections:data.reflections as unknown as SyncRecord[],savedMasterSentences:data.savedMasterSentences as unknown as SyncRecord[]},
   preferences:{...data.practicePreferences},
  };
 }
 
-function fromSyncPayload(payload:ShibashiSyncPayload):PersistedState{
+function fromSyncPayload(payload:ShibashiSyncPayload,current?:PersistedState):PersistedState{
+ const localSessions=new Map(current?.sessions.map(session=>[session.id,session])??[]);
  return migratePersistedState({
   profile:payload.profile as unknown as UserProfile,
-  sessions:payload.history.sessions.map(toAppPracticeSession).filter((value):value is PracticeSession=>Boolean(value)),
+  sessions:payload.history.sessions.map(toAppPracticeSession).filter((value):value is PracticeSession=>Boolean(value)).map(session=>session.imageData?session:{...session,imageData:localSessions.get(session.id)?.imageData}),
   entries:payload.history.entries as unknown as JournalEntry[],
   postureReports:payload.history.postureReports.map(toAppPostureReport).filter((value):value is PostureReport=>Boolean(value)),
   completedStories:payload.journey.completedStories,
@@ -145,7 +147,7 @@ export function AppProvider({children}:PropsWithChildren){
   setSyncMessage(result.message);
   if(result.syncedAt)setLastSyncedAt(result.syncedAt);
   if(!result.payload)return;
-  const merged=fromSyncPayload(result.payload);
+  const merged=fromSyncPayload(result.payload,dataRef.current);
   if(JSON.stringify(merged)===JSON.stringify(dataRef.current))return;
   dataRef.current=merged;
   setData(merged);
@@ -182,6 +184,7 @@ export function AppProvider({children}:PropsWithChildren){
  };
  const saveProfile=(patch:Partial<UserProfile>)=>update(current=>({...current,profile:{...current.profile,...patch}}));
  const addSession=(value:PracticeSession)=>update(current=>({...current,sessions:[value,...current.sessions]}));
+ const setSessionTrainerVisibility=(sessionId:string,trainerVisible:boolean)=>update(current=>({...current,sessions:current.sessions.map(session=>session.id===sessionId?{...session,trainerVisible}:session)}));
  const addEntry=(value:JournalEntry)=>update(current=>({...current,entries:[value,...current.entries]}));
  const addPostureReport=(value:PostureReport)=>update(current=>({...current,postureReports:[value,...current.postureReports]}));
  const completeStory=(id:string)=>update(current=>current.completedStories.includes(id)?current:{...current,completedStories:[...current.completedStories,id]});
@@ -208,7 +211,7 @@ export function AppProvider({children}:PropsWithChildren){
   void replaceSyncCode().then(setSyncCodeState);
  };
 
- return <Context.Provider value={{ready,...data,syncStatus,syncCode,lastSyncedAt,syncMessage,syncNow:runSync,setSyncCode:changeSyncCode,saveProfile,addSession,addEntry,addPostureReport,completeStory,addShenActivity,addReflection,saveMasterSentence,removeMasterSentence,updatePracticePreferences,reset}}>{children}</Context.Provider>;
+ return <Context.Provider value={{ready,...data,syncStatus,syncCode,lastSyncedAt,syncMessage,syncNow:runSync,setSyncCode:changeSyncCode,saveProfile,addSession,setSessionTrainerVisibility,addEntry,addPostureReport,completeStory,addShenActivity,addReflection,saveMasterSentence,removeMasterSentence,updatePracticePreferences,reset}}>{children}</Context.Provider>;
 }
 
 export function useApp(){

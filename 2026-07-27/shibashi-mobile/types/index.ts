@@ -6,7 +6,7 @@ export interface UserProfile{name:string;experience:Experience;dailyGoal:number;
 export interface ShibashiMovement{id:string;order:number;name:string;englishName:string;duration:number;difficulty:'Başlangıç'|'Orta';focus:string;gate:number;description:string;steps:string[];breath:string;mistakes:string[]}
 export interface Practice{id:string;title:string;duration:number;focus:string;movementIds:string[];locked?:boolean}
 export interface PoseFeedback{postureScore:number;balanceScore:number;flowScore:number;corrections:string[]}
-export interface PracticeSession extends PoseFeedback{id:string;practiceId:string;date:string;duration:number;breathScore?:number;jing?:number;xp?:number}
+export interface PracticeSession extends PoseFeedback{id:string;practiceId:string;date:string;duration:number;breathScore?:number;jing?:number;xp?:number;imageData?:string;movementName?:string;trainerVisible?:boolean;source?:'practice2'}
 export interface BaguaGate{id:number;name:string;theme:string;symbol:string;requirement:number}
 export interface JournalEntry{id:string;date:string;mood:number;energy:number;note:string;shenId?:ShenId}
 export interface Achievement{id:string;title:string;description:string;unlocked:boolean}

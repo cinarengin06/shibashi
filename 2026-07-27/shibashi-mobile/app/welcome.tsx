@@ -1,5 +1,6 @@
 import {useEventListener} from 'expo';
 import {router} from 'expo-router';
+import {StatusBar} from 'expo-status-bar';
 import {useVideoPlayer,VideoView} from 'expo-video';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Image,Pressable,StyleSheet,Text,View} from 'react-native';
@@ -45,14 +46,15 @@ export default function Welcome(){
  },[finish,player]);
 
  return <View style={w.root}>
-  <Image accessibilityIgnoresInvertColors source={introPoster} resizeMode="cover" style={StyleSheet.absoluteFill}/>
+  <StatusBar hidden/>
+  <Image accessibilityIgnoresInvertColors source={introPoster} resizeMode="cover" style={w.media}/>
   <VideoView
    contentFit="cover"
    nativeControls={false}
    onFirstFrameRender={()=>setFirstFrameReady(true)}
    player={player}
    playsInline
-   style={[StyleSheet.absoluteFill,!firstFrameReady&&w.videoLoading]}
+   style={[w.media,!firstFrameReady&&w.videoLoading]}
    surfaceType="textureView"
    useExoShutter={false}
   />
@@ -69,13 +71,14 @@ export default function Welcome(){
 }
 
 const w=StyleSheet.create({
- root:{flex:1,backgroundColor:'#020604',overflow:'hidden'},
+ root:{flex:1,width:'100%',height:'100%',backgroundColor:'#020604',overflow:'hidden'},
+ media:{...StyleSheet.absoluteFillObject,width:'100%',height:'100%'},
  videoLoading:{opacity:0},
  scrim:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(2,6,4,.18)',borderBottomWidth:260,borderBottomColor:'rgba(2,6,4,.52)'},
  copy:{position:'absolute',bottom:58,left:24,right:24,gap:7},
- eyebrow:{color:'#D8C394',fontSize:10,fontWeight:'900',letterSpacing:1.8},
- title:{color:colors.cream,fontFamily:'DMSerifDisplay_400Regular',fontSize:34,lineHeight:38},
- body:{color:colors.muted,fontSize:13,lineHeight:19,maxWidth:340},
- skip:{position:'absolute',right:18,top:56,minHeight:38,minWidth:72,paddingHorizontal:16,borderRadius:20,borderWidth:1,borderColor:'rgba(239,197,93,.4)',backgroundColor:'rgba(3,10,6,.66)',alignItems:'center',justifyContent:'center'},
- skipText:{color:'#F3D27A',fontSize:10,fontWeight:'800',letterSpacing:1.35,textTransform:'uppercase'},
+ eyebrow:{color:'#D8C394',fontSize:16,fontWeight:'900',letterSpacing:1.8},
+ title:{color:colors.cream,fontFamily:'Newsreader_600SemiBold',fontSize:34,lineHeight:38},
+ body:{color:colors.muted,fontSize:16,lineHeight:24,maxWidth:340},
+ skip:{position:'absolute',right:18,top:56,minHeight:48,minWidth:72,paddingHorizontal:16,borderRadius:20,borderWidth:1,borderColor:'rgba(239,197,93,.4)',backgroundColor:'rgba(3,10,6,.66)',alignItems:'center',justifyContent:'center'},
+ skipText:{color:'#F3D27A',fontSize:16,fontWeight:'800',letterSpacing:1.35,textTransform:'uppercase'},
 });

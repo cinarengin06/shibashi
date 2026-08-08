@@ -11,7 +11,7 @@ import { ShibashiAuthGate } from "@/components/shibashi-auth-gate";
 import {getBrowserSyncCode,setBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
 import { useShibashiAuth } from "@/lib/supabase-auth";
 import { shenThemes } from "@/packages/design-tokens";
-import { getExperienceLayer, getJourneyDay } from "@/packages/experience-design";
+import { getJourneyDay } from "@/packages/experience-design";
 import {
   breathingPatterns,
   calculateShenProgress,
@@ -737,6 +737,62 @@ const fiveShen = [
   sound: string;
   language: string;
 }>;
+
+const shenTodayCopy: Record<ShenId, {
+  action: string;
+  body: string;
+  identity: string;
+  motto: string;
+  practice: string;
+  shortLabel: string;
+  title: string;
+}> = {
+  hun: {
+    action: "Yönünü bul",
+    body: "Yönünü zorlamadan fark et. Bugün yeni bir ihtimale sakin bir adım aç.",
+    identity: "Yönünü ve büyüme isteğini taşır",
+    motto: "Rüzgâr yönü gösterir; adımı sen seçersin.",
+    practice: "Ufuk Açan Akış",
+    shortLabel: "Yön · Umut",
+    title: "Ufku genişlet.",
+  },
+  shen: {
+    action: "Birliğe dön",
+    body: "Beden, nefes ve dikkat bugün aynı yerde buluşabilir.",
+    identity: "Kalp açıklığını ve birlik duygusunu taşır",
+    motto: "Kalp yumuşadığında parçalar birbirini duyar.",
+    practice: "Kalp Merkezinde Akış",
+    shortLabel: "Huzur · Birlik",
+    title: "Bütünü bir araya getir.",
+  },
+  yi: {
+    action: "Odağını kur",
+    body: "Dağınık olanı sadeleştir. Şimdi yalnızca bir sonraki adımla kal.",
+    identity: "Niyetini ve sakin dikkatini taşır",
+    motto: "Bir anda tek şey; bir nefeste tek yön.",
+    practice: "Merkezleyen Tekrar",
+    shortLabel: "Dikkat · Denge",
+    title: "Dikkatini sadeleştir.",
+  },
+  po: {
+    action: "Bedene dön",
+    body: "Ayaklarını hisset, omuzlarını çöz. Nefesin güvene dönüşsün.",
+    identity: "Bedensel duyumu ve bırakmayı taşır",
+    motto: "Beden bıraktığında nefes yerini bulur.",
+    practice: "Nefes ve Bırakış",
+    shortLabel: "Güven · Beden",
+    title: "Ağırlığını bırak.",
+  },
+  zhi: {
+    action: "Kökünü hisset",
+    body: "Acele etmeden devam et. Gücünü koruyarak en küçük adımı seç.",
+    identity: "Sessiz iradeyi ve devam gücünü taşır",
+    motto: "Derin su acele etmez; yine de yolunu bulur.",
+    practice: "Köklenme Akışı",
+    shortLabel: "Sessizlik · İrade",
+    title: "Sessizce devam et.",
+  },
+};
 
 const neijingStages: readonly NeijingStage[] = [
   {
@@ -1993,19 +2049,26 @@ function DojoHomeScreen({
       setJourneyDay(1);
     }
   }, []);
-  const layer = getExperienceLayer(journeyDay);
   const personality = shenThemes[selectedShen.id];
+  const todayCopy = shenTodayCopy[selectedShen.id];
 
   return (
     <section className="screen dojo-home" style={{ "--dojo-accent": selectedShen.color, "--shen-surface": personality.surface, "--shen-surface-raised": personality.surfaceRaised, "--shen-button-primary": personality.button, "--shen-button-ink": personality.buttonInk, "--shen-control-radius": `${personality.controlRadius}px`, "--shen-heading-weight": personality.headingWeight, "--shen-heading-tracking": personality.headingTracking, "--shen-transition": `${personality.transitionMs}ms` } as CSSProperties}>
       <header className="dojo-home-head"><div><h1>Merhaba, {userName || "yol arkadaşım"}</h1><span>{new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</span></div><div><b>{journeyDay}</b><small>GÜN</small></div></header>
 
-      <div className="dojo-worlds dojo-worlds-main" aria-label="5 Shen atmosferi">{fiveShen.map((shen) => { const world = shenThemes[shen.id]; return <button aria-label={`${shen.name} atmosferi`} className={selectedShen.id === shen.id ? "active" : ""} key={shen.id} onClick={() => onSelectShen(shen.id)} style={{ "--world-color": shen.color, "--world-radius": `${world.controlRadius}px`, "--world-surface": world.surfaceRaised } as CSSProperties} type="button"><i /><span>{shen.name}</span></button>; })}</div>
+      <section className="dojo-shen-chooser" aria-labelledby="dojo-shen-chooser-label">
+        <span className="dojo-kicker" id="dojo-shen-chooser-label">BUGÜN HANGİ ALAN SANA EŞLİK ETSİN?</span>
+        <div className="dojo-worlds dojo-worlds-main" aria-label="Beş Shen seçimi">{fiveShen.map((shen) => { const world = shenThemes[shen.id]; const copy = shenTodayCopy[shen.id]; return <button aria-label={`${shen.name}, ${copy.shortLabel}`} aria-pressed={selectedShen.id === shen.id} className={selectedShen.id === shen.id ? "active" : ""} key={shen.id} onClick={() => onSelectShen(shen.id)} style={{ "--world-color": shen.color, "--world-radius": `${world.controlRadius}px`, "--world-surface": world.surfaceRaised } as CSSProperties} type="button"><span className="dojo-world-name"><i /><b>{shen.name}</b></span><small>({copy.shortLabel})</small></button>; })}</div>
+        <div className="dojo-shen-identity" style={{ "--identity-color": selectedShen.color } as CSSProperties}>
+          <span className="dojo-shen-symbol" aria-hidden="true">{selectedShen.symbol}</span>
+          <div><p><b>{selectedShen.name}</b> · {todayCopy.identity}</p><small>{selectedShen.element} · {selectedShen.map}</small></div>
+        </div>
+      </section>
 
       <article className="dojo-home-hero">
         <div aria-hidden="true" className="shen-image-stack">{fiveShen.map((shen) => <span className={`shen-image-layer ${selectedShen.id === shen.id ? "shen-image-layer-active" : ""}`} key={shen.id} style={{ backgroundImage: `url(${shen.image})` }} />)}</div>
         <div className="dojo-home-shade" />
-        <div className="dojo-home-copy"><div className="dojo-home-meta"><span>{layer.homeKicker}</span><small>{layer.familiarName}</small></div><div className="dojo-ritual-mark"><i /><b /></div><h2>{layer.homeTitle}</h2><p>{layer.homeBody}</p><button onClick={onPractice} type="button">Bugünün akışına başla <span>→</span></button><small>8 dakika · yavaş · başlangıç</small></div>
+        <div className="dojo-home-copy"><div className="dojo-home-meta"><span>BUGÜN {selectedShen.name.toLocaleUpperCase("tr-TR")} SENİNLE</span><small>{selectedShen.dailyName}</small></div><div className="dojo-ritual-mark"><i /><b /></div><h2>{todayCopy.title}</h2><p>{todayCopy.body}</p><blockquote className="dojo-home-motto">“{todayCopy.motto}”</blockquote><button onClick={onPractice} type="button">{todayCopy.action} <span>→</span></button><small>{todayCopy.practice} · 8 dakika · yavaş</small></div>
       </article>
 
       <div className="dojo-real-progress"><div><b>{practiceCount || "—"}</b><span>tamamlanan akış</span></div><i /><div><b>{postureCount || "—"}</b><span>beden izi</span></div><i /><div><b>{earnedXp}</b><span>gerçek XP</span></div></div>

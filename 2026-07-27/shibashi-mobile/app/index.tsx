@@ -26,9 +26,9 @@ export default function Index(){
 const s=StyleSheet.create({
  root:{alignItems:'center',backgroundColor:'#020604',flex:1,justifyContent:'center',overflow:'hidden'},
  splash:{height:'100%',width:'100%'},
- sound:{position:'absolute',right:18,top:56,minHeight:42,paddingHorizontal:13,borderRadius:22,borderWidth:1,borderColor:'rgba(242,238,231,.18)',backgroundColor:'rgba(3,10,6,.68)',flexDirection:'row',alignItems:'center',gap:7},
+ sound:{position:'absolute',right:18,top:56,minHeight:48,paddingHorizontal:13,borderRadius:22,borderWidth:1,borderColor:'rgba(242,238,231,.18)',backgroundColor:'rgba(3,10,6,.68)',flexDirection:'row',alignItems:'center',gap:7},
  soundActive:{borderColor:'rgba(243,210,122,.5)',shadowColor:'#F3D27A',shadowOpacity:.2,shadowRadius:12},
- soundText:{color:'rgba(242,238,231,.64)',fontSize:9,fontWeight:'800',letterSpacing:1.1,textTransform:'uppercase'},
+ soundText:{color:'rgba(242,238,231,.64)',fontSize:16,fontWeight:'800',letterSpacing:1.1,textTransform:'uppercase'},
  soundTextActive:{color:'#F3D27A'},
  loading:{flex:1,backgroundColor:colors.ink,alignItems:'center',justifyContent:'center'},
 });

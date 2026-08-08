@@ -11,9 +11,10 @@ export default function TabLayout(){
   headerShown:false,
   tabBarActiveTintColor:shen.color,
   tabBarInactiveTintColor:colors.muted,
-  tabBarStyle:{position:'absolute',height:78,paddingTop:8,paddingBottom:12,backgroundColor:colors.deep,borderTopColor:colors.line,borderTopWidth:1},
-  tabBarLabelStyle:{fontSize:10,fontFamily:fonts.sansStrong},
-  tabBarIcon:({color,size})=><Ionicons name={icons[route.name]} size={size} color={color}/>,
+  tabBarStyle:{position:'absolute',height:84,paddingTop:8,paddingBottom:12,backgroundColor:colors.deep,borderTopColor:colors.line,borderTopWidth:1},
+  tabBarItemStyle:{minHeight:56},
+  tabBarLabelStyle:{fontSize:13,fontFamily:fonts.sansStrong},
+  tabBarIcon:({color})=><Ionicons name={icons[route.name]} size={24} color={color}/>,
  })}>
   <Tabs.Screen name="index" options={{title:'Bugün'}}/>
   <Tabs.Screen name="journey" options={{title:'Yolculuk'}}/>

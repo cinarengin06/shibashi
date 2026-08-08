@@ -1,5 +1,5 @@
 import {Ionicons} from '@expo/vector-icons';
-import {router} from 'expo-router';
+import {router,useLocalSearchParams} from 'expo-router';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {Animated,Image,Pressable,ScrollView,StyleSheet,Text,View} from 'react-native';
 import {breathingPatterns,calculateShenProgress,getMasterSentence,getPracticeForShen,getProgressLabel,getQuestionForShen,getShenRecommendation,masterSentences,shenProfiles,toDomainShenId,toLegacyShenId} from '../../../../packages/shen-domain';
@@ -12,6 +12,7 @@ import {shibashiCoaches} from '../../data/coaches';
 import {useApp} from '../../store/AppStore';
 
 export default function Journey(){
+ const params=useLocalSearchParams<{view?:string}>();
  const{profile,saveProfile,shenActivities,reflections,savedMasterSentences}=useApp();
  const[selected,setSelected]=useState(toDomainShenId(profile.selectedShenId));
  const progresses=useMemo(()=>shenProfiles.map(item=>calculateShenProgress(shenActivities,item.id)),[shenActivities]);
@@ -25,7 +26,8 @@ export default function Journey(){
  const lastReflection=reflections[0];
  const lastSaved=savedMasterSentences[0]&&masterSentences.find(item=>item.id===savedMasterSentences[0].masterSentenceId);
  const[baguaIndex,setBaguaIndex]=useState(0);
- const[journeyView,setJourneyView]=useState<'bagua'|'map'|'guides'>('bagua');
+ const[journeyView,setJourneyView]=useState<'bagua'|'map'|'guides'>(params.view==='map'?'map':'bagua');
+ useEffect(()=>{if(params.view==='map'||params.view==='guides'||params.view==='bagua')setJourneyView(params.view)},[params.view]);
  const activeDirection=baguaDirections[baguaIndex]??baguaDirections[0];
  const openDirection=()=>{if(activeDirection.target==='practice')router.push('/(tabs)/practice');else if(activeDirection.target==='posture')router.push('/posture');else if(activeDirection.target==='journal')router.push('/(tabs)/journal');else if(activeDirection.target==='learning')router.push('/living-learning');else router.push('/(tabs)')};
  const choose=(id:typeof selected)=>{setSelected(id);saveProfile({selectedShenId:toLegacyShenId(id)})};

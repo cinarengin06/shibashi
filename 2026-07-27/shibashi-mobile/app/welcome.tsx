@@ -5,6 +5,7 @@ import {useVideoPlayer,VideoView} from 'expo-video';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Image,Pressable,StyleSheet,Text,useWindowDimensions,View} from 'react-native';
 import {colors} from '../constants/theme';
+import {GOOGLE_AUTH_UI_ENABLED} from '../constants/features';
 
 const introVideo=require('../assets/intro/intro-gate.mp4');
 const introPoster=require('../assets/intro/intro-gate-poster-hq-v2.png');
@@ -28,7 +29,7 @@ export default function Welcome(){
   // down. Pause only while the shared object is still alive, and swallow the
   // native exception if the route transition won the race.
   try{if(player.playing)player.pause()}catch{}
-  router.replace('/auth');
+  router.replace(GOOGLE_AUTH_UI_ENABLED?'/auth':'/onboarding');
  },[player]);
 
  useEventListener(player,'playToEnd',finish);

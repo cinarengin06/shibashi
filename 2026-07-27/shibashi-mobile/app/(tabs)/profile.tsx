@@ -5,6 +5,7 @@ import {Alert,Pressable,StyleSheet,Switch,Text,TextInput,View} from 'react-nativ
 import {FiveShenSelector} from '../../components/FiveShenSelector';
 import {Card,Eyebrow,Metric,Screen,Section,Title} from '../../components/ui';
 import {colors} from '../../constants/theme';
+import {GOOGLE_AUTH_UI_ENABLED} from '../../constants/features';
 import {getShen} from '../../data/fiveShen';
 import {signOut} from '../../services/auth/SupabaseAuth';
 import {useApp} from '../../store/AppStore';
@@ -19,13 +20,13 @@ export default function Profile(){
  return <Screen>
   <View style={p.head}><View style={[p.avatar,{borderColor:shen.color}]}><Text style={[p.initial,{color:shen.color}]}>{profile.name[0]?.toUpperCase()}</Text></View><View><Eyebrow>PRATİK PROFİLİ</Eyebrow><Title>{profile.name}</Title><Text style={p.muted}>{profile.experience}</Text></View></View>
   <View style={p.metrics}><Metric label="Kayıtlı pratik" value={sessions.length}/><Metric label="Dakika" value={sessions.reduce((a,s)=>a+s.duration,0)}/><Metric label="Postür ölçümü" value={postureReports.length}/></View>
-  <Section title="Google hesabı" action={profile.authEmail?'Bağlı':'Hesapsız'}>
+  {GOOGLE_AUTH_UI_ENABLED?<Section title="Google hesabı" action={profile.authEmail?'Bağlı':'Hesapsız'}>
    <Card style={[p.accountCard,{borderColor:`${shen.color}44`}]}>
     <View style={[p.syncIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={profile.authEmail?'logo-google':'person-outline'} color={shen.color} size={23}/></View>
     <View style={{flex:1}}><Text style={p.text}>{profile.authEmail?'Hesabın bağlı':'Hesapsız kullanıyorsun'}</Text><Text style={p.muted}>{profile.authEmail??'Google ile giriş yaparak ilerlemeni cihazların arasında taşı.'}</Text></View>
     {profile.authEmail?<Pressable onPress={()=>void disconnectGoogle()} style={p.accountAction}><Text style={p.accountActionText}>Çıkış</Text></Pressable>:<Pressable onPress={()=>router.push('/auth')} style={p.accountAction}><Text style={p.accountActionText}>Bağla</Text></Pressable>}
    </Card>
-  </Section>
+  </Section>:null}
   <Section title="App + Web senkronizasyonu" action={syncStatus==='synced'?'Güncel':syncStatus==='syncing'?'Eşitleniyor':'Çevrimdışı kuyruk açık'}>
    <Card style={[p.syncCard,{borderColor:`${shen.color}55`}]}>
     <View style={p.syncHead}><View style={[p.syncIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={syncStatus==='synced'?'cloud-done-outline':syncStatus==='syncing'?'sync-outline':'cloud-offline-outline'} color={shen.color} size={23}/></View><View style={{flex:1}}><Text style={p.text}>{syncStatus==='synced'?'Verilerin iki cihazda güncel':syncStatus==='syncing'?'Veriler eşitleniyor':'Kayıtlar cihazda güvende'}</Text><Text style={p.muted}>{lastSyncedAt?`Son eşitleme ${new Date(lastSyncedAt).toLocaleString('tr-TR')}`:syncMessage??'İnternet geldiğinde kuyruk otomatik gönderilir.'}</Text></View></View>

@@ -3,6 +3,7 @@ import {router} from 'expo-router';
 import {useEffect,useState} from 'react';
 import {ImageBackground,Pressable,SafeAreaView,StyleSheet,Text,View} from 'react-native';
 import {colors} from '../constants/theme';
+import {GOOGLE_AUTH_UI_ENABLED} from '../constants/features';
 import {signInWithGoogle,supabaseAuth} from '../services/auth/SupabaseAuth';
 import {useApp} from '../store/AppStore';
 
@@ -15,6 +16,7 @@ export default function Auth(){
  const[error,setError]=useState('');
 
  useEffect(()=>{
+  if(!GOOGLE_AUTH_UI_ENABLED){router.replace('/onboarding');return}
   if(!supabaseAuth){setLoading(false);return}
   void supabaseAuth.auth.getUser().then(({data})=>{
    if(data.user){
@@ -53,6 +55,8 @@ export default function Auth(){
    setLoading(false);
   }
  };
+
+ if(!GOOGLE_AUTH_UI_ENABLED)return null;
 
  return <ImageBackground source={authBackground} resizeMode="cover" style={a.background}>
   <View style={a.shade}/>

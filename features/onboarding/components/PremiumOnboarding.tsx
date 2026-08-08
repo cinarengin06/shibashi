@@ -1,59 +1,149 @@
 "use client";
 
-import type{CSSProperties}from'react';
-import{useCallback,useEffect,useMemo,useRef,useState}from'react';
-import{
- analyzeBodyTrace,analyzeFirstMovement,createFirstJourneyPlan,emptyOnboardingProfile,isFullBodyReady,onboardingStages,profileQuestions,
- type BodyView,type OnboardingPosePoint,type OnboardingProfile,type OnboardingProgress,type PoseSample,
-}from'@/packages/onboarding';
-import styles from'./premium-onboarding.module.css';
+import Image from "next/image";
+import type { CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  createFirstJourneyPlan,
+  emptyOnboardingProfile,
+  onboardingShenResults,
+  onboardingStages,
+  profileQuestions,
+  type BodyFocus,
+  type ExperienceLevel,
+  type OnboardingProfile,
+  type OnboardingProgress,
+  type PracticeIntention,
+} from "@/packages/onboarding";
+import styles from "./premium-onboarding.module.css";
 
-const STORAGE_KEY='shibashi-onboarding-v5';
-const RESULT_KEY='shibashi-onboarding-result-v5';
-const poseNames=['nose','left_eye_inner','left_eye','left_eye_outer','right_eye_inner','right_eye','right_eye_outer','left_ear','right_ear','mouth_left','mouth_right','left_shoulder','right_shoulder','left_elbow','right_elbow','left_wrist','right_wrist','left_pinky','right_pinky','left_index','right_index','left_thumb','right_thumb','left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle','left_heel','right_heel','left_foot_index','right_foot_index'];
-const links=[['left_shoulder','right_shoulder'],['left_shoulder','left_elbow'],['left_elbow','left_wrist'],['right_shoulder','right_elbow'],['right_elbow','right_wrist'],['left_shoulder','left_hip'],['right_shoulder','right_hip'],['left_hip','right_hip'],['left_hip','left_knee'],['left_knee','left_ankle'],['right_hip','right_knee'],['right_knee','right_ankle']]as const;
-const bodyViews:BodyView[]=['front','side','back'];
-const viewLabels:Record<BodyView,string>={front:'Önden',side:'Yandan',back:'Arkadan'};
+const STORAGE_KEY = "shibashi-onboarding-v6";
+const RESULT_KEY = "shibashi-onboarding-result-v6";
+type ShenId = ReturnType<typeof createFirstJourneyPlan>["recommendedShen"];
 
-type CameraState='idle'|'loading'|'ready'|'denied'|'error';
-function usePoseCamera(active:boolean){const videoRef=useRef<HTMLVideoElement>(null),streamRef=useRef<MediaStream|null>(null),rafRef=useRef(0),detectorRef=useRef<{detectForVideo:(video:HTMLVideoElement,now:number)=>{landmarks:Array<Array<{x:number;y:number;z?:number;visibility?:number}>>};close?:()=>void}|null>(null),[pose,setPose]=useState<OnboardingPosePoint[]>([]),[state,setState]=useState<CameraState>('idle');const stop=useCallback(()=>{cancelAnimationFrame(rafRef.current);detectorRef.current?.close?.();detectorRef.current=null;streamRef.current?.getTracks().forEach(track=>track.stop());streamRef.current=null;if(videoRef.current)videoRef.current.srcObject=null;setPose([]);setState('idle')},[]);const start=useCallback(async()=>{if(streamRef.current)return;setState('loading');try{const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:1920}},audio:false});streamRef.current=stream;const video=videoRef.current;if(!video)throw new Error('Kamera alanı hazır değil');video.srcObject=stream;await video.play();const{createPoseLandmarker}=await import('@/lib/pose/createPoseLandmarker');const detector=await createPoseLandmarker();detectorRef.current=detector;let last=0;const detect=(now:number)=>{rafRef.current=requestAnimationFrame(detect);if(now-last<110||video.readyState<2)return;last=now;const landmarks=detector.detectForVideo(video,now).landmarks[0];setPose(landmarks?.map((point,index)=>({name:poseNames[index]??`point-${index}`,x:point.x,y:point.y,z:point.z,score:point.visibility??0}))??[])};setState('ready');rafRef.current=requestAnimationFrame(detect)}catch(error){setState(error instanceof DOMException&&(error.name==='NotAllowedError'||error.name==='PermissionDeniedError')?'denied':'error')}},[]);useEffect(()=>{if(!active)stop();return()=>stop()},[active,stop]);return{videoRef,pose,state,start,stop}}
+const shenVisuals: Record<ShenId, { accent: string; image: string }> = {
+  hun: { accent: "#91A867", image: "/images/shen-river-hun.jpg" },
+  shen: { accent: "#D1AE68", image: "/images/shen-river-shen.jpg" },
+  yi: { accent: "#C7BFAE", image: "/images/shen-river-po.jpg" },
+  po: { accent: "#B69268", image: "/images/shen-river-yi.jpg" },
+  zhi: { accent: "#688AA1", image: "/images/shen-river-zhi.jpg" },
+};
 
-export function PremiumOnboarding({embedded=false,onComplete}:{embedded?:boolean;onComplete?:()=>void}){const[step,setStep]=useState(0),[profile,setProfile]=useState<OnboardingProfile>(emptyOnboardingProfile),[hydrated,setHydrated]=useState(false),[scanView,setScanView]=useState<BodyView>('front'),[scanSeconds,setScanSeconds]=useState(5),[scanRunning,setScanRunning]=useState(false),[scanSamples,setScanSamples]=useState<Record<BodyView,PoseSample[]>>({front:[],side:[],back:[]}),[movementRunning,setMovementRunning]=useState(false),[movementSeconds,setMovementSeconds]=useState(5),[movementSamples,setMovementSamples]=useState<PoseSample[]>([]);const cameraActive=step===2||step===3,{videoRef,pose,state:cameraState,start:startCamera}=usePoseCamera(cameraActive),stage=onboardingStages[step],fullBodyReady=isFullBodyReady(pose);
+type Props = {
+  embedded?: boolean;
+  musicState?: "kapalı" | "açık";
+  onComplete?: (profile: OnboardingProfile) => void;
+  onShenRevealed?: (shenId: ShenId) => void;
+  onToggleMusic?: () => void;
+};
 
- useEffect(()=>{try{const raw=localStorage.getItem(STORAGE_KEY);if(raw){const saved=JSON.parse(raw)as OnboardingProgress;if(saved.version===5&&saved.stage!=='completed'){const index=onboardingStages.findIndex(item=>item.id===saved.stage);if(index>=0)setStep(index);setProfile({...emptyOnboardingProfile,...saved.profile})}}}catch{}setHydrated(true)},[]);
- useEffect(()=>{if(!hydrated)return;const progress:OnboardingProgress={version:5,stage:onboardingStages[step]?.id??'completed',profile,updatedAt:new Date().toISOString()};localStorage.setItem(STORAGE_KEY,JSON.stringify(progress))},[hydrated,profile,step]);
- useEffect(()=>{if(!scanRunning||!fullBodyReady)return;const timer=window.setInterval(()=>setScanSamples(current=>({...current,[scanView]:[...current[scanView].slice(-39),{timestampMs:Date.now(),keypoints:pose}]})),180);return()=>clearInterval(timer)},[fullBodyReady,pose,scanRunning,scanView]);
- useEffect(()=>{if(!scanRunning)return;const timer=window.setInterval(()=>setScanSeconds(value=>Math.max(0,value-1)),1000);return()=>clearInterval(timer)},[scanRunning]);
- useEffect(()=>{if(!scanRunning||scanSeconds>0)return;setScanRunning(false);const currentIndex=bodyViews.indexOf(scanView);if(currentIndex<bodyViews.length-1){setScanView(bodyViews[currentIndex+1]);setScanSeconds(5);navigator.vibrate?.(8)}else{const result=analyzeBodyTrace(scanSamples);setProfile(current=>({...current,bodyTraceResult:result}));navigator.vibrate?.(12)}},[scanRunning,scanSamples,scanSeconds,scanView]);
- useEffect(()=>{if(!movementRunning||!fullBodyReady)return;const timer=window.setInterval(()=>setMovementSamples(current=>[...current.slice(-49),{timestampMs:Date.now(),keypoints:pose}]),180);return()=>clearInterval(timer)},[fullBodyReady,movementRunning,pose]);
- useEffect(()=>{if(!movementRunning)return;const timer=window.setInterval(()=>setMovementSeconds(value=>Math.max(0,value-1)),1000);return()=>clearInterval(timer)},[movementRunning]);
- useEffect(()=>{if(!movementRunning||movementSeconds>0)return;setMovementRunning(false);const result=analyzeFirstMovement(movementSamples);setProfile(current=>({...current,firstMovementResult:result}))},[movementRunning,movementSamples,movementSeconds]);
+export function PremiumOnboarding({ embedded = false, musicState = "kapalı", onComplete, onShenRevealed, onToggleMusic }: Props) {
+  const [step, setStep] = useState(0);
+  const [profile, setProfile] = useState<OnboardingProfile>(emptyOnboardingProfile);
+  const [hydrated, setHydrated] = useState(false);
+  const stage = onboardingStages[step];
+  const plan = useMemo(() => createFirstJourneyPlan(profile), [profile]);
+  const result = onboardingShenResults[plan.recommendedShen];
+  const visual = shenVisuals[plan.recommendedShen];
 
- const plan=useMemo(()=>profile.firstJourneyPlan??createFirstJourneyPlan(profile),[profile]);
- const patchProfile=<K extends keyof OnboardingProfile>(key:K,value:OnboardingProfile[K])=>setProfile(current=>({...current,[key]:value}));
- const next=()=>{if(step===4){const completeProfile={...profile,firstJourneyPlan:plan};localStorage.setItem(RESULT_KEY,JSON.stringify(completeProfile));localStorage.setItem(STORAGE_KEY,JSON.stringify({version:5,stage:'completed',profile:completeProfile,updatedAt:new Date().toISOString()}satisfies OnboardingProgress));localStorage.setItem('ritim-kapisi-onboarding-profile',JSON.stringify(completeProfile));navigator.vibrate?.(14);onComplete?.();return}setStep(value=>Math.min(4,value+1))};
- const beginScan=async()=>{await startCamera();setScanSamples(current=>({...current,[scanView]:[]}));setScanSeconds(5);setScanRunning(true)};
- const beginMovement=async()=>{await startCamera();setMovementSamples([]);setMovementSeconds(5);setMovementRunning(true)};
- if(!hydrated)return null;
- return <main className={`${styles.root} ${embedded?styles.embedded:''}`}>
-  <div className={styles.ambient}/><header className={styles.header}><button aria-label="Önceki adım" className={styles.back} disabled={step===0} onClick={()=>setStep(value=>Math.max(0,value-1))}>←</button><div className={styles.brand}><span>SHIBASHI EFE</span><div>{onboardingStages.map((item,index)=><i className={index<=step?styles.progressActive:''} key={item.id}/>)}</div></div><button className={styles.skip} onClick={()=>step<2?setStep(2):setStep(4)} type="button">{step<2?'Atla':'Planı gör'}</button></header>
-  <section className={styles.shell} key={stage.id}>
-   <div className={styles.copy}><span className={styles.kicker}>0{step+1} · {stage.label}</span><h1>{stage.title}</h1><p>{step===0?'Nefes, denge, ağırlık aktarımı ve yumuşak hareketi birleştiren 18 aşamalı Tai Chi Qigong yolculuğu.':step===1?'Deneyimini, bedeninin rahatlığını ve öğrenme biçimini anlayalım. Bu bir test değil; pratiğini sana göre yumuşatır.':step===2?'Bedenini daha iyi anlamak için önden, yandan ve arkadan kısa bir duruş kaydı alacağız. Görüntün cihazından gönderilmez.':step===3?'Başlangıç Duruşu’nu önce gör, sonra bedeninde dene. Sistem yalnızca gerçek pose ölçümü olduğunda geri bildirim verir.':'Başlangıçta ağırlık aktarımı, omuz rahatlığı ve nefes-hareket uyumuna odaklanacağız.'}</p></div>
-   {step===0?<Discover/>:null}
-   {step===1?<ProfileStep profile={profile} patch={patchProfile}/>:null}
-   {step===2?<BodyScan cameraState={cameraState} fullBodyReady={fullBodyReady} pose={pose} profile={profile} running={scanRunning} samples={scanSamples} seconds={scanSeconds} start={beginScan} videoRef={videoRef} view={scanView}/>:null}
-   {step===3?<FirstMovement cameraState={cameraState} fullBodyReady={fullBodyReady} pose={pose} profile={profile} running={movementRunning} seconds={movementSeconds} start={beginMovement} videoRef={videoRef}/>:null}
-   {step===4?<FirstPlan plan={plan}/>:null}
-  </section>
-  <footer className={styles.footer}><span>{step===0?'“Yavaşla, hisset ve akışa katıl.”':step===4?'Yolculuğun ilerledikçe hareketinin beş niteliğini keşfedeceksin.':'Her ölçüm yalnızca sana daha nazik bir başlangıç hazırlamak için.'}</span><button className={styles.primary} disabled={(step===2&&!profile.bodyTraceResult)||(step===3&&!profile.firstMovementResult?.completed)} onClick={next}>{step===4?'İlk Dersime Başla':'Devam'} <b>→</b></button></footer>
- </main>}
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw) as OnboardingProgress;
+        if (saved.version === 6 && saved.stage !== "completed") {
+          const index = onboardingStages.findIndex((item) => item.id === saved.stage);
+          if (index >= 0) setStep(index);
+          setProfile({ ...emptyOnboardingProfile, ...saved.profile });
+        }
+      }
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    setHydrated(true);
+  }, []);
 
-function Discover(){return <div className={styles.discover}><div className={styles.heroImage}><img alt="Shibashi akışını çalışan Tai Chi öğretmeni" src="/images/shibashi-reference-web/ref-open-gate.jpg"/><div className={styles.enso}/><div className={styles.echoes}><img alt="" src="/images/shibashi-reference-web/ref-push-palms.jpg"/><img alt="" src="/images/shibashi-reference-web/ref-cloud-hands.jpg"/></div></div><div className={styles.facts}><article><b>18</b><span>Hareket</span></article><article><b>12–20</b><span>Dakika</span></article><article><b>Her seviye</b><span>Yumuşak ilerleme</span></article></div></div>}
-function Choice({active,label,onClick}:{active:boolean;label:string;onClick:()=>void}){return <button aria-pressed={active} className={active?styles.choiceActive:styles.choice} onClick={onClick} type="button">{label}<i>{active?'✓':''}</i></button>}
-function ProfileStep({profile,patch}:{profile:OnboardingProfile;patch:<K extends keyof OnboardingProfile>(key:K,value:OnboardingProfile[K])=>void}){return <div className={styles.questions}><Question no="1" title="Daha önce Tai Chi veya Qigong deneyimin oldu mu?"><div className={styles.choiceRow}>{profileQuestions.experience.map(item=><Choice active={profile.experienceLevel===item.value} key={item.value} label={item.label} onClick={()=>patch('experienceLevel',item.value)}/>)}</div></Question><Question no="2" title="Ayakta rahatça kaç dakika kalabiliyorsun?"><div className={styles.choiceRow}>{profileQuestions.standing.map(item=><Choice active={profile.standingCapacity===item.value} key={item.value} label={item.label} onClick={()=>patch('standingCapacity',item.value)}/>)}</div></Question><Question no="3" title="Özellikle korumak istediğin bir bölge var mı?"><div className={styles.bodyChoice}><div className={styles.bodyMap}>♙<i/></div><div className={styles.choiceGrid}>{profileQuestions.protected.map(item=><Choice active={profile.protectedArea===item.value} key={item.value} label={item.label} onClick={()=>patch('protectedArea',item.value)}/>)}</div></div></Question><Question no="4" title="Hangi yönlendirme sana daha uygun?"><div className={styles.choiceRow}>{profileQuestions.guidance.map(item=><Choice active={profile.guidancePreference===item.value} key={item.value} label={item.label} onClick={()=>patch('guidancePreference',item.value)}/>)}</div></Question></div>}
-function Question({children,no,title}:{children:React.ReactNode;no:string;title:string}){return <article className={styles.question}><span>{no}</span><div><h2>{title}</h2>{children}</div></article>}
-function CameraViewport({cameraState,fullBodyReady,pose,videoRef}:{cameraState:CameraState;fullBodyReady:boolean;pose:OnboardingPosePoint[];videoRef:React.RefObject<HTMLVideoElement|null>}){return <div className={styles.camera}><video autoPlay muted playsInline ref={videoRef}/><PoseOverlay pose={pose}/><div className={styles.frameGuide}/><span className={styles.live}>{cameraState==='ready'?'● CANLI':cameraState==='loading'?'MODEL HAZIRLANIYOR':cameraState==='denied'?'KAMERA İZNİ GEREKLİ':'KAMERA KAPALI'}</span><p>{cameraState==='ready'?(fullBodyReady?'Hareketsiz dur':'Başından ayaklarına kadar kadraja gir'):'Kamera görüntüsü yalnızca cihazında analiz edilir.'}</p></div>}
-function BodyScan({cameraState,fullBodyReady,pose,profile,running,samples,seconds,start,videoRef,view}:{cameraState:CameraState;fullBodyReady:boolean;pose:OnboardingPosePoint[];profile:OnboardingProfile;running:boolean;samples:Record<BodyView,PoseSample[]>;seconds:number;start:()=>void;videoRef:React.RefObject<HTMLVideoElement|null>;view:BodyView}){const result=profile.bodyTraceResult;return <div className={styles.scanLayout}><CameraViewport cameraState={cameraState} fullBodyReady={fullBodyReady} pose={pose} videoRef={videoRef}/><aside className={styles.scanPanel}><div className={styles.angles}>{bodyViews.map((item,index)=><article className={samples[item].length?styles.angleDone:item===view?styles.angleActive:''} key={item}><b>{index+1}</b><span>{viewLabels[item]}</span><i>{samples[item].length?'✓':''}</i></article>)}</div>{result?<div className={styles.observations}><h2>Beden izinin ilk gözlemleri</h2>{result.observations.map(item=><p data-status={item.status} key={item.id}><i/>{item.text}</p>)}</div>:<div className={styles.scanAction}><strong>{running?`${seconds}`:view==='front'?'Önden görünüm':view==='side'?'Şimdi yana dön':'Şimdi arkanı dön'}</strong><span>{running?(fullBodyReady?'Hareketsiz dur':'Tam bedenini kadraja al'):'Hazır olduğunda 5 saniyelik ölçümü başlat.'}</span><button disabled={running||cameraState==='loading'} onClick={start}>{cameraState==='idle'?'Kamerayı aç':'5 saniyeyi başlat'}</button></div>}</aside></div>}
-function FirstMovement({cameraState,fullBodyReady,pose,profile,running,seconds,start,videoRef}:{cameraState:CameraState;fullBodyReady:boolean;pose:OnboardingPosePoint[];profile:OnboardingProfile;running:boolean;seconds:number;start:()=>void;videoRef:React.RefObject<HTMLVideoElement|null>}){const result=profile.firstMovementResult,[teacherPlaying,setTeacherPlaying]=useState(false);return <div className={styles.movementLayout}><div className={`${styles.teacher} ${teacherPlaying?styles.teacherPlaying:''}`}><span>1 · ÖĞRETMENİ İZLE</span><img alt="Başlangıç Duruşu öğretmen referansı" src="/images/shibashi-reference/01-acilis-formu.jpg"/><div><button aria-label={teacherPlaying?'Öğretmen gösterimini duraklat':'Öğretmen gösterimini oynat'} onClick={()=>setTeacherPlaying(value=>!value)}>{teacherPlaying?'Ⅱ':'▶'}</button><p><b>Başlangıç Duruşu</b><small>{teacherPlaying?'Nefes al · omuzlarını bırak':'Referans gösterimi · Nefesi doğal bırak'}</small></p></div></div><div><span className={styles.panelLabel}>2 · SEN DENE</span><CameraViewport cameraState={cameraState} fullBodyReady={fullBodyReady} pose={pose} videoRef={videoRef}/><button className={styles.tryButton} disabled={running} onClick={start}>{running?`${seconds} · Hareketsiz kal`:result?'Tekrar dene':'Kamerayla dene'}</button></div><div className={styles.feedback}><span>3 · GERİ BİLDİRİM</span>{result?.correctionFeedback?<p className={styles.warning}>↑ {result.correctionFeedback}</p>:null}{result?.positiveFeedback?<p className={styles.positive}>✓ {result.positiveFeedback}</p>:null}{!result?<p>Gerçek ölçüm başladığında aynı anda yalnızca bir düzeltme ve bir olumlu gözlem görürsün.</p>:null}{typeof result?.overallScore==='number'?<strong>{result.overallScore}% <small>genel uyum</small></strong>:null}</div></div>}
-function FirstPlan({plan}:{plan:ReturnType<typeof createFirstJourneyPlan>}){const cards=[['◷','Günlük süre',`${plan.dailyMinutes} dakika`],['♙','İlk Shibashi hareketleri',`${plan.movementIds.length} temel hareket`],['≋','Nefes çalışması','Derin ve doğal nefes'],['◉','Beden farkındalığı','Merkezini hisset'],['↗','7. gün değerlendirme','İlerlemeni birlikte gör']];return <div className={styles.plan}><div className={styles.planReason}><h2>Neden bu yol?</h2><p>{plan.reasonSummary}</p></div><div className={styles.planCards}>{cards.map(([icon,title,note])=><article key={title}><span>{icon}</span><p><b>{title}</b><small>{note}</small></p></article>)}</div><div className={styles.shenHint}><span>Beş hareket niteliği</span><p>Po · Zhi · Hun · Yi · Shen</p></div></div>}
-function PoseOverlay({pose}:{pose:OnboardingPosePoint[]}){const point=(name:string)=>pose.find(item=>item.name===name),visible=new Set<string>(links.flat());return <svg className={styles.pose} preserveAspectRatio="none" viewBox="0 0 100 100">{links.map(([a,b])=>{const first=point(a),second=point(b);return first&&second?(<line key={`${a}-${b}`} x1={first.x*100} y1={first.y*100} x2={second.x*100} y2={second.y*100}/>):null})}{pose.filter(item=>visible.has(item.name)&&(item.score??0)>.35).map(item=><circle cx={item.x*100} cy={item.y*100} key={item.name} r=".75"/>)}</svg>}
+  useEffect(() => {
+    if (!hydrated) return;
+    const progress: OnboardingProgress = { version: 6, stage: onboardingStages[step]?.id ?? "completed", profile, updatedAt: new Date().toISOString() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  }, [hydrated, profile, step]);
+
+  const patch = <K extends keyof OnboardingProfile>(key: K, value: OnboardingProfile[K]) => setProfile((current) => ({ ...current, [key]: value }));
+  const canContinue = step !== 0 || profile.name.trim().length >= 2;
+  const next = () => {
+    if (step === 3) {
+      onShenRevealed?.(plan.recommendedShen);
+      setStep(4);
+      return;
+    }
+    if (step === 4) {
+      const completeProfile = { ...profile, name: profile.name.trim(), firstJourneyPlan: plan };
+      const completed: OnboardingProgress = { version: 6, stage: "completed", profile: completeProfile, updatedAt: new Date().toISOString() };
+      localStorage.setItem(RESULT_KEY, JSON.stringify(completeProfile));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(completed));
+      localStorage.setItem("ritim-kapisi-onboarding-profile", JSON.stringify(completeProfile));
+      onComplete?.(completeProfile);
+      return;
+    }
+    setStep((value) => Math.min(4, value + 1));
+  };
+
+  if (!hydrated) return null;
+  return (
+    <main className={`${styles.root} ${embedded ? styles.embedded : ""}`} style={{ "--onboarding-accent": step === 4 ? visual.accent : "#C6A56A" } as CSSProperties}>
+      <div className={styles.ambient} />
+      <header className={styles.header}>
+        <button aria-label="Önceki soru" className={styles.back} disabled={step === 0} onClick={() => setStep((value) => Math.max(0, value - 1))} type="button">←</button>
+        <div className={styles.brand}><span>SHIBASHI EFE</span><small>{step < 4 ? `${step + 1} / 4` : "SENİN RİTMİN"}</small></div>
+        <div className={styles.progress} aria-label={`${Math.min(step + 1, 4)} / 4 tamamlandı`}>{onboardingStages.slice(0, 4).map((item, index) => <i className={index <= step ? styles.progressActive : ""} key={item.id} />)}</div>
+      </header>
+
+      <section className={styles.shell} key={stage.id}>
+        <div className={styles.copy}>
+          <span className={styles.kicker}>{step < 4 ? `SORU ${step + 1}` : "KISA TESTİN TAMAMLANDI"}</span>
+          <h1>{stage.title}</h1>
+          <p>{step === 0 ? "Burada doğru cevap yok. Seni zorlamayan, sana ait bir başlangıç hazırlamak için dört kısa sorumuz var." : step === 1 ? "Daha önce hiç yapmamış olman sorun değil. Başlangıcın hızını ve anlatım dilini buna göre ayarlayacağız." : step === 2 ? "İnsanlar harekete farklı nedenlerle başlar. Sana gerçekten anlamlı gelen nedeni seç." : step === 3 ? "Bir rahatsızlık teşhisi koymuyoruz; yalnızca ilk pratikte hangi bölgeye daha nazik yaklaşacağımızı seçiyoruz." : `${profile.name || "Sen"}, cevapların bize bugün nasıl bir ritme ihtiyaç duyduğunu gösterdi.`}</p>
+        </div>
+
+        <div className={styles.stage}>
+          {step === 0 ? <NameStep name={profile.name} onChange={(value) => patch("name", value)} /> : null}
+          {step === 1 ? <ExperienceStep value={profile.experienceLevel} onChange={(value) => patch("experienceLevel", value)} /> : null}
+          {step === 2 ? <IntentionStep value={profile.practiceIntention} onChange={(value) => patch("practiceIntention", value)} /> : null}
+          {step === 3 ? <BodyFocusStep value={profile.bodyFocus} onChange={(value) => patch("bodyFocus", value)} /> : null}
+          {step === 4 ? <ResultStep musicState={musicState} onToggleMusic={onToggleMusic} plan={plan} result={result} visual={visual} /> : null}
+        </div>
+      </section>
+
+      <footer className={styles.footer}>
+        <span>{step === 4 ? "Bu bir etiket değil; bugün sana iyi gelebilecek başlangıç noktası." : "Yanıtlarını daha sonra profilinden değiştirebilirsin."}</span>
+        <button className={styles.primary} disabled={!canContinue} onClick={next} type="button">{step === 4 ? "Ana sayfama geç" : step === 3 ? "Ritmimi bul" : "Devam"}<b aria-hidden="true">→</b></button>
+      </footer>
+    </main>
+  );
+}
+
+function NameStep({ name, onChange }: { name: string; onChange: (value: string) => void }) {
+  return <div className={styles.nameStage}><div className={styles.welcomeImage}><Image alt="Sakin bir doğa ortamında Tai Chi pratiği" fill priority sizes="(min-width: 900px) 52vw, 100vw" src="/images/living-learning/curtains-opening.png" /><span>İlk adımın kusursuz olmak değil, kendine yer açmak.</span></div><label><span>Adın</span><input autoComplete="given-name" autoFocus maxLength={40} onChange={(event) => onChange(event.target.value)} placeholder="Sana nasıl seslenelim?" value={name} /></label></div>;
+}
+
+function ExperienceStep({ value, onChange }: { value: ExperienceLevel; onChange: (value: ExperienceLevel) => void }) {
+  const options = [{ value: "none", label: "Yeni başlıyorum", note: "Daha önce denemedim veya çok az denedim" }, { value: "some", label: "Biraz deneyimim var", note: "Birkaç ders ya da benzer hareket çalışmaları yaptım" }, { value: "regular", label: "Düzenli çalıştım", note: "Temel akışlara ve beden farkındalığına aşinayım" }] as const;
+  return <OptionList options={options} selected={value} onSelect={onChange} />;
+}
+
+function IntentionStep({ value, onChange }: { value: PracticeIntention; onChange: (value: PracticeIntention) => void }) {
+  return <OptionList options={profileQuestions.intention} selected={value} onSelect={onChange} />;
+}
+
+function BodyFocusStep({ value, onChange }: { value: BodyFocus; onChange: (value: BodyFocus) => void }) {
+  return <OptionList options={profileQuestions.bodyFocus} selected={value} onSelect={onChange} />;
+}
+
+function OptionList<T extends string>({ onSelect, options, selected }: { onSelect: (value: T) => void; options: ReadonlyArray<{ value: T; label: string; note: string }>; selected: T }) {
+  return <div className={styles.options} role="radiogroup">{options.map((option, index) => <button aria-checked={selected === option.value} className={selected === option.value ? styles.optionActive : styles.option} key={option.value} onClick={() => onSelect(option.value)} role="radio" type="button"><i>{String(index + 1).padStart(2, "0")}</i><span><strong>{option.label}</strong><small>{option.note}</small></span><b aria-hidden="true">{selected === option.value ? "✓" : ""}</b></button>)}</div>;
+}
+
+function ResultStep({ musicState, onToggleMusic, plan, result, visual }: { musicState: "kapalı" | "açık"; onToggleMusic?: () => void; plan: ReturnType<typeof createFirstJourneyPlan>; result: (typeof onboardingShenResults)[ShenId]; visual: { accent: string; image: string } }) {
+  return <article className={styles.result}><Image alt={`${result.mode} atmosferi`} fill priority sizes="(min-width: 900px) 52vw, 100vw" src={visual.image} /><span className={styles.resultShade} /><div className={styles.resultContent}><div className={styles.resultSymbol}>{result.symbol}</div><small>{result.mode}</small><h2>{result.title}</h2><p>{result.description}</p><div className={styles.resultPlan}><span><b>{plan.dailyMinutes} dk</b> başlangıç pratiği</span><span><b>{plan.movementIds.length}</b> temel hareket</span></div><button aria-label={`Müziği ${musicState === "açık" ? "kapat" : "aç"}`} aria-pressed={musicState === "açık"} className={styles.music} onClick={onToggleMusic} type="button"><i aria-hidden="true">{musicState === "açık" ? "♪" : "♪̸"}</i><span><b>{musicState === "açık" ? "Ritmin çalıyor" : "Ritmini dinle"}</b><small>Ana sayfada kesintisiz devam eder</small></span></button></div></article>;
+}

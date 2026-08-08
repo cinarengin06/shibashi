@@ -7,12 +7,16 @@ import { MovementCoach } from "@/components/tai-chi/MovementCoach";
 import { LivingLearningScreen } from "@/components/living-learning/LivingLearningScreen";
 import { Practice2Screen } from "@/features/practice2/components/Practice2Screen";
 import { PremiumOnboarding } from "@/features/onboarding/components/PremiumOnboarding";
+import { HomeDashboard } from "@/features/home/components/HomeDashboard";
+import type { HomeFlowSummary } from "@/features/home/types/home";
 import type { LivingPracticeResult } from "@/packages/living-learning";
+import { getStaticPractice, shortFlowDefinitions } from "@/packages/practice2";
 import { ShibashiAuthGate } from "@/components/shibashi-auth-gate";
 import {getBrowserSyncCode,setBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
 import { useShibashiAuth } from "@/lib/supabase-auth";
 import { shenThemes } from "@/packages/design-tokens";
 import { getJourneyDay } from "@/packages/experience-design";
+import type { OnboardingProfile } from "@/packages/onboarding";
 import {
   breathingPatterns,
   calculateShenProgress,
@@ -48,6 +52,11 @@ type PostureView = "front" | "side" | "back";
 type PostureAssessmentStep = "intro" | "history" | "captured" | "processing" | PostureView | "result";
 type PostureScanGuidance = "model-loading" | "find-body" | "wrong-angle" | "hold" | "capturing";
 type DomainShenId = (typeof shenProfiles)[number]["id"];
+
+// Geçici arayüz anahtarları: altyapı ve bileşenler yeniden açılmak üzere korunur.
+const WEB_GOOGLE_AUTH_UI_ENABLED = false;
+const WEB_INTRO_VIDEO_ENABLED = false;
+const SHEN_MUSIC_SESSION_KEY = "shibashi-session-music";
 
 declare global {
   interface Window {
@@ -183,6 +192,8 @@ type PracticeSnapshot = {
   score: number;
   shenName: string;
   imageData: string;
+  trainerVisible?: boolean;
+  source?: "practice2";
 };
 
 type MovementAnalysisWindowState = "idle" | "recording" | "complete";
@@ -532,14 +543,14 @@ function getInnerJourneyScene(movementId: number) {
 }
 
 const tabs: { id: TabId; label: string; icon: string }[] = [
-  { id: "home", label: "Bugün", icon: "◉" },
+  { id: "home", label: "Ana Sayfa", icon: "◉" },
   { id: "practice", label: "Pratik", icon: "◎" },
-  { id: "practice2", label: "Pratik2", icon: "⌁" },
+  { id: "practice2", label: "Akışlar", icon: "⌁" },
   { id: "posture", label: "Postür", icon: "↕" },
-  { id: "journey", label: "Bagua", icon: "☯" },
-  { id: "learning", label: "Öğren", icon: "✦" },
-  { id: "journal", label: "Günlük", icon: "◌" },
-  { id: "profile", label: "Profil", icon: "☰" },
+  { id: "journey", label: "8 Kapı", icon: "☯" },
+  { id: "learning", label: "5 Shen", icon: "✦" },
+  { id: "journal", label: "Program", icon: "◌" },
+  { id: "profile", label: "İlerleme", icon: "☰" },
 ];
 
 const coachVoiceVersion = "tr-yelda-20260714";
@@ -1157,7 +1168,7 @@ function inferCoachIntent(text:string):CoachIntent {
 export default function RitimKapisiOS() {
   const auth = useShibashiAuth();
   const [activeTab, setActiveTab] = useState<TabId>("home");
-  const [introVideoVisible, setIntroVideoVisible] = useState(true);
+  const [introVideoVisible, setIntroVideoVisible] = useState(WEB_INTRO_VIDEO_ENABLED);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [experienceDay, setExperienceDay] = useState(1);
   const [posturePreviewLive, setPosturePreviewLive] = useState(false);
@@ -1406,6 +1417,16 @@ export default function RitimKapisiOS() {
     });
   }
 
+  function setPracticeSnapshotTrainerVisibility(snapshotId: string, trainerVisible: boolean) {
+    setPracticeGallery((current) => {
+      const nextGallery = current.map((snapshot) => snapshot.id === snapshotId ? { ...snapshot, trainerVisible } : snapshot);
+      const updatedSnapshot = nextGallery.find((snapshot) => snapshot.id === snapshotId);
+      if (updatedSnapshot) void savePracticeSnapshotToIndexedDb(updatedSnapshot);
+      persistPracticeSnapshotsToLocalStorage(nextGallery);
+      return nextGallery;
+    });
+  }
+
   useEffect(() => {
     const receiveLivingPractice = (event: Event) => {
       const result = (event as CustomEvent<LivingPracticeResult>).detail;
@@ -1469,7 +1490,8 @@ export default function RitimKapisiOS() {
     if ("vibrate" in navigator) navigator.vibrate(12);
     window.localStorage.setItem("ritim-kapisi-selected-shen", shenId);
     const nextShen = fiveShen.find((shen) => shen.id === shenId);
-    if (soundState === "açık" && nextShen) {
+    const musicExplicitlyMuted = window.sessionStorage.getItem(SHEN_MUSIC_SESSION_KEY) === "off";
+    if ((soundState === "açık" || !musicExplicitlyMuted) && nextShen) {
       void startShenMusic(nextShen);
     }
   }
@@ -1485,15 +1507,28 @@ export default function RitimKapisiOS() {
   function stopShenMusic() {
     mediaAudioRef.current?.pause();
     stopGeneratedShenMusic();
+    window.sessionStorage.setItem(SHEN_MUSIC_SESSION_KEY, "off");
     setSoundState("kapalı");
   }
 
   function playSelectedShenMusic() {
+    window.sessionStorage.setItem(SHEN_MUSIC_SESSION_KEY, "on");
     void startShenMusic(selectedShen);
   }
 
-  function completeOnboarding() {
-    const trimmedName = userName.trim();
+  function toggleShenMusic() {
+    if (soundState === "açık") stopShenMusic();
+    else playSelectedShenMusic();
+  }
+
+  function completeOnboarding(profile?: OnboardingProfile) {
+    const recommendedShen = profile?.firstJourneyPlan?.recommendedShen;
+    if (recommendedShen && fiveShen.some((shen) => shen.id === recommendedShen)) {
+      setSelectedShenId(recommendedShen);
+      window.localStorage.setItem("ritim-kapisi-selected-shen", recommendedShen);
+    }
+    const trimmedName = profile?.name.trim() || userName.trim();
+    if (trimmedName) setUserName(trimmedName);
     if (trimmedName) window.localStorage.setItem("ritim-kapisi-user-name", trimmedName);
     window.localStorage.setItem("ritim-kapisi-onboarding-complete", "true");
     setExperienceDay(1);
@@ -1506,6 +1541,20 @@ export default function RitimKapisiOS() {
     setIntroVideoVisible(true);
     setOnboardingComplete(false);
     setActiveTab("home");
+  }
+
+  async function resetLocalExperience() {
+    const confirmed = window.confirm("Tüm yerel Shibashi verileri silinecek ve onboarding yeniden başlayacak. Devam edilsin mi?");
+    if (!confirmed) return;
+    stopShenMusic();
+    const prefixes = ["ritim-kapisi-", "shibashi-"];
+    [window.localStorage, window.sessionStorage].forEach((storage) => {
+      Object.keys(storage).forEach((key) => {
+        if (prefixes.some((prefix) => key.startsWith(prefix))) storage.removeItem(key);
+      });
+    });
+    await clearLocalShibashiDatabase();
+    window.location.replace(window.location.pathname);
   }
 
   async function startShenMusic(shen: (typeof fiveShen)[number]): Promise<boolean> {
@@ -1526,11 +1575,13 @@ export default function RitimKapisiOS() {
 
     try {
       await audio.play();
+      window.sessionStorage.setItem(SHEN_MUSIC_SESSION_KEY, "on");
       setSoundState("açık");
       return true;
     } catch {
       try {
         const generatedStarted = await startGeneratedShenMusic(shen);
+        if (generatedStarted) window.sessionStorage.setItem(SHEN_MUSIC_SESSION_KEY, "on");
         setSoundState(generatedStarted ? "açık" : "kapalı");
         return generatedStarted;
       } catch {
@@ -1625,7 +1676,7 @@ export default function RitimKapisiOS() {
 
   return (
     <main
-      className={`app-shell shen-theme-${selectedShen.id} device-mode-desktop`}
+      className={`app-shell shen-theme-${selectedShen.id} device-mode-desktop active-tab-${activeTab}`}
       data-shen={selectedShen.id}
       style={{ "--shen-accent": selectedShen.color, "--shen-accent-2": selectedShen.color2 } as CSSProperties}
     >
@@ -1642,12 +1693,13 @@ export default function RitimKapisiOS() {
         <div className="ambient-line" />
       </div>
       <AmbientParticles selectedShenId={selectedShen.id} />
-      {introVideoVisible ? (
+      {WEB_INTRO_VIDEO_ENABLED && introVideoVisible ? (
         <IntroGateVideo
           onClose={() => setIntroVideoVisible(false)}
         />
       ) : null}
-      {!introVideoVisible &&
+      {WEB_GOOGLE_AUTH_UI_ENABLED &&
+      !introVideoVisible &&
       !authSkipped &&
       (!auth.ready || !auth.user) ? (
         <ShibashiAuthGate
@@ -1664,24 +1716,35 @@ export default function RitimKapisiOS() {
             <span className="phone-camera" />
           </div>
         {!onboardingComplete ? (
-          <PremiumOnboarding embedded onComplete={completeOnboarding} />
+          <PremiumOnboarding
+            embedded
+            musicState={soundState}
+            onComplete={completeOnboarding}
+            onShenRevealed={(shenId) => {
+              const shen = fiveShen.find((item) => item.id === shenId);
+              if (!shen) return;
+              setSelectedShenId(shenId);
+              window.localStorage.setItem("ritim-kapisi-selected-shen", shenId);
+              window.sessionStorage.setItem(SHEN_MUSIC_SESSION_KEY, "on");
+              void startShenMusic(shen);
+            }}
+            onToggleMusic={toggleShenMusic}
+          />
         ) : null}
         {onboardingComplete && activeTab === "home" ? (
           <DojoHomeScreen
-            earnedXp={practiceGallery.reduce((total, item) => total + Math.round(item.score), 0)}
             energyScores={energyScores}
-            journeyUnlocked={journeyUnlocked}
-            onJourney={() => setActiveTab("journey")}
             onJournal={() => setActiveTab("journal")}
             onLearning={() => setActiveTab("learning")}
-            onMovementSelect={(movementId) => { setSelectedMovement(Math.max(0, Math.min(movements.length - 1, movementId - 1))); setPracticePhase("calibrate"); setActiveTab("practice"); }}
             onPractice={() => setActiveTab("practice")}
             onPractice2={() => setActiveTab("practice2")}
             onPosture={() => setActiveTab("posture")}
+            onReset={() => void resetLocalExperience()}
             onSelectShen={selectShen}
-            practiceCount={practiceGallery.length}
+            practiceGallery={practiceGallery}
             postureCount={postureReports.length}
             selectedShen={selectedShen}
+            shenActivities={shenActivities}
             userName={userName}
           />
         ) : null}
@@ -1720,7 +1783,7 @@ export default function RitimKapisiOS() {
             latestPostureReport={postureReports[0]}
           />
         ) : null}
-        {onboardingComplete && activeTab === "practice2" ? <Practice2Screen embedded /> : null}
+        {onboardingComplete && activeTab === "practice2" ? <Practice2Screen embedded onSnapshotCaptured={savePracticeSnapshot} selectedShenName={selectedShen.name} /> : null}
         {onboardingComplete && activeTab === "posture" ? (
           <PostureScreen
             onDeletePostureReport={deletePostureReport}
@@ -1751,6 +1814,7 @@ export default function RitimKapisiOS() {
         {onboardingComplete && activeTab === "journal" ? (
           <JournalScreen
             gallery={practiceGallery}
+            onSetTrainerVisibility={setPracticeSnapshotTrainerVisibility}
             postureReports={postureReports}
             selectedShen={selectedShen}
           />
@@ -1786,7 +1850,7 @@ export default function RitimKapisiOS() {
             </div>
             {visibleTabs.map((tab) => (
               <button
-                className={`nav-button ${activeTab === tab.id ? "nav-button-active" : ""}`}
+                className={`nav-button nav-tab-${tab.id} ${activeTab === tab.id ? "nav-button-active" : ""}`}
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 type="button"
@@ -1795,6 +1859,12 @@ export default function RitimKapisiOS() {
                 {tab.label}
               </button>
             ))}
+            <div className="web-nav-account" aria-label="Kullanıcı özeti">
+              <span className="web-nav-streak" title="Güncel seri">♨ {getPracticeStreak(practiceGallery, shenActivities).current}</span>
+              <button aria-label={`Müziği ${soundState === "açık" ? "kapat" : "aç"}`} aria-pressed={soundState === "açık"} className={`web-nav-music ${soundState === "açık" ? "is-playing" : ""}`} onClick={toggleShenMusic} title={`Shen müziği ${soundState}`} type="button"><span aria-hidden="true">{soundState === "açık" ? "♪" : "♪̸"}</span></button>
+              <button aria-label="Bildirimler" className="web-nav-bell" type="button">♢</button>
+              <button className="web-nav-profile" onClick={() => setActiveTab("profile")} type="button"><i>{(userName || "Ç").slice(0, 1).toLocaleUpperCase("tr-TR")}</i><span>{userName || "Çınar"}</span><b>⌄</b></button>
+            </div>
           </nav>
         ) : null}
       </div>
@@ -2020,7 +2090,126 @@ function DojoOnboardingScreen({
   );
 }
 
+function getPracticeStreak(practiceGallery: PracticeSnapshot[], activities: ShenActivity[]) {
+  const dates = new Set<string>();
+  const addDate = (value?: string) => {
+    if (!value) return;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return;
+    dates.add(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`);
+  };
+  practiceGallery.forEach((item) => addDate(item.createdAt));
+  activities.filter((item) => item.type === "practice" && item.completed !== false).forEach((item) => addDate(item.createdAt));
+  const sorted = [...dates].sort();
+  let longest = 0;
+  let run = 0;
+  let previous: number | null = null;
+  sorted.forEach((key) => {
+    const day = new Date(`${key}T12:00:00`).getTime();
+    run = previous !== null && Math.round((day - previous) / 86400000) === 1 ? run + 1 : 1;
+    longest = Math.max(longest, run);
+    previous = day;
+  });
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  let current = 0;
+  for (let offset = 0; offset < 366; offset += 1) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - offset);
+    const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    if (dates.has(key)) current += 1;
+    else if (offset > 0 || dates.size > 0) break;
+  }
+  const activeDays = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(today);
+    day.setDate(today.getDate() - (6 - index));
+    const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    return dates.has(key);
+  });
+  return { activeDays, current, longest };
+}
+
 function DojoHomeScreen({
+  energyScores,
+  onJournal,
+  onLearning,
+  onPractice,
+  onPractice2,
+  onPosture,
+  onReset,
+  onSelectShen,
+  practiceGallery,
+  postureCount,
+  selectedShen,
+  shenActivities,
+  userName,
+}: {
+  energyScores: EnergyScores;
+  onJournal: () => void;
+  onLearning: () => void;
+  onPractice: () => void;
+  onPractice2: () => void;
+  onPosture: () => void;
+  onReset: () => void;
+  onSelectShen: (shenId: ShenId) => void;
+  practiceGallery: PracticeSnapshot[];
+  postureCount: number;
+  selectedShen: (typeof fiveShen)[number];
+  shenActivities: ShenActivity[];
+  userName: string;
+}) {
+  const progress = calculateShenProgress(shenActivities, toDomainShenId(selectedShen.id));
+  const now = new Date();
+  const recentDays = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(now);
+    day.setHours(0, 0, 0, 0);
+    day.setDate(now.getDate() - (6 - index));
+    return day;
+  });
+  const dailyMinutes = recentDays.map((day) => shenActivities
+    .filter((item) => item.type === "practice" && new Date(item.createdAt).toDateString() === day.toDateString())
+    .reduce((total, item) => total + (item.minutes ?? 0), 0));
+  const recentPractices = shenActivities.filter((item) => {
+    const createdAt = new Date(item.createdAt).getTime();
+    return item.type === "practice" && item.completed !== false && createdAt >= recentDays[0].getTime();
+  });
+  const flowCards: HomeFlowSummary[] = shortFlowDefinitions.map((flow) => {
+    const reference = getStaticPractice(flow.steps[Math.min(1, flow.steps.length - 1)]?.practiceId ?? flow.steps[0]?.practiceId);
+    return {
+      description: flow.description,
+      durationMinutes: flow.durationMinutes,
+      focus: flow.focus,
+      id: flow.id,
+      image: reference.referenceImage,
+      level: flow.level,
+      title: flow.title,
+    };
+  });
+  const recommendedFlow = flowCards[selectedShen.mapStage % flowCards.length] ?? flowCards[0];
+  const experienceIntoLevel = progress.experience % 240;
+
+  return <HomeDashboard
+    energy={{ score: energyScores.shen, trend: dailyMinutes.map((value) => Math.min(100, value * 18)) }}
+    flows={flowCards}
+    level={{ experience: experienceIntoLevel, level: progress.level, nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
+    onFlows={onPractice2}
+    onHistory={onJournal}
+    onPractice={onPractice}
+    onPosture={onPosture}
+    onReset={onReset}
+    onSelectShen={onSelectShen}
+    onShen={onLearning}
+    postureCount={postureCount}
+    recommendedFlow={recommendedFlow}
+    shen={{ actionLabel: shenTodayCopy[selectedShen.id].action, color: selectedShen.color, description: selectedShen.dailyPrompt, element: `${selectedShen.element.split("•")[0]?.trim()} Zamanı`, heroBody: shenTodayCopy[selectedShen.id].body, heroTitle: shenTodayCopy[selectedShen.id].title, id: selectedShen.id, motto: shenTodayCopy[selectedShen.id].motto, name: selectedShen.name, organ: selectedShen.organ, period: "Bugünün odağı", shortLabel: shenTodayCopy[selectedShen.id].shortLabel, symbol: selectedShen.symbol, wallpaper: selectedShen.image }}
+    shenOptions={fiveShen.map((shen) => ({ actionLabel: shenTodayCopy[shen.id].action, color: shen.color, description: shen.dailyPrompt, element: `${shen.element.split("•")[0]?.trim()} Zamanı`, heroBody: shenTodayCopy[shen.id].body, heroTitle: shenTodayCopy[shen.id].title, id: shen.id, motto: shenTodayCopy[shen.id].motto, name: shen.name, organ: shen.organ, period: shen.dailyName, shortLabel: shenTodayCopy[shen.id].shortLabel, symbol: shen.symbol, wallpaper: shen.image }))}
+    streak={getPracticeStreak(practiceGallery, shenActivities)}
+    userName={userName}
+    week={{ dailyMinutes, minutes: recentPractices.reduce((total, item) => total + (item.minutes ?? 0), 0), practiceCount: recentPractices.length }}
+  />;
+}
+
+function LegacyDojoHomeScreen({
   earnedXp,
   energyScores,
   journeyUnlocked,
@@ -7607,10 +7796,12 @@ function InnerGateJourneyPanel({ selectedShen }: { selectedShen: (typeof fiveShe
 
 function JournalScreen({
   gallery,
+  onSetTrainerVisibility,
   postureReports,
   selectedShen,
 }: {
   gallery: PracticeSnapshot[];
+  onSetTrainerVisibility: (snapshotId: string, trainerVisible: boolean) => void;
   postureReports: PostureReport[];
   selectedShen: (typeof fiveShen)[number];
 }) {
@@ -7636,6 +7827,20 @@ function JournalScreen({
     window.localStorage.setItem("ritim-kapisi-daily-mood", mood);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
+  }
+
+  async function shareSnapshot(snapshot: PracticeSnapshot) {
+    if (!navigator.share) return;
+    try {
+      const response = await fetch(snapshot.imageData);
+      const blob = await response.blob();
+      const file = new File([blob], `shibashi-${snapshot.dateKey}.jpg`, { type: blob.type || "image/jpeg" });
+      const data = { title: snapshot.movementName, text: `${snapshot.movementName} · %${snapshot.score} poz uyumu`, files: [file] };
+      if (!navigator.canShare || navigator.canShare(data)) await navigator.share(data);
+      else await navigator.share({ title: data.title, text: data.text });
+    } catch {
+      // Paylaşım kullanıcı tarafından kapatıldığında galeriyi etkileme.
+    }
   }
 
   return (
@@ -7761,7 +7966,17 @@ function JournalScreen({
               {snapshots.map((snapshot) => (
                 <article key={snapshot.id}>
                   <img src={snapshot.imageData} alt={`${snapshot.movementName} ekran görüntüsü`} />
-                  <div><strong>{snapshot.movementName}</strong><small>{snapshot.timeLabel} · %{snapshot.score}</small></div>
+                  <div>
+                    <strong>{snapshot.movementName}</strong>
+                    <small>{snapshot.timeLabel} · %{snapshot.score} · {snapshot.source === "practice2" ? "Poz eşleştirme" : snapshot.shenName}</small>
+                    <div className="snapshot-sharing-actions">
+                      <label>
+                        <input checked={snapshot.trainerVisible ?? false} onChange={(event) => onSetTrainerVisibility(snapshot.id, event.target.checked)} type="checkbox" />
+                        <span>{snapshot.trainerVisible ? "Eğitmene açık" : "Yalnızca ben"}</span>
+                      </label>
+                      <button onClick={() => void shareSnapshot(snapshot)} type="button">Paylaş</button>
+                    </div>
+                  </div>
                 </article>
               ))}
             </div>
@@ -7820,7 +8035,7 @@ function ProfileScreen({
           <p>Bugünkü modun {selectedShen.dailyName}. Gelişim kayıtların ve izinlerin burada.</p>
         </div>
       </div>
-      <div className="glass-card profile-auth-card">
+      {WEB_GOOGLE_AUTH_UI_ENABLED ? <div className="glass-card profile-auth-card">
         <div>
           <span className="eyebrow">Google Hesabı</span>
           <h2>{authEmail ? "Hesabın bağlı" : "Hesapsız kullanıyorsun"}</h2>
@@ -7834,7 +8049,7 @@ function ProfileScreen({
             Çıkış yap
           </button>
         ) : null}
-      </div>
+      </div> : null}
       <div className="glass-card profile-sync-card">
         <div className="section-heading" style={{ margin: 0 }}>
           <div>
@@ -9011,6 +9226,16 @@ async function deletePostureReportFromIndexedDb(reportId: string) {
   } catch {
     // The in-memory list is still updated when persistent storage is unavailable.
   }
+}
+
+async function clearLocalShibashiDatabase() {
+  if (!window.indexedDB) return;
+  await new Promise<void>((resolve) => {
+    const request = window.indexedDB.deleteDatabase(postureReportDatabaseName);
+    request.onsuccess = () => resolve();
+    request.onerror = () => resolve();
+    request.onblocked = () => resolve();
+  });
 }
 
 async function loadPostureReportsFromIndexedDb(): Promise<PostureReport[]> {

@@ -1278,6 +1278,201 @@ img {
   }
 }
 
+/* Web application contract — full-width desktop site, never a device mockup. */
+.device-mode-desktop {
+  min-height: 100dvh;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+.device-mode-desktop .device-preview-dock,
+.device-mode-desktop .phone-hardware {
+  display: none !important;
+}
+
+.device-mode-desktop .device-shell {
+  display: block;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+.device-mode-desktop .mobile-frame {
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 1600px;
+  min-height: 100dvh;
+  overflow: visible;
+  padding: 104px clamp(24px, 4vw, 72px) 72px;
+  width: 100%;
+}
+
+.device-mode-desktop .mobile-frame > *,
+.device-mode-desktop .screen,
+.device-mode-desktop .screen > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.device-mode-desktop .screen {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+}
+
+.device-mode-desktop .dojo-home,
+.device-mode-desktop .progressive-home,
+.device-mode-desktop .journey-screen,
+.device-mode-desktop .profile-screen-simple,
+.device-mode-desktop .shen-journey-screen {
+  max-width: none;
+  width: 100%;
+}
+
+.device-mode-desktop img,
+.device-mode-desktop video,
+.device-mode-desktop canvas,
+.device-mode-desktop svg {
+  max-width: 100%;
+}
+
+@media (min-width: 900px) {
+  .device-mode-desktop .bottom-nav {
+    align-items: center;
+    backdrop-filter: blur(24px) saturate(1.15);
+    background: rgba(7, 12, 9, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    bottom: auto;
+    box-shadow: 0 18px 54px rgba(0, 0, 0, 0.42);
+    display: grid !important;
+    gap: 4px;
+    grid-template-columns: repeat(var(--nav-count, 7), minmax(0, 1fr));
+    left: 50%;
+    max-width: 1180px;
+    padding: 6px;
+    right: auto;
+    top: 16px;
+    transform: translateX(-50%);
+    width: min(1180px, calc(100vw - 48px));
+  }
+
+  .device-mode-desktop .nav-button {
+    min-height: 58px;
+    padding: 6px 10px;
+    width: auto;
+  }
+
+  .device-mode-desktop .dojo-home-hero {
+    min-height: min(680px, calc(100dvh - 170px));
+  }
+
+  .device-mode-desktop .dojo-home,
+  .device-mode-desktop .progressive-home,
+  .device-mode-desktop .profile-screen-simple,
+  .device-mode-desktop .shen-journey-screen {
+    gap: clamp(18px, 2vw, 30px);
+  }
+}
+
+@media (max-width: 899px) {
+  .device-mode-desktop .mobile-frame {
+    max-width: none;
+    padding: 22px 16px 118px;
+  }
+
+  .device-mode-desktop .bottom-nav {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    display: grid !important;
+    left: 50%;
+    max-width: calc(100% - 20px);
+    top: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 20px);
+  }
+}
+
+/* Direct cinematic intro: poster and video share one stage, then the whole
+   layer dissolves into the application without a flash. */
+.intro-video-gate {
+  opacity: 1;
+  transition: opacity 900ms cubic-bezier(0.22, 1, 0.36, 1), visibility 900ms linear;
+}
+
+.intro-video-gate-closing {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.intro-video-poster-background {
+  opacity: 1;
+  transition: opacity 1400ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 1;
+}
+
+.intro-gate-ready .intro-video-poster-background {
+  opacity: 0;
+}
+
+.intro-video-gate .intro-gate-video {
+  backface-visibility: hidden;
+  opacity: 0;
+  transform: translateZ(0) scale(1.008);
+  transition: opacity 1400ms cubic-bezier(0.22, 1, 0.36, 1), transform 12s linear;
+  will-change: opacity, transform;
+}
+
+.intro-video-gate.intro-gate-ready .intro-gate-video {
+  opacity: 1;
+  transform: translateZ(0) scale(1);
+}
+
+.intro-video-gate .intro-video-copy {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 1100ms ease 320ms, transform 1100ms cubic-bezier(0.22, 1, 0.36, 1) 320ms;
+}
+
+.intro-video-gate.intro-gate-ready .intro-video-copy {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.intro-video-credit {
+  align-items: baseline;
+  bottom: clamp(26px, 5vh, 58px);
+  color: #e7c476;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  position: absolute;
+  right: clamp(24px, 5vw, 72px);
+  transition: opacity 1100ms ease 600ms;
+  z-index: 4;
+}
+
+.intro-gate-ready .intro-video-credit {
+  opacity: 1;
+}
+
+.intro-video-credit span {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1rem, 1.7vw, 1.35rem);
+}
+
+.intro-video-credit small {
+  color: rgba(242, 238, 231, 0.62);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 700px) {
+  .intro-video-credit {
+    bottom: 18px;
+    right: 18px;
+  }
+}
+
 .intro-gate {
   background: #050807;
   display: grid;
@@ -17034,5 +17229,98 @@ body {
   .profile-auth-card {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+/* Final desktop web overrides. Keep these last so legacy device-preview rules
+   cannot constrain the normal website layout. */
+.device-mode-desktop {
+  min-height: 100dvh;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+
+.device-mode-desktop .device-preview-dock,
+.device-mode-desktop .phone-hardware {
+  display: none !important;
+}
+
+.device-mode-desktop .device-shell {
+  display: block;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+.device-mode-desktop .mobile-frame {
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 1600px;
+  min-height: 100dvh;
+  overflow: visible;
+  padding: 104px clamp(24px, 4vw, 72px) 72px;
+  width: 100%;
+}
+
+.device-mode-desktop .mobile-frame > *,
+.device-mode-desktop .screen,
+.device-mode-desktop .screen > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.device-mode-desktop .screen {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+}
+
+.device-mode-desktop .dojo-home,
+.device-mode-desktop .progressive-home,
+.device-mode-desktop .journey-screen,
+.device-mode-desktop .profile-screen-simple,
+.device-mode-desktop .shen-journey-screen {
+  max-width: none;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .device-mode-desktop .bottom-nav {
+    bottom: auto;
+    display: grid !important;
+    gap: 4px;
+    grid-template-columns: repeat(var(--nav-count, 7), minmax(0, 1fr));
+    left: 50%;
+    max-width: 1180px;
+    padding: 6px;
+    right: auto;
+    top: 16px;
+    transform: translateX(-50%);
+    width: min(1180px, calc(100vw - 48px));
+  }
+
+  .device-mode-desktop .nav-button {
+    min-height: 58px;
+    padding: 6px 10px;
+    width: auto;
+  }
+
+  .device-mode-desktop .dojo-home-hero {
+    min-height: min(680px, calc(100dvh - 170px));
+  }
+}
+
+@media (max-width: 899px) {
+  .device-mode-desktop .mobile-frame {
+    max-width: none;
+    padding: 22px 16px 118px;
+  }
+
+  .device-mode-desktop .bottom-nav {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    display: grid !important;
+    left: 50%;
+    max-width: calc(100% - 20px);
+    top: auto;
+    transform: translateX(-50%);
+    width: calc(100% - 20px);
   }
 }

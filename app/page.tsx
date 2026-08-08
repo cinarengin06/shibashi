@@ -42,7 +42,6 @@ import {
 
 type TabId = "home" | "practice" | "practice2" | "posture" | "journey" | "learning" | "journal" | "profile";
 type ShenId = "hun" | "shen" | "yi" | "po" | "zhi";
-type DeviceMode = "desktop" | "iphone" | "ipad";
 type PostureRenderMode = "3d" | "2d";
 type PostureView = "front" | "side" | "back";
 type PostureAssessmentStep = "intro" | "history" | "captured" | "processing" | PostureView | "result";
@@ -1096,8 +1095,6 @@ function inferCoachIntent(text:string):CoachIntent {
 export default function RitimKapisiOS() {
   const auth = useShibashiAuth();
   const [activeTab, setActiveTab] = useState<TabId>("home");
-  const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop");
-  const [introVisible, setIntroVisible] = useState(true);
   const [introVideoVisible, setIntroVideoVisible] = useState(true);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [experienceDay, setExperienceDay] = useState(1);
@@ -1155,7 +1152,6 @@ export default function RitimKapisiOS() {
       previewMode === "practice" ||
       previewMode === "practice2";
     if (isPreview) {
-      setIntroVisible(false);
       setIntroVideoVisible(false);
       setOnboardingComplete(true);
       if (previewMode === "posture" || previewMode === "posture-live") setActiveTab("posture");
@@ -1322,7 +1318,7 @@ export default function RitimKapisiOS() {
 
   useEffect(() => {
     mobileFrameRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [activeTab, deviceMode, onboardingComplete]);
+  }, [activeTab, onboardingComplete]);
 
   function savePracticeSnapshot(snapshot: PracticeSnapshot) {
     void savePracticeSnapshotToIndexedDb(snapshot);
@@ -1445,7 +1441,6 @@ export default function RitimKapisiOS() {
 
   function restartOnboarding() {
     window.localStorage.removeItem("ritim-kapisi-onboarding-complete");
-    setIntroVisible(true);
     setIntroVideoVisible(true);
     setOnboardingComplete(false);
     setActiveTab("home");
@@ -1568,7 +1563,7 @@ export default function RitimKapisiOS() {
 
   return (
     <main
-      className={`app-shell shen-theme-${selectedShen.id} device-mode-${deviceMode} ${deviceMode === "iphone" ? "phone-mode" : ""} ${deviceMode === "ipad" ? "tablet-mode" : ""}`}
+      className={`app-shell shen-theme-${selectedShen.id} device-mode-desktop`}
       data-shen={selectedShen.id}
       style={{ "--shen-accent": selectedShen.color, "--shen-accent-2": selectedShen.color2 } as CSSProperties}
     >
@@ -1585,21 +1580,12 @@ export default function RitimKapisiOS() {
         <div className="ambient-line" />
       </div>
       <AmbientParticles selectedShenId={selectedShen.id} />
-      <DevicePreviewDock deviceMode={deviceMode} onChange={setDeviceMode} />
-      {introVisible ? (
-        <IntroSplash
-          onClose={() => setIntroVisible(false)}
-          deviceMode={deviceMode}
-          musicLabel={selectedShen.name}
-          musicSrc={selectedShen.music}
-        />
-      ) : introVideoVisible ? (
+      {introVideoVisible ? (
         <IntroGateVideo
           onClose={() => setIntroVideoVisible(false)}
         />
       ) : null}
-      {!introVisible &&
-      !introVideoVisible &&
+      {!introVideoVisible &&
       !authSkipped &&
       (!auth.ready || !auth.user) ? (
         <ShibashiAuthGate
@@ -1725,10 +1711,15 @@ export default function RitimKapisiOS() {
             userName={userName}
           />
         ) : null}
+        {onboardingComplete ? <footer className="web-page-credit">Ayhan Güler</footer> : null}
         </div>
 
         {onboardingComplete ? (
-          <nav className="bottom-nav" aria-label="Ana gezinme" style={{ "--nav-count": visibleTabs.length + 1 } as CSSProperties}>
+          <nav className="bottom-nav" aria-label="Ana gezinme" style={{ "--nav-count": visibleTabs.length } as CSSProperties}>
+            <div className="web-nav-brand" aria-label="Shibashi EFE">
+              <i aria-hidden="true" />
+              <span>SHIBASHI EFE</span>
+            </div>
             {visibleTabs.map((tab) => (
               <button
                 className={`nav-button ${activeTab === tab.id ? "nav-button-active" : ""}`}
@@ -1747,148 +1738,19 @@ export default function RitimKapisiOS() {
   );
 }
 
-function DevicePreviewDock({
-  deviceMode,
-  onChange,
-}: {
-  deviceMode: DeviceMode;
-  onChange: (mode: DeviceMode) => void;
-}) {
-  const modes: ReadonlyArray<{ id: DeviceMode; icon: string; label: string }> = [
-    { id: "desktop", icon: "▱", label: "Ekran" },
-    { id: "iphone", icon: "▯", label: "iPhone 17 Pro" },
-    { id: "ipad", icon: "▭", label: "iPad Pro" },
-  ];
-
-  return (
-    <div className="device-preview-dock" aria-label="Cihaz önizlemesi">
-      {modes.map((mode) => (
-        <button
-          aria-pressed={deviceMode === mode.id}
-          className={deviceMode === mode.id ? "device-preview-active" : ""}
-          key={mode.id}
-          onClick={() => onChange(mode.id)}
-          type="button"
-        >
-          <span>{mode.icon}</span>
-          <small>{mode.label}</small>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function IntroSplash({
-  deviceMode,
-  musicLabel,
-  musicSrc,
-  onClose,
-}: {
-  deviceMode: DeviceMode;
-  musicLabel: string;
-  musicSrc: string;
-  onClose: () => void;
-}) {
-  const [isClosing, setIsClosing] = useState(false);
-  const [soundOff, setSoundOff] = useState(false);
-  const splashAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    const audio = new Audio(musicSrc);
-    const savedMuted = window.localStorage.getItem("shibashi-splash-muted") === "true";
-    splashAudioRef.current = audio;
-    audio.loop = true;
-    audio.preload = "auto";
-    audio.volume = .3;
-    audio.muted = savedMuted;
-    setSoundOff(savedMuted);
-    void audio.play().catch(() => setSoundOff(true));
-    return () => {
-      audio.pause();
-      audio.src = "";
-      if (splashAudioRef.current === audio) splashAudioRef.current = null;
-    };
-  }, [musicSrc]);
-
-  useEffect(() => {
-    const closeTimer = window.setTimeout(() => setIsClosing(true), 4500);
-    const finishTimer = window.setTimeout(onClose, 5000);
-    return () => {
-      window.clearTimeout(closeTimer);
-      window.clearTimeout(finishTimer);
-    };
-  }, [onClose]);
-
-  function closeSplash() {
-    if (isClosing) return;
-    setIsClosing(true);
-    window.setTimeout(onClose, 420);
-  }
-
-  async function toggleSplashSound() {
-    const audio = splashAudioRef.current;
-    if (!audio) return;
-    if (soundOff || audio.paused) {
-      audio.muted = false;
-      try {
-        await audio.play();
-        setSoundOff(false);
-        window.localStorage.setItem("shibashi-splash-muted", "false");
-      } catch {
-        setSoundOff(true);
-      }
-      return;
-    }
-    audio.muted = true;
-    setSoundOff(true);
-    window.localStorage.setItem("shibashi-splash-muted", "true");
-  }
-
-  return (
-    <div
-      aria-label="Shibashi Efe açılış ekranı"
-      className={`intro-gate intro-gate-${deviceMode} intro-splash ${isClosing ? "intro-splash-closing" : ""}`}
-      role="dialog"
-    >
-      <div className="intro-device-frame">
-        <div className="intro-phone-speaker" />
-        <img
-          alt="Shibashi Efe — İçsel Yolculuk"
-          className="intro-splash-image"
-          src="/images/shibashi/shibashi-splash.png"
-        />
-        <button
-          aria-label={soundOff ? `${musicLabel} müziğini aç` : `${musicLabel} müziğini sustur`}
-          aria-pressed={soundOff}
-          className={`intro-splash-audio ${soundOff ? "intro-splash-audio-muted" : ""}`}
-          onClick={() => void toggleSplashSound()}
-          type="button"
-        >
-          <span aria-hidden="true">{soundOff ? "⌁" : "♪"}</span>
-          <small>{soundOff ? "Sessiz" : musicLabel}</small>
-        </button>
-        <button aria-label="Açılışı geç" className="intro-splash-skip" onClick={closeSplash} type="button">
-          <span>Dokun ve başla</span>
-          <i aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function IntroGateVideo({
   onClose,
 }: {
   onClose: () => void;
 }) {
-  const INTRO_VIDEO_PLAYBACK_RATE = 0.82;
+  const INTRO_VIDEO_PLAYBACK_RATE = 0.72;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [needsTap, setNeedsTap] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    const fallbackTimer = window.setTimeout(onClose, Math.round((10000 / INTRO_VIDEO_PLAYBACK_RATE) * 1000) + 1800);
     const tryPlay = async () => {
       const video = videoRef.current;
       if (!video) return;
@@ -1911,7 +1773,6 @@ function IntroGateVideo({
     const retryTimer = window.setTimeout(() => void tryPlay(), 420);
     return () => {
       cancelled = true;
-      window.clearTimeout(fallbackTimer);
       window.clearTimeout(retryTimer);
     };
   }, [onClose]);
@@ -1929,10 +1790,17 @@ function IntroGateVideo({
     }).catch(() => setNeedsTap(true));
   };
 
+  const closeVideo = () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    videoRef.current?.pause();
+    window.setTimeout(onClose, 900);
+  };
+
   return (
     <div
       aria-label="Shibashi Efe onboarding videosu"
-      className={`intro-gate intro-video-gate ${isReady ? "intro-gate-ready" : ""}`}
+      className={`intro-gate intro-video-gate ${isReady ? "intro-gate-ready" : ""} ${isClosing ? "intro-video-gate-closing" : ""}`}
       role="dialog"
     >
       <div className="intro-device-frame">
@@ -1948,17 +1816,17 @@ function IntroGateVideo({
             autoPlay
             className="intro-gate-video"
             muted
-            onCanPlay={() => {
-              setIsReady(true);
+            onCanPlayThrough={() => {
               void playVideo();
             }}
-            onEnded={onClose}
+            onEnded={closeVideo}
+            onError={() => setNeedsTap(true)}
             onLoadedMetadata={() => void playVideo()}
+            onPlaying={() => setIsReady(true)}
             playsInline
-            poster="/images/shibashi/intro-gate-poster-hq-v2.png"
             preload="auto"
             ref={videoRef}
-            src="/videos/intro-gate.mp4"
+            src="/videos/intro-gate-smooth.mp4"
           />
         </div>
         <div className="intro-gate-shade" />
@@ -1971,10 +1839,11 @@ function IntroGateVideo({
               Videoyu oynat
             </button>
           ) : null}
-          <button className="primary-action intro-gate-action" onClick={onClose} type="button">
-            Atla ve devam et <span>→</span>
+          <button className="primary-action intro-gate-action" onClick={closeVideo} type="button">
+            Yolculuğa başla <span>→</span>
           </button>
         </div>
+        <div className="intro-video-credit"><span>Ayhan Güler</span><small>ile</small></div>
       </div>
     </div>
   );

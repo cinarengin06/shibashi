@@ -6,7 +6,6 @@ import { getLivingPractice, livingScenes, type LivingPracticeResult, type Living
 import { useMovementTimeline } from "../hooks/useMovementTimeline";
 import { CinematicPracticeStage } from "./CinematicPracticeStage";
 import { LivingCameraPractice } from "./LivingCameraPractice";
-import { MovementStepRail } from "./MovementStepRail";
 import { PracticeCompletion } from "./PracticeCompletion";
 import { SceneSelector } from "./SceneSelector";
 import styles from "./living-learning.module.css";
@@ -36,21 +35,15 @@ export function LivingLearningScreen({ embedded = false }: { embedded?: boolean 
   return <main className={`${styles.page} ${embedded ? styles.embedded : ""}`}>
     {!embedded ? <header className={styles.topbar}><Link href="/" className={styles.topBrand}>SHIBASHI EFE</Link><span>Bir hareketi değil, yaşamdaki karşılığını öğren.</span><Link href="/">Uygulamaya dön</Link></header> : null}
     <div className={`${styles.shell} ${mode === "camera" ? styles.cameraShell : ""}`}>
-      {mode === "complete" && result ? <PracticeCompletion result={result} onSave={save} onRetry={retry} onHome={home} saved={saved} /> : <>
+        {mode === "complete" && result ? <PracticeCompletion result={result} onSave={save} onRetry={retry} onHome={home} saved={saved} /> : <>
+        {mode === "watch" ? <header className={styles.memoryHero}><div><p className={styles.eyebrow}>Hareket hafızası</p><h1>Formu ezberleme.<br/>Sahneyi hatırla.</h1></div><p>Her Shibashi hareketi gündelik bir ana bağlanır. Ambiyansı hisset, öğretmenin tam bedenini izle, sonra aynı anıyı kendi bedeninde canlandır.</p></header> : null}
         <section className={styles.practiceColumn}>
           {mode === "camera" ? <LivingCameraPractice activeStep={timeline.activeStep} elapsedMs={timeline.elapsedMs} onClose={() => { timeline.reset(); setMode("watch"); }} onComplete={complete} onRestart={timeline.restart} onToggle={timeline.toggle} playing={timeline.playing} practice={selectedPractice} /> : <CinematicPracticeStage activeStep={timeline.activeStep} elapsedMs={timeline.elapsedMs} muted={muted} onCamera={() => { setMode("camera"); timeline.reset(); }} onMute={() => setMuted((value) => !value)} onRestart={timeline.restart} onToggle={timeline.toggle} playing={timeline.playing} practice={selectedPractice} scene={selectedScene} />}
-          {mode === "watch" ? <div className={styles.stageMeta}><article><small>Sahne</small><strong>{selectedScene.name}</strong></article><article><small>Hareket kalitesi</small><strong>{selectedScene.movementQuality}</strong></article><article><small>Süre</small><strong>28 saniye</strong></article><article><small>Ölçüm</small><strong>Kamera açılınca gerçek</strong></article></div> : null}
+          {mode === "watch" ? <div className={styles.memoryPath}><article className={styles.memoryPathActive}><span>01</span><div><strong>Sahneyi hisset</strong><small>{selectedScene.name} · {selectedScene.light}</small></div></article><i/><article><span>02</span><div><strong>Öğretmeni izle</strong><small>Beş okunur hareket karesi</small></div></article><i/><article><span>03</span><div><strong>Sen yap</strong><small>Kamerada aynı hikâyeyi canlandır</small></div></article></div> : null}
         </section>
 
-        {mode === "watch" ? <MovementStepRail activeStepId={timeline.activeStep.id} steps={selectedPractice.steps} /> : null}
         {mode === "watch" ? <div className={styles.scenesWrap}><SceneSelector onSelect={setSelectedSceneId} scenes={livingScenes} selectedId={selectedSceneId} />
-          <section className={styles.experienceFlow}><p className={styles.eyebrow}>Pratik akışı</p><div>
-            <article><span>01</span><strong>Sahneyi seç</strong><small>Bugün sana yaklaşan yaşam anını bul.</small></article>
-            <article><span>02</span><strong>Hareketi izle</strong><small>Metaforun bedendeki karşılığını gör.</small></article>
-            <article><span>03</span><strong>Sen yap</strong><small>Kamerayı aç ve kendi ritminde uygula.</small></article>
-            <article><span>04</span><strong>Anlık geri bildirim</strong><small>Tek, sakin ve anlaşılır öneri al.</small></article>
-            <article><span>05</span><strong>Akışı tamamla</strong><small>Hareketi gündelik hafızana kaydet.</small></article>
-          </div></section>
+          <section className={styles.memoryPromise}><p className={styles.eyebrow}>Hafıza çapası</p><blockquote>“{selectedScene.metaphor}.”</blockquote><span>Yarın benzer bir yaşam anı geldiğinde bedenin bu hareketi kendiliğinden hatırlasın.</span></section>
         </div> : null}
       </>}
     </div>

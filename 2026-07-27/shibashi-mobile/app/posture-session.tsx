@@ -210,9 +210,9 @@ export default function PostureSession(){
  if(result)return <SafeAreaView style={styles.result}>
   <ScrollView contentContainerStyle={styles.resultContent}>
    <View style={styles.resultTop}><Text style={[styles.resultLabel,{color:shen.color}]}>POSTÜR RAPORUN HAZIR</Text><Text style={styles.resultTitle}>Beden çizgin görünür oldu.</Text><Text style={styles.resultBody}>{result.summary}</Text></View>
-   <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text></View>
+   <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text><Text style={styles.overallConfidence}>Genel güven %{getReportConfidence(result)}</Text></View>
    <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}><View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View><View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
-   <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişisel öneri</Text><Text style={styles.insightBody}>{result.asymmetrySignal}. Bir sonraki pratikte dizleri kilitlemeden omuzları aşağı bırak.</Text></View></View>
+   <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişiselleştirilmiş Öneriler ve Notlar</Text><Text style={styles.insightBody}>{getReportRecommendation(result)}</Text></View></View>
    <PrimaryButton label={saving?'Kaydediliyor…':'Analizi kaydet'} icon="checkmark" onPress={save}/>
    <Pressable onPress={restart} style={styles.retake}><Text style={styles.retakeText}>Yeniden çek</Text></Pressable>
   </ScrollView>
@@ -357,6 +357,23 @@ function MetricRow({metric}:{metric:Metric}){
 function scoreTone(value:number){return value>=82?'#A8D973':value>=68?'#D7A85B':'#B96B5A'}
 function scoreLabel(value:number){return value>=82?'İyi':value>=68?'Orta':'Dikkat'}
 
+function getReportConfidence(report:PostureReport){
+ return Math.round((report.captures.reduce((total,capture)=>total+(capture.confidence??0),0)/Math.max(1,report.captures.length))*100);
+}
+
+function getReportRecommendation(report:PostureReport){
+ const count=Math.max(1,report.captures.length);
+ const averages={
+  axis:report.captures.reduce((total,capture)=>total+capture.axisScore,0)/count,
+  shoulder:report.captures.reduce((total,capture)=>total+capture.shoulderScore,0)/count,
+  hip:report.captures.reduce((total,capture)=>total+capture.hipScore,0)/count,
+ };
+ const weakest=(Object.entries(averages) as [keyof typeof averages,number][]).sort((a,b)=>a[1]-b[1])[0];
+ if(weakest[0]==='shoulder')return `${report.asymmetrySignal}. Omuz hattın ölçümde en çok dikkat isteyen bölge. Nefes verirken iki omzu aşağı bırak; kolları kaldırmadan önce üç sakin tekrar yap.`;
+ if(weakest[0]==='hip')return `${report.asymmetrySignal}. Kalça hattında sağ-sol yük dağılımını çalış. Ayaklarını kalça genişliğinde yerleştir, ağırlığı iki ayağa eşit ver ve dizleri kilitlemeden 30 saniye bekle.`;
+ return `${report.asymmetrySignal}. Merkez eksenini uzatmaya odaklan. Başının tepesini yukarı, kuyruk sokumunu aşağı düşün ve çeneyi sıkmadan üç doğal nefes boyunca bu hattı koru.`;
+}
+
 const styles=StyleSheet.create({
  root:{flex:1,backgroundColor:colors.ink},
  sessionContent:{flex:1,gap:12,paddingBottom:12,paddingHorizontal:12,paddingTop:8},
@@ -479,6 +496,7 @@ const styles=StyleSheet.create({
  overall:{width:150,height:150,borderRadius:75,borderWidth:5,alignSelf:'center',alignItems:'center',justifyContent:'center',backgroundColor:colors.surface},
  overallValue:{fontSize:46,fontWeight:'900'},
  overallLabel:{color:colors.muted,fontSize:16,fontWeight:'900',letterSpacing:1},
+ overallConfidence:{color:colors.cream,fontSize:14,fontWeight:'800',marginTop:7},
  captureList:{gap:8},
  captureRow:{minHeight:66,borderRadius:radii.md,backgroundColor:colors.surface,padding:10,flexDirection:'row',alignItems:'center',gap:10},
  captureIcon:{width:43,height:43,borderRadius:22,alignItems:'center',justifyContent:'center'},

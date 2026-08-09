@@ -1,4 +1,4 @@
-export type OnboardingStage='discover'|'profile'|'body-scan'|'first-movement'|'first-plan'|'completed';
+export type OnboardingStage='welcome'|'discover'|'checkin'|'body-scan'|'first-movement'|'profile'|'first-plan'|'completed';
 export type ExperienceLevel='none'|'some'|'regular';
 export type StandingCapacity='1-5'|'5-15'|'15-plus';
 export type GuidancePreference='visual'|'audio'|'both';
@@ -15,5 +15,5 @@ export interface BodyTraceObservation{id:string;status:'positive'|'attention'|'n
 export interface BodyTraceResult{frontCaptured:boolean;sideCaptured:boolean;backCaptured:boolean;observations:BodyTraceObservation[];confidence:number;metrics:PracticeMetric[]}
 export interface FirstMovementResult{overallScore?:number;completed:boolean;positiveFeedback?:string;correctionFeedback?:string;metrics:PracticeMetric[];confidence:number}
 export interface FirstJourneyPlan{dailyMinutes:number;movementIds:string[];breathingPracticeId:string;awarenessPracticeId:string;reassessmentDay:number;reasonSummary:string;focuses:string[];recommendedShen:'po'|'zhi'|'hun'|'yi'|'shen'}
-export interface OnboardingProfile{name:string;experienceLevel:ExperienceLevel;practiceIntention:PracticeIntention;bodyFocus:BodyFocus;standingCapacity:StandingCapacity;protectedArea:ProtectedArea;guidancePreference:GuidancePreference;bodyTraceResult?:BodyTraceResult;firstMovementResult?:FirstMovementResult;firstJourneyPlan?:FirstJourneyPlan}
-export interface OnboardingProgress{version:6;stage:OnboardingStage;profile:OnboardingProfile;updatedAt:string}
+export interface OnboardingProfile{name:string;experienceLevel:ExperienceLevel;practiceIntention:PracticeIntention;bodyFocus:BodyFocus;standingCapacity:StandingCapacity;protectedArea:ProtectedArea;guidancePreference:GuidancePreference;bodyState:number;breathState:number;energyState:number;bodyTraceResult?:BodyTraceResult;firstMovementResult?:FirstMovementResult;firstJourneyPlan?:FirstJourneyPlan}
+export interface OnboardingProgress{version:8;stage:OnboardingStage;profile:OnboardingProfile;updatedAt:string}

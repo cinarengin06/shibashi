@@ -1521,7 +1521,7 @@ export default function RitimKapisiOS() {
     else playSelectedShenMusic();
   }
 
-  function completeOnboarding(profile?: OnboardingProfile) {
+  function completeOnboarding(profile?: OnboardingProfile, destination: "home" | "practice" = "home") {
     const recommendedShen = profile?.firstJourneyPlan?.recommendedShen;
     if (recommendedShen && fiveShen.some((shen) => shen.id === recommendedShen)) {
       setSelectedShenId(recommendedShen);
@@ -1533,7 +1533,7 @@ export default function RitimKapisiOS() {
     window.localStorage.setItem("ritim-kapisi-onboarding-complete", "true");
     setExperienceDay(1);
     setOnboardingComplete(true);
-    setActiveTab("home");
+    setActiveTab(destination);
   }
 
   function restartOnboarding() {
@@ -1800,10 +1800,12 @@ export default function RitimKapisiOS() {
           <FiveShenJourneyWeb
             activities={shenActivities}
             onNavigate={setActiveTab}
+            onSelectCoach={setSelectedCoachId}
             onSelectShen={(id) => selectShen(id === "xin" ? "shen" : id)}
             reflections={shenReflections}
             savedSentences={savedMasterSentences}
             selectedShenId={toDomainShenId(selectedShenId)}
+            selectedCoachId={selectedCoachId}
             setActivities={setShenActivities}
             setReflections={setShenReflections}
             setSavedSentences={setSavedMasterSentences}
@@ -5991,8 +5993,6 @@ function PostureResultDashboard({
   selectedShen: (typeof fiveShen)[number];
 }) {
   const [activeView, setActiveView] = useState<PostureView>("front");
-  const [mode, setMode] = useState<PostureRenderMode>("3d");
-  const [isReviewPlaying, setIsReviewPlaying] = useState(false);
   const compositeAnalysis = getPostureReportCompositeAnalysis(report);
   const capture = report.captures[activeView];
   const viewAnalysis = {
@@ -6005,6 +6005,7 @@ function PostureResultDashboard({
   };
   const quality = getPostureQualityCounts(viewAnalysis);
   const activeLabel = activeView === "front" ? "Ön" : activeView === "side" ? "Yan" : "Arka";
+  const confidence = Math.round(Object.values(report.captures).reduce((total, item) => total + item.analysis.confidence, 0) / 3);
 
   return (
     <section className="screen posture-assessment-screen posture-analysis-screen posture-result-dashboard">
@@ -6029,7 +6030,7 @@ function PostureResultDashboard({
         </header>
 
         <div className="posture-analysis-grid posture-result-grid">
-          <PostureScorePanel analysis={compositeAnalysis} ready score={report.score} selectedShen={selectedShen} />
+          <PostureScorePanel analysis={compositeAnalysis} compact confidence={confidence} ready score={report.score} selectedShen={selectedShen} />
 
           <main className="posture-analysis-stage-card posture-result-stage-card">
             <div className="posture-stage-tabs" aria-label="Kayıt görünümü seçimi">
@@ -6044,29 +6045,17 @@ function PostureResultDashboard({
               ))}
             </div>
 
-            <div className={`posture-result-capture-stage posture-result-capture-${mode} ${isReviewPlaying ? "posture-result-review-playing" : ""}`}>
+            <div className="posture-result-capture-stage">
               {capture.imageData ? <img src={capture.imageData} alt={`${activeLabel} postür analizi`} /> : <div className="posture-result-capture-empty">Bu kayda ait kamera görüntüsü bu cihazda saklanmamış.</div>}
-              <div className="posture-result-depth-grid" aria-hidden="true" />
-              <div className="posture-result-center-axis" aria-hidden="true" />
               <div className="posture-quality-legend posture-result-quality-legend">
                 <span><i className="legend-good" /> İyi {quality.good}</span>
                 <span><i className="legend-mid" /> Orta {quality.mid}</span>
                 <span><i className="legend-fix" /> Düzelt {quality.fix}</span>
               </div>
-              <button className="posture-stage-mode-button posture-result-mode-button" onClick={() => setMode(mode === "3d" ? "2d" : "3d")} type="button">
-                {mode.toUpperCase()}
-              </button>
-              <div className="posture-result-view-badge">
-                <strong>{activeLabel} görünüm</strong>
-                <span>{mode === "3d" ? "Derinlik ve eksen katmanı" : "MediaPipe eklem katmanı"}</span>
+              <div className="posture-result-confidence-badge">
+                <strong>Gerçek veri</strong>
+                <span>Genel güven %{confidence}</span>
               </div>
-            </div>
-
-            <div className="posture-result-timeline posture-result-timeline-real">
-              <button onClick={() => setIsReviewPlaying((playing) => !playing)} type="button" aria-label={isReviewPlaying ? "İncelemeyi durdur" : "İncelemeyi oynat"}>
-                {isReviewPlaying ? "Ⅱ" : "▶"}
-              </button>
-              <span>{isReviewPlaying ? "Canlı ölçüm katmanı" : "Kayıtlı ölçüm"}</span>
             </div>
 
             <div className="posture-result-capture-strip" aria-label="Üç açıdan postür kayıtları">
@@ -6084,6 +6073,7 @@ function PostureResultDashboard({
               analysis={viewAnalysis}
               guidanceText={report.summary}
               ready
+              resultMode
               selectedShen={selectedShen}
               view={activeView}
             />
@@ -6186,11 +6176,15 @@ function PostureSavedReportsGallery({
 
 function PostureScorePanel({
   analysis,
+  compact = false,
+  confidence,
   ready,
   score,
   selectedShen,
 }: {
   analysis: ReturnType<typeof analyzePosture>;
+  compact?: boolean;
+  confidence?: number;
   ready: boolean;
   score: number;
   selectedShen: (typeof fiveShen)[number];
@@ -6210,9 +6204,10 @@ function PostureScorePanel({
         </div>
         <p>Genel Skor</p>
         <b>{scoreLabel}</b>
+        {compact && typeof confidence === "number" ? <span className="posture-score-confidence">Genel güven %{confidence}</span> : null}
       </div>
 
-      <div className="posture-score-list">
+      {!compact ? <div className="posture-score-list">
         {metrics.map((metric) => (
           <article className={`posture-score-item posture-score-${getMetricTone(metric.value)}`} key={metric.label}>
             <span className="posture-score-icon">{metric.icon}</span>
@@ -6225,7 +6220,7 @@ function PostureScorePanel({
             <em>{ready ? `${metric.value}/100` : "--"}</em>
           </article>
         ))}
-      </div>
+      </div> : null}
     </aside>
   );
 }
@@ -6234,12 +6229,14 @@ function PostureFeedbackPanel({
   analysis,
   guidanceText,
   ready,
+  resultMode = false,
   selectedShen,
   view,
 }: {
   analysis: ReturnType<typeof analyzePosture>;
   guidanceText: string;
   ready: boolean;
+  resultMode?: boolean;
   selectedShen: (typeof fiveShen)[number];
   view: PostureView;
 }) {
@@ -6249,12 +6246,12 @@ function PostureFeedbackPanel({
   return (
     <aside className="posture-feedback-column">
       <article className="posture-feedback-card posture-feedback-good">
-        <span className="posture-feedback-title">Genel Geri Bildirim</span>
+        <span className="posture-feedback-title">{resultMode ? "Kişiselleştirilmiş Öneriler ve Notlar" : "Genel Geri Bildirim"}</span>
         <p>{ready ? analysis.feedback : guidanceText}</p>
       </article>
 
       <article className="posture-feedback-card posture-feedback-warning">
-        <span className="posture-feedback-title">Düzeltilecek Noktalar</span>
+        <span className="posture-feedback-title">{resultMode ? "Öncelikli Nokta" : "Düzeltilecek Noktalar"}</span>
         <div className="posture-correction-row">
           <div className="posture-mini-body" aria-hidden="true">
             <PostureSkeleton2D analysis={analysis} selectedShen={selectedShen} view={view} />
@@ -6264,7 +6261,7 @@ function PostureFeedbackPanel({
       </article>
 
       <article className="posture-feedback-card posture-feedback-improve">
-        <span className="posture-feedback-title">Önerilen İyileştirmeler</span>
+        <span className="posture-feedback-title">{resultMode ? "Sana Özel Çalışma" : "Önerilen İyileştirmeler"}</span>
         <div className="posture-recommendation-list">
           {recommendations.map((item) => (
             <div className="posture-recommendation" key={item.title}>
@@ -6276,10 +6273,10 @@ function PostureFeedbackPanel({
             </div>
           ))}
         </div>
-        <button className="posture-see-all" type="button">
+        {!resultMode ? <button className="posture-see-all" type="button">
           Tüm Önerileri Gör
           <span aria-hidden="true">›</span>
-        </button>
+        </button> : null}
       </article>
     </aside>
   );
@@ -7305,10 +7302,12 @@ function annularSectorPath(
 function FiveShenJourneyWeb({
   activities,
   onNavigate,
+  onSelectCoach,
   onSelectShen,
   reflections,
   savedSentences,
   selectedShenId,
+  selectedCoachId,
   setActivities,
   setReflections,
   setSavedSentences,
@@ -7316,17 +7315,20 @@ function FiveShenJourneyWeb({
 }: {
   activities: ShenActivity[];
   onNavigate: (tab: TabId) => void;
+  onSelectCoach: (coachId: AiCoach["id"]) => void;
   onSelectShen: (id: DomainShenId) => void;
   reflections: DomainReflectionEntry[];
   savedSentences: SavedMasterSentence[];
   selectedShenId: DomainShenId;
+  selectedCoachId: AiCoach["id"];
   setActivities: Dispatch<SetStateAction<ShenActivity[]>>;
   setReflections: Dispatch<SetStateAction<DomainReflectionEntry[]>>;
   setSavedSentences: Dispatch<SetStateAction<SavedMasterSentence[]>>;
   userName: string;
 }) {
   const [selected, setSelected] = useState<DomainShenId>(selectedShenId);
-  const [view, setView] = useState<"journey" | "detail" | "notebook">("journey");
+  const [view, setView] = useState<"overview" | "journey" | "directions" | "guides" | "detail" | "notebook">("overview");
+  const [directionIndex, setDirectionIndex] = useState(0);
   const [reflectionText, setReflectionText] = useState("");
   const [feeling, setFeeling] = useState("");
   const [sentenceFilter, setSentenceFilter] = useState<"all" | DomainShenId>("all");
@@ -7339,6 +7341,9 @@ function FiveShenJourneyWeb({
   const sentence = getMasterSentence(selected, progress.completedPractices);
   const breathing = breathingPatterns.find((item) => item.id === practice.breathingPatternId);
   const atmosphere = soundAtmospheres.find((item) => item.id === profile.soundAtmosphereId);
+  const activeDirection = baguaDirections[directionIndex] ?? baguaDirections[0];
+  const recommendedDirectionIndex = Math.max(0, shenProfiles.findIndex((item) => item.id === selected)) % baguaDirections.length;
+  const journeyCoach = aiCoaches.find((item) => item.id === selectedCoachId) ?? aiCoaches[0];
   const goals = progressGoals.filter((item) => item.shenId === selected);
   const savedSentenceItems = savedSentences
     .map((record) => ({ record, sentence: masterSentences.find((item) => item.id === record.masterSentenceId) }))
@@ -7381,6 +7386,58 @@ function FiveShenJourneyWeb({
     setReflectionText("");
     setFeeling("");
   };
+
+  if (view === "overview") {
+    return (
+      <section className="screen shen-journey-screen journey-framework-screen">
+        <header className="journey-framework-hero">
+          <span className="eyebrow">Kişisel pusulan</span>
+          <h1>Önce halini tanı. Sonra yönünü seç. Rehberinle yürü.</h1>
+          <p>Üç kadim anlatı, üç ayrı soru. Terimleri bilmek zorunda değilsin; bugün ihtiyacın olan yerden başlayabilirsin.</p>
+        </header>
+        <div className="journey-framework-flow" aria-label="İç durumdan rehberliğe üç aşamalı yolculuk">
+          <button className="journey-framework-card journey-framework-card-shen" onClick={() => setView("journey")} style={{ "--journey-accent": profile.primaryColor } as CSSProperties} type="button">
+            <span className="journey-framework-number">01</span><span className="journey-framework-symbol">神</span>
+            <small>İÇ DÜNYA</small><h2>5 Shen</h2><p>Şu an içimde ne oluyor?</p>
+            <strong>{profile.name} · {profile.shortMeaning}</strong><em>Halini tanı →</em>
+          </button>
+          <span className="journey-framework-connector" aria-hidden="true">→</span>
+          <button className="journey-framework-card journey-framework-card-direction" onClick={() => setView("directions")} style={{ "--journey-accent": activeDirection.accent } as CSSProperties} type="button">
+            <span className="journey-framework-number">02</span><span className="journey-framework-symbol">{activeDirection.trigram}</span>
+            <small>YÖN VE EYLEM</small><h2>8 Yön · Bagua</h2><p>Bugün nereye yönelmeliyim?</p>
+            <strong>{activeDirection.title} · {activeDirection.module}</strong><em>Yönünü seç →</em>
+          </button>
+          <span className="journey-framework-connector" aria-hidden="true">→</span>
+          <button className="journey-framework-card journey-framework-card-guide" onClick={() => setView("guides")} type="button">
+            <span className="journey-framework-number">03</span><span className="journey-framework-symbol">八仙</span>
+            <small>HİKÂYE VE REHBERLİK</small><h2>8 Ölümsüz</h2><p>Bu yolda hangi ses bana iyi gelir?</p>
+            <strong>{journeyCoach.name} · {journeyCoach.role}</strong><em>Rehberini seç →</em>
+          </button>
+        </div>
+        <article className="journey-today-synthesis">
+          <div><span className="eyebrow">Bugünkü birleşimin</span><h2>{profile.name} iç dünyan · {activeDirection.title} yönün · {journeyCoach.name} rehberin</h2></div>
+          <button className="primary-action" onClick={() => onNavigate("practice")} type="button">Bu birleşimle pratiğe başla →</button>
+        </article>
+        <p className="journey-framework-note">Bu üç gelenek tarihsel olarak bire bir eşleştirilmiş tek bir sistem değildir. Shibashi EFE onları iç durum, yön ve rehberlik katmanları olarak birlikte kullanır.</p>
+      </section>
+    );
+  }
+
+  if (view === "directions") {
+    return (
+      <section className="screen shen-journey-screen journey-framework-screen">
+        <header className="shen-journey-header"><div><span className="eyebrow">02 · Yön ve eylem</span><h1>8 Yön · Bagua</h1><p>Sekiz trigram, değişimin sekiz niteliğini anlatır. Bugün harekete geçmek istediğin yönü seç.</p></div><button className="secondary-action" onClick={() => setView("overview")} type="button">Pusulaya dön</button></header>
+        <div className="bagua-layout">
+          <div className="bagua-stage" style={{ "--bagua-accent": activeDirection.accent } as CSSProperties}><BaguaWheel activeDirection={activeDirection} activeIndex={directionIndex} recommendedIndex={recommendedDirectionIndex} onSelect={setDirectionIndex} /></div>
+          <aside className="bagua-insight-panel"><span className="eyebrow">Seçtiğin yön</span><h2>{activeDirection.trigram} {activeDirection.name} · {activeDirection.title}</h2><p>{activeDirection.cue}</p><div className="bagua-energy-strip"><div><span>İç durumun</span><strong>{profile.name}</strong></div><div><span>Çalışma alanın</span><strong>{activeDirection.module}</strong></div></div><button className="bagua-primary-action" onClick={() => onNavigate(activeDirection.tab)} type="button">{activeDirection.module} alanına geç <span>→</span></button><small className="journey-term-note">“8 Yön”, Bagua’nın sekiz trigramından gelir. Beden Haritası ise uygulamanın ayrı çalışma modelidir.</small></aside>
+        </div>
+      </section>
+    );
+  }
+
+  if (view === "guides") {
+    return <section className="screen shen-journey-screen journey-framework-screen"><header className="shen-journey-header"><div><span className="eyebrow">03 · Hikâye ve rehberlik</span><h1>8 Ölümsüz · Sekiz rehberlik tonu</h1><p>Daoist anlatıların sekiz efsanevi figüründen ilham alan rehberler, pratiğin dilini ve ritmini kişiselleştirir.</p></div><button className="secondary-action" onClick={() => setView("overview")} type="button">Pusulaya dön</button></header><JourneyGuideSelector onSelectCoach={onSelectCoach} selectedCoach={journeyCoach} selectedCoachId={selectedCoachId} /><p className="journey-framework-note">Bu karakterler tanı veya kader belirlemez; geleneksel anlatılardan uyarlanmış pratik eşlikçileridir.</p></section>;
+  }
 
   if (view === "notebook") {
     return (
@@ -7440,8 +7497,8 @@ function FiveShenJourneyWeb({
   return (
     <section className="screen shen-journey-screen">
       <header className="shen-journey-header">
-        <div><span className="eyebrow">Beş Shen · İçsel Yolculuk</span><h1>{userName || "Sen"}, gelişimin hangi alanda destek istiyor?</h1><p>{getShenRecommendation([...progresses])}</p></div>
-        <button className="secondary-action" onClick={() => setView("notebook")} type="button">Ustanın Defteri</button>
+        <div><span className="eyebrow">01 · İç dünya</span><h1>{userName || "Sen"}, şu an içinde ne oluyor?</h1><p>5 Shen, zihinsel ve duygusal işleyişini beş ayrı pencereden fark etmene yardım eder. {getShenRecommendation([...progresses])}</p></div>
+        <div className="journey-header-actions"><button className="secondary-action" onClick={() => setView("overview")} type="button">Pusulaya dön</button><button className="secondary-action" onClick={() => setView("notebook")} type="button">Ustanın Defteri</button></div>
       </header>
       <div className="shen-journey-rail">
         {shenProfiles.map((item) => {
@@ -8914,25 +8971,6 @@ function createPostureCapture(
   drawPoseKeypoints(context, mirroredKeypoints, accent, postureDisplayPoints);
   drawPostureQualityKeypoints(context, mirroredKeypoints, analysis);
   context.restore();
-
-  const viewLabel = view === "front" ? "Ön" : view === "side" ? "Yan" : "Arka";
-  const overlayHeight = Math.max(128, height * 0.17);
-  const gradient = context.createLinearGradient(0, height - overlayHeight, 0, height);
-  gradient.addColorStop(0, "rgba(5, 12, 10, 0)");
-  gradient.addColorStop(1, "rgba(5, 12, 10, 0.88)");
-  context.fillStyle = gradient;
-  context.fillRect(0, height - overlayHeight, width, overlayHeight);
-
-  const pad = Math.max(28, width * 0.045);
-  context.fillStyle = "rgba(246, 239, 228, 0.96)";
-  context.font = `800 ${Math.max(24, width * 0.044)}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
-  context.fillText(`${viewLabel} Postür`, pad, height - overlayHeight + pad + 14);
-  context.font = `650 ${Math.max(17, width * 0.028)}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
-  context.fillText(
-    `Hizalanma ${analysis.axisScore} • Omuz ${analysis.shoulderScore} • Kalça ${analysis.hipScore} • ${analysis.sampleCount ?? 1} kare medyan`,
-    pad,
-    height - pad - 26,
-  );
 
   return {
     analysis,

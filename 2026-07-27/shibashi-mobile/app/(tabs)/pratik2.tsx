@@ -18,7 +18,6 @@ import {
   analyzeStaticPractice,
   buildShortFlowReferenceFrames,
   getStaticPractice,
-  interpolatePractice2Reference,
   shortFlowDefinitions,
   shortFlowStepAt,
   staticPracticeDefinitions,
@@ -88,7 +87,7 @@ const links = [
 ] as const;
 const DYNAMIC_PREVIEW_MS = 4500;
 const CAPTURE_THRESHOLD = 70,
-  CAPTURE_HOLD_MS = 1500;
+  CAPTURE_HOLD_MS = 2000;
 const practiceImages: Record<string, number> = {
   "qi-shi": require("../../assets/practice2/static/01-qi-shi.png"),
   "push-forward": require("../../assets/practice2/static/02-push-forward.png"),
@@ -134,7 +133,7 @@ export default function Practice2() {
       [flow],
     ),
     activeFlowStep = shortFlowStepAt(flow, elapsedMs, flowDurationMs),
-    reference = interpolatePractice2Reference(elapsedMs, flowFrames);
+    displayReference = staticReferencePoses[activeFlowStep.practiceId];
   elapsedRef.current = elapsedMs;
   modeRef.current = mode;
   useEffect(() => {
@@ -154,10 +153,6 @@ export default function Practice2() {
   useEffect(() => {
     if (mode === "dynamic" && elapsedMs >= flowDurationMs) setRunning(false);
   }, [elapsedMs, flowDurationMs, mode]);
-  useEffect(() => {
-    if (mode === "static" && elapsedMs >= selectedPractice.holdDurationMs)
-      setRunning(false);
-  }, [elapsedMs, mode, selectedPractice.holdDurationMs]);
   useEffect(() => {
     if (
       mode !== "dynamic" ||
@@ -329,6 +324,158 @@ export default function Practice2() {
       width: event.nativeEvent.layout.width,
       height: event.nativeEvent.layout.height,
     });
+  const leaveStaticCapture = () => {
+    setStarted(false);
+    setRunning(false);
+    setElapsedMs(0);
+    setAnalysis(null);
+    setPose([]);
+    setCaptureState("idle");
+    setHoldProgress(0);
+    matchedAtRef.current = 0;
+    capturedRef.current = false;
+    historyRef.current = [];
+  };
+
+  if (mode === "static" && started) {
+    const score = analysis?.overallScore;
+    const holdSeconds = Math.max(1, Math.ceil((100 - holdProgress) / 50));
+    return (
+      <View style={s.staticLiveRoot}>
+        <CameraView
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          facing="front"
+          mirror
+          active={running}
+          onLayout={layout}
+        />
+        <View pointerEvents="none" style={s.staticLiveShade} />
+        <SafeAreaView edges={["top", "bottom"]} style={s.staticLiveOverlay}>
+          <View style={s.staticLiveTop}>
+            <Pressable onPress={leaveStaticCapture} style={s.staticLiveClose}>
+              <Ionicons name="close" color={colors.cream} size={24} />
+            </Pressable>
+            <View style={s.staticLiveTitleWrap}>
+              <Text style={s.staticLiveEyebrow}>STATİK POZ</Text>
+              <Text style={s.staticLiveTitle}>{selectedPractice.title}</Text>
+            </View>
+          </View>
+
+          <View style={s.staticLiveScore}>
+            <Text style={[s.staticLiveScoreValue, score !== null && score !== undefined && score >= CAPTURE_THRESHOLD && s.staticLiveScoreReady]}>
+              {score === null || score === undefined ? "—" : `${score}%`}
+            </Text>
+            <Text style={s.staticLiveScoreLabel}>UYUM</Text>
+          </View>
+
+          <View style={s.staticLiveReference}>
+            <Text style={s.staticLiveReferenceLabel}>BU POZU YAP</Text>
+            <ImageBackground
+              source={practiceImages[selectedPractice.id]}
+              resizeMode="cover"
+              style={s.staticLiveReferenceImage}
+              imageStyle={s.staticLiveReferenceImageRadius}
+            />
+            <Text style={s.staticLiveReferenceName}>{selectedPractice.title}</Text>
+          </View>
+
+          <View style={[s.staticLiveMessage, captureState === "hold" && s.staticLiveMessageHold, captureState === "saved" && s.staticLiveMessageSaved]}>
+            <View style={s.staticLiveMessageIcon}>
+              <Ionicons
+                name={captureState === "saved" ? "checkmark" : captureState === "hold" ? "camera" : "scan-outline"}
+                color={captureState === "saved" || captureState === "hold" ? colors.ink : colors.gold}
+                size={21}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.staticLiveMessageTitle}>
+                {captureState === "saved"
+                  ? "Fotoğraf galerine kaydedildi"
+                  : captureState === "hold"
+                    ? `${holdSeconds} saniye bekle`
+                    : score === null || score === undefined
+                      ? "Tam bedeninle kadraja gir"
+                      : score >= CAPTURE_THRESHOLD
+                        ? "Pozunu koru"
+                        : "Referans pozuna yaklaş"}
+              </Text>
+              <Text style={s.staticLiveMessageText}>
+                {captureState === "saved"
+                  ? `Skorun %${score ?? 0}. Kayıt tarih ve skoruyla hazır.`
+                  : captureState === "hold"
+                    ? "Kıpırdama; fotoğraf otomatik çekilecek."
+                    : "Yandaki fotoğrafa bak. %70 uyumda çekim kendiliğinden başlar."}
+              </Text>
+            </View>
+            {captureState === "saved" ? (
+              <Pressable onPress={leaveStaticCapture} style={s.staticLiveDone}>
+                <Text style={s.staticLiveDoneText}>Bitti</Text>
+              </Pressable>
+            ) : null}
+            {captureState === "hold" ? (
+              <View style={s.staticLiveHoldTrack}>
+                <View style={[s.staticLiveHoldFill, { width: `${holdProgress}%` }]} />
+              </View>
+            ) : null}
+          </View>
+        </SafeAreaView>
+        <MediaPipePoseBridge ref={bridgeRef} />
+      </View>
+    );
+  }
+
+  if (mode === "static") {
+    return (
+      <View style={s.root}>
+        <SafeAreaView edges={["top"]} style={s.safe}>
+          <View style={s.staticSelectHeader}>
+            <View>
+              <Text style={s.kicker}>STATİK POZ</Text>
+              <Text style={s.title}>Bir fotoğraf seç. Aynısını yap.</Text>
+            </View>
+            <Pressable onPress={() => switchMode("dynamic")} style={s.staticFlowLink}>
+              <Text style={s.staticFlowLinkText}>Kısa akışlar</Text>
+              <Ionicons name="arrow-forward" color={colors.gold} size={17} />
+            </Pressable>
+          </View>
+          <ScrollView contentContainerStyle={s.staticSelectContent} showsVerticalScrollIndicator={false}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.staticPicker}>
+              {staticPracticeDefinitions.map((item, index) => (
+                <Pressable key={item.id} onPress={() => setSelectedStatic(index)} style={[s.staticCard, index === selectedStatic && s.staticCardActive]}>
+                  <ImageBackground source={practiceImages[item.id]} resizeMode="contain" style={s.staticThumb} imageStyle={s.staticThumbImage} />
+                  <View style={s.staticCopy}>
+                    <Text numberOfLines={1} style={s.staticName}>{String(item.order).padStart(2, "0")} · {item.title}</Text>
+                    <Text style={s.staticSub}>{item.englishTitle}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <View style={s.staticHero}>
+              <ImageBackground source={practiceImages[selectedPractice.id]} resizeMode="cover" style={StyleSheet.absoluteFill} imageStyle={s.staticHeroImage} />
+              <View style={s.staticHeroShade} />
+              <View style={s.staticHeroCopy}>
+                <Text style={s.staticHeroLabel}>HEDEF POZ</Text>
+                <Text style={s.staticHeroTitle}>{selectedPractice.title}</Text>
+                <Text style={s.staticHeroText}>{selectedPractice.shortInstruction}</Text>
+              </View>
+            </View>
+            <View style={s.staticHowItWorks}>
+              <Text style={s.staticHowTitle}>Nasıl çalışır?</Text>
+              <Text style={s.staticHowText}>Kamera açılır. Referans fotoğraf yanında kalır. Pozun %70’e ulaştığında iki saniye sabit kalırsın; fotoğraf otomatik çekilip galerine kaydedilir.</Text>
+            </View>
+            <Pressable onPress={begin} style={s.staticStartButton}>
+              <Text style={s.staticStartText}>Kamerayı aç ve pozu yap</Text>
+              <Ionicons name="camera" color={colors.ink} size={20} />
+            </Pressable>
+          </ScrollView>
+        </SafeAreaView>
+        <MediaPipePoseBridge ref={bridgeRef} />
+      </View>
+    );
+  }
+
+  const remainingMode = mode as "static" | "dynamic";
   return (
     <View style={s.root}>
       <SafeAreaView edges={["top"]} style={s.safe}>
@@ -339,7 +486,7 @@ export default function Practice2() {
           </View>
           <View style={s.counter}>
             <Text style={s.counterText}>
-              {mode === "static"
+              {remainingMode === "static"
                 ? `${selectedStatic + 1} / 5`
                 : `${selectedFlow + 1} / 5`}
             </Text>
@@ -348,20 +495,20 @@ export default function Practice2() {
         <View style={s.segment}>
           <Pressable
             onPress={() => switchMode("static")}
-            style={[s.segmentButton, mode === "static" && s.segmentActive]}
+            style={[s.segmentButton, remainingMode === "static" && s.segmentActive]}
           >
             <Text
-              style={[s.segmentText, mode === "static" && s.segmentTextActive]}
+              style={[s.segmentText, remainingMode === "static" && s.segmentTextActive]}
             >
               1 · Statik Pozlar
             </Text>
           </Pressable>
           <Pressable
             onPress={() => switchMode("dynamic")}
-            style={[s.segmentButton, mode === "dynamic" && s.segmentActive]}
+            style={[s.segmentButton, remainingMode === "dynamic" && s.segmentActive]}
           >
             <Text
-              style={[s.segmentText, mode === "dynamic" && s.segmentTextActive]}
+              style={[s.segmentText, remainingMode === "dynamic" && s.segmentTextActive]}
             >
               2 · Kısa Akışlar
             </Text>
@@ -371,7 +518,7 @@ export default function Practice2() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={s.content}
         >
-          {mode === "static" ? (
+          {remainingMode === "static" ? (
             <>
               <ScrollView
                 horizontal
@@ -614,7 +761,7 @@ export default function Practice2() {
                   <View style={s.duoShade} />
                   <Text style={s.paneLabel}>ÖĞRETMEN</Text>
                   <View style={s.duoReferencePose}>
-                    <PoseMini pose={reference.keypoints} />
+                    <PoseMini pose={displayReference} />
                   </View>
                 </View>
                 <View style={s.userPane} onLayout={layout}>
@@ -918,6 +1065,162 @@ const s = StyleSheet.create({
   },
   segmentTextActive: { color: "#10140F" },
   content: { padding: 18, paddingBottom: 118, gap: 12 },
+  staticSelectHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+  staticFlowLink: {
+    alignItems: "center",
+    borderColor: "rgba(198,165,106,.28)",
+    borderRadius: 18,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 6,
+    minHeight: 38,
+    paddingHorizontal: 11,
+  },
+  staticFlowLinkText: { color: colors.gold, fontFamily: fonts.sansStrong, fontSize: 13 },
+  staticSelectContent: { gap: 15, paddingBottom: 130, paddingHorizontal: 18 },
+  staticHero: {
+    aspectRatio: 3 / 4,
+    backgroundColor: "#111713",
+    borderColor: "rgba(198,165,106,.34)",
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: "hidden",
+    position: "relative",
+  },
+  staticHeroImage: { borderRadius: 24 },
+  staticHeroShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(5,8,6,.12)",
+  },
+  staticHeroCopy: {
+    backgroundColor: "rgba(5,10,7,.80)",
+    borderColor: "rgba(255,255,255,.1)",
+    borderRadius: 18,
+    borderWidth: 1,
+    bottom: 14,
+    gap: 4,
+    left: 14,
+    padding: 14,
+    position: "absolute",
+    right: 14,
+  },
+  staticHeroLabel: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 12, letterSpacing: 1.4 },
+  staticHeroTitle: { color: colors.cream, fontFamily: fonts.displayMedium, fontSize: 27 },
+  staticHeroText: { color: colors.muted, fontFamily: fonts.sans, fontSize: 15, lineHeight: 22 },
+  staticHowItWorks: {
+    backgroundColor: "#151B17",
+    borderColor: "rgba(255,255,255,.08)",
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 6,
+    padding: 15,
+  },
+  staticHowTitle: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 16 },
+  staticHowText: { color: colors.muted, fontFamily: fonts.sans, fontSize: 15, lineHeight: 23 },
+  staticStartButton: {
+    alignItems: "center",
+    backgroundColor: colors.gold,
+    borderRadius: 22,
+    flexDirection: "row",
+    gap: 9,
+    justifyContent: "center",
+    minHeight: 58,
+  },
+  staticStartText: { color: colors.ink, fontFamily: fonts.sansBold, fontSize: 16 },
+  staticLiveRoot: { backgroundColor: "#030604", flex: 1 },
+  staticLiveShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(3,7,5,.08)",
+  },
+  staticLiveOverlay: { flex: 1, position: "relative" },
+  staticLiveTop: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 11,
+    paddingHorizontal: 14,
+    paddingTop: 6,
+  },
+  staticLiveClose: {
+    alignItems: "center",
+    backgroundColor: "rgba(5,10,7,.78)",
+    borderColor: "rgba(255,255,255,.12)",
+    borderRadius: 22,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  staticLiveTitleWrap: {
+    backgroundColor: "rgba(5,10,7,.72)",
+    borderRadius: 18,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  staticLiveEyebrow: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 10, letterSpacing: 1.3 },
+  staticLiveTitle: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 16, marginTop: 2 },
+  staticLiveScore: {
+    alignItems: "center",
+    backgroundColor: "rgba(5,10,7,.82)",
+    borderColor: "rgba(255,255,255,.12)",
+    borderRadius: 18,
+    borderWidth: 1,
+    left: 14,
+    minWidth: 82,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    position: "absolute",
+    top: 82,
+  },
+  staticLiveScoreValue: { color: colors.cream, fontFamily: fonts.metricStrong, fontSize: 24 },
+  staticLiveScoreReady: { color: colors.jade },
+  staticLiveScoreLabel: { color: colors.muted, fontFamily: fonts.sansBold, fontSize: 10, letterSpacing: 1.2 },
+  staticLiveReference: {
+    backgroundColor: "rgba(5,10,7,.86)",
+    borderColor: "rgba(216,169,88,.68)",
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 7,
+    padding: 8,
+    position: "absolute",
+    right: 12,
+    top: 82,
+    width: 122,
+  },
+  staticLiveReferenceLabel: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 10, letterSpacing: 1.1, textAlign: "center" },
+  staticLiveReferenceImage: { aspectRatio: 3 / 4, width: "100%" },
+  staticLiveReferenceImageRadius: { borderRadius: 13 },
+  staticLiveReferenceName: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 12, textAlign: "center" },
+  staticLiveMessage: {
+    alignItems: "center",
+    backgroundColor: "rgba(5,10,7,.88)",
+    borderColor: "rgba(255,255,255,.12)",
+    borderRadius: 22,
+    borderWidth: 1,
+    bottom: 98,
+    flexDirection: "row",
+    gap: 11,
+    left: 14,
+    minHeight: 84,
+    overflow: "hidden",
+    padding: 13,
+    position: "absolute",
+    right: 14,
+  },
+  staticLiveMessageHold: { borderColor: "rgba(169,217,119,.72)" },
+  staticLiveMessageSaved: { borderColor: "rgba(169,217,119,.72)" },
+  staticLiveMessageIcon: { alignItems: "center", backgroundColor: colors.gold, borderRadius: 21, height: 42, justifyContent: "center", width: 42 },
+  staticLiveMessageTitle: { color: colors.cream, fontFamily: fonts.sansBold, fontSize: 16 },
+  staticLiveMessageText: { color: colors.muted, fontFamily: fonts.sans, fontSize: 13, lineHeight: 19, marginTop: 3 },
+  staticLiveDone: { backgroundColor: colors.gold, borderRadius: 16, paddingHorizontal: 13, paddingVertical: 10 },
+  staticLiveDoneText: { color: colors.ink, fontFamily: fonts.sansBold, fontSize: 13 },
+  staticLiveHoldTrack: { backgroundColor: "rgba(255,255,255,.12)", bottom: 0, height: 4, left: 0, position: "absolute", right: 0 },
+  staticLiveHoldFill: { backgroundColor: colors.jade, height: "100%" },
   staticPicker: { gap: 8, paddingRight: 8 },
   staticCard: {
     width: 178,

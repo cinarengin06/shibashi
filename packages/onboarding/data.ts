@@ -1,14 +1,16 @@
 import type{OnboardingProfile,OnboardingStage}from'./types';
 
 export const onboardingStages:ReadonlyArray<{id:Exclude<OnboardingStage,'completed'>;label:string;title:string}>=[
- {id:'discover',label:'Tanışalım',title:'Sana nasıl seslenelim?'},
- {id:'profile',label:'Başlangıcın',title:'Hareketle ilişkin nasıl?'},
- {id:'body-scan',label:'Niyetin',title:'Bugün hayatında ne değişsin?'},
- {id:'first-movement',label:'Bedenin',title:'Bedeninde nereye alan açalım?'},
+ {id:'welcome',label:'Hoş geldin',title:'Sana iyi gelecek yolu birlikte bulalım.'},
+ {id:'discover',label:'Tanışalım',title:'Sana nasıl hitap edelim?'},
+ {id:'checkin',label:'Bugün',title:'Bugün nasıl hissediyorsun?'},
+ {id:'body-scan',label:'İhtiyacın',title:'Bugün neye ihtiyacın var?'},
+ {id:'first-movement',label:'Bedenin',title:'Bedeninde en çok nereyle ilgilenmek istersin?'},
+ {id:'profile',label:'Başlangıcın',title:'Sana uygun başlangıç hangisi?'},
  {id:'first-plan',label:'Ritmin',title:'Sana eşlik edecek ritmi bulduk.'},
 ];
 
-export const emptyOnboardingProfile:OnboardingProfile={name:'',experienceLevel:'none',practiceIntention:'calm',bodyFocus:'whole-body',standingCapacity:'5-15',protectedArea:'none',guidancePreference:'both'};
+export const emptyOnboardingProfile:OnboardingProfile={name:'',experienceLevel:'none',practiceIntention:'calm',bodyFocus:'whole-body',standingCapacity:'5-15',protectedArea:'none',guidancePreference:'both',bodyState:50,breathState:50,energyState:50};
 
 export const profileQuestions={
  experience:[{value:'none',label:'Hayır'},{value:'some',label:'Biraz'},{value:'regular',label:'Evet'}],
@@ -30,7 +32,6 @@ export const profileQuestions={
   {value:'whole-body',label:'Bütün beden',note:'Tek bir bölge değil, genel olarak açılmak'},
  ],
 }as const;
-
 export const onboardingShenResults={
  hun:{name:'Hun',mode:'Yenilenme ritmi',title:'Senin ritmin: ileriye açılan hareket.',description:'Merak, canlılık ve yeni bir yön arıyorsun. Pratiklerinde akış, yan beden ve genişleyen hareketler sana iyi eşlik edecek.',symbol:'木'},
  shen:{name:'Shen',mode:'Bütünlük ritmi',title:'Senin ritmin: kendinle yeniden buluşmak.',description:'Bedeninle daha sıcak bir bağ ve günün içinde daha fazla açıklık arıyorsun. Pratiklerinde nefes, göğüs alanı ve yumuşak bütünlük öne çıkacak.',symbol:'火'},

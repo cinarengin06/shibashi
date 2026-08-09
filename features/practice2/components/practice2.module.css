@@ -194,7 +194,7 @@
 .staticPicker img {
   width: 56px;
   height: 56px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 10px;
   filter: saturate(0.55) brightness(0.65);
 }
@@ -330,7 +330,7 @@
   min-height: 690px;
   padding: 18px;
   display: grid;
-  grid-template-columns: minmax(360px, 1fr) minmax(230px, 330px);
+  grid-template-columns: minmax(360px, 1fr) minmax(300px, 420px);
   gap: 18px;
   overflow: hidden;
   border: 1px solid rgba(242, 238, 231, 0.09);
@@ -351,7 +351,7 @@
 .staticModuleActive .staticStage {
   height: min(900px, calc(100vh - 72px));
   min-height: 680px;
-  grid-template-columns: minmax(420px, 1fr) minmax(240px, 330px);
+  grid-template-columns: minmax(420px, 1fr) minmax(320px, 440px);
 }
 .staticModuleActive .staticCameraPortrait {
   height: calc(min(900px, 100vh - 72px) - 36px);
@@ -377,18 +377,10 @@
   gap: 12px;
   overflow: hidden;
 }
-.staticReference small {
-  color: var(--gold);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-}
 .staticReference {
   min-height: 0;
-  padding: 16px;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  gap: 8px;
+  padding: 10px;
+  display: flex;
   overflow: hidden;
   border: 1px solid rgba(198, 165, 106, 0.48);
   border-radius: 22px;
@@ -401,16 +393,9 @@
   height: 100%;
   min-height: 0;
   object-fit: contain;
-  border-radius: 14px;
+  object-position: center;
+  border-radius: 16px;
   background: #0a0f0c;
-}
-.staticReference strong {
-  color: var(--cream);
-  font-size: 17px;
-}
-.staticReference span {
-  color: var(--muted);
-  font-size: 11px;
 }
 .staticScore {
   padding: 15px;
@@ -1038,7 +1023,7 @@
   height: clamp(690px, calc(100vh - 265px), 900px);
   padding: 18px;
   display: grid;
-  grid-template-columns: minmax(360px, 1fr) minmax(260px, 380px);
+  grid-template-columns: minmax(360px, 1fr) minmax(320px, 460px);
   gap: 18px;
   overflow: hidden;
   border: 1px solid rgba(242, 238, 231, .09);
@@ -1070,26 +1055,23 @@
 }
 .dynamicReference {
   min-height: 0;
-  padding: 16px;
+  padding: 10px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
-  gap: 8px;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
   overflow: hidden;
   border: 1px solid rgba(198, 165, 106, .48);
   border-radius: 22px;
   background: rgba(8, 13, 10, .88);
 }
-.dynamicReference > small { color: var(--gold); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
-.dynamicReference > strong { font-size: 17px; }
-.dynamicReference > span { color: var(--muted); font-size: 11px; }
 .dynamicReferenceMedia {
   position: relative;
   min-height: 0;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 16px;
   background: #090e0b;
 }
-.dynamicReferenceMedia > img { width: 100%; height: 100%; object-fit: contain; }
+.dynamicReferenceMedia > img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
 .dynamicReferenceMedia .referenceFigure { left: 10%; top: 4%; width: 80%; height: 88%; }
 .dynamicReference .referenceControls {
   position: relative;
@@ -1189,8 +1171,8 @@
   .metricCompact {
     height: auto;
   }
-  .staticStage { grid-template-columns: minmax(320px, 1fr) minmax(210px, 260px); }
-  .dynamicPracticeStage { grid-template-columns: minmax(320px, 1fr) minmax(220px, 280px); }
+  .staticStage { grid-template-columns: minmax(320px, 1fr) minmax(250px, 330px); }
+  .dynamicPracticeStage { grid-template-columns: minmax(320px, 1fr) minmax(260px, 350px); }
 }
 @media (max-width: 660px) {
   .page {

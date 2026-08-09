@@ -1110,9 +1110,9 @@ const s = StyleSheet.create({
     position: "absolute",
     right: 14,
   },
-  staticHeroLabel: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 12, letterSpacing: 1.4 },
+  staticHeroLabel: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 14, letterSpacing: 1.4 },
   staticHeroTitle: { color: colors.cream, fontFamily: fonts.displayMedium, fontSize: 27 },
-  staticHeroText: { color: colors.muted, fontFamily: fonts.sans, fontSize: 15, lineHeight: 22 },
+  staticHeroText: { color: colors.muted, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24 },
   staticHowItWorks: {
     backgroundColor: "#151B17",
     borderColor: "rgba(255,255,255,.08)",
@@ -1162,7 +1162,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 13,
     paddingVertical: 8,
   },
-  staticLiveEyebrow: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 10, letterSpacing: 1.3 },
+  staticLiveEyebrow: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 13, letterSpacing: 1.3 },
   staticLiveTitle: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 16, marginTop: 2 },
   staticLiveScore: {
     alignItems: "center",
@@ -1179,7 +1179,7 @@ const s = StyleSheet.create({
   },
   staticLiveScoreValue: { color: colors.cream, fontFamily: fonts.metricStrong, fontSize: 24 },
   staticLiveScoreReady: { color: colors.jade },
-  staticLiveScoreLabel: { color: colors.muted, fontFamily: fonts.sansBold, fontSize: 10, letterSpacing: 1.2 },
+  staticLiveScoreLabel: { color: colors.muted, fontFamily: fonts.sansBold, fontSize: 13, letterSpacing: 1.2 },
   staticLiveReference: {
     backgroundColor: "rgba(5,10,7,.86)",
     borderColor: "rgba(216,169,88,.68)",
@@ -1192,10 +1192,10 @@ const s = StyleSheet.create({
     top: 82,
     width: 122,
   },
-  staticLiveReferenceLabel: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 10, letterSpacing: 1.1, textAlign: "center" },
+  staticLiveReferenceLabel: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 13, letterSpacing: 1.1, textAlign: "center" },
   staticLiveReferenceImage: { aspectRatio: 3 / 4, width: "100%" },
   staticLiveReferenceImageRadius: { borderRadius: 13 },
-  staticLiveReferenceName: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 12, textAlign: "center" },
+  staticLiveReferenceName: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 14, textAlign: "center" },
   staticLiveMessage: {
     alignItems: "center",
     backgroundColor: "rgba(5,10,7,.88)",

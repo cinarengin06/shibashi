@@ -3,7 +3,7 @@ import {router,useLocalSearchParams} from 'expo-router';
 import {useEffect,useRef} from 'react';
 import {StyleSheet,Text,View} from 'react-native';
 import {Card,Eyebrow,Metric,PrimaryButton,Screen,Section,Title} from '../components/ui';
-import {colors} from '../constants/theme';
+import {colors,fonts} from '../constants/theme';
 import {getShen} from '../data/fiveShen';
 import {useApp} from '../store/AppStore';
 import {getMasterSentence,masterSentences,toDomainShenId} from '../../../packages/shen-domain';
@@ -26,4 +26,4 @@ export default function Result(){
   <PrimaryButton label="Ana ekrana dön" icon="home" onPress={()=>router.replace('/(tabs)')}/><PrimaryButton label={`${shen.name} günlüğüne not ekle`} icon="book-outline" onPress={()=>router.replace('/(tabs)/journal')}/>
  </Screen>
 }
-const r=StyleSheet.create({medal:{alignItems:'center',paddingTop:18},medalInner:{width:100,height:100,borderRadius:50,borderWidth:1,alignItems:'center',justifyContent:'center'},body:{color:colors.muted,fontSize:16,lineHeight:24},metrics:{flexDirection:'row',gap:8},reward:{flexDirection:'row',justifyContent:'space-around'},rewardValue:{fontSize:19,fontWeight:'800'},muted:{color:colors.muted,fontSize:17,marginTop:3},coach:{color:colors.cream,fontSize:17,lineHeight:28,fontStyle:'italic'},line:{height:1,backgroundColor:colors.line},good:{fontSize:16,fontWeight:'800'},improve:{color:colors.amber,fontSize:16,fontWeight:'800'},task:{flexDirection:'row',alignItems:'center',gap:12},taskLabel:{fontSize:16,fontWeight:'900',letterSpacing:1},taskText:{color:colors.cream,fontSize:16,lineHeight:25,marginTop:3},master:{gap:12},masterText:{color:colors.cream,fontSize:20,lineHeight:29,fontFamily:'Newsreader_600SemiBold'},summary:{color:colors.muted,textAlign:'center',fontSize:16}});
+const r=StyleSheet.create({medal:{alignItems:'center',paddingTop:18},medalInner:{width:100,height:100,borderRadius:50,borderWidth:1,alignItems:'center',justifyContent:'center'},body:{color:colors.muted,fontSize:16,lineHeight:24},metrics:{flexDirection:'row',gap:8},reward:{flexDirection:'row',justifyContent:'space-around'},rewardValue:{fontSize:19,fontWeight:'800'},muted:{color:colors.muted,fontSize:17,marginTop:3},coach:{color:colors.cream,fontSize:17,lineHeight:28,fontStyle:'italic'},line:{height:1,backgroundColor:colors.line},good:{fontSize:16,fontWeight:'800'},improve:{color:colors.amber,fontSize:16,fontWeight:'800'},task:{flexDirection:'row',alignItems:'center',gap:12},taskLabel:{fontSize:16,fontWeight:'900',letterSpacing:1},taskText:{color:colors.cream,fontSize:16,lineHeight:25,marginTop:3},master:{gap:12},masterText:{color:colors.cream,fontSize:20,lineHeight:29,fontFamily:fonts.displayStrong},summary:{color:colors.muted,textAlign:'center',fontSize:16}});

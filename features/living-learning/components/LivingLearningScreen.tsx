@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { WebHeader } from "../../../components/web/WebHeader";
 import { getLivingPractice, livingScenes, type LivingPracticeResult, type LivingSceneId } from "../../../packages/living-learning";
 import { useMovementTimeline } from "../hooks/useMovementTimeline";
 import { CinematicPracticeStage } from "./CinematicPracticeStage";
@@ -33,7 +33,7 @@ export function LivingLearningScreen({ embedded = false }: { embedded?: boolean 
   const home = () => { if (embedded) { setMode("watch"); timeline.reset(); window.scrollTo({ top: 0, behavior: "smooth" }); } else window.location.href = "/"; };
 
   return <main className={`${styles.page} ${embedded ? styles.embedded : ""}`}>
-    {!embedded ? <header className={styles.topbar}><Link href="/" className={styles.topBrand}>SHIBASHI EFE</Link><span>Bir hareketi değil, yaşamdaki karşılığını öğren.</span><Link href="/">Uygulamaya dön</Link></header> : null}
+    {!embedded ? <WebHeader active="learning" /> : null}
     <div className={`${styles.shell} ${mode === "camera" ? styles.cameraShell : ""}`}>
         {mode === "complete" && result ? <PracticeCompletion result={result} onSave={save} onRetry={retry} onHome={home} saved={saved} /> : <>
         {mode === "watch" ? <header className={styles.memoryHero}><div><p className={styles.eyebrow}>Hareket hafızası</p><h1>Formu ezberleme.<br/>Sahneyi hatırla.</h1></div><p>Her Shibashi hareketi gündelik bir ana bağlanır. Ambiyansı hisset, öğretmenin tam bedenini izle, sonra aynı anıyı kendi bedeninde canlandır.</p></header> : null}

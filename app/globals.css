@@ -438,6 +438,94 @@
   .active-tab-home .bottom-nav .nav-tab-posture { display: none; }
 }
 
+/* --------------------------------------------------------------------------
+   Unified web typography
+
+   The editorial home is the visual source of truth. Older feature screens
+   used a mix of Georgia, system fonts and very small one-off type scales.
+   Keep the cinematic home sizing intact while giving every other route the
+   same Inter voice and a predictable, readable hierarchy.
+   -------------------------------------------------------------------------- */
+:root {
+  --type-page-title: clamp(2.2rem, 4vw, 3.8rem);
+  --type-section-title: clamp(1.65rem, 2.5vw, 2.4rem);
+  --type-card-title: 1.2rem;
+  --type-body: 1rem;
+  --type-body-compact: 0.92rem;
+  --type-label: 0.8rem;
+  --type-button: 0.95rem;
+}
+
+.app-shell,
+.app-shell *:not(svg):not(path) {
+  font-family: var(--font-sans), Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+}
+
+.app-shell :where(.screen, main):not(.dojo-home):not(.posture-live-screen):not(.posture-capture-screen):not(.practice-screen):not(.warmup-studio) h1 {
+  font-size: var(--type-page-title) !important;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.04;
+}
+
+.app-shell :where(.screen, main):not(.dojo-home):not(.posture-live-screen):not(.posture-capture-screen):not(.practice-screen):not(.warmup-studio) h2 {
+  font-size: var(--type-section-title) !important;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+
+.app-shell :where(.screen, main):not(.dojo-home):not(.posture-live-screen):not(.posture-capture-screen):not(.practice-screen):not(.warmup-studio) h3 {
+  font-size: var(--type-card-title) !important;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.app-shell :where(.screen, main):not(.dojo-home) :where(p, li, textarea, input, select) {
+  font-size: var(--type-body) !important;
+  line-height: 1.65;
+}
+
+.app-shell :where(.screen, main):not(.dojo-home) button {
+  font-size: var(--type-button) !important;
+  line-height: 1.25;
+}
+
+.app-shell :where(.screen, main):not(.dojo-home) :where(small, .eyebrow) {
+  font-size: var(--type-label) !important;
+  line-height: 1.45;
+}
+
+.app-shell .screen:not(.dojo-home) :where(
+  [class*="kicker"],
+  [class*="eyebrow"],
+  [class*="caption"],
+  [class*="meta"],
+  [class*="label"]
+) {
+  font-size: var(--type-label) !important;
+  line-height: 1.45;
+}
+
+/* Immersive camera screens keep their compact layout, but no functional copy
+   is allowed to fall below the home screen's readable metadata size. */
+.app-shell :where(.posture-live-screen, .posture-capture-screen, .practice-screen, .warmup-studio) :where(p, label, button, small) {
+  font-size: var(--type-label) !important;
+  line-height: 1.4;
+}
+
+@media (max-width: 899px) {
+  :root {
+    --type-page-title: clamp(2rem, 9vw, 2.75rem);
+    --type-section-title: clamp(1.5rem, 6vw, 2rem);
+    --type-card-title: 1.12rem;
+    --type-body: 1rem;
+    --type-body-compact: 0.9rem;
+    --type-label: 0.78rem;
+    --type-button: 0.95rem;
+  }
+}
+
 .app-shell[data-shen="hun"] .dojo-home-hero { animation: shen-hun-arrive 520ms ease-in-out both; }
 .app-shell[data-shen="po"] .dojo-home-hero { animation: shen-po-arrive 360ms ease-in-out both; }
 .app-shell[data-shen="yi"] .dojo-home-hero { animation: shen-yi-arrive 420ms ease-in-out both; }
@@ -18347,6 +18435,61 @@ body { font-size: 16px; line-height: 1.55; }
 
 @media (max-width: 899px) {
   .device-mode-desktop.active-tab-home .device-shell .mobile-frame { padding: 0; }
+}
+
+/* The approved home header is the single desktop header on every destination. */
+@media (min-width: 900px) {
+  .device-mode-desktop .device-shell .bottom-nav {
+    align-items: center;
+    backdrop-filter: blur(18px);
+    background: rgba(5, 11, 8, .96);
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 0;
+    bottom: auto;
+    display: flex !important;
+    gap: clamp(18px, 2.5vw, 38px);
+    height: 80px;
+    justify-content: center;
+    left: 0;
+    max-width: none;
+    padding: 0 28px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    transform: none;
+    width: 100%;
+    z-index: 90;
+  }
+  .device-mode-desktop .bottom-nav .web-nav-brand { margin-right: clamp(28px, 5vw, 86px); }
+  .device-mode-desktop .bottom-nav .web-nav-brand i { border-color: var(--shen-accent); border-right-color: transparent; }
+  .device-mode-desktop .bottom-nav .web-nav-brand span { color: var(--shen-accent); font-size: 16px; letter-spacing: .24em; }
+  .device-mode-desktop .bottom-nav .nav-button {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: rgba(242, 238, 231, .78);
+    font-family: var(--font-sans), Inter, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 80px;
+    padding: 0;
+    width: auto;
+  }
+  .device-mode-desktop .bottom-nav .nav-button strong { display: none; }
+  .device-mode-desktop .bottom-nav .nav-button-active { box-shadow: inset 0 -2px var(--shen-accent); color: var(--shen-accent); }
+  .device-mode-desktop .bottom-nav .nav-tab-posture { display: flex; }
+  .device-mode-desktop .web-nav-account { align-items: center; display: flex; gap: 10px; margin-left: clamp(12px, 2vw, 32px); }
+  .device-mode-desktop .web-nav-account > span,
+  .device-mode-desktop .web-nav-account > button { background: #0b120e; border: 1px solid rgba(255, 255, 255, .07); border-radius: 9px; color: #f2eee7; min-height: 40px; }
+  .device-mode-desktop .web-nav-streak { align-items: center; color: var(--shen-accent) !important; display: flex; font-size: 12px; padding: 0 14px; }
+  .device-mode-desktop .web-nav-bell,
+  .device-mode-desktop .web-nav-music { cursor: pointer; font-size: 18px; width: 42px; }
+  .device-mode-desktop .web-nav-profile { align-items: center; cursor: pointer; display: flex; gap: 9px; padding: 0 12px 0 6px; }
+  .device-mode-desktop .web-nav-profile i { align-items: center; background: linear-gradient(135deg, #d8bf96, #655443); border-radius: 50%; color: #19130c; display: flex; font-size: 12px; font-style: normal; height: 30px; justify-content: center; width: 30px; }
+  .device-mode-desktop .web-nav-profile span,
+  .device-mode-desktop .web-nav-profile b { font-size: 12px; }
+  .device-mode-desktop.active-tab-home .device-shell .bottom-nav .nav-tab-posture { display: flex; }
 }
 
 /* Three distinct traditions, one legible product journey. */

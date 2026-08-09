@@ -18,6 +18,7 @@ type HomeDashboardProps = {
   flows: HomeFlowSummary[];
   level: HomeLevelSummary;
   onFlows: () => void;
+  onFlowSelect: (flowId: string) => void;
   onHistory: () => void;
   onPractice: () => void;
   onPosture: () => void;
@@ -46,8 +47,8 @@ export function HomeDashboard(props: HomeDashboardProps) {
       <ShenSelector activeShen={props.shen} onSelect={props.onSelectShen} options={props.shenOptions} />
       <HomeStatsRow energy={props.energy} level={props.level} streak={props.streak} week={props.week} />
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
-        <TodayPracticeCard flow={props.recommendedFlow} onPractice={props.onPractice} />
-        <ShortFlowsRow flows={props.flows} onFlows={props.onFlows} onPractice={props.onPractice} />
+        <TodayPracticeCard flow={props.recommendedFlow} onFlowSelect={props.onFlowSelect} />
+        <ShortFlowsRow flows={props.flows} onFlowSelect={props.onFlowSelect} onFlows={props.onFlows} />
         <PostureAnalysisCard count={props.postureCount} onPosture={props.onPosture} />
       </section>
       <footer className={styles.footer}>
@@ -60,17 +61,22 @@ export function HomeDashboard(props: HomeDashboardProps) {
   );
 }
 
-function HomeHero({ onHistory, onPractice, onShen, shen, userName }: HomeDashboardProps) {
+function HomeHero({ onHistory, onPractice, onShen, shen, shenOptions, userName }: HomeDashboardProps) {
   return (
     <article className={styles.hero}>
-      <Image
-        alt={`${shen.name} atmosferini taşıyan Shibashi manzarası`}
-        className={styles.heroImage}
-        fill
-        priority
-        sizes="100vw"
-        src={shen.wallpaper}
-      />
+      <div aria-hidden="true" className={styles.heroWallpapers}>
+        {shenOptions.map((option) => (
+          <Image
+            alt=""
+            className={`${styles.heroImage} ${option.id === shen.id ? styles.heroImageActive : ""}`}
+            fill
+            key={option.id}
+            priority
+            sizes="100vw"
+            src={option.wallpaper}
+          />
+        ))}
+      </div>
       <span aria-hidden="true" className={styles.heroShade} />
       <div className={styles.heroCopy}>
         <p className={styles.eyebrow}><span>Hoş geldin,</span> <strong>{userName || "Çınar"}</strong></p>
@@ -178,11 +184,11 @@ function MiniTrend({ values }: { values: number[] }) {
   return <div className={styles.miniTrend} aria-label="Son yedi günün enerji eğilimi">{safeValues.map((value, index) => <span key={index} style={{ height: `${Math.max(6, value)}%` }} />)}</div>;
 }
 
-function TodayPracticeCard({ flow, onPractice }: { flow: HomeFlowSummary; onPractice: () => void }) {
+function TodayPracticeCard({ flow, onFlowSelect }: { flow: HomeFlowSummary; onFlowSelect: (flowId: string) => void }) {
   return (
     <article className={styles.todayCard}>
       <h2>Bugünkü Pratik Önerisi</h2>
-      <button onClick={onPractice} type="button">
+      <button onClick={() => onFlowSelect(flow.id)} type="button">
         <Image alt={`${flow.title} pratiği`} fill sizes="(min-width: 1024px) 28vw, 100vw" src={flow.image} />
         <span className={styles.cardShade} />
         <div className={styles.todayCopy}><small>{flow.durationMinutes} dk · {flow.level}</small><h3>{flow.title}</h3><p>{flow.description}</p></div>
@@ -192,11 +198,11 @@ function TodayPracticeCard({ flow, onPractice }: { flow: HomeFlowSummary; onPrac
   );
 }
 
-function ShortFlowsRow({ flows, onFlows, onPractice }: { flows: HomeFlowSummary[]; onFlows: () => void; onPractice: () => void }) {
+function ShortFlowsRow({ flows, onFlowSelect, onFlows }: { flows: HomeFlowSummary[]; onFlowSelect: (flowId: string) => void; onFlows: () => void }) {
   return (
     <section className={styles.flowsPanel}>
       <header><h2>Kısa Akışlar</h2><button onClick={onFlows} type="button">Tümünü gör <span aria-hidden="true">→</span></button></header>
-      <div className={styles.flowCards}>{flows.slice(0, 5).map((flow) => <button key={flow.id} onClick={onPractice} type="button"><span className={styles.flowImage}><Image alt={flow.title} fill sizes="180px" src={flow.image} /></span><small>{flow.durationMinutes} dk</small><strong>{flow.title}</strong><em>{flow.level} · {flow.focus}</em></button>)}</div>
+      <div className={styles.flowCards}>{flows.slice(0, 5).map((flow) => <button key={flow.id} onClick={() => onFlowSelect(flow.id)} type="button"><span className={styles.flowImage}><Image alt={flow.title} fill sizes="180px" src={flow.image} /></span><small>{flow.durationMinutes} dk</small><strong>{flow.title}</strong><em>{flow.level} · {flow.focus}</em></button>)}</div>
     </section>
   );
 }

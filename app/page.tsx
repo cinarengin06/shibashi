@@ -543,14 +543,14 @@ function getInnerJourneyScene(movementId: number) {
 }
 
 const tabs: { id: TabId; label: string; icon: string }[] = [
-  { id: "home", label: "Ana Sayfa", icon: "◉" },
-  { id: "practice", label: "Pratik", icon: "◎" },
-  { id: "practice2", label: "Akışlar", icon: "⌁" },
-  { id: "posture", label: "Postür", icon: "↕" },
-  { id: "journey", label: "8 Kapı", icon: "☯" },
-  { id: "learning", label: "5 Shen", icon: "✦" },
-  { id: "journal", label: "Program", icon: "◌" },
-  { id: "profile", label: "İlerleme", icon: "☰" },
+  { id: "home", label: "Özel Odam", icon: "◉" },
+  { id: "practice", label: "Yolculuk", icon: "◎" },
+  { id: "practice2", label: "Akışa Gir", icon: "⌁" },
+  { id: "posture", label: "Bedenini Gör", icon: "↕" },
+  { id: "journey", label: "Haritan", icon: "☯" },
+  { id: "learning", label: "Yaşayarak Öğren", icon: "✦" },
+  { id: "journal", label: "Günlüğüm", icon: "◌" },
+  { id: "profile", label: "Gelişimim", icon: "☰" },
 ];
 
 const coachVoiceVersion = "tr-yelda-20260714";
@@ -1168,7 +1168,13 @@ function inferCoachIntent(text:string):CoachIntent {
 export default function RitimKapisiOS() {
   const auth = useShibashiAuth();
   const [activeTab, setActiveTab] = useState<TabId>("home");
+
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab") as TabId | null;
+    if (requestedTab && tabs.some((tab) => tab.id === requestedTab)) setActiveTab(requestedTab);
+  }, []);
   const [introVideoVisible, setIntroVideoVisible] = useState(WEB_INTRO_VIDEO_ENABLED);
+  const [selectedPractice2FlowId, setSelectedPractice2FlowId] = useState<string>();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [experienceDay, setExperienceDay] = useState(1);
   const [posturePreviewLive, setPosturePreviewLive] = useState(false);
@@ -1737,7 +1743,10 @@ export default function RitimKapisiOS() {
             onJournal={() => setActiveTab("journal")}
             onLearning={() => setActiveTab("learning")}
             onPractice={() => setActiveTab("practice")}
-            onPractice2={() => setActiveTab("practice2")}
+            onPractice2={(flowId) => {
+              setSelectedPractice2FlowId(flowId);
+              setActiveTab("practice2");
+            }}
             onPosture={() => setActiveTab("posture")}
             onReset={() => void resetLocalExperience()}
             onSelectShen={selectShen}
@@ -1783,7 +1792,7 @@ export default function RitimKapisiOS() {
             latestPostureReport={postureReports[0]}
           />
         ) : null}
-        {onboardingComplete && activeTab === "practice2" ? <Practice2Screen embedded onSnapshotCaptured={savePracticeSnapshot} selectedShenName={selectedShen.name} /> : null}
+        {onboardingComplete && activeTab === "practice2" ? <Practice2Screen embedded initialFlowId={selectedPractice2FlowId} onSnapshotCaptured={savePracticeSnapshot} selectedShenName={selectedShen.name} /> : null}
         {onboardingComplete && activeTab === "posture" ? (
           <PostureScreen
             onDeletePostureReport={deletePostureReport}
@@ -2150,7 +2159,7 @@ function DojoHomeScreen({
   onJournal: () => void;
   onLearning: () => void;
   onPractice: () => void;
-  onPractice2: () => void;
+  onPractice2: (flowId?: string) => void;
   onPosture: () => void;
   onReset: () => void;
   onSelectShen: (shenId: ShenId) => void;
@@ -2195,6 +2204,7 @@ function DojoHomeScreen({
     flows={flowCards}
     level={{ experience: experienceIntoLevel, level: progress.level, nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
     onFlows={onPractice2}
+    onFlowSelect={onPractice2}
     onHistory={onJournal}
     onPractice={onPractice}
     onPosture={onPosture}

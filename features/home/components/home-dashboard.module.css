@@ -10,7 +10,7 @@
   --card-radius: 14px;
   background:
     linear-gradient(180deg, rgba(5, 11, 8, .93), rgba(5, 11, 8, .985) 58%, #080d0a),
-    var(--home-wallpaper) center top / cover fixed;
+    #080d0a;
   color: var(--text);
   display: grid;
   gap: 14px;
@@ -32,14 +32,22 @@
 .dashboard a { font: inherit; }
 
 .hero {
-  animation: homeFade .8s ease both;
   border-bottom: 1px solid rgba(255, 255, 255, .08);
+  height: 440px;
   min-height: 440px;
   overflow: hidden;
   position: relative;
 }
 
-.heroImage { animation: wallpaperReveal .75s ease both; object-fit: cover; object-position: center 48%; }
+.heroWallpapers { inset: 0; overflow: hidden; position: absolute; }
+.heroImage {
+  object-fit: cover;
+  object-position: 50% 48%;
+  opacity: 0;
+  transform: scale(1.012);
+  transition: opacity 950ms cubic-bezier(.22, .8, .2, 1), transform 1400ms cubic-bezier(.22, .8, .2, 1);
+}
+.heroImageActive { opacity: 1; transform: scale(1); z-index: 1; }
 .heroShade { background: linear-gradient(90deg, rgba(4, 10, 7, .97) 0%, rgba(5, 11, 8, .86) 30%, rgba(5, 11, 8, .18) 63%, rgba(5, 11, 8, .32) 100%), linear-gradient(0deg, rgba(4, 10, 7, .78), transparent 40%); inset: 0; position: absolute; }
 .heroCopy { display: flex; flex-direction: column; justify-content: center; min-height: 440px; padding: 34px 0 36px 8px; position: relative; width: min(47%, 650px); z-index: 2; }
 .eyebrow { align-items: baseline; display: flex; gap: 7px; letter-spacing: .06em; margin: 0 0 15px; }
@@ -170,8 +178,6 @@
 .resetButton:hover { color: #f2eee7; }
 .mobileReset { display: none; }
 
-@keyframes homeFade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes wallpaperReveal { from { opacity: .2; transform: scale(1.018); } to { opacity: 1; transform: scale(1); } }
 @keyframes ambientFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
 @media (max-width: 1180px) {
@@ -186,7 +192,7 @@
 
 @media (max-width: 899px) {
   .dashboard { gap: 12px; padding: 20px 16px 112px; }
-  .hero { border-radius: 18px; display: flex; flex-direction: column; min-height: 0; padding-top: 210px; }
+  .hero { border-radius: 18px; display: flex; flex-direction: column; height: auto; min-height: 0; padding-top: 210px; }
   .heroImage { height: 280px !important; object-position: 62% center; }
   .heroShade { background: linear-gradient(0deg, #09100c 5%, rgba(7, 14, 10, .82) 35%, rgba(5, 10, 7, .12) 85%); height: 330px; }
   .heroCopy { min-height: 0; order: 1; padding: 24px 20px 18px; width: 100%; }
@@ -214,6 +220,10 @@
   .postureCard { grid-column: auto; min-height: 240px; order: 7; }
   .footer { display: none; }
   .mobileReset { background: transparent; border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent); border-radius: 10px; color: var(--gold); display: block; font-size: 12px; margin: 0 auto; min-height: 42px; order: 9; padding: 0 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroImage { transform: none; transition: opacity 180ms linear; }
 }
 
 @media (max-width: 520px) {

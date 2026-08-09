@@ -1,0 +1,70 @@
+.header {
+  align-items: center;
+  backdrop-filter: blur(18px);
+  background: rgba(5, 11, 8, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f2eee7;
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) auto minmax(70px, 1fr);
+  height: 80px;
+  margin-inline: calc(50% - 50vw);
+  padding: 0 clamp(28px, 4vw, 64px);
+  position: sticky;
+  top: 0;
+  width: 100vw;
+  z-index: 90;
+}
+
+.brand {
+  align-items: center;
+  color: #c6a56a;
+  display: flex;
+  font-size: 16px;
+  font-weight: 600;
+  gap: 15px;
+  letter-spacing: 0.24em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand i {
+  border: 3px solid currentColor;
+  border-radius: 50%;
+  border-right-color: transparent;
+  height: 32px;
+  transform: rotate(-18deg);
+  width: 32px;
+}
+
+.header nav { align-items: stretch; display: flex; gap: clamp(18px, 2.5vw, 38px); height: 100%; }
+.header nav a { align-items: center; color: rgba(242, 238, 231, 0.78); display: flex; font-size: 13px; font-weight: 600; position: relative; text-decoration: none; }
+.header nav a::after { background: #c6a56a; bottom: 0; content: ""; height: 2px; left: 0; opacity: 0; position: absolute; right: 0; transform: scaleX(0.3); transition: opacity 180ms ease, transform 180ms ease; }
+.header nav a:hover,
+.header nav a.active { color: #c6a56a; }
+.header nav a.active::after { opacity: 1; transform: scaleX(1); }
+
+.profile {
+  border: 1px solid rgba(198, 165, 106, 0.42);
+  border-radius: 999px;
+  color: #f2eee7;
+  font-size: 13px;
+  font-weight: 600;
+  justify-self: end;
+  min-height: 40px;
+  padding: 10px 17px;
+  text-decoration: none;
+}
+
+@media (max-width: 1050px) {
+  .header { grid-template-columns: auto minmax(0, 1fr); }
+  .brand span,
+  .profile { display: none; }
+  .header nav { justify-content: flex-end; overflow-x: auto; }
+}
+
+@media (max-width: 700px) {
+  .header { height: 68px; padding: 0 14px; }
+  .brand i { height: 28px; width: 28px; }
+  .header nav { gap: 22px; justify-content: flex-start; margin-left: 18px; }
+  .header nav a { flex: 0 0 auto; font-size: 12px; }
+}

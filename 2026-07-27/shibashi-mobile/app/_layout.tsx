@@ -7,13 +7,38 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { Text, TextInput } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { colors } from "../constants/theme";
+import { colors, fonts, type } from "../constants/theme";
 import { AppProvider } from "../store/AppStore";
 import { ShenExperienceProvider } from "../store/ShenExperience";
 import { useApp } from "../store/AppStore";
 
 void SplashScreen.preventAutoHideAsync();
+
+type WithDefaultProps = {
+  defaultProps?: { style?: unknown };
+};
+
+// Keep every route on the same readable Inter baseline as the home screen.
+// Explicit component styles can still promote text to the shared heading tokens.
+const textDefaults = Text as typeof Text & WithDefaultProps;
+textDefaults.defaultProps = {
+  ...textDefaults.defaultProps,
+  style: [
+    textDefaults.defaultProps?.style,
+    { fontFamily: fonts.sans, fontSize: type.bodyCompact },
+  ],
+};
+
+const inputDefaults = TextInput as typeof TextInput & WithDefaultProps;
+inputDefaults.defaultProps = {
+  ...inputDefaults.defaultProps,
+  style: [
+    inputDefaults.defaultProps?.style,
+    { fontFamily: fonts.sans, fontSize: type.bodyCompact },
+  ],
+};
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -21,15 +46,6 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
-    Newsreader_400Regular: Inter_400Regular,
-    Newsreader_500Medium: Inter_500Medium,
-    Newsreader_600SemiBold: Inter_600SemiBold,
-    SourceSans3_400Regular: Inter_400Regular,
-    SourceSans3_500Medium: Inter_500Medium,
-    SourceSans3_600SemiBold: Inter_600SemiBold,
-    SourceSans3_700Bold: Inter_700Bold,
-    Manrope_600SemiBold: Inter_600SemiBold,
-    Manrope_700Bold: Inter_700Bold,
   });
   if (!fontsLoaded) return null;
   return (

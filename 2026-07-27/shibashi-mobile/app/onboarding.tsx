@@ -49,8 +49,8 @@ const timeOptions = [
 const bodyFocusMarkers: Record<BodyFocus, Array<{ height?: number; width?: number; x: number; y: number }>> = {
   "breath-shoulders": [{ x: 35, y: 19 }, { x: 65, y: 19 }, { height: 12, width: 42, x: 50, y: 26 }],
   "hips-sides": [{ x: 38, y: 48 }, { x: 62, y: 48 }],
-  "center-balance": [{ height: 24, width: 22, x: 50, y: 42 }, { height: 7, width: 44, x: 50, y: 88 }],
-  "back-knees-feet": [{ height: 20, width: 30, x: 50, y: 42 }, { x: 39, y: 69 }, { x: 61, y: 69 }, { x: 39, y: 90 }, { x: 61, y: 90 }],
+  "center-balance": [{ height: 22, width: 22, x: 50, y: 43 }, { x: 39, y: 94 }, { x: 61, y: 94 }],
+  "back-knees-feet": [{ height: 30, width: 34, x: 50, y: 36 }],
   "whole-body": [{ height: 88, width: 54, x: 50, y: 49 }],
 };
 
@@ -555,27 +555,33 @@ function BodyStep({
   return (
     <View style={m.bodyStage}>
       <View style={m.bodyFigure}>
-        <Image
-          resizeMode="contain"
-          source={require("../assets/posture/posture-back-translucent.png")}
-          style={m.bodyImage}
-        />
-        {bodyFocusMarkers[value].map((marker, index) => (
-          <View
-            key={`${value}-${index}`}
-            style={[
-              m.bodyGlow,
-              {
-                height: `${marker.height ?? 9}%` as `${number}%`,
-                left: `${marker.x}%` as `${number}%`,
-                top: `${marker.y}%` as `${number}%`,
-                width: `${marker.width ?? 9}%` as `${number}%`,
-              },
-            ]}
-          >
-            <View style={m.bodyGlowCore} />
-          </View>
-        ))}
+        <View style={m.bodyCanvas}>
+          <Image
+            resizeMode="contain"
+            source={require("../assets/posture/posture-back-translucent.png")}
+            style={m.bodyImage}
+          />
+          {bodyFocusMarkers[value].map((marker, index) => {
+            const height = marker.height ?? 9;
+            const width = marker.width ?? 9;
+            return (
+              <View
+                key={`${value}-${index}`}
+                style={[
+                  m.bodyGlow,
+                  {
+                    height: `${height}%` as `${number}%`,
+                    left: `${marker.x - width / 2}%` as `${number}%`,
+                    top: `${marker.y - height / 2}%` as `${number}%`,
+                    width: `${width}%` as `${number}%`,
+                  },
+                ]}
+              >
+                <View style={m.bodyGlowCore} />
+              </View>
+            );
+          })}
+        </View>
       </View>
       <View accessibilityRole="radiogroup" style={m.bodyOptions}>
         {options.map((option) => {
@@ -772,7 +778,7 @@ const m = StyleSheet.create({
   stepText: {
     color: colors.cream,
     fontFamily: fonts.sansBold,
-    fontSize: 12,
+    fontSize: 13,
     minWidth: 48,
     textAlign: "right",
   },
@@ -780,7 +786,7 @@ const m = StyleSheet.create({
   kicker: {
     color: colors.gold,
     fontFamily: fonts.sansBold,
-    fontSize: 12,
+    fontSize: 14,
     letterSpacing: 1.5,
   },
   title: {
@@ -792,8 +798,8 @@ const m = StyleSheet.create({
   body: {
     color: colors.muted,
     fontFamily: fonts.sans,
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: 16,
+    lineHeight: 25,
   },
   welcome: { flex: 1, minHeight: 720 },
   welcomeImage: { height: "100%", width: "100%" },
@@ -866,7 +872,7 @@ const m = StyleSheet.create({
   inputLabel: {
     color: colors.gold,
     fontFamily: fonts.sansBold,
-    fontSize: 11,
+    fontSize: 14,
     letterSpacing: 1.4,
   },
   input: {
@@ -921,7 +927,7 @@ const m = StyleSheet.create({
     width: 26,
   },
   moodEnds: { flexDirection: "row", justifyContent: "space-between" },
-  moodEnd: { color: colors.muted, fontFamily: fonts.sans, fontSize: 12 },
+  moodEnd: { color: colors.muted, fontFamily: fonts.sans, fontSize: 13 },
   options: { gap: 10 },
   option: {
     alignItems: "center",
@@ -963,7 +969,14 @@ const m = StyleSheet.create({
     justifyContent: "center",
     position: "relative",
   },
-  bodyImage: { height: 360, width: "100%" },
+  bodyCanvas: {
+    aspectRatio: 864 / 1821,
+    maxHeight: 360,
+    maxWidth: "100%",
+    position: "relative",
+    width: "100%",
+  },
+  bodyImage: { height: "100%", width: "100%" },
   bodyGlow: {
     alignItems: "center",
     backgroundColor: "rgba(216,169,88,.24)",

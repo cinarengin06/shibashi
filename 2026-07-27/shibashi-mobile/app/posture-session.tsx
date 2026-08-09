@@ -1,6 +1,6 @@
 import {Ionicons} from '@expo/vector-icons';
 import {CameraView,useCameraPermissions} from 'expo-camera';
-import {useAudioPlayer} from 'expo-audio';
+import {useAudioPlayer,type AudioPlayer} from 'expo-audio';
 import * as Speech from 'expo-speech';
 import {router} from 'expo-router';
 import {useEffect,useRef,useState} from 'react';
@@ -32,6 +32,17 @@ const scanCopy:Record<PostureView,{start:string;turn:string;waiting:string}>={
  side:{start:'Şimdi yana dön. Yan duruşun algılandığında üç saniye bekle.',turn:'Şimdi yana dön.',waiting:'Yan görünümünü algılıyorum.'},
  back:{start:'Şimdi arkaya dön. Arka görünüm algılandığında üç saniye bekle.',turn:'Şimdi arkaya dön.',waiting:'Arka görünümünü algılıyorum.'},
 };
+
+function pausePlayerSafely(player:AudioPlayer){
+ try{player.pause()}catch{}
+}
+
+async function restartPlayerSafely(player:AudioPlayer){
+ try{
+  await player.seekTo(0);
+  player.play();
+ }catch{}
+}
 
 export default function PostureSession(){
  const[permission,requestPermission]=useCameraPermissions();
@@ -84,11 +95,14 @@ export default function PostureSession(){
   speakingRef.current=`view-${view}`;
   Speech.stop();
   const player=view==='front'?frontVoice:view==='side'?sideVoice:backVoice;
-  frontVoice.pause();sideVoice.pause();backVoice.pause();
-  void player.seekTo(0).then(()=>player.play());
+  pausePlayerSafely(frontVoice);pausePlayerSafely(sideVoice);pausePlayerSafely(backVoice);
+  void restartPlayerSafely(player);
  },[view,cameraReady,phase,permission?.granted]);
 
- useEffect(()=>()=>{Speech.stop();frontVoice.pause();sideVoice.pause();backVoice.pause();scanSessionRef.current+=1},[]);
+ useEffect(()=>()=>{
+  Speech.stop();
+  scanSessionRef.current+=1;
+ },[]);
 
  useEffect(()=>{
   if(!cameraReady||cameraError||phase!=='scan')return;

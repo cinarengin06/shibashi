@@ -11,7 +11,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { colors } from "../constants/theme";
+import { colors, fonts, type } from "../constants/theme";
 import { GOOGLE_AUTH_UI_ENABLED } from "../constants/features";
 import { useApp } from "../store/AppStore";
 
@@ -129,17 +129,17 @@ const w = StyleSheet.create({
   copy: { position: "absolute", bottom: 58, left: 24, right: 24, gap: 7 },
   eyebrow: {
     color: "#D8C394",
-    fontSize: 16,
-    fontWeight: "900",
+    fontFamily: fonts.sansBold,
+    fontSize: type.label,
     letterSpacing: 1.8,
   },
   title: {
     color: colors.cream,
-    fontFamily: "Newsreader_600SemiBold",
-    fontSize: 34,
-    lineHeight: 38,
+    fontFamily: fonts.displayStrong,
+    fontSize: type.h1,
+    lineHeight: 42,
   },
-  body: { color: colors.muted, fontSize: 16, lineHeight: 24, maxWidth: 340 },
+  body: { color: colors.muted, fontFamily: fonts.sans, fontSize: type.body, lineHeight: 27, maxWidth: 340 },
   skip: {
     position: "absolute",
     right: 18,
@@ -156,8 +156,8 @@ const w = StyleSheet.create({
   },
   skipText: {
     color: "#F3D27A",
-    fontSize: 16,
-    fontWeight: "800",
+    fontFamily: fonts.sansBold,
+    fontSize: type.button,
     letterSpacing: 1.35,
     textTransform: "uppercase",
   },

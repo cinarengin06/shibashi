@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ImageBackground,
   Pressable,
@@ -21,6 +22,10 @@ import { useShenExperience } from "../../store/ShenExperience";
 import { fiveShen } from "../../data/fiveShen";
 import { shenThemes } from "../../../../packages/design-tokens";
 import { ShenId } from "../../types";
+import {
+  ensureSystemNotifications,
+  unreadNotificationCount,
+} from "../../services/notifications/NotificationInbox";
 
 const shenTodayCopy: Record<
   ShenId,
@@ -131,6 +136,21 @@ export default function Today() {
   );
   const hasPracticedToday = todaySessions.length > 0;
   const earnedXp = sessions.reduce((total, item) => total + (item.xp ?? 0), 0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void ensureSystemNotifications({
+        hasPostureReport: postureReports.length > 0,
+        hasSessionToday: todaySessions.length > 0,
+        remindersEnabled: profile.reminders,
+      }).then((items) => {
+        if (active) setUnreadNotifications(unreadNotificationCount(items));
+      });
+      return () => { active = false; };
+    }, [postureReports.length, profile.reminders, todaySessions.length]),
+  );
 
   const startPractice = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
@@ -154,6 +174,19 @@ export default function Today() {
             <Ionicons color="#F28A39" name="flame" size={17} />
             <Text style={s.streakText}>{journeyDay}</Text>
           </View>
+          <Pressable
+            accessibilityLabel={unreadNotifications ? `${unreadNotifications} okunmamış bildirim` : "Bildirimleri aç"}
+            accessibilityRole="button"
+            onPress={() => router.push("/notifications")}
+            style={s.roundAction}
+          >
+            <Ionicons color={personality.light} name="notifications-outline" size={19} />
+            {unreadNotifications ? (
+              <View style={[s.notificationBadge, { backgroundColor: personality.primary }]}>
+                <Text style={[s.notificationBadgeText, { color: personality.buttonInk }]}>{Math.min(9, unreadNotifications)}</Text>
+              </View>
+            ) : null}
+          </Pressable>
           <Pressable
             accessibilityLabel={soundEnabled ? "Müziği kapat" : "Müziği aç"}
             accessibilityRole="button"
@@ -621,6 +654,20 @@ const s = StyleSheet.create({
     justifyContent: "center",
     width: 38,
   },
+  notificationBadge: {
+    alignItems: "center",
+    borderColor: colors.deep,
+    borderRadius: 9,
+    borderWidth: 2,
+    height: 18,
+    justifyContent: "center",
+    minWidth: 18,
+    paddingHorizontal: 3,
+    position: "absolute",
+    right: -4,
+    top: -5,
+  },
+  notificationBadgeText: { fontFamily: fonts.sansBold, fontSize: 9, lineHeight: 11 },
   avatar: {
     alignItems: "center",
     backgroundColor: colors.surface2,

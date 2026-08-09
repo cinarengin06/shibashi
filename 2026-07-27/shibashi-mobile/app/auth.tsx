@@ -2,7 +2,7 @@ import {Ionicons} from '@expo/vector-icons';
 import {router} from 'expo-router';
 import {useEffect,useState} from 'react';
 import {ImageBackground,Pressable,SafeAreaView,StyleSheet,Text,View} from 'react-native';
-import {colors} from '../constants/theme';
+import {colors,fonts,type} from '../constants/theme';
 import {GOOGLE_AUTH_UI_ENABLED} from '../constants/features';
 import {signInWithGoogle,supabaseAuth} from '../services/auth/SupabaseAuth';
 import {useApp} from '../store/AppStore';
@@ -90,22 +90,22 @@ const a=StyleSheet.create({
  card:{backgroundColor:'rgba(7,15,11,.92)',borderColor:'rgba(216,195,148,.28)',borderRadius:28,borderWidth:1,gap:14,maxWidth:460,padding:26,shadowColor:'#000',shadowOffset:{width:0,height:24},shadowOpacity:.55,shadowRadius:38,width:'100%'},
  mark:{alignItems:'center',alignSelf:'center',borderColor:'rgba(216,195,148,.48)',borderRadius:31,borderWidth:1,height:62,justifyContent:'center',width:62},
  markText:{color:'#D8C394',fontSize:31},
- eyebrow:{color:'#D8C394',fontSize:16,fontWeight:'900',letterSpacing:1.8,textAlign:'center'},
- title:{color:colors.cream,fontFamily:'Newsreader_600SemiBold',fontSize:34,lineHeight:38,textAlign:'center'},
- body:{color:colors.muted,fontSize:16,lineHeight:26,textAlign:'center'},
+ eyebrow:{color:'#D8C394',fontFamily:fonts.sansBold,fontSize:type.label,letterSpacing:1.8,textAlign:'center'},
+ title:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:type.h1,lineHeight:42,textAlign:'center'},
+ body:{color:colors.muted,fontFamily:fonts.sans,fontSize:type.body,lineHeight:27,textAlign:'center'},
  mode:{backgroundColor:'rgba(255,255,255,.045)',borderColor:'rgba(255,255,255,.08)',borderRadius:24,borderWidth:1,flexDirection:'row',padding:4},
  modeButton:{alignItems:'center',borderRadius:20,flex:1,justifyContent:'center',minHeight:48},
  modeActive:{backgroundColor:'rgba(126,158,100,.25)'},
- modeText:{color:colors.muted,fontSize:16,fontWeight:'700'},
+ modeText:{color:colors.muted,fontFamily:fonts.sansStrong,fontSize:type.button},
  modeTextActive:{color:colors.cream},
  google:{alignItems:'center',backgroundColor:'#F7F5EF',borderRadius:27,flexDirection:'row',gap:12,justifyContent:'center',minHeight:54,paddingHorizontal:18},
  disabled:{opacity:.58},
  googleMark:{alignItems:'center',height:25,justifyContent:'center',width:25},
  googleLetter:{color:'#4285F4',fontSize:20,fontWeight:'900'},
- googleText:{color:'#151915',fontSize:16,fontWeight:'800'},
+ googleText:{color:'#151915',fontFamily:fonts.sansBold,fontSize:type.button},
  error:{alignItems:'center',backgroundColor:'rgba(161,61,50,.14)',borderColor:'rgba(210,101,86,.3)',borderRadius:13,borderWidth:1,flexDirection:'row',gap:8,padding:11},
- errorText:{color:'#E5A197',flex:1,fontSize:17,lineHeight:27},
+ errorText:{color:'#E5A197',flex:1,fontFamily:fonts.sans,fontSize:type.bodyCompact,lineHeight:25},
  skip:{alignItems:'center',padding:7},
- skipText:{color:colors.muted,fontSize:16,fontWeight:'700'},
- privacy:{color:'rgba(180,187,179,.62)',fontSize:16,lineHeight:15,textAlign:'center'},
+ skipText:{color:colors.muted,fontFamily:fonts.sansStrong,fontSize:type.bodyCompact},
+ privacy:{color:'rgba(180,187,179,.62)',fontFamily:fonts.sans,fontSize:type.small,lineHeight:19,textAlign:'center'},
 });

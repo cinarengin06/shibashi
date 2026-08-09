@@ -7,17 +7,20 @@ import {colors,fonts,radii,spacing,type} from '../constants/theme';
 import {fiveShen} from '../data/fiveShen';
 import {shenBackgrounds} from '../data/shenAssets';
 import {useShenExperience} from '../store/ShenExperience';
-import {shenThemes} from '../../../packages/design-tokens';
+import {useApp} from '../store/AppStore';
+import {shenThemes,visualThemes} from '../../../packages/design-tokens';
 
 export function Screen({children,scroll=true,style}:{children:React.ReactNode;scroll?:boolean;style?:StyleProp<ViewStyle>}){
  const{width}=useWindowDimensions();
  const{shen}=useShenExperience();
+ const{profile}=useApp();
  const personality=shenThemes[shen.id];
+ const visual=visualThemes[profile.visualThemeId??'ink-night'];
  const body=<View style={[s.content,style]}>{children}</View>;
- return <View style={[s.safe,{width,backgroundColor:personality.dark}]}>
+ return <View style={[s.safe,{width,backgroundColor:visual.background}]}>
   <ShenBackdrop opacity={.34}/>
-  <View style={[s.themeWash,{backgroundColor:personality.surface}]}/>
-  <View style={[s.scrim,{backgroundColor:`${personality.dark}D8`}]}/>
+  <View style={[s.themeWash,{backgroundColor:visual.backgroundSecondary}]}/>
+  <View style={[s.scrim,{backgroundColor:visual.background,opacity:.86}]}/>
   <SafeAreaView style={s.safeClear} edges={['top']}>
    {scroll?<ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>{body}</ScrollView>:body}
   </SafeAreaView>
@@ -56,7 +59,8 @@ export function Section({title,action,children}:{title:string;action?:string;chi
 }
 export function Card({children,style}:{children:React.ReactNode;style?:StyleProp<ViewStyle>}){
  const{shen}=useShenExperience();const personality=shenThemes[shen.id];
- return <View style={[s.card,{backgroundColor:personality.surface,borderColor:`${personality.primary}35`,borderRadius:Math.min(28,personality.controlRadius+8)},style]}>{children}</View>;
+ const{profile}=useApp();const visual=visualThemes[profile.visualThemeId??'ink-night'];
+ return <View style={[s.card,{backgroundColor:visual.surface,borderColor:`${personality.primary}42`,borderRadius:Math.min(28,personality.controlRadius+8),shadowColor:visual.navigation},style]}>{children}</View>;
 }
 export function PrimaryButton({label,onPress,icon='arrow-forward',disabled=false}:{label:string;onPress:()=>void;icon?:keyof typeof Ionicons.glyphMap;disabled?:boolean}){
  const{shen}=useShenExperience();

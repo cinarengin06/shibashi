@@ -55,7 +55,7 @@
   border: 1px solid rgba(198, 165, 106, 0.22);
   border-radius: 999px;
   color: var(--cream);
-  font-size: 10px;
+  font-size: 12px;
   text-decoration: none;
 }
 .brand {
@@ -63,7 +63,7 @@
   align-items: center;
   gap: 10px;
   color: var(--cream);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.28em;
   text-decoration: none;
 }
@@ -86,7 +86,7 @@
 .embeddedTitle p {
   margin: 0;
   color: var(--gold);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.18em;
 }
@@ -100,7 +100,7 @@
 }
 .embeddedTitle span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .segment {
   position: relative;
@@ -121,7 +121,7 @@
   background: none;
   color: var(--muted);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 12px;
 }
 .segment .segmentActive {
   background: linear-gradient(135deg, #d2b270, #b99150);
@@ -162,14 +162,14 @@
 .moduleHeader p {
   margin: 6px 0;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 12px;
 }
 .moduleHeader > span {
   padding: 9px 14px;
   border: 1px solid rgba(198, 165, 106, 0.2);
   border-radius: 999px;
   color: #dfc99e;
-  font-size: 9px;
+  font-size: 12px;
 }
 .staticPicker {
   display: grid;
@@ -208,10 +208,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--cream);
-  font-size: 8px;
+  font-size: 12px;
 }
 .staticPicker small {
-  font-size: 7px;
+  font-size: 12px;
 }
 .staticPicker .staticSelected {
   border-color: var(--gold);
@@ -250,7 +250,7 @@
 .flowPicker button small,
 .flowPicker button em {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 12px;
   font-style: normal;
 }
 .flowPicker button em {
@@ -304,7 +304,7 @@
 .storyboard article small {
   bottom: 11px;
   color: #d4d0c7;
-  font-size: 7px;
+  font-size: 12px;
 }
 .storyboard > div {
   padding: 17px;
@@ -314,7 +314,7 @@
 }
 .storyboard > div small {
   color: var(--gold);
-  font-size: 7px;
+  font-size: 12px;
   letter-spacing: 0.12em;
 }
 .storyboard > div strong {
@@ -322,7 +322,7 @@
 }
 .storyboard > div span {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 12px;
   line-height: 1.5;
 }
 .staticStage {
@@ -405,7 +405,7 @@
 }
 .staticScore > span {
   color: var(--cream);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
 }
 .staticHud {
@@ -448,7 +448,7 @@
 }
 .staticTime span {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
 }
 .staticControl {
   position: absolute;
@@ -474,7 +474,7 @@
   backdrop-filter: blur(14px);
 }
 .captureCue strong { font-size: 13px; }
-.captureCue span { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.captureCue span { color: var(--muted); font-size: 12px; line-height: 1.4; }
 .captureCue i {
   position: absolute;
   left: 0;
@@ -545,7 +545,7 @@
 }
 .cameraEmpty span {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 .poseTarget {
   position: absolute;
@@ -565,7 +565,7 @@
 .poseTarget small,
 .stageBadge small {
   color: var(--gold);
-  font-size: 7px;
+  font-size: 12px;
   letter-spacing: 0.13em;
 }
 .poseTarget svg {
@@ -574,7 +574,7 @@
 }
 .poseTarget span {
   color: #d8d9d4;
-  font-size: 8px;
+  font-size: 12px;
 }
 .stageBadge {
   position: absolute;
@@ -595,7 +595,7 @@
 }
 .stageBadge span {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 12px;
 }
 .stageTime,
 .liveTime {
@@ -619,7 +619,7 @@
 .stageTime small,
 .liveTime small {
   color: var(--muted);
-  font-size: 7px;
+  font-size: 12px;
 }
 .scoreRing {
   --score: 0;
@@ -657,7 +657,7 @@
 .scoreRing small {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 7px;
+  font-size: 12px;
 }
 .breathBar {
   position: absolute;
@@ -676,11 +676,11 @@
 }
 .breathBar span {
   color: var(--gold);
-  font-size: 7px;
+  font-size: 12px;
   letter-spacing: 0.13em;
 }
 .breathBar strong {
-  font-size: 9px;
+  font-size: 12px;
 }
 .breathBar i {
   height: 22px;
@@ -738,12 +738,12 @@
   display: grid;
 }
 .metricRow strong {
-  font-size: 8px;
+  font-size: 12px;
 }
 .metricRow small {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 6.5px;
+  font-size: 12px;
 }
 .metricRow > span {
   height: 4px;
@@ -764,7 +764,7 @@
 .metricRow em {
   grid-column: 2/4;
   color: #8d928c;
-  font-size: 7px;
+  font-size: 12px;
   font-style: normal;
 }
 .metricTotal {
@@ -772,7 +772,7 @@
   display: flex;
   justify-content: space-between;
   color: #e8d4aa;
-  font-size: 9px;
+  font-size: 12px;
 }
 .feedbackPanel {
   min-height: 220px;
@@ -783,7 +783,7 @@
   margin: 5px 0;
   display: flex;
   gap: 8px;
-  font-size: 8px;
+  font-size: 12px;
   line-height: 1.5;
 }
 .correction {
@@ -801,7 +801,7 @@
 }
 .master small {
   color: var(--gold);
-  font-size: 7px;
+  font-size: 12px;
   letter-spacing: 0.13em;
 }
 .master strong {
@@ -812,7 +812,7 @@
 }
 .empty {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 12px;
   line-height: 1.5;
 }
 .actions {
@@ -830,7 +830,7 @@
   border-radius: 999px;
   background: #2b2b26;
   color: var(--cream);
-  font-size: 9px;
+  font-size: 12px;
   cursor: pointer;
 }
 .actions > div {
@@ -885,7 +885,7 @@
   left: 12px;
   top: 11px;
   color: var(--gold);
-  font-size: 7px;
+  font-size: 12px;
   letter-spacing: 0.12em;
 }
 .referenceFigure {
@@ -920,12 +920,12 @@
   text-align: right;
 }
 .referenceInfo strong {
-  font-size: 8px;
+  font-size: 12px;
 }
 .referenceInfo small {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 7px;
+  font-size: 12px;
 }
 .referenceControls {
   position: absolute;
@@ -967,7 +967,7 @@
 .phases > p {
   margin: 0 0 9px;
   color: var(--gold);
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.1em;
 }
 .phases > div {
@@ -994,7 +994,7 @@
     sans-serif;
 }
 .phases article small {
-  font-size: 6px;
+  font-size: 12px;
 }
 .phases .phaseActive {
   color: var(--gold);
@@ -1008,7 +1008,7 @@
   display: flex;
   justify-content: space-between;
   color: var(--muted);
-  font-size: 7px;
+  font-size: 12px;
 }
 .phases footer strong {
   color: var(--gold);
@@ -1196,7 +1196,7 @@
   }
   .segment button {
     padding-inline: 8px;
-    font-size: 9px;
+    font-size: 12px;
   }
   .staticStage {
     min-height: 0;

@@ -59,7 +59,7 @@ export const shenThemes = {
     primary: "#91A867",
     dark: "#46543D",
     light: "#D1DAAD",
-    backgroundImage: "/images/shen-river-hun.jpg",
+    backgroundImage: "/images/shen-home/hun-web.webp",
     backgroundOverlay: "rgba(10,15,12,0.78)",
     icon: "leaf-outline",
     shortDescription: "Gün doğumu, yön ve umut",
@@ -81,7 +81,7 @@ export const shenThemes = {
     primary: "#C7BFAE",
     dark: "#6F6A62",
     light: "#EEE8DC",
-    backgroundImage: "/images/shen-river-po.jpg",
+    backgroundImage: "/images/shen-home/yi-web.webp",
     backgroundOverlay: "rgba(10,15,12,0.8)",
     icon: "ellipse-outline",
     shortDescription: "Sis, dikkat ve iç denge",
@@ -103,7 +103,7 @@ export const shenThemes = {
     primary: "#B69268",
     dark: "#604D3C",
     light: "#DCC7AA",
-    backgroundImage: "/images/shen-river-yi.jpg",
+    backgroundImage: "/images/shen-home/po-web.webp",
     backgroundOverlay: "rgba(10,15,12,0.82)",
     icon: "moon-outline",
     shortDescription: "Güven, merkez ve sakin güç",
@@ -125,7 +125,7 @@ export const shenThemes = {
     primary: "#688AA1",
     dark: "#263846",
     light: "#B9D0DA",
-    backgroundImage: "/images/shen-river-zhi.jpg",
+    backgroundImage: "/images/shen-home/zhi-web.webp",
     backgroundOverlay: "rgba(10,15,12,0.82)",
     icon: "water-outline",
     shortDescription: "Derinlik, sessizlik ve içsel irade",
@@ -147,7 +147,7 @@ export const shenThemes = {
     primary: "#D1AE68",
     dark: "#6C5638",
     light: "#F0D9A6",
-    backgroundImage: "/images/shen-river-shen.jpg",
+    backgroundImage: "/images/shen-home/shen-fire-web.webp",
     backgroundOverlay: "rgba(10,15,12,0.8)",
     icon: "heart-outline",
     shortDescription: "Altın ışık, huzur ve birlik",
@@ -166,6 +166,14 @@ export const shenThemes = {
 
 export type SharedShenId = keyof typeof shenThemes;
 
+export const visualThemes = {
+  "ink-night": {id:"ink-night",name:"Mürekkep Gecesi",shortName:"Mürekkep",description:"Siyah mürekkep, kömür yüzeyler ve sıcak altın ışık.",background:"#090C0D",backgroundSecondary:"#111619",surface:"#1B2125",surfaceRaised:"#252C31",navigation:"#070A0B",text:"#F2EEE7",textSecondary:"#A7ADA6",border:"rgba(232,222,205,0.13)",glow:"#C8A56A"},
+  "jade-garden": {id:"jade-garden",name:"Yeşim Bahçesi",shortName:"Yeşim",description:"Derin orman yeşili, yeşim taşları ve dingin krem tonları.",background:"#06100D",backgroundSecondary:"#0B1A15",surface:"#12241C",surfaceRaised:"#1A3127",navigation:"#050D0A",text:"#F0F1E9",textSecondary:"#A5B8AC",border:"rgba(153,193,169,0.16)",glow:"#79B397"},
+  "moon-water": {id:"moon-water",name:"Ay Suyu",shortName:"Ay Suyu",description:"Gece mavisi, ay ışığı ve su gibi sakin gümüş yüzeyler.",background:"#070B14",backgroundSecondary:"#0C1421",surface:"#121E2D",surfaceRaised:"#1A2A3D",navigation:"#050913",text:"#EEF2F5",textSecondary:"#A4B0BF",border:"rgba(151,180,207,0.16)",glow:"#86ABC8"},
+} as const;
+
+export type VisualThemeId = keyof typeof visualThemes;
+
 export const designTokens = {
   palette,
   spacing,
@@ -173,4 +181,5 @@ export const designTokens = {
   motion,
   typography,
   shenThemes,
+  visualThemes,
 } as const;

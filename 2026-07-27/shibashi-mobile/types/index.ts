@@ -1,8 +1,9 @@
 export type Experience='Yeni'|'Biraz deneyimli'|'Düzenli pratik';
 export type ShenId='hun'|'shen'|'yi'|'po'|'zhi';
+export type VisualThemeId='ink-night'|'jade-garden'|'moon-water';
 export interface FiveShenProfile{id:ShenId;name:string;label:string;value:number;note:string;organ:string;bodyMap:string;color:string;color2:string;hero:string;dailyName:string;dailyPrompt:string;recommendation:string;bagua:string;baguaText:string;task:string;mapTitle:string;world:string;essence:string;symbol:string;element:string;practiceId:string}
 import type{FirstJourneyPlan,OnboardingProfile,OnboardingStage}from'../../../packages/onboarding';
-export interface UserProfile{name:string;experience:Experience;dailyGoal:number;reminders:boolean;onboardingDone:boolean;onboardingVersion:number;selectedShenId:ShenId;soundEnabled:boolean;authUserId?:string;authEmail?:string;avatarUrl?:string;onboardingCheckin?:{body:number;breath:number;energy:number;createdAt:string};onboardingStage?:OnboardingStage;onboardingProfile?:OnboardingProfile;firstJourneyPlan?:FirstJourneyPlan}
+export interface UserProfile{name:string;experience:Experience;dailyGoal:number;reminders:boolean;onboardingDone:boolean;onboardingVersion:number;selectedShenId:ShenId;visualThemeId:VisualThemeId;soundEnabled:boolean;authUserId?:string;authEmail?:string;avatarUrl?:string;onboardingCheckin?:{body:number;breath:number;energy:number;createdAt:string};onboardingStage?:OnboardingStage;onboardingProfile?:OnboardingProfile;firstJourneyPlan?:FirstJourneyPlan}
 export interface ShibashiMovement{id:string;order:number;name:string;englishName:string;duration:number;difficulty:'Başlangıç'|'Orta';focus:string;gate:number;description:string;steps:string[];breath:string;mistakes:string[]}
 export interface Practice{id:string;title:string;duration:number;focus:string;movementIds:string[];locked?:boolean}
 export interface PoseFeedback{postureScore:number;balanceScore:number;flowScore:number;corrections:string[]}

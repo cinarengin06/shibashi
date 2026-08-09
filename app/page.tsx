@@ -14,7 +14,7 @@ import { getStaticPractice, shortFlowDefinitions } from "@/packages/practice2";
 import { ShibashiAuthGate } from "@/components/shibashi-auth-gate";
 import {getBrowserSyncCode,setBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
 import { useShibashiAuth } from "@/lib/supabase-auth";
-import { shenThemes } from "@/packages/design-tokens";
+import { shenThemes, visualThemes, type VisualThemeId } from "@/packages/design-tokens";
 import { getJourneyDay } from "@/packages/experience-design";
 import type { OnboardingProfile } from "@/packages/onboarding";
 import {
@@ -567,7 +567,7 @@ const fiveShen = [
     point: { x: 41, y: 49 },
     color: shenThemes.hun.primary,
     color2: shenThemes.hun.dark,
-    image: "/images/shen-river-hun.jpg",
+    image: "/images/shen-home/hun-web.webp",
     music: "/videos/shen-music-hun.mp4",
     tone: 196,
     hero: "Vizyonunu genişlet, hareketi büyüyen ormana bağla.",
@@ -600,7 +600,7 @@ const fiveShen = [
     point: { x: 50, y: 38 },
     color: shenThemes.shen.primary,
     color2: shenThemes.shen.dark,
-    image: "/images/shen-river-shen.jpg",
+    image: "/images/shen-home/shen-fire-web.webp",
     music: "/videos/shen-music-shen.mp4",
     tone: 256,
     hero: "Kalpteki ışığı aç, neşeyi sakin bilinçle taşı.",
@@ -633,7 +633,7 @@ const fiveShen = [
     point: { x: 50, y: 55 },
     color: shenThemes.yi.primary,
     color2: shenThemes.yi.dark,
-    image: "/images/shen-river-po.jpg",
+    image: "/images/shen-home/yi-web.webp",
     music: "/videos/shen-music-yi.mp4",
     tone: 220,
     hero: "Merkezini kur, ritmi sade ve kararlı tut.",
@@ -666,7 +666,7 @@ const fiveShen = [
     point: { x: 59, y: 42 },
     color: shenThemes.po.primary,
     color2: shenThemes.po.dark,
-    image: "/images/shen-river-yi.jpg",
+    image: "/images/shen-home/po-web.webp",
     music: "/videos/shen-music-po.mp4",
     tone: 174,
     hero: "Bedenin duyumunu dinle, bırakış göl gibi yayılsın.",
@@ -699,7 +699,7 @@ const fiveShen = [
     point: { x: 50, y: 72 },
     color: shenThemes.zhi.primary,
     color2: shenThemes.zhi.dark,
-    image: "/images/shen-river-zhi.jpg",
+    image: "/images/shen-home/zhi-web.webp",
     music: "/videos/shen-music-zhi.mp4",
     tone: 146,
     hero: "Derine köklen, iradeyi sessiz süreklilikle taşı.",
@@ -1180,6 +1180,7 @@ export default function RitimKapisiOS() {
   const [posturePreviewLive, setPosturePreviewLive] = useState(false);
   const [userName, setUserName] = useState("");
   const [selectedShenId, setSelectedShenId] = useState<ShenId>("shen");
+  const [visualThemeId, setVisualThemeId] = useState<VisualThemeId>("ink-night");
   const [selectedCoachId, setSelectedCoachId] = useState<AiCoach["id"]>("he");
   const [soundState, setSoundState] = useState<"kapalı" | "açık">("kapalı");
   const [selectedMovement, setSelectedMovement] = useState(0);
@@ -1254,6 +1255,8 @@ export default function RitimKapisiOS() {
     if (savedShenId && fiveShen.some((shen) => shen.id === savedShenId)) {
       setSelectedShenId(savedShenId);
     }
+    const savedVisualThemeId = window.localStorage.getItem("shibashi-visual-theme") as VisualThemeId | null;
+    if (savedVisualThemeId && savedVisualThemeId in visualThemes) setVisualThemeId(savedVisualThemeId);
     const savedCoachId = window.localStorage.getItem("ritim-kapisi-selected-coach") as AiCoach["id"] | null;
     if (savedCoachId && aiCoaches.some((coach) => coach.id === savedCoachId)) {
       setSelectedCoachId(savedCoachId);
@@ -1334,6 +1337,7 @@ export default function RitimKapisiOS() {
         name: userName,
         selectedCoachId,
         selectedShenId,
+        visualThemeId,
       },
       history: { sessions: practiceGallery as unknown as SyncRecord[], entries: [], postureReports: postureReports as unknown as SyncRecord[] },
       journey: { completedStories: [], shenActivities: shenActivities as unknown as SyncRecord[], reflections: shenReflections as unknown as SyncRecord[], savedMasterSentences: savedMasterSentences as unknown as SyncRecord[] },
@@ -1342,9 +1346,11 @@ export default function RitimKapisiOS() {
   }
 
   function applyWebSyncPayload(payload:ShibashiSyncPayload) {
-    const profile = payload.profile as {name?:string;selectedShenId?:ShenId;selectedCoachId?:AiCoach["id"]};
+    const profile = payload.profile as {name?:string;selectedShenId?:ShenId;visualThemeId?:VisualThemeId;selectedCoachId?:AiCoach["id"]};
     if(typeof profile.name==="string")setUserName(profile.name);
     if(profile.selectedShenId&&fiveShen.some(item=>item.id===profile.selectedShenId))setSelectedShenId(profile.selectedShenId);
+    const savedVisualTheme=window.localStorage.getItem("shibashi-visual-theme");
+    if(!savedVisualTheme&&profile.visualThemeId&&profile.visualThemeId in visualThemes){setVisualThemeId(profile.visualThemeId);window.localStorage.setItem("shibashi-visual-theme",profile.visualThemeId)}
     if(profile.selectedCoachId&&aiCoaches.some(item=>item.id===profile.selectedCoachId))setSelectedCoachId(profile.selectedCoachId);
     const nextGallery=payload.history.sessions.map(record=>toWebPracticeSnapshot(record)).filter((record):record is PracticeSnapshot=>Boolean(record));
     const nextReports=payload.history.postureReports.map(record=>toWebPostureReport(record)).filter((record):record is PostureReport=>Boolean(record));
@@ -1382,7 +1388,7 @@ export default function RitimKapisiOS() {
     if(syncTimerRef.current)clearTimeout(syncTimerRef.current);
     syncTimerRef.current=setTimeout(()=>void syncWebNow(),1400);
     return()=>{if(syncTimerRef.current)clearTimeout(syncTimerRef.current)};
-  },[syncReady,syncCode,userName,selectedShenId,selectedCoachId,practiceGallery,postureReports,shenActivities,shenReflections,savedMasterSentences,auth.user?.id]);
+  },[syncReady,syncCode,userName,selectedShenId,visualThemeId,selectedCoachId,practiceGallery,postureReports,shenActivities,shenReflections,savedMasterSentences,auth.user?.id]);
 
   useEffect(() => {
     const retry=()=>void syncWebNow();
@@ -1500,6 +1506,11 @@ export default function RitimKapisiOS() {
     if ((soundState === "açık" || !musicExplicitlyMuted) && nextShen) {
       void startShenMusic(nextShen);
     }
+  }
+
+  function selectVisualTheme(themeId: VisualThemeId) {
+    setVisualThemeId(themeId);
+    window.localStorage.setItem("shibashi-visual-theme", themeId);
   }
 
   function selectCoach(coachId: AiCoach["id"]) {
@@ -1684,6 +1695,7 @@ export default function RitimKapisiOS() {
     <main
       className={`app-shell shen-theme-${selectedShen.id} device-mode-desktop active-tab-${activeTab}`}
       data-shen={selectedShen.id}
+      data-visual-theme={visualThemeId}
       style={{ "--shen-accent": selectedShen.color, "--shen-accent-2": selectedShen.color2 } as CSSProperties}
     >
       <div aria-hidden="true" className="shen-image-stack shen-app-background">
@@ -1838,12 +1850,14 @@ export default function RitimKapisiOS() {
             onConnectSyncCode={connectWebSyncCode}
             onRestartOnboarding={restartOnboarding}
             onSelectShen={selectShen}
+            onSelectVisualTheme={selectVisualTheme}
             onSignOut={auth.user ? () => void auth.signOut() : undefined}
             onToggleMusic={soundState === "açık" ? stopShenMusic : playSelectedShenMusic}
             onSyncNow={()=>void syncWebNow()}
             postureReports={postureReports}
             selectedShen={selectedShen}
             selectedShenId={selectedShenId}
+            visualThemeId={visualThemeId}
             syncCode={syncCode}
             syncMessage={syncMessage}
             syncStatus={syncStatus}
@@ -8061,12 +8075,14 @@ function ProfileScreen({
   onConnectSyncCode,
   onRestartOnboarding,
   onSelectShen,
+  onSelectVisualTheme,
   onSignOut,
   onToggleMusic,
   onSyncNow,
   postureReports,
   selectedShen,
   selectedShenId,
+  visualThemeId,
   syncCode,
   syncMessage,
   syncStatus,
@@ -8078,12 +8094,14 @@ function ProfileScreen({
   onConnectSyncCode: (code:string) => boolean;
   onRestartOnboarding: () => void;
   onSelectShen: (shen: ShenId) => void;
+  onSelectVisualTheme: (theme: VisualThemeId) => void;
   onSignOut?: () => void;
   onToggleMusic: () => void;
   onSyncNow: () => void;
   postureReports: PostureReport[];
   selectedShen: (typeof fiveShen)[number];
   selectedShenId: ShenId;
+  visualThemeId: VisualThemeId;
   syncCode: string;
   syncMessage?: string;
   syncStatus: SyncStatus;
@@ -8184,6 +8202,33 @@ function ProfileScreen({
               <span>{shen.symbol}</span>
               <strong>{shen.dailyName.replace(" Modu", "")}</strong>
               <small>{shen.name}</small>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="glass-card profile-theme-settings">
+        <div className="section-heading" style={{ margin: 0 }}>
+          <div>
+            <span className="eyebrow">Görünüm</span>
+            <h2>Uygulama temanı seç</h2>
+          </div>
+          <span>{visualThemes[visualThemeId].name}</span>
+        </div>
+        <p>Tema bütün sayfaların zeminini, kartlarını, navigasyonunu ve ışık karakterini değiştirir. Günlük Shen rengin ayrı olarak yaşamaya devam eder.</p>
+        <div className="profile-theme-grid" role="radiogroup" aria-label="Uygulama teması">
+          {Object.values(visualThemes).map((theme) => (
+            <button
+              aria-checked={visualThemeId === theme.id}
+              className={visualThemeId === theme.id ? "profile-theme-active" : ""}
+              key={theme.id}
+              onClick={() => onSelectVisualTheme(theme.id)}
+              role="radio"
+              style={{"--theme-preview-bg":theme.background,"--theme-preview-surface":theme.surfaceRaised,"--theme-preview-glow":theme.glow} as CSSProperties}
+              type="button"
+            >
+              <i aria-hidden="true"><b/><b/><b/></i>
+              <span><strong>{theme.name}</strong><small>{theme.description}</small></span>
+              <em aria-hidden="true">{visualThemeId === theme.id ? "✓" : ""}</em>
             </button>
           ))}
         </div>

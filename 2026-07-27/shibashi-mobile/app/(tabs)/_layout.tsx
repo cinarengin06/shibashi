@@ -2,16 +2,20 @@ import {Ionicons} from '@expo/vector-icons';
 import {Tabs} from 'expo-router';
 import {colors,fonts} from '../../constants/theme';
 import {useShenExperience} from '../../store/ShenExperience';
+import {useApp} from '../../store/AppStore';
+import {visualThemes} from '../../../../packages/design-tokens';
 
 const icons:Record<string,keyof typeof Ionicons.glyphMap>={index:'sunny-outline',journey:'compass-outline',practice:'play-circle',pratik2:'analytics-outline',journal:'book-outline',profile:'person-outline'};
 
 export default function TabLayout(){
  const{shen}=useShenExperience();
+ const{profile}=useApp();
+ const visual=visualThemes[profile.visualThemeId??'ink-night'];
  return <Tabs screenOptions={({route})=>({
   headerShown:false,
   tabBarActiveTintColor:shen.color,
-  tabBarInactiveTintColor:colors.muted,
-  tabBarStyle:{position:'absolute',height:84,paddingTop:8,paddingBottom:12,backgroundColor:colors.deep,borderTopColor:colors.line,borderTopWidth:1},
+  tabBarInactiveTintColor:visual.textSecondary,
+  tabBarStyle:{position:'absolute',height:84,paddingTop:8,paddingBottom:12,backgroundColor:visual.navigation,borderTopColor:visual.border,borderTopWidth:1},
   tabBarItemStyle:{minHeight:56},
   tabBarLabelStyle:{fontSize:13,fontFamily:fonts.sansStrong},
   tabBarIcon:({color})=><Ionicons name={icons[route.name]} size={24} color={color}/>,

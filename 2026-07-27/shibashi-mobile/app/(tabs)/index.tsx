@@ -623,8 +623,8 @@ const s = StyleSheet.create({
   brandSub: {
     color: colors.gold,
     fontFamily: fonts.sansBold,
-    fontSize: 10,
-    letterSpacing: 5,
+    fontSize: 13,
+    letterSpacing: 3.2,
     textAlign: "center",
   },
   headerActions: { alignItems: "center", flexDirection: "row", gap: 8 },
@@ -657,17 +657,17 @@ const s = StyleSheet.create({
   notificationBadge: {
     alignItems: "center",
     borderColor: colors.deep,
-    borderRadius: 9,
+    borderRadius: 11,
     borderWidth: 2,
-    height: 18,
+    height: 22,
     justifyContent: "center",
-    minWidth: 18,
+    minWidth: 22,
     paddingHorizontal: 3,
     position: "absolute",
     right: -4,
     top: -5,
   },
-  notificationBadgeText: { fontFamily: fonts.sansBold, fontSize: 9, lineHeight: 11 },
+  notificationBadgeText: { fontFamily: fonts.sansBold, fontSize: 13, lineHeight: 15 },
   avatar: {
     alignItems: "center",
     backgroundColor: colors.surface2,
@@ -803,7 +803,7 @@ const s = StyleSheet.create({
   todayShenLabel: {
     color: colors.muted,
     fontFamily: fonts.sansBold,
-    fontSize: 10,
+    fontSize: 13,
     letterSpacing: 1,
   },
   todayShenName: { fontFamily: fonts.displayMedium, fontSize: 17 },
@@ -937,7 +937,7 @@ const s = StyleSheet.create({
   portalSpace: { flex: 1 },
   portalLabel: {
     fontFamily: fonts.sansBold,
-    fontSize: 11,
+    fontSize: 13,
     letterSpacing: 0.85,
   },
   portalTitle: {

@@ -183,7 +183,7 @@
 .device-mode-desktop .nav-button {
   border-radius: 13px;
   color: var(--ink-soft);
-  font-size: 0.62rem;
+  font-size: 0.75rem;
 }
 
 .device-mode-desktop .nav-button-active {

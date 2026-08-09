@@ -13,6 +13,7 @@ import { colors, fonts, type } from "../constants/theme";
 import { AppProvider } from "../store/AppStore";
 import { ShenExperienceProvider } from "../store/ShenExperience";
 import { useApp } from "../store/AppStore";
+import { visualThemes } from "../../../packages/design-tokens";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -58,7 +59,8 @@ export default function RootLayout() {
 }
 
 function BootContent() {
-  const { ready } = useApp();
+  const { ready, profile } = useApp();
+  const visualTheme = visualThemes[profile.visualThemeId ?? "ink-night"];
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
@@ -69,7 +71,7 @@ function BootContent() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.ink },
+          contentStyle: { backgroundColor: visualTheme.background },
           animation: "fade",
         }}
       />

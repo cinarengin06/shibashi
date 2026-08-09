@@ -39,7 +39,7 @@
 
 .sceneContext {
   color: rgba(246, 239, 228, 0.46);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.09em;
   margin: 0 0 12px;
@@ -51,7 +51,7 @@
   border: 1px solid rgba(255, 244, 223, 0.16);
   border-radius: 999px;
   color: rgba(246, 239, 228, 0.82);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   left: 24px;
   padding: 8px 11px;
@@ -74,8 +74,8 @@
 
 .sceneTime > span { color: #f3cf8b; font-size: 1.2rem; }
 .sceneTime div { display: grid; gap: 1px; }
-.sceneTime strong { color: #f6efe4; font-size: .72rem; }
-.sceneTime small { color: rgba(246, 239, 228, .56); font-size: .62rem; }
+.sceneTime strong { color: #f6efe4; font-size: 0.75rem; }
+.sceneTime small { color: rgba(246, 239, 228, .56); font-size: 0.75rem; }
 
 .visualCopy {
   bottom: 32px;
@@ -128,7 +128,7 @@
   border: 1px solid rgba(255, 244, 223, .14);
   border-radius: 999px;
   color: rgba(246, 239, 228, .72);
-  font-size: .62rem;
+  font-size: 0.75rem;
   font-weight: 800;
   padding: 6px 9px;
 }
@@ -174,7 +174,7 @@
 .instructionNumber,
 .modelLabel small {
   color: rgba(246, 239, 228, 0.45);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -291,7 +291,7 @@
 
 .modelSceneCaption {
   color: rgba(246, 239, 228, .56);
-  font-size: .62rem;
+  font-size: 0.75rem;
   font-weight: 820;
   left: 20px;
   letter-spacing: .08em;
@@ -363,14 +363,14 @@
 
 .instructionPanel { display: grid; gap: 12px; padding: 20px; }
 .stepMarker { align-items: center; display: flex; gap: 7px; margin-bottom: 4px; }
-.stepMarker span { align-items: center; background: rgba(233, 201, 121, 0.14); border: 1px solid rgba(233, 201, 121, 0.35); border-radius: 50%; color: #f5daa1; display: flex; font-size: 0.68rem; font-weight: 900; height: 25px; justify-content: center; width: 25px; }
+.stepMarker span { align-items: center; background: rgba(233, 201, 121, 0.14); border: 1px solid rgba(233, 201, 121, 0.35); border-radius: 50%; color: #f5daa1; display: flex; font-size: 0.75rem; font-weight: 900; height: 25px; justify-content: center; width: 25px; }
 .stepMarker i { background: rgba(233, 201, 121, 0.28); height: 1px; width: 25px; }
 .instructionBlock { align-items: start; display: grid; gap: 10px; grid-template-columns: 30px minmax(0, 1fr); padding: 10px 0; }
 .instructionNumber { align-items: center; background: rgba(140, 207, 178, 0.1); border: 1px solid rgba(140, 207, 178, 0.25); border-radius: 50%; color: #bce9d5; display: flex; height: 28px; justify-content: center; letter-spacing: 0; width: 28px; }
 .instructionBlock strong { color: #f6efe4; font-size: 0.82rem; }
-.instructionBlock p { color: rgba(246, 239, 228, 0.54); font-size: 0.72rem; line-height: 1.4; margin: 4px 0 0; }
+.instructionBlock p { color: rgba(246, 239, 228, 0.54); font-size: 0.75rem; line-height: 1.4; margin: 4px 0 0; }
 .practicePrompt { background: rgba(233, 201, 121, 0.09); border: 1px solid rgba(233, 201, 121, 0.25); border-radius: 17px; display: grid; gap: 5px; margin-top: auto; padding: 14px; }
-.practicePrompt span { color: #e9c979; font-size: 0.68rem; font-weight: 850; }
+.practicePrompt span { color: #e9c979; font-size: 0.75rem; font-weight: 850; }
 .practicePrompt strong { color: #f6efe4; font-size: 0.98rem; }
 .practicePrompt button { margin-top: 6px; min-height: 42px; }
 .practicePrompt button:disabled { cursor: wait; opacity: .7; }

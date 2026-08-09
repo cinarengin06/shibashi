@@ -828,8 +828,8 @@ const m = StyleSheet.create({
   brandSub: {
     color: colors.gold,
     fontFamily: fonts.sansBold,
-    fontSize: 9,
-    letterSpacing: 5,
+    fontSize: 13,
+    letterSpacing: 3.2,
     textAlign: "center",
   },
   welcomeSpace: { flex: 1 },

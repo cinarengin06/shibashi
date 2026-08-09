@@ -50,7 +50,7 @@ type State=PersistedState&{
  reset:()=>void;
 };
 
-const initialProfile:UserProfile={name:'Gezgin',experience:'Yeni',dailyGoal:10,reminders:true,onboardingDone:false,onboardingVersion:0,selectedShenId:'shen',soundEnabled:true};
+const initialProfile:UserProfile={name:'Gezgin',experience:'Yeni',dailyGoal:10,reminders:true,onboardingDone:false,onboardingVersion:0,selectedShenId:'shen',visualThemeId:'ink-night',soundEnabled:true};
 const initialPreferences:PracticePreferences={ghostMode:'follow',traceMode:'compare',ghostOpacity:.58,voiceEnabled:true};
 const initialData:PersistedState={profile:initialProfile,sessions:[],entries:[],postureReports:[],completedStories:[],shenActivities:[],reflections:[],savedMasterSentences:[],practicePreferences:initialPreferences};
 const Context=createContext<State|null>(null);
@@ -84,7 +84,7 @@ function toSyncPayload(data:PersistedState):ShibashiSyncPayload{
 function fromSyncPayload(payload:ShibashiSyncPayload,current?:PersistedState):PersistedState{
  const localSessions=new Map(current?.sessions.map(session=>[session.id,session])??[]);
  return migratePersistedState({
-  profile:payload.profile as unknown as UserProfile,
+  profile:{...(payload.profile as unknown as UserProfile),visualThemeId:current?.profile.visualThemeId??(payload.profile.visualThemeId as UserProfile['visualThemeId']|undefined)??'ink-night'},
   sessions:payload.history.sessions.map(toAppPracticeSession).filter((value):value is PracticeSession=>Boolean(value)).map(session=>session.imageData?session:{...session,imageData:localSessions.get(session.id)?.imageData}),
   entries:payload.history.entries as unknown as JournalEntry[],
   postureReports:payload.history.postureReports.map(toAppPostureReport).filter((value):value is PostureReport=>Boolean(value)),

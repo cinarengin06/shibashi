@@ -36,7 +36,7 @@
 
 .sceneContext {
   color: rgba(246, 239, 228, 0.46);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 850;
   letter-spacing: 0.09em;
   margin: 0 0 12px;
@@ -58,7 +58,7 @@
   border: 1px solid rgba(255, 244, 223, 0.16);
   border-radius: 999px;
   color: rgba(246, 239, 228, 0.8);
-  font-size: 0.74rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   padding: 8px 11px;
@@ -166,7 +166,7 @@
 .ambience > span {
   color: rgba(246, 239, 228, 0.42);
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 900;
   letter-spacing: 0.12em;
   margin-bottom: 10px;

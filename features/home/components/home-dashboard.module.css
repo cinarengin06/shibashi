@@ -56,18 +56,11 @@
 .hero h1 { font-family: var(--font-display), "DM Serif Display", Georgia, serif; font-size: clamp(42px, 4.2vw, 62px); font-weight: 400; letter-spacing: -.025em; line-height: 1.05; margin: 0; }
 .hero h1 span { font-size: .6em; vertical-align: .12em; }
 .lead { color: rgba(242, 238, 231, .8); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.7; margin: 18px 0 22px; }
-.hero blockquote { background: rgba(8, 16, 11, .78); border: 1px solid color-mix(in srgb, var(--gold) 28%, transparent); border-radius: 12px; display: grid; grid-template-columns: auto 1fr; margin: 0; max-width: 390px; padding: 16px 20px; }
-.hero blockquote > span { color: var(--gold); font-family: Georgia, serif; font-size: 48px; line-height: .9; margin-right: 12px; }
-.hero blockquote p { font-size: 16px; line-height: 1.65; margin: 0; }
-.hero blockquote cite { color: var(--gold); font-size: 13px; font-style: normal; grid-column: 2; margin-top: 3px; }
-.heroActions { align-items: center; display: flex; gap: 26px; margin-top: 22px; }
+.heroActions { align-items: center; display: flex; gap: 26px; margin-top: 4px; }
 .heroActions button { cursor: pointer; }
 .primaryAction { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 72%, #f4efe4), var(--gold)); border: 0; border-radius: var(--action-radius); color: #09100c; font-size: 15px; font-weight: 700; letter-spacing: .05em; min-height: 52px; padding: 0 24px; text-transform: uppercase; transition: background .8s ease, border-radius .65s ease, filter .5s ease, transform .5s ease; }
 .primaryAction:hover { filter: brightness(1.08); transform: translateY(-2px); }
 .primaryAction span { font-size: 12px; margin-right: 7px; }
-.textAction { background: transparent; border: 0; color: var(--gold); font-size: 14px; padding: 12px 0; }
-.textAction span { margin-left: 8px; transition: margin .5s ease; }
-.textAction:hover span { margin-left: 13px; }
 
 .shenCard { --home-shen: var(--gold); animation: ambientFloat 7s ease-in-out infinite; backdrop-filter: blur(12px); background: rgba(5, 13, 9, .9); border: 1px solid color-mix(in srgb, var(--home-shen) 42%, transparent); border-radius: var(--card-radius); bottom: 28px; box-shadow: 0 24px 60px rgba(0, 0, 0, .34); padding: 20px; position: absolute; right: 20px; transition: border-radius .65s ease; width: 280px; z-index: 3; }
 .shenCard header { align-items: center; display: flex; gap: 10px; }
@@ -80,26 +73,24 @@
 .shenCard button { background: transparent; border: 0; color: var(--home-shen); cursor: pointer; font-size: 14px; font-weight: 700; letter-spacing: .07em; padding: 5px 0 0; text-transform: uppercase; }
 .shenCard button span { margin-left: 12px; }
 
-.shenSelector { align-items: center; backdrop-filter: blur(18px); background: color-mix(in srgb, #0a120d 92%, var(--gold)); border: 1px solid color-mix(in srgb, var(--gold) 24%, rgba(255, 255, 255, .08)); border-radius: var(--card-radius); display: grid; gap: 18px; grid-template-columns: 170px minmax(0, 1fr) 190px; min-height: 82px; padding: 10px 14px; transition: background .8s ease, border-color .8s ease, border-radius .65s ease; }
+.shenSelector { align-items: center; backdrop-filter: blur(18px); background: color-mix(in srgb, #0a120d 92%, var(--gold)); border: 1px solid color-mix(in srgb, var(--gold) 24%, rgba(255, 255, 255, .08)); border-radius: var(--card-radius); display: grid; gap: 12px; grid-template-columns: 210px minmax(0, 1fr); min-height: 64px; padding: 7px 10px; transition: background .8s ease, border-color .8s ease, border-radius .65s ease; }
 .shenSelectorIntro { border-right: 1px solid color-mix(in srgb, var(--gold) 22%, transparent); display: grid; grid-template-columns: auto 1fr; padding: 2px 16px 2px 4px; }
-.shenSelectorIntro > span { color: var(--muted); font-size: 12px; grid-column: 1 / -1; letter-spacing: .14em; text-transform: uppercase; }
-.shenSelectorIntro strong { color: var(--gold); font-family: var(--font-display), Georgia, serif; font-size: 23px; font-weight: 400; margin-top: 3px; }
-.shenSelectorIntro small { align-self: end; color: rgba(242, 238, 231, .7); font-size: 13px; justify-self: end; padding-bottom: 3px; }
-.shenChoices { display: grid; gap: 7px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.shenSelectorIntro > span { color: var(--muted); font-size: 10px; grid-column: 1 / -1; letter-spacing: .13em; text-transform: uppercase; }
+.shenSelectorIntro strong { color: var(--gold); font-family: var(--font-display), Georgia, serif; font-size: 16px; font-weight: 400; margin-top: 2px; }
+.shenSelectorIntro small { align-self: end; color: rgba(242, 238, 231, .68); font-size: 12px; justify-self: end; padding-bottom: 1px; }
+.shenChoices { display: grid; gap: 6px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .shenChoice,
-.shenChoiceActive { align-items: center; background: rgba(255, 255, 255, .025); border: 1px solid rgba(255, 255, 255, .07); border-radius: 10px; color: var(--text); cursor: pointer; display: flex; gap: 8px; min-height: 54px; min-width: 0; padding: 7px 9px; text-align: left; transition: background .55s ease, border-color .55s ease, box-shadow .55s ease, transform .55s ease; }
+.shenChoiceActive { align-items: center; background: rgba(255, 255, 255, .025); border: 1px solid rgba(255, 255, 255, .07); border-radius: 9px; color: var(--text); cursor: pointer; display: flex; gap: 7px; min-height: 44px; min-width: 0; padding: 5px 8px; text-align: left; transition: background .55s ease, border-color .55s ease, box-shadow .55s ease, transform .55s ease; }
 .shenChoice:hover { border-color: color-mix(in srgb, var(--choice-color) 48%, transparent); transform: translateY(-2px); }
 .shenChoiceActive { background: color-mix(in srgb, var(--choice-color) 18%, rgba(255, 255, 255, .035)); border-color: color-mix(in srgb, var(--choice-color) 70%, transparent); box-shadow: inset 0 0 28px color-mix(in srgb, var(--choice-color) 11%, transparent), 0 9px 30px rgba(0, 0, 0, .18); }
 .shenChoice i,
-.shenChoiceActive i { align-items: center; border: 1px solid var(--choice-color); border-radius: 50%; color: var(--choice-color); display: flex; flex: 0 0 32px; font-family: Georgia, serif; font-size: 14px; font-style: normal; height: 32px; justify-content: center; }
+.shenChoiceActive i { align-items: center; border: 1px solid var(--choice-color); border-radius: 50%; color: var(--choice-color); display: flex; flex: 0 0 26px; font-family: Georgia, serif; font-size: 12px; font-style: normal; height: 26px; justify-content: center; }
 .shenChoice > span,
 .shenChoiceActive > span { display: grid; min-width: 0; }
 .shenChoice strong,
-.shenChoiceActive strong { font-family: var(--font-display), Georgia, serif; font-size: 16px; font-weight: 400; }
+.shenChoiceActive strong { font-family: var(--font-sans), sans-serif; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .shenChoice small,
-.shenChoiceActive small { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.shenSelector > p { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
-.shenSelector > p span { color: var(--gold); font-size: 14px; margin-right: 4px; }
+.shenChoiceActive small { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .stats { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .statCard { background: linear-gradient(145deg, rgba(23, 29, 25, .97), rgba(12, 19, 15, .98)); border: 1px solid rgba(255, 255, 255, .08); border-radius: var(--card-radius); min-height: 132px; padding: 16px 18px; transition: border-color .6s ease, border-radius .65s ease, transform .6s ease; }
@@ -134,9 +125,9 @@
 .miniTrend { align-items: flex-end; display: flex; gap: 4px; height: 48px; width: 55%; }
 .miniTrend span { background: linear-gradient(to top, color-mix(in srgb, var(--gold) 18%, transparent), var(--gold)); border-radius: 2px; flex: 1; min-height: 3px; opacity: .8; }
 
-.contentGrid { display: grid; gap: 12px; grid-template-columns: minmax(250px, 1.05fr) minmax(510px, 1.65fr) minmax(260px, 1fr); }
+.contentGrid { align-items: stretch; display: grid; gap: 12px; grid-template-columns: minmax(250px, 1.05fr) minmax(510px, 1.65fr) minmax(260px, 1fr); }
 .todayCard, .flowsPanel, .postureCard { background: var(--surface); border: 1px solid rgba(255, 255, 255, .08); border-radius: var(--card-radius); min-height: 248px; overflow: hidden; transition: border-radius .65s ease; }
-.todayCard > h2, .flowsPanel > header, .postureCard h2 { font-family: var(--font-display), Georgia, serif; font-size: 19px; font-weight: 400; margin: 0; }
+.todayCard > h2, .flowsPanel > header h2, .postureCard h2 { font-family: var(--font-display), Georgia, serif; font-size: 19px; font-weight: 400; line-height: 1.35; margin: 0; min-height: 26px; }
 .todayCard { padding: 16px; }
 .todayCard > button { border: 0; border-radius: 10px; cursor: pointer; height: 194px; margin-top: 12px; overflow: hidden; position: relative; text-align: left; width: 100%; }
 .todayCard > button img { object-fit: cover; }
@@ -161,7 +152,7 @@
 
 .postureCard { display: grid; grid-template-columns: 1fr 1.25fr; padding: 16px; position: relative; }
 .postureCard > div:first-child { position: relative; z-index: 2; }
-.postureCard p { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 18px 0; }
+.postureCard p { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 12px 0 18px; }
 .postureCard button { background: transparent; border: 1px solid color-mix(in srgb, var(--gold) 46%, transparent); border-radius: var(--action-radius); color: var(--gold); cursor: pointer; font-size: 14px; letter-spacing: .06em; min-height: 42px; padding: 0 13px; text-transform: uppercase; transition: border-radius .65s ease; }
 .postureCard small { color: var(--muted); display: block; font-size: 12px; margin-top: 10px; }
 .postureModels { align-items: end; display: flex; inset: 26px 0 4px 43%; overflow: hidden; position: absolute; }
@@ -186,8 +177,7 @@
   .postureCard { grid-column: 1 / -1; min-height: 230px; }
   .postureModels { left: 55%; }
   .dayDots { gap: 4px; }
-  .shenSelector { grid-template-columns: 145px minmax(0, 1fr); }
-  .shenSelector > p { display: none; }
+  .shenSelector { grid-template-columns: 180px minmax(0, 1fr); }
 }
 
 @media (max-width: 899px) {
@@ -198,16 +188,14 @@
   .heroCopy { min-height: 0; order: 1; padding: 24px 20px 18px; width: 100%; }
   .hero h1 { font-size: clamp(34px, 9vw, 44px); }
   .lead { font-size: 15px; margin: 12px 0 18px; }
-  .hero blockquote { display: none; }
   .heroActions { align-items: stretch; flex-direction: column; gap: 4px; margin-top: 0; }
   .primaryAction { width: 100%; }
-  .textAction { text-align: left; }
   .shenCard { animation: none; background: #111813; bottom: auto; margin: 0 16px 18px; order: 2; padding: 17px; position: relative; right: auto; width: auto; }
   .shenSelector { display: block; order: 3; overflow: hidden; padding: 14px 12px 12px; }
   .shenSelectorIntro { border-bottom: 1px solid color-mix(in srgb, var(--gold) 22%, transparent); border-right: 0; margin-bottom: 10px; padding: 0 4px 10px; }
   .shenChoices { display: flex; margin-right: -12px; overflow-x: auto; padding: 0 12px 6px 0; scroll-snap-type: x mandatory; }
   .shenChoice,
-  .shenChoiceActive { flex: 0 0 126px; scroll-snap-align: start; }
+  .shenChoiceActive { flex: 0 0 150px; scroll-snap-align: start; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); order: 6; }
   .statCard { min-height: 140px; }
   .stats .statCard:nth-child(4) { grid-column: 1 / -1; order: 4; }

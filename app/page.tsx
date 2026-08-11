@@ -50,7 +50,7 @@ type ShenId = "hun" | "shen" | "yi" | "po" | "zhi";
 type PostureRenderMode = "3d" | "2d";
 type PostureView = "front" | "side" | "back";
 type PostureAssessmentStep = "intro" | "history" | "captured" | "processing" | PostureView | "result";
-type PostureScanGuidance = "model-loading" | "find-body" | "wrong-angle" | "hold" | "capturing";
+type PostureScanGuidance = "model-loading" | "find-body" | "wrong-angle" | "reposition" | "hold" | "capturing";
 type DomainShenId = (typeof shenProfiles)[number]["id"];
 
 // Geçici arayüz anahtarları: altyapı ve bileşenler yeniden açılmak üzere korunur.
@@ -816,7 +816,7 @@ const neijingStages: readonly NeijingStage[] = [
     title: "Zhi Okyanusu",
     shenId: "zhi",
     x: 50,
-    y: 84,
+    y: 82,
     labelX: 50,
     labelY: 87,
     reward: "Köklenme pratiği",
@@ -828,8 +828,8 @@ const neijingStages: readonly NeijingStage[] = [
   },
   {
     title: "Alt Dantian",
-    x: 75,
-    y: 81,
+    x: 50,
+    y: 51,
     labelX: 75,
     labelY: 84,
     reward: "Merkez pratiği",
@@ -842,8 +842,8 @@ const neijingStages: readonly NeijingStage[] = [
   {
     title: "Yi Toprağı",
     shenId: "yi",
-    x: 52,
-    y: 66,
+    x: 50,
+    y: 42,
     labelX: 52,
     labelY: 69,
     reward: "Odak pratiği",
@@ -856,8 +856,8 @@ const neijingStages: readonly NeijingStage[] = [
   {
     title: "Kalp Tapınağı",
     shenId: "shen",
-    x: 66,
-    y: 50,
+    x: 50,
+    y: 29,
     labelX: 66,
     labelY: 53,
     reward: "Göğüs açıklığı pratiği",
@@ -870,8 +870,8 @@ const neijingStages: readonly NeijingStage[] = [
   {
     title: "Hun Ormanı",
     shenId: "hun",
-    x: 31,
-    y: 47,
+    x: 43,
+    y: 36,
     labelX: 31,
     labelY: 50,
     reward: "Yön pratiği",
@@ -883,8 +883,8 @@ const neijingStages: readonly NeijingStage[] = [
   },
   {
     title: "12 Katlı Pagoda",
-    x: 53,
-    y: 32,
+    x: 50,
+    y: 21,
     labelX: 53,
     labelY: 35,
     reward: "Nefes ritmi pratiği",
@@ -896,8 +896,8 @@ const neijingStages: readonly NeijingStage[] = [
   },
   {
     title: "Kunlun Zirveleri",
-    x: 52,
-    y: 10,
+    x: 50,
+    y: 7,
     labelX: 52,
     labelY: 13,
     reward: "Berraklık pratiği",
@@ -910,8 +910,8 @@ const neijingStages: readonly NeijingStage[] = [
   {
     title: "Po Gölü",
     shenId: "po",
-    x: 26,
-    y: 69,
+    x: 58,
+    y: 30,
     labelX: 26,
     labelY: 72,
     reward: "Bırakma pratiği",
@@ -1538,7 +1538,7 @@ export default function RitimKapisiOS() {
     else playSelectedShenMusic();
   }
 
-  function completeOnboarding(profile?: OnboardingProfile, destination: "home" | "practice" = "home") {
+  function completeOnboarding(profile?: OnboardingProfile, destination: "home" | "practice2" = "home") {
     const recommendedShen = profile?.firstJourneyPlan?.recommendedShen;
     if (recommendedShen && fiveShen.some((shen) => shen.id === recommendedShen)) {
       setSelectedShenId(recommendedShen);
@@ -1550,6 +1550,7 @@ export default function RitimKapisiOS() {
     window.localStorage.setItem("ritim-kapisi-onboarding-complete", "true");
     setExperienceDay(1);
     setOnboardingComplete(true);
+    if (destination === "practice2") setSelectedPractice2FlowId(undefined);
     setActiveTab(destination);
   }
 
@@ -3487,6 +3488,9 @@ function PostureScreen({
   const postureReadyAtRef = useRef(0);
   const postureAnnouncedStepRef = useRef<PostureAssessmentStep | null>(null);
   const postureAudioRef = useRef<HTMLAudioElement | null>(null);
+  const postureSmoothedPointsRef = useRef<PoseKeypoint[]>([]);
+  const postureLastVoiceCueRef = useRef("");
+  const postureLastVoiceAtRef = useRef(0);
   const postureStepRef = useRef<PostureAssessmentStep>("intro");
   const poseStatusRef = useRef<"bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata">("bekliyor");
   const lastPoseUiUpdateRef = useRef(0);
@@ -3503,10 +3507,16 @@ function PostureScreen({
   const [autoCaptureProgress, setAutoCaptureProgress] = useState(0);
   const [captureFlash, setCaptureFlash] = useState(false);
   const [capturedView, setCapturedView] = useState<PostureView | null>(null);
+  const [postureVoiceEnabled, setPostureVoiceEnabled] = useState(true);
   const captureTransitionRef = useRef<number | null>(null);
   postureStepRef.current = postureStep;
   const activeScanView = postureStep === "front" || postureStep === "side" || postureStep === "back" ? postureStep : postureView;
-  const postureFrameReadiness = evaluateWebPostureFrame(keypoints, activeScanView);
+  const postureFrameReadiness = evaluateWebPostureFrame(
+    keypoints,
+    activeScanView,
+    videoRef.current?.videoWidth,
+    videoRef.current?.videoHeight,
+  );
   const scanGuidance: PostureScanGuidance =
     poseStatus === "yükleniyor"
       ? "model-loading"
@@ -3514,9 +3524,20 @@ function PostureScreen({
         ? "find-body"
         : !postureFrameReadiness.angleReady
           ? "wrong-angle"
+          : !postureFrameReadiness.positionReady
+            ? "reposition"
           : autoCaptureProgress >= 100
             ? "capturing"
             : "hold";
+  const postureCoachCue =
+    postureStep === "front" || postureStep === "side" || postureStep === "back"
+      ? getPostureLiveCoachCue(
+          postureStep,
+          postureFrameReadiness,
+          analyzePosture(keypoints, movementScore, selectedShen.id, postureStep),
+          keypoints,
+        )
+      : "Tam bedenini kadraja al.";
 
   useEffect(() => {
     if (previewLive) setPostureStep("front");
@@ -3545,6 +3566,7 @@ function PostureScreen({
     if (cameraStatus !== "ready") {
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
       setKeypoints([]);
+      postureSmoothedPointsRef.current = [];
       if (poseStatusRef.current !== "bekliyor") {
         poseStatusRef.current = "bekliyor";
         setPoseStatus("bekliyor");
@@ -3567,6 +3589,7 @@ function PostureScreen({
   useEffect(() => {
     postureStableSinceRef.current = null;
     posturePreviousPointsRef.current = [];
+    postureSmoothedPointsRef.current = [];
     postureSampleAnalysesRef.current = [];
     postureAutoCaptureLockRef.current = false;
     postureReadyAtRef.current = Date.now() + (postureStep === "front" ? 0 : 2200);
@@ -3587,8 +3610,13 @@ function PostureScreen({
       setAutoCaptureProgress(0);
       return;
     }
-    const frameReadiness = evaluateWebPostureFrame(keypoints, postureStep);
-    if (!frameReadiness.bodyReady || !frameReadiness.angleReady) {
+    const frameReadiness = evaluateWebPostureFrame(
+      keypoints,
+      postureStep,
+      videoRef.current?.videoWidth,
+      videoRef.current?.videoHeight,
+    );
+    if (!frameReadiness.bodyReady || !frameReadiness.angleReady || !frameReadiness.positionReady) {
       postureStableSinceRef.current = null;
       posturePreviousPointsRef.current = keypoints;
       postureSampleAnalysesRef.current = [];
@@ -3628,17 +3656,26 @@ function PostureScreen({
     if (postureAnnouncedStepRef.current === postureStep) return;
 
     postureAnnouncedStepRef.current = postureStep;
+    const orientationCue = getPostureOrientationCue(postureStep);
     const timer = window.setTimeout(() => {
       postureAudioRef.current?.pause();
-      const audio = new Audio(`/audio/posture/tai/${postureStep}-3s.mp3`);
-      postureAudioRef.current = audio;
-      void audio.play().catch(() => undefined);
+      if (postureVoiceEnabled) speakCoach(orientationCue);
     }, 300);
     return () => {
       window.clearTimeout(timer);
       postureAudioRef.current?.pause();
     };
-  }, [postureStep]);
+  }, [postureStep, postureVoiceEnabled]);
+
+  useEffect(() => {
+    if (postureStep !== "front" && postureStep !== "side" && postureStep !== "back") return;
+    if (!postureVoiceEnabled || scanGuidance === "model-loading" || scanGuidance === "capturing") return;
+    const now = Date.now();
+    if (postureCoachCue === postureLastVoiceCueRef.current || now - postureLastVoiceAtRef.current < 6500) return;
+    postureLastVoiceCueRef.current = postureCoachCue;
+    postureLastVoiceAtRef.current = now;
+    speakCoach(postureCoachCue);
+  }, [postureCoachCue, postureStep, postureVoiceEnabled, scanGuidance]);
 
   useEffect(() => {
     if (postureStep !== "processing" || !postureResult) return;
@@ -3673,6 +3710,8 @@ function PostureScreen({
           drawPoseCanvas(canvasRef.current, undefined, selectedShen.color);
           targetScoreRef.current = 0;
         } else {
+          const smoothedKeypoints = smoothPoseKeypoints(postureSmoothedPointsRef.current, pose.keypoints, 0.24);
+          postureSmoothedPointsRef.current = smoothedKeypoints;
           const importantVisible = [
             "nose",
             "left_shoulder",
@@ -3683,7 +3722,7 @@ function PostureScreen({
             "right_knee",
             "left_ankle",
             "right_ankle",
-          ].filter((name) => (pose.keypoints?.find((point) => point.name === name)?.score ?? 0) > 0.35);
+          ].filter((name) => (smoothedKeypoints.find((point) => point.name === name)?.score ?? 0) > 0.35);
           const nextStatus=importantVisible.length>=6?"aktif":"beden-yok";
           if(poseStatusRef.current!==nextStatus){
             poseStatusRef.current=nextStatus;
@@ -3692,14 +3731,14 @@ function PostureScreen({
           const now=performance.now();
           if(now-lastPoseUiUpdateRef.current>=100){
             lastPoseUiUpdateRef.current=now;
-            setKeypoints(pose.keypoints);
+            setKeypoints(smoothedKeypoints);
           }
           const currentView =
             postureStepRef.current === "front" || postureStepRef.current === "side" || postureStepRef.current === "back"
               ? postureStepRef.current
               : "front";
-          const liveAnalysis = analyzePosture(pose.keypoints, 0, selectedShen.id, currentView);
-          drawPoseCanvas(canvasRef.current, pose, selectedShen.color, liveAnalysis);
+          const liveAnalysis = analyzePosture(smoothedKeypoints, 0, selectedShen.id, currentView);
+          drawPoseCanvas(canvasRef.current, { ...pose, keypoints: smoothedKeypoints }, selectedShen.color, liveAnalysis);
           targetScoreRef.current = nextStatus === "aktif" ? getPostureOverallScore(liveAnalysis) : 0;
         }
 
@@ -3731,16 +3770,29 @@ function PostureScreen({
     try {
       setCameraStatus("requesting");
       onStopMusic();
+      const desktopCamera = window.matchMedia("(min-width: 900px)").matches;
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
           facingMode: "user",
-          width: { ideal: 720 },
-          height: { ideal: 1280 },
-          aspectRatio: { ideal: 0.75 },
-          frameRate: { ideal: 60, max: 60 },
+          width: { ideal: desktopCamera ? 1280 : 720 },
+          height: { ideal: desktopCamera ? 960 : 1280 },
+          // Most laptop sensors expose more vertical field of view in 4:3.
+          // Requesting 16:9 can crop that sensor before the frame reaches us.
+          aspectRatio: { ideal: desktopCamera ? 4 / 3 : 0.75 },
+          frameRate: { ideal: desktopCamera ? 30 : 60, max: 60 },
         },
       });
+
+      const cameraTrack = stream.getVideoTracks()[0];
+      const capabilities = cameraTrack?.getCapabilities() as MediaTrackCapabilities & {
+        zoom?: { min: number; max: number; step: number };
+      };
+      if (cameraTrack && capabilities?.zoom && Number.isFinite(capabilities.zoom.min)) {
+        await cameraTrack.applyConstraints({
+          advanced: [{ zoom: capabilities.zoom.min }],
+        } as unknown as MediaTrackConstraints).catch(() => undefined);
+      }
 
       streamRef.current = stream;
       if (videoRef.current) {
@@ -3765,9 +3817,22 @@ function PostureScreen({
     drawPoseCanvas(canvasRef.current, undefined, selectedShen.color);
     setCameraStatus("idle");
     setKeypoints([]);
+    postureSmoothedPointsRef.current = [];
     setPoseStatus("bekliyor");
     targetScoreRef.current = 0;
     setMovementScore(0);
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }
+
+  function togglePostureVoice() {
+    if (postureVoiceEnabled) {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    } else {
+      postureLastVoiceCueRef.current = "";
+      postureLastVoiceAtRef.current = 0;
+      speakCoach(postureCoachCue);
+    }
+    setPostureVoiceEnabled((enabled) => !enabled);
   }
 
   async function openPostureCamera() {
@@ -3792,8 +3857,13 @@ function PostureScreen({
   function captureCurrentPosture() {
     if (postureStep !== "front" && postureStep !== "side" && postureStep !== "back") return;
     const view = postureStep;
-    const frameReadiness = evaluateWebPostureFrame(keypoints, view);
-    if (!frameReadiness.bodyReady || !frameReadiness.angleReady) {
+    const frameReadiness = evaluateWebPostureFrame(
+      keypoints,
+      view,
+      videoRef.current?.videoWidth,
+      videoRef.current?.videoHeight,
+    );
+    if (!frameReadiness.bodyReady || !frameReadiness.angleReady || !frameReadiness.positionReady) {
       postureAutoCaptureLockRef.current = false;
       postureStableSinceRef.current = null;
       setAutoCaptureProgress(0);
@@ -3890,6 +3960,8 @@ function PostureScreen({
       movementScore={movementScore}
       autoCaptureProgress={autoCaptureProgress}
       scanGuidance={scanGuidance}
+      coachCue={postureCoachCue}
+      frameReadiness={postureFrameReadiness}
       onCapture={captureCurrentPosture}
       onClose={resetPostureAssessment}
       onCompleteAnalysis={completePostureAnalysis}
@@ -3907,6 +3979,8 @@ function PostureScreen({
       reportIsSaved={viewingSavedReport}
       savedReports={postureReports}
       selectedShen={selectedShen}
+      voiceEnabled={postureVoiceEnabled}
+      onVoiceToggle={togglePostureVoice}
       step={postureStep}
       videoRef={videoRef}
       view={postureView}
@@ -5427,6 +5501,7 @@ function PostureAssessmentScreen({
   autoCaptureProgress,
   cameraStatus,
   canvasRef,
+  coachCue = "Tam bedenini kadraja al.",
   captureFlash = false,
   captures,
   capturedView = null,
@@ -5438,6 +5513,7 @@ function PostureAssessmentScreen({
   onCompleteAnalysis,
   onModeChange,
   onOpenCamera,
+  onVoiceToggle = () => undefined,
   onDeleteSavedReport,
   onOpenSavedReport,
   onRetake,
@@ -5454,10 +5530,13 @@ function PostureAssessmentScreen({
   step,
   videoRef,
   view,
+  voiceEnabled = true,
+  frameReadiness,
 }: {
   autoCaptureProgress?: number;
   cameraStatus: "idle" | "requesting" | "ready" | "denied" | "unsupported";
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  coachCue?: string;
   captureFlash?: boolean;
   captures: Partial<Record<PostureView, PostureAssessmentCapture>>;
   capturedView?: PostureView | null;
@@ -5469,6 +5548,7 @@ function PostureAssessmentScreen({
   onCompleteAnalysis?: () => void;
   onModeChange: (mode: PostureRenderMode) => void;
   onOpenCamera: () => void;
+  onVoiceToggle?: () => void;
   onDeleteSavedReport?: (reportId: string) => void;
   onOpenSavedReport?: (report: PostureReport) => void;
   onRetake: () => void;
@@ -5485,6 +5565,8 @@ function PostureAssessmentScreen({
   step: PostureAssessmentStep;
   videoRef: RefObject<HTMLVideoElement | null>;
   view: PostureView;
+  voiceEnabled?: boolean;
+  frameReadiness?: ReturnType<typeof evaluateWebPostureFrame>;
 }) {
   const activeView = step === "front" || step === "side" || step === "back" ? step : view;
   const activeLabel = activeView === "front" ? "Ön" : activeView === "side" ? "Yan" : "Arka";
@@ -5542,14 +5624,18 @@ function PostureAssessmentScreen({
         captureCount={captureCount}
         captureFlash={captureFlash}
         capturedView={capturedView}
+        coachCue={coachCue}
+        frameReadiness={frameReadiness ?? evaluateWebPostureFrame(keypoints, activeView, videoRef.current?.videoWidth, videoRef.current?.videoHeight)}
         onCapture={onCapture}
         onClose={onClose}
         onRestart={onRetake}
+        onVoiceToggle={onVoiceToggle}
         poseStatus={poseStatus}
         scanGuidance={scanGuidance}
         score={postureScore}
         selectedShen={selectedShen}
         videoRef={videoRef}
+        voiceEnabled={voiceEnabled}
       />
     );
   }
@@ -5641,7 +5727,7 @@ function PostureAssessmentScreen({
               {cameraStatus !== "ready" && cameraStatus !== "requesting" ? (
                 <div className="posture-camera-placeholder posture-analysis-placeholder">
                   <span className="eyebrow">Postür Kurulumu</span>
-                  <h2>Telefonu 2-3 metre uzağa koy.</h2>
+                  <h2>Laptop ekranını sabitle ve kameraya tam karşıdan bak.</h2>
                   <p>Ön, yan ve arka görünümden ayrı kayıt alacağız. Bu ekran teşhis değil; postür gelişimini takip eden bir ayna.</p>
                   <button className="posture-placeholder-action" onClick={onOpenCamera} type="button">
                     Kamerayı Aç
@@ -5769,14 +5855,18 @@ function PostureAutoCaptureScreen({
   captureCount,
   captureFlash,
   capturedView,
+  coachCue,
+  frameReadiness,
   onCapture,
   onClose,
   onRestart,
+  onVoiceToggle,
   poseStatus,
   scanGuidance,
   score,
   selectedShen,
   videoRef,
+  voiceEnabled,
 }: {
   activeView: PostureView;
   analysis: ReturnType<typeof analyzePosture>;
@@ -5786,14 +5876,18 @@ function PostureAutoCaptureScreen({
   captureCount: number;
   captureFlash: boolean;
   capturedView: PostureView | null;
+  coachCue: string;
+  frameReadiness: ReturnType<typeof evaluateWebPostureFrame>;
   onCapture: () => void;
   onClose: () => void;
   onRestart: () => void;
+  onVoiceToggle: () => void;
   poseStatus: "bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata";
   scanGuidance: PostureScanGuidance;
   score: number;
   selectedShen: (typeof fiveShen)[number];
   videoRef: RefObject<HTMLVideoElement | null>;
+  voiceEnabled: boolean;
 }) {
   const viewLabel = activeView === "front" ? "Ön" : activeView === "side" ? "Yan" : "Arka";
   const expectedInstruction =
@@ -5807,17 +5901,21 @@ function PostureAutoCaptureScreen({
           ? "Tam bedeninizi kadraja alın"
           : scanGuidance === "wrong-angle"
             ? expectedInstruction
+            : scanGuidance === "reposition"
+              ? frameReadiness.positionCue
             : scanGuidance === "capturing"
               ? "Görünüm kaydedildi"
-              : "Hareketsiz kalın";
-  const secondsLeft = Math.max(1, Math.ceil(5 - autoCaptureProgress / 20));
+              : coachCue;
+  const secondsLeft = Math.max(1, Math.ceil(((100 - autoCaptureProgress) / 100) * 3));
   const angleSteps = [
     ["front", "Ön"],
     ["side", "Yan"],
     ["back", "Arka"],
   ] as const;
-  const metrics = getPostureMetricList(analysis);
-  const scoreLabel = score >= 82 ? "İyi" : score >= 68 ? "Orta" : "Dikkat";
+  const regionScores = [analysis.shoulderScore, analysis.axisScore, analysis.hipScore];
+  const alignedCount = regionScores.filter((value) => value >= 70).length;
+  const correctionCount = regionScores.length - alignedCount;
+  const scoreLabel = score >= 82 ? "Dengeli" : score >= 70 ? "Yaklaşıyor" : "Düzeltme gerekli";
   const live = cameraStatus === "ready" && poseStatus === "aktif";
 
   return (
@@ -5826,10 +5924,27 @@ function PostureAutoCaptureScreen({
         <div className="posture-live-camera">
           <div className="posture-live-floating-actions">
             <button className="posture-live-icon-button" onClick={onClose} type="button" aria-label="Postür çekiminden çık">×</button>
-            <button className="posture-live-icon-button posture-live-help" type="button" aria-label="Postür analizi yardımı">?</button>
+            <button className="posture-live-icon-button posture-live-voice" onClick={onVoiceToggle} type="button" aria-label={voiceEnabled ? "Sesli yönlendirmeyi kapat" : "Sesli yönlendirmeyi aç"}>
+              {voiceEnabled ? "◖))" : "◖×"}
+            </button>
           </div>
-          <video className={`camera-preview ${cameraStatus === "ready" ? "camera-preview-active" : ""}`} muted playsInline ref={videoRef} />
+          <video
+            className={`camera-preview ${cameraStatus === "ready" ? "camera-preview-active" : ""}`}
+            muted
+            onLoadedMetadata={(event) => {
+              const video = event.currentTarget;
+              const cameraStage = video.closest<HTMLElement>(".posture-live-camera");
+              if (!cameraStage || !video.videoWidth || !video.videoHeight) return;
+              cameraStage.style.setProperty("--posture-camera-aspect", `${video.videoWidth} / ${video.videoHeight}`);
+            }}
+            playsInline
+            ref={videoRef}
+          />
           <canvas className="camera-pose-canvas" ref={canvasRef} />
+          <div className={`posture-live-score-overlay ${live && score >= 70 ? "is-aligned" : ""}`} aria-live="polite">
+            <span>Dik duruş skoru</span>
+            <strong>{live ? score : "—"}<small>{live ? "/100" : ""}</small></strong>
+          </div>
           <PostureCaptureFlash visible={captureFlash} capturedView={capturedView} />
           {cameraStatus !== "ready" ? <div className="posture-live-camera-wait">Kamera hazırlanıyor...</div> : null}
 
@@ -5840,6 +5955,8 @@ function PostureAutoCaptureScreen({
               <span>
                 {scanGuidance === "hold"
                   ? "Gerçek ölçüm sürüyor; üç saniye aynı duruşu koruyun"
+                  : scanGuidance === "reposition"
+                    ? "Kılavuz yeşile döndüğünde ölçüm başlayacak"
                   : scanGuidance === "wrong-angle"
                     ? `${viewLabel} görünüm doğrulanınca sayaç başlayacak`
                     : "Tam beden ve doğru yön algılandığında sayaç başlayacak"}
@@ -5848,9 +5965,25 @@ function PostureAutoCaptureScreen({
           </div>
         </div>
         <aside className="posture-live-side-panel">
-          <span className="eyebrow">Üç açılı tarama</span>
-          <strong>{captureCount + 1} / 3 · {viewLabel}den</strong>
-          <p>{instruction}</p>
+          <span className="eyebrow">Doğal dik duruş · {viewLabel}</span>
+          <div className="posture-live-score-card">
+            <span>Dik duruş uyumu</span>
+            <strong>{live ? score : "—"}<small>{live ? "%" : ""}</small></strong>
+            <b>{scoreLabel}</b>
+            <div><i style={{ width: `${live ? score : 0}%` }} /></div>
+          </div>
+          <div className="posture-live-region-summary">
+            <span><i className="good" /> {alignedCount} bölge uyumlu</span>
+            <span><i className="fix" /> {correctionCount} bölgeyi düzelt</span>
+          </div>
+          <div className="posture-live-reference" data-view={activeView}>
+            <PostureNeutralReference view={activeView} />
+            <span>{viewLabel} görünüm</span>
+          </div>
+          <div className="posture-live-coach-card" aria-live="polite">
+            <i aria-hidden="true">♫</i>
+            <div><span>Sesli yönlendirme</span><strong>{coachCue}</strong></div>
+          </div>
           <div className="posture-live-side-steps">
             {angleSteps.map(([item, label], index) => (
               <div className={activeView === item ? "active" : capturesStepClass(item, activeView)} key={item}>
@@ -5859,14 +5992,40 @@ function PostureAutoCaptureScreen({
               </div>
             ))}
           </div>
-          <div className="posture-live-tip">
-            <b>Kısa ipucu</b>
-            <span>Başın ve ayakların aynı karedeyken doğal duruşunu koru.</span>
-          </div>
-          <small>Görüntü yalnızca canlı ölçüm için işlenir.</small>
+          <small>{captureCount + 1} / 3 · Görüntü yalnızca canlı ölçüm için işlenir.</small>
         </aside>
       </div>
     </section>
+  );
+}
+
+const postureNeutralReferencePhotos = {
+  front: {
+    alt: "Önden doğal dik duruş gösteren eğitmen",
+    src: "/images/posture/posture-neutral-front-v2.jpg",
+  },
+  side: {
+    alt: "Yandan doğal dik duruş gösteren eğitmen",
+    src: "/images/posture/posture-neutral-side-v2.jpg",
+  },
+  back: {
+    alt: "Arkadan doğal dik duruş gösteren eğitmen",
+    src: "/images/posture/posture-neutral-back-v2.jpg",
+  },
+} satisfies Record<PostureView, { alt: string; src: string }>;
+
+function PostureNeutralReference({ view }: { view: PostureView }) {
+  const reference = postureNeutralReferencePhotos[view];
+
+  return (
+    <NextImage
+      alt={reference.alt}
+      className="posture-neutral-reference"
+      height={796}
+      sizes="96px"
+      src={reference.src}
+      width={480}
+    />
   );
 }
 
@@ -6095,6 +6254,7 @@ function PostureResultDashboard({
           <div className="posture-result-feedback-stack">
             <PostureFeedbackPanel
               analysis={viewAnalysis}
+              captureImage={capture.imageData}
               guidanceText={report.summary}
               ready
               resultMode
@@ -6251,6 +6411,7 @@ function PostureScorePanel({
 
 function PostureFeedbackPanel({
   analysis,
+  captureImage,
   guidanceText,
   ready,
   resultMode = false,
@@ -6258,6 +6419,7 @@ function PostureFeedbackPanel({
   view,
 }: {
   analysis: ReturnType<typeof analyzePosture>;
+  captureImage?: string;
   guidanceText: string;
   ready: boolean;
   resultMode?: boolean;
@@ -6277,9 +6439,13 @@ function PostureFeedbackPanel({
       <article className="posture-feedback-card posture-feedback-warning">
         <span className="posture-feedback-title">{resultMode ? "Öncelikli Nokta" : "Düzeltilecek Noktalar"}</span>
         <div className="posture-correction-row">
-          <div className="posture-mini-body" aria-hidden="true">
-            <PostureSkeleton2D analysis={analysis} selectedShen={selectedShen} view={view} />
-          </div>
+          {resultMode && captureImage ? (
+            <img className="posture-feedback-user-photo" src={captureImage} alt={`${view === "front" ? "Ön" : view === "side" ? "Yan" : "Arka"} postür kaydın`} />
+          ) : (
+            <div className="posture-mini-body" aria-hidden="true">
+              <PostureSkeleton2D analysis={analysis} selectedShen={selectedShen} view={view} />
+            </div>
+          )}
           <p>{corrections[0]}</p>
         </div>
       </article>
@@ -6532,7 +6698,7 @@ function PostureAvatar({
         ))}
       </div>
       <div className="avatar-feedback">
-        {avatarReady ? analysis.feedback : "Kamerayı açınca MediaPipe tam beden referanslarını okuyacak. Boydan kadraj için telefonu biraz geriye al."}
+        {avatarReady ? analysis.feedback : "Kamerayı açınca MediaPipe tam beden referanslarını okuyacak. Boydan kadraj için laptop ekranının açısını ayarla ve biraz geri çekil."}
       </div>
     </div>
   );
@@ -6841,7 +7007,7 @@ function getPostureCorrections(analysis: ReturnType<typeof analyzePosture>, read
       if (flag.includes("Omuz")) return "Omuz çizgisinde fark var. Omuzlarını aşağı bırak ve göğsü zorlamadan aç.";
       if (flag.includes("Kalça")) return "Kalça hattı kayıyor. Ağırlığı iki ayağa daha eşit dağıt.";
       if (flag.includes("Merkez")) return "Baş ve gövde merkezden uzaklaşıyor. Tepeyi yukarı, kuyruk sokumunu aşağı düşün.";
-      return "Ayaklar kadraj dışında kalıyor. Telefonu biraz daha geriye al.";
+      return "Ayaklar kadraj dışında kalıyor. Laptop ekranını biraz geriye eğ veya biraz daha geri çekil.";
     });
 
   return corrections.length ? corrections : ["Belirgin bir alarm yok. Nefesi bozma; hareketin yumuşaklığını koru."];
@@ -7070,10 +7236,15 @@ function HumanMap({
   const [activeStageIndex, setActiveStageIndex] = useState<number>(selectedShen.mapStage);
   const [gateInfoOpen, setGateInfoOpen] = useState(false);
   const activeStage = neijingStages[activeStageIndex] ?? neijingStages[selectedShen.mapStage];
-  const mapProgress = Math.round(((activeStageIndex + 1) / neijingStages.length) * 100);
-  const bodyRevealed = mapProgress >= 100;
-  const personalFeedback = getPersonalMapFeedback(activeStage, selectedShen, activeStageIndex, bodyRevealed);
+  const currentGateIndex = selectedShen.mapStage;
+  const mapProgress = Math.round(((currentGateIndex + 1) / neijingStages.length) * 100);
+  const personalFeedback = getPersonalMapFeedback(activeStage, selectedShen, activeStageIndex, true);
   const activeGateTone = activeStage.shenId ? getShenById(activeStage.shenId) : selectedShen;
+
+  useEffect(() => {
+    setActiveStageIndex(selectedShen.mapStage);
+    setGateInfoOpen(false);
+  }, [selectedShen.mapStage]);
 
   function selectStage(index: number, openInfo = true) {
     setActiveStageIndex(index);
@@ -7090,70 +7261,38 @@ function HumanMap({
   return (
     <div className="glass-card human-map-card neijing-card cut-safe-card">
       <div className="section-heading cut-safe-heading" style={{ margin: "0 0 12px" }}>
-        <h2>{bodyRevealed ? "Beden Haritası Uyandı" : "Kapılar Yolu"}</h2>
-        <span>{activeStageIndex + 1} / {neijingStages.length} kapı</span>
+        <h2>8 Kapılı Beden Haritan</h2>
+        <span>Şu anki kapın · {selectedShen.mapTitle}</span>
       </div>
-      <div className={`neijing-map-shell ${sidePanel ? "neijing-map-shell-with-panel" : ""}`}>
+      <div className="neijing-map-shell neijing-map-shell-with-panel">
         <div
-          className={`neijing-map ${bodyRevealed ? "neijing-map-revealed" : "neijing-map-locked"}`}
-          aria-label={bodyRevealed ? `Beden haritası, seçili alan ${selectedShen.mapTitle}` : `Kapılar yolu, seçili kapı ${activeStage.title}`}
+          className="neijing-map neijing-body-map"
+          aria-label={`Sekiz kapılı beden haritası. Şu anki kapın ${selectedShen.mapTitle}`}
           style={
             {
               "--journey-progress": `${mapProgress}%`,
             } as CSSProperties
           }
         >
-          <img className="neijing-map-image" src="/images/neijing-map.jpg" alt="" />
-          <div className="map-sensor map-sensor-left" aria-hidden="true">
-            <span>{selectedShen.dailyName.replace(" Modu", "")}</span>
-            <strong>{selectedShen.name}</strong>
-            <i style={{ height: `${mapProgress}%` }} />
-          </div>
-          <div className="map-sensor map-sensor-right" aria-hidden="true">
-            <span>{mapProgress}%</span>
-            <strong>Keşif</strong>
-            <i style={{ height: `${mapProgress}%` }} />
-          </div>
-          <svg className="neijing-flow" viewBox="0 0 464 832" preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <mask id="river-progress-mask">
-                <path
-                  d="M220 760 C238 704 300 650 250 574 C204 504 284 448 236 382 C192 320 266 264 232 198 C206 148 226 112 246 78"
-                  pathLength={100}
-                  stroke="white"
-                  strokeLinecap="round"
-                  strokeWidth="22"
-                  style={{ strokeDasharray: 100, strokeDashoffset: 100 - mapProgress }}
-                />
-              </mask>
-            </defs>
-            <path className="river-bed" d="M220 760 C238 704 300 650 250 574 C204 504 284 448 236 382 C192 320 266 264 232 198 C206 148 226 112 246 78" />
-            <path
-              className="river-progress"
-              d="M220 760 C238 704 300 650 250 574 C204 504 284 448 236 382 C192 320 266 264 232 198 C206 148 226 112 246 78"
-              pathLength={100}
-              style={{ strokeDasharray: 100, strokeDashoffset: 100 - mapProgress }}
-            />
-            <path
-              className="river-spark"
-              d="M220 760 C238 704 300 650 250 574 C204 504 284 448 236 382 C192 320 266 264 232 198 C206 148 226 112 246 78"
-              mask="url(#river-progress-mask)"
-              pathLength={100}
-            />
-            <path className="flow-b" d="M245 78 C296 154 304 221 276 288 C248 354 304 403 276 468 C248 532 300 590 250 676 C235 704 222 728 220 758" />
-          </svg>
-          <div
-            className="map-boat"
-            style={{ left: `${activeStage.x}%`, top: `${activeStage.y}%` }}
-            aria-hidden="true"
-          >
-            ◢
+          <NextImage
+            alt="Enerji merkezleri aydınlatılmış üç boyutlu insan bedeni"
+            className="neijing-map-image"
+            fill
+            priority
+            sizes="(min-width: 1024px) 460px, (min-width: 700px) 55vw, 340px"
+            src="/images/body-map-eight-gates-3d-v2.jpg"
+          />
+          <div className="neijing-current-gate-badge" aria-live="polite">
+            <span>ŞU ANKİ KAPIN</span>
+            <strong>{selectedShen.mapTitle}</strong>
+            <small>{selectedShen.dailyName}</small>
           </div>
           {neijingStages.map((stage, index) => (
             <div key={stage.title}>
               <button
                 aria-label={`${stage.title} bölgesini seç`}
-                className={`neijing-hotspot ${activeStageIndex === index ? "neijing-hotspot-active" : ""}`}
+                aria-current={currentGateIndex === index ? "step" : undefined}
+                className={`neijing-hotspot ${activeStageIndex === index ? "neijing-hotspot-active" : ""} ${currentGateIndex === index ? "neijing-hotspot-current" : ""}`}
                 onClick={() => selectStage(index)}
                 style={{ left: `${stage.x}%`, top: `${stage.y}%` }}
                 type="button"
@@ -7162,6 +7301,7 @@ function HumanMap({
               </button>
             </div>
           ))}
+          <div className="neijing-map-hint">Bir kapıya dokun · açıklamasını aç</div>
           {gateInfoOpen ? (
             <div className="gate-info-card" role="dialog" aria-label={`${activeStage.title} bilgileri`}>
               <div className="gate-info-topline">
@@ -7206,25 +7346,25 @@ function HumanMap({
           {sidePanel}
           <div className="human-map-copy neijing-copy">
             <div className="neijing-detail-head">
-              <span className="eyebrow">{bodyRevealed ? "İç harita" : "Kapı sınavı"}</span>
+              <span className="eyebrow">{activeStageIndex === currentGateIndex ? "Şu an bulunduğun kapı" : "İncelediğin kapı"}</span>
               <span className="neijing-reward">{activeStage.reward}</span>
             </div>
             <div className="item-title">{activeStage.title}</div>
             <div className="map-journey-strip">
               <span>Şu an</span>
+              <strong>{currentGateIndex + 1}</strong>
+              <span>incelediğin</span>
               <strong>{activeStageIndex + 1}</strong>
-              <span>sonraki kapı</span>
-              <strong>{activeStageIndex === neijingStages.length - 1 ? "✓" : activeStageIndex + 2}</strong>
             </div>
             <div className="item-subtitle">{personalFeedback}</div>
-            <div className={`map-reveal-note ${bodyRevealed ? "map-reveal-note-open" : ""}`}>
-              {bodyRevealed
-                ? "Yol tamamlandı: artık haritadaki kapıları nefes, dikkat ve duruş hattı olarak okuyorsun."
-                : "Harita baştan açık. Gösterge yalnızca bugün hangi kapıyı keşfettiğini ve hangi beceriyi çalıştığını gösterir."}
+            <div className={`map-reveal-note ${activeStageIndex === currentGateIndex ? "map-reveal-note-open" : ""}`}>
+              {activeStageIndex === currentGateIndex
+                ? `Bugün ${selectedShen.dailyName} seni bu kapıya getiriyor. Altın halkalı işaret haritadaki mevcut konumun.`
+                : `Şu anki kapın ${selectedShen.mapTitle}. Bu alanı bilgi edinmek için inceliyorsun; altın halkalı işaret mevcut konumunu gösterir.`}
             </div>
             <div className="map-progress-meta">
-              <span>Kapı {activeStageIndex + 1} / {neijingStages.length}</span>
-              <strong>%{mapProgress} keşfedildi</strong>
+              <span>İncelenen kapı {activeStageIndex + 1} / {neijingStages.length}</span>
+              <strong>Mevcut kapı {currentGateIndex + 1}</strong>
             </div>
             <div className="progress-track">
               <div className="progress-fill" style={{ width: `${mapProgress}%` }} />
@@ -7351,13 +7491,14 @@ function FiveShenJourneyWeb({
   userName: string;
 }) {
   const [selected, setSelected] = useState<DomainShenId>(selectedShenId);
-  const [view, setView] = useState<"overview" | "journey" | "directions" | "guides" | "detail" | "notebook">("overview");
+  const [view, setView] = useState<"overview" | "map" | "journey" | "directions" | "guides" | "detail" | "notebook">("map");
   const [directionIndex, setDirectionIndex] = useState(0);
   const [reflectionText, setReflectionText] = useState("");
   const [feeling, setFeeling] = useState("");
   const [sentenceFilter, setSentenceFilter] = useState<"all" | DomainShenId>("all");
   const progresses = useMemo(() => shenProfiles.map((profile) => calculateShenProgress(activities, profile.id)), [activities]);
   const profile = getShenProfile(selected);
+  const selectedMapShen = getShenById(selected === "xin" ? "shen" : selected);
   const progress = progresses.find((item) => item.shenId === selected) ?? progresses[0];
   const practices = getPracticeForShen(selected);
   const practice = practices[0];
@@ -7411,6 +7552,18 @@ function FiveShenJourneyWeb({
     setFeeling("");
   };
 
+  if (view === "map") {
+    return (
+      <section className="screen shen-journey-screen journey-framework-screen">
+        <header className="shen-journey-header">
+          <div><span className="eyebrow">Haritan · Sekiz beden kapısı</span><h1>Bedenindeki kapıları gör.</h1><p>Kapılara dokun; beden bölgesini, günlük karşılığını ve mini pratiğini aç. Altın halka şu an bulunduğun kapıyı gösterir.</p></div>
+          <button className="secondary-action" onClick={() => setView("overview")} type="button">Kişisel pusulaya geç</button>
+        </header>
+        <HumanMap selectedShen={selectedMapShen} />
+      </section>
+    );
+  }
+
   if (view === "overview") {
     return (
       <section className="screen shen-journey-screen journey-framework-screen">
@@ -7420,6 +7573,12 @@ function FiveShenJourneyWeb({
           <p>Üç kadim anlatı, üç ayrı soru. Terimleri bilmek zorunda değilsin; bugün ihtiyacın olan yerden başlayabilirsin.</p>
         </header>
         <div className="journey-framework-flow" aria-label="İç durumdan rehberliğe üç aşamalı yolculuk">
+          <button className="journey-framework-card journey-framework-card-map" onClick={() => setView("map")} style={{ "--journey-accent": profile.primaryColor } as CSSProperties} type="button">
+            <span className="journey-framework-number">00</span><span className="journey-framework-symbol">身</span>
+            <small>BEDEN HARİTAN</small><h2>8 Kapı</h2><p>Bedenimde şu an hangi kapı açık?</p>
+            <strong>{selectedMapShen.mapTitle}</strong><em>Haritayı aç →</em>
+          </button>
+          <span className="journey-framework-connector" aria-hidden="true">→</span>
           <button className="journey-framework-card journey-framework-card-shen" onClick={() => setView("journey")} style={{ "--journey-accent": profile.primaryColor } as CSSProperties} type="button">
             <span className="journey-framework-number">01</span><span className="journey-framework-symbol">神</span>
             <small>İÇ DÜNYA</small><h2>5 Shen</h2><p>Şu an içimde ne oluyor?</p>
@@ -8590,8 +8749,8 @@ function drawPoseCanvas(canvas: HTMLCanvasElement | null, pose: Pose | undefined
   } else {
     drawPoseConnections(context, pose.keypoints, "#7FB46B");
   }
-  drawPoseKeypoints(context, pose.keypoints, "#A9D977", analysis ? postureDisplayPoints : undefined);
   if (analysis) drawPostureQualityKeypoints(context, pose.keypoints, analysis);
+  else drawPoseKeypoints(context, pose.keypoints, "#A9D977");
   context.restore();
 }
 
@@ -8659,9 +8818,7 @@ function getPosturePointScore(name: string, analysis: PostureAnalysisSnapshot) {
 }
 
 function getPostureQualityColor(score: number) {
-  if (score >= 82) return "#79D69E";
-  if (score >= 62) return "#F3B84F";
-  return "#FF5B57";
+  return score >= 70 ? "#72E08C" : "#FF5B57";
 }
 
 function drawPostureQualityConnections(context: CanvasRenderingContext2D, keypoints: PoseKeypoint[], analysis: PostureAnalysisSnapshot) {
@@ -9035,7 +9192,60 @@ function createPostureCapture(
   };
 }
 
-function evaluateWebPostureFrame(keypoints: PoseKeypoint[], view: PostureView) {
+function smoothPoseKeypoints(previous: PoseKeypoint[], current: PoseKeypoint[], alpha = 0.24): PoseKeypoint[] {
+  if (!previous.length) return current;
+  const previousByName = new Map(previous.map((point) => [point.name, point]));
+  return current.map((point) => {
+    const before = previousByName.get(point.name);
+    if (!before || (point.score ?? 0) < 0.2 || (before.score ?? 0) < 0.2) return point;
+    return {
+      ...point,
+      x: before.x + (point.x - before.x) * alpha,
+      y: before.y + (point.y - before.y) * alpha,
+      score: (before.score ?? 0) * (1 - alpha) + (point.score ?? 0) * alpha,
+    };
+  });
+}
+
+function getPostureOrientationCue(view: PostureView) {
+  if (view === "front") return "Ön görünüm. Kameraya dön. Ayaklarını kalça genişliğinde aç ve kollarını rahat bırak.";
+  if (view === "side") return "Şimdi sağ yanını kameraya dön. Başını doğal konumda tut ve kollarını rahat bırak.";
+  return "Şimdi arkanı kameraya dön. Ağırlığını iki ayağına eşit dağıt ve doğal dur.";
+}
+
+function getPostureLiveCoachCue(
+  view: PostureView,
+  readiness: ReturnType<typeof evaluateWebPostureFrame>,
+  analysis: PostureAnalysisSnapshot,
+  keypoints: PoseKeypoint[],
+) {
+  if (!readiness.bodyReady) return "Laptop ekranını sabitle. Başınla ayakların aynı karede görünene kadar biraz geri çekil.";
+  if (!readiness.angleReady) return getPostureOrientationCue(view);
+  if (!readiness.positionReady) return readiness.positionCue;
+
+  if (view === "side") {
+    if (analysis.shoulderScore < 70) return "Çeneni hafifçe geriye al. Başını omuzunun üzerinde tut.";
+    if (analysis.axisScore < 70) return "Göğsünü kaldırmadan gövdeni dikey hatta getir.";
+    if (analysis.hipScore < 70) return "Kalçanı ayak bileğinin üzerinde hizala.";
+  } else {
+    if (analysis.shoulderScore < 70) {
+      const left = keypoints.find((point) => point.name === "left_shoulder");
+      const right = keypoints.find((point) => point.name === "right_shoulder");
+      if (left && right) return left.y < right.y ? "Sol omzunu biraz indir." : "Sağ omzunu biraz indir.";
+      return "Omuzlarını aynı yüksekliğe getir.";
+    }
+    if (analysis.hipScore < 70) return "Ağırlığını iki ayağına eşit dağıt.";
+    if (analysis.axisScore < 70) return analysis.spineShift > 0 ? "Gövdeni hafifçe sola taşı." : "Gövdeni hafifçe sağa taşı.";
+  }
+  return "Duruşun dengeli. Nefesini değiştirmeden sabit kal.";
+}
+
+function evaluateWebPostureFrame(
+  keypoints: PoseKeypoint[],
+  view: PostureView,
+  frameWidth = 0,
+  frameHeight = 0,
+) {
   const byName = new Map(keypoints.map((point) => [point.name, point]));
   const visible = (name: string, threshold = 0.5) => {
     const point = byName.get(name);
@@ -9052,7 +9262,7 @@ function evaluateWebPostureFrame(keypoints: PoseKeypoint[], view: PostureView) {
     pairReady("left_hip", "right_hip", 0.42) &&
     pairReady("left_knee", "right_knee", 0.36) &&
     pairReady("left_ankle", "right_ankle", 0.3);
-  if (!bodyReady) return { bodyReady: false, angleReady: false };
+  if (!bodyReady) return { bodyReady: false, angleReady: false, positionReady: false, positionCue: "Tam bedenini kadraja al." };
 
   const leftShoulder = byName.get("left_shoulder")!;
   const rightShoulder = byName.get("right_shoulder")!;
@@ -9072,7 +9282,33 @@ function evaluateWebPostureFrame(keypoints: PoseKeypoint[], view: PostureView) {
         ? shoulderWidthRatio >= 0.25 && faceConfidence >= 0.5 && anatomicalOrder > -bodyHeight * 0.04
         : shoulderWidthRatio >= 0.25 && (faceConfidence < 0.5 || anatomicalOrder < bodyHeight * 0.04);
 
-  return { bodyReady, angleReady };
+  const measurablePoints = keypoints.filter((point) => (point.score ?? 0) >= 0.35);
+  const width = frameWidth || Math.max(1, ...measurablePoints.map((point) => point.x));
+  const height = frameHeight || Math.max(1, ...measurablePoints.map((point) => point.y));
+  const minX = Math.min(...measurablePoints.map((point) => point.x));
+  const maxX = Math.max(...measurablePoints.map((point) => point.x));
+  const minY = Math.min(...measurablePoints.map((point) => point.y));
+  const maxY = Math.max(...measurablePoints.map((point) => point.y));
+  const displayCenterX = width - (minX + maxX) / 2;
+  const bodyRatio = (maxY - minY) / height;
+  const horizontalOffset = displayCenterX / width - 0.5;
+  let positionCue = "Kadrajdaki beden kılavuzunun ortasında kal.";
+  let positionReady = true;
+  if (bodyRatio > 0.88) {
+    positionReady = false;
+    positionCue = "Bir adım geri git.";
+  } else if (bodyRatio < 0.5) {
+    positionReady = false;
+    positionCue = "Kameraya yarım adım yaklaş.";
+  } else if (horizontalOffset < -0.1) {
+    positionReady = false;
+    positionCue = "Biraz sağa geç.";
+  } else if (horizontalOffset > 0.1) {
+    positionReady = false;
+    positionCue = "Biraz sola geç.";
+  }
+
+  return { bodyReady, angleReady, positionReady, positionCue };
 }
 
 function getPoseStabilityDistance(previous: PoseKeypoint[], current: PoseKeypoint[]): number {
@@ -9378,17 +9614,16 @@ function mergePracticeSnapshots(...collections: PracticeSnapshot[][]): PracticeS
 }
 
 function persistPostureReportsToLocalStorage(reports: PostureReport[]) {
-  const lightweightReports = reports.slice(0, 18).map((report) => ({
+  const lightweightReports = reports.slice(0, 18).map((report, reportIndex) => ({
     ...report,
     captures: Object.fromEntries(
       (["front", "side", "back"] as const).map((view) => [
         view,
         {
           ...report.captures[view],
-          imageData: portableHistoryImage(
-            report.captures[view].imageData,
-            "/images/posture/posture-back-translucent.png",
-          ),
+          imageData: reportIndex < 2
+            ? report.captures[view].imageData
+            : portableHistoryImage(report.captures[view].imageData, ""),
         },
       ]),
     ) as PostureReport["captures"],

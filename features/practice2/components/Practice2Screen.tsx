@@ -27,12 +27,13 @@ export function Practice2Screen({embedded=false,initialFlowId,onSnapshotCaptured
  const finishStatic=()=>setStaticActive(false);
  const beginDynamic=async()=>{await camera.start();dynamicHistory.current=[];dynamicMatchedAt.current=0;dynamicCaptured.current=false;dynamicCarried.current=0;setDynamicElapsed(0);setDynamicAnalysis(null);setDynamicCaptureState('matching');setDynamicHoldProgress(0);setDynamicRunning(true)};
  const toggleDynamic=()=>setDynamicRunning(current=>{if(current){dynamicCarried.current=dynamicElapsed}else if(dynamicElapsed>=flowDurationMs){dynamicCarried.current=0;setDynamicElapsed(0)}return!current});
+ const changeMode=(nextMode:'static'|'dynamic')=>{if(nextMode===mobileMode)return;setStaticActive(false);setDynamicRunning(false);setMobileMode(nextMode)};
 
  return <main className={`${styles.page} ${embedded?styles.embedded:''}`}>
-  {!embedded?<WebHeader active="practice2"/>:mobileMode==='static'&&staticActive?null:<div className={styles.embeddedTitle}><p>PRATİK2 · GERÇEK ANALİZ</p><h1>Pratik Modu</h1><span>Statik duruş ve dinamik akış aynı ölçüm dilinde.</span></div>}
-  {mobileMode==='static'&&staticActive?null:<div className={styles.segment}><button className={mobileMode==='static'?styles.segmentActive:''} onClick={()=>setMobileMode('static')} type="button">1 · Statik Pozlar</button><button className={mobileMode==='dynamic'?styles.segmentActive:''} onClick={()=>setMobileMode('dynamic')} type="button">2 · Akış Hareketleri</button></div>}
+  {!embedded?<WebHeader active="practice2"/>:null}
+  {mobileMode==='static'&&staticActive?null:<div aria-label="Pratik türü" className={styles.segment} role="tablist"><i aria-hidden="true" className={`${styles.segmentIndicator} ${mobileMode==='dynamic'?styles.segmentIndicatorDynamic:''}`}/><button aria-selected={mobileMode==='static'} className={mobileMode==='static'?styles.segmentActive:''} onClick={()=>changeMode('static')} role="tab" type="button">1 · Statik Pozlar</button><button aria-selected={mobileMode==='dynamic'} className={mobileMode==='dynamic'?styles.segmentActive:''} onClick={()=>changeMode('dynamic')} role="tab" type="button">2 · Akış Hareketleri</button></div>}
   <div className={styles.singleScreen}>
-   {mobileMode==='static'?<section className={`${styles.module} ${styles.staticModule} ${staticActive?styles.staticModuleActive:''}`}>
+   {mobileMode==='static'?<section className={`${styles.module} ${styles.modePanel} ${styles.staticModule} ${staticActive?styles.staticModuleActive:''}`}>
     {!staticActive?<div className={styles.staticPicker}>{staticPracticeDefinitions.map((item,index)=><button className={selectedStatic===index?styles.staticSelected:''} key={item.id} onClick={()=>{setSelectedStatic(index);setStaticAnalysis(null);setStaticActive(false)}} type="button"><img alt="" src={item.referenceImage}/><span><b>{String(item.order).padStart(2,'0')} · {item.title}</b><small>{cameraViewLabels[item.cameraView]} · {Math.round(item.holdDurationMs/1000)} sn</small></span></button>)}</div>:null}
     <div className={styles.staticStage}>
      <div className={styles.staticCameraPortrait}>
@@ -54,8 +55,7 @@ export function Practice2Screen({embedded=false,initialFlowId,onSnapshotCaptured
     </div>
    </section>:null}
 
-   {mobileMode==='dynamic'?<section className={styles.module}>
-    <ModuleHeader index="2" title="Dinamik Hareket – Akış Pratiği" note="Referans dizisini izle ve aynı akışı kamera önünde uygula." action="Akış Alıştırması"/>
+   {mobileMode==='dynamic'?<section className={`${styles.module} ${styles.modePanel}`}>
     <div className={styles.flowPicker}>{shortFlowDefinitions.map((item,index)=><button className={selectedFlow===index?styles.flowSelected:''} key={item.id} onClick={()=>{setSelectedFlow(index);setDynamicRunning(false);setDynamicAnalysis(null);setDynamicElapsed(0)}} type="button"><span>{String(item.order).padStart(2,'0')}</span><strong>{item.title}</strong><small>4,5 sn · hareket ön izlemesi</small><em>{item.focus}</em></button>)}</div>
     <div className={styles.dynamicPracticeStage}>
      <div className={styles.dynamicCameraPortrait}>
@@ -77,7 +77,6 @@ export function Practice2Screen({embedded=false,initialFlowId,onSnapshotCaptured
  </main>;
 }
 
-function ModuleHeader({index,title,note,action}:{index:string;title:string;note:string;action:string}){return <div className={styles.moduleHeader}><div><h2>{index}. {title}</h2><p>{note}</p></div><span>{action}</span></div>}
 function ScoreRing({score,label}:{score:number|null;label:string}){return <div className={styles.scoreRing} style={{'--score':score??0}as CSSProperties}><strong>{score===null?'—':`${score}%`}</strong><small>{label}</small></div>}
 function MetricPanel({title,analysis,fallback,compact=false}:{title:string;analysis:Practice2Analysis|null;fallback:string;compact?:boolean}){const metrics=analysis?.metrics??[];return <section className={`${styles.metricPanel} ${compact?styles.metricCompact:''}`}><h3>{title}</h3>{metrics.length?metrics.map(item=><div className={styles.metricRow} key={item.id}><div><strong>{item.label}</strong><small>{item.detail}</small></div>{item.available?<><span><i style={{width:`${item.value??0}%`}}/></span><b>{item.value}%</b></>:<em>Henüz ölçülemiyor</em>}</div>):<p className={styles.empty}>{fallback}</p>}{analysis?.overallScore!==null&&analysis?<div className={styles.metricTotal}><span>Toplam uyum</span><strong>{analysis.overallScore}%</strong></div>:null}</section>}
 function FeedbackPanel({analysis}:{analysis:Practice2Analysis|null}){return <section className={styles.feedbackPanel}><h3>Geri Bildirim</h3>{analysis?.correction?<p className={styles.correction}><span>△</span>{analysis.correction}</p>:null}{analysis?.positive?<p className={styles.positive}><span>✓</span>{analysis.positive}</p>:null}{!analysis?<p className={styles.empty}>Aynı anda yalnızca bir düzeltme ve bir olumlu işaret göreceksin.</p>:null}<div className={styles.master}><small>USTADAN NOT</small><strong>“Duruş, hareketin köküdür. Kökün güçlenirse dalın hafifler.”</strong></div></section>}

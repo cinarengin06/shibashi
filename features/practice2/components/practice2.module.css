@@ -112,8 +112,11 @@
   border: 1px solid rgba(198, 165, 106, 0.2);
   border-radius: 999px;
   background: #111713;
+  isolation: isolate;
 }
 .segment button {
+  position: relative;
+  z-index: 2;
   flex: 1;
   min-height: 44px;
   border: 0;
@@ -122,15 +125,37 @@
   color: var(--muted);
   cursor: pointer;
   font-size: 12px;
+  transition: color 220ms ease;
 }
 .segment .segmentActive {
-  background: linear-gradient(135deg, #d2b270, #b99150);
+  background: transparent;
   color: #11150f;
   font-weight: 800;
+}
+.segmentIndicator {
+  background: linear-gradient(135deg, #d2b270, #b99150);
+  border-radius: 999px;
+  bottom: 5px;
+  box-shadow: 0 8px 24px rgba(185, 145, 80, 0.2);
+  left: 5px;
+  pointer-events: none;
+  position: absolute;
+  top: 5px;
+  transform: translateX(0);
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  width: calc(50% - 5px);
+  z-index: 1;
+}
+.segmentIndicatorDynamic {
+  transform: translateX(100%);
 }
 .singleScreen {
   max-width: none;
   margin: auto;
+}
+.modePanel {
+  animation: practice-mode-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: 50% 0;
 }
 .module {
   min-width: 0;
@@ -1126,6 +1151,25 @@
   width: 1px;
   height: 1px;
   opacity: 0.001;
+}
+@keyframes practice-mode-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modePanel {
+    animation: none;
+  }
+  .segmentIndicator {
+    transition: none;
+  }
 }
 @media (max-width: 900px) {
   .singleScreen {

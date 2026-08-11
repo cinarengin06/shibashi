@@ -11,6 +11,7 @@ import {
   profileQuestions,
   type BodyFocus,
   type ExperienceLevel,
+  type MovementSupport,
   type OnboardingProfile,
   type OnboardingProgress,
   type PracticeIntention,
@@ -18,16 +19,16 @@ import {
 } from "@/packages/onboarding";
 import styles from "./premium-onboarding.module.css";
 
-const STORAGE_KEY = "shibashi-onboarding-v8";
-const RESULT_KEY = "shibashi-onboarding-result-v8";
+const STORAGE_KEY = "shibashi-onboarding-v9";
+const RESULT_KEY = "shibashi-onboarding-result-v9";
 type ShenId = ReturnType<typeof createFirstJourneyPlan>["recommendedShen"];
 
 const shenVisuals: Record<ShenId, { accent: string; image: string }> = {
-  hun: { accent: "#91A867", image: "/images/shen-river-hun.jpg" },
-  shen: { accent: "#D1AE68", image: "/images/shen-river-shen.jpg" },
-  yi: { accent: "#C7BFAE", image: "/images/shen-river-po.jpg" },
-  po: { accent: "#B69268", image: "/images/shen-river-yi.jpg" },
-  zhi: { accent: "#688AA1", image: "/images/shen-river-zhi.jpg" },
+  hun: { accent: "#91A867", image: "/images/shen-home/hun-web.webp" },
+  shen: { accent: "#D1AE68", image: "/images/shen-home/shen-fire-web.webp" },
+  yi: { accent: "#C7BFAE", image: "/images/shen-home/yi-web.webp" },
+  po: { accent: "#B69268", image: "/images/shen-home/po-web.webp" },
+  zhi: { accent: "#688AA1", image: "/images/shen-home/zhi-web.webp" },
 };
 
 const shenMusic: Record<ShenId, string> = {
@@ -46,7 +47,7 @@ const bodyFocusMarkers: Record<BodyFocus, Array<{ height?: number; width?: numbe
   "whole-body": [{ height: 88, width: 54, x: 50, y: 49 }],
 };
 
-type Destination = "home" | "practice";
+type Destination = "home" | "practice2";
 type Props = {
   embedded?: boolean;
   musicState?: "kapalı" | "açık";
@@ -100,7 +101,7 @@ export function PremiumOnboarding({
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw) as OnboardingProgress;
-        if (saved.version === 8 && saved.stage !== "completed") {
+        if (saved.version === 9 && saved.stage !== "completed") {
           const index = onboardingStages.findIndex(
             (item) => item.id === saved.stage,
           );
@@ -117,7 +118,7 @@ export function PremiumOnboarding({
   useEffect(() => {
     if (!hydrated) return;
     const progress: OnboardingProgress = {
-      version: 8,
+      version: 9,
       stage: onboardingStages[step]?.id ?? "completed",
       profile,
       updatedAt: new Date().toISOString(),
@@ -136,11 +137,11 @@ export function PremiumOnboarding({
   ) => setProfile((current) => ({ ...current, [key]: value }));
   const canContinue = step !== 1 || profile.name.trim().length >= 2;
   const next = () => {
-    if (step === 5) {
+    if (step === 6) {
       if (onShenRevealed) onShenRevealed(plan.recommendedShen);
       else startLocalMusic(plan.recommendedShen);
     }
-    setStep((value) => Math.min(6, value + 1));
+    setStep((value) => Math.min(7, value + 1));
   };
   const finish = (destination: Destination) => {
     const completeProfile = {
@@ -149,7 +150,7 @@ export function PremiumOnboarding({
       firstJourneyPlan: plan,
     };
     const completed: OnboardingProgress = {
-      version: 8,
+      version: 9,
       stage: "completed",
       profile: completeProfile,
       updatedAt: new Date().toISOString(),
@@ -163,18 +164,18 @@ export function PremiumOnboarding({
     if (onComplete) onComplete(completeProfile, destination);
     else
       window.location.assign(
-        destination === "practice" ? "/?view=practice" : "/",
+        destination === "practice2" ? "/?tab=practice2" : "/",
       );
   };
 
   if (!hydrated) return null;
-  const questionNumber = Math.min(5, step);
+  const questionNumber = Math.min(6, step);
   return (
     <main
       className={`${styles.root} ${embedded ? styles.embedded : ""}`}
       style={
         {
-          "--onboarding-accent": step === 6 ? visual.accent : "#C99543",
+          "--onboarding-accent": step === 7 ? visual.accent : "#C99543",
         } as CSSProperties
       }
     >
@@ -191,13 +192,13 @@ export function PremiumOnboarding({
           </button>
           <div className={styles.brand}>
             <span>SHIBASHI EFE</span>
-            <small>{step < 6 ? `${questionNumber} / 5` : "SENİN RİTMİN"}</small>
+            <small>{step < 7 ? `${questionNumber} / 6` : "SENİN RİTMİN"}</small>
           </div>
           <div
             className={styles.progress}
-            aria-label={`${questionNumber} / 4 tamamlandı`}
+            aria-label={`${questionNumber} / 6 tamamlandı`}
           >
-            {[1, 2, 3, 4, 5].map((item) => (
+            {[1, 2, 3, 4, 5, 6].map((item) => (
               <i
                 className={item <= questionNumber ? styles.progressActive : ""}
                 key={item}
@@ -210,15 +211,15 @@ export function PremiumOnboarding({
       {step === 0 ? <Welcome onStart={next} /> : null}
       {step > 0 ? (
         <section
-          className={`${styles.shell} ${step === 6 ? styles.resultShell : ""}`}
+          className={`${styles.shell} ${step === 7 ? styles.resultShell : ""}`}
           key={stage.id}
         >
           <div className={styles.copy}>
             <span className={styles.kicker}>
-              {step < 6 ? `${questionNumber} / 5` : "KISA TESTİN TAMAMLANDI"}
+              {step < 7 ? `${questionNumber} / 6` : "BAŞLANGICIN HAZIR"}
             </span>
             <h1>
-              {step === 6
+              {step === 7
                 ? `Bugün sana ${result.name} eşlik edecek.`
                 : stage.title}
             </h1>
@@ -233,6 +234,8 @@ export function PremiumOnboarding({
                       ? "Bu bir teşhis değil; ilk pratiğin odağını nazikçe belirler."
                       : step === 5
                         ? "Deneyimine ve ayırabileceğin zamana uygun bir plan hazırlayacağız."
+                        : step === 6
+                          ? "Kamera ilk gününde zorunlu değil. Önce rahat ve güvenli bir başlangıç yapacağız."
                         : `${profile.name || "Sen"}, cevapların bugün sana iyi gelebilecek başlangıç ritmini gösterdi.`}
             </p>
           </div>
@@ -263,6 +266,9 @@ export function PremiumOnboarding({
               <PreferencesStep profile={profile} patch={patch} />
             ) : null}
             {step === 6 ? (
+              <PracticeSetupStep profile={profile} patch={patch} />
+            ) : null}
+            {step === 7 ? (
               <ResultStep
                 musicState={effectiveMusicState}
                 onToggleMusic={toggleMusic}
@@ -275,7 +281,7 @@ export function PremiumOnboarding({
         </section>
       ) : null}
 
-      {step > 0 && step < 6 ? (
+      {step > 0 && step < 7 ? (
         <footer className={styles.footer}>
           <span>Yanıtlarını daha sonra profilinden değiştirebilirsin.</span>
           <button
@@ -284,19 +290,19 @@ export function PremiumOnboarding({
             onClick={next}
             type="button"
           >
-            {step === 5 ? "YOLUMU HAZIRLA" : "DEVAM ET"}
+            {step === 6 ? "RİTMİMİ GÖSTER" : "DEVAM ET"}
             <b aria-hidden="true">→</b>
           </button>
         </footer>
       ) : null}
-      {step === 6 ? (
+      {step === 7 ? (
         <footer className={`${styles.footer} ${styles.resultFooter}`}>
           <button
             className={styles.primary}
-            onClick={() => finish("practice")}
+            onClick={() => finish("practice2")}
             type="button"
           >
-            ▶ İLK PRATİĞİME BAŞLA
+            ▶ 5 DAKİKALIK İLK PRATİĞİ BAŞLAT
           </button>
           <button
             className={styles.secondary}
@@ -331,11 +337,11 @@ function Welcome({ onStart }: { onStart: () => void }) {
       <div className={styles.welcomeCopy}>
         <small>YOLCULUĞUN BURADA BAŞLIYOR</small>
         <h1>Sana iyi gelecek yolu birlikte bulalım.</h1>
-        <p>Birkaç kısa soruyla sana uygun başlangıcı hazırlayacağız.</p>
+        <p>Deneyim ve ekipman gerektirmez. Altı kısa adımda ilk 5 dakikalık pratiğini hazırlayacağız.</p>
         <button className={styles.primary} onClick={onStart} type="button">
           BAŞLAYALIM <b>→</b>
         </button>
-        <span>◷ Yaklaşık 1 dakika</span>
+        <span>◷ Yaklaşık 2 dakika · Kamera isteğe bağlı</span>
       </div>
     </section>
   );
@@ -603,6 +609,61 @@ function PreferencesStep({
           </button>
         ))}
       </div>
+      <span>Hareket ederken sana ne iyi gelir?</span>
+      <div className={styles.segments}>
+        {([
+          { value: "free-standing", label: "Rahatça ayakta" },
+          { value: "gentle-range", label: "Küçük hareketlerle" },
+          { value: "supported", label: "Destek yakınımda" },
+        ] as const).map((item) => (
+          <button
+            aria-pressed={profile.movementSupport === item.value}
+            className={profile.movementSupport === item.value ? styles.segmentActive : styles.segment}
+            key={item.value}
+            onClick={() => patch("movementSupport", item.value as MovementSupport)}
+            type="button"
+          >
+            {item.label}
+            {profile.movementSupport === item.value ? <b>✓</b> : null}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PracticeSetupStep({
+  profile,
+  patch,
+}: {
+  profile: OnboardingProfile;
+  patch: <K extends keyof OnboardingProfile>(key: K, value: OnboardingProfile[K]) => void;
+}) {
+  return (
+    <div className={styles.setupStage}>
+      <div className={styles.setupPreview}>
+        <Image
+          alt="Tai Chi başlangıç duruşu"
+          fill
+          sizes="(min-width: 900px) 34vw, 100vw"
+          src="/images/posture/posture-neutral-front-v2.jpg"
+        />
+        <span><b>İlk küçük başarı</b>Ayaklarını rahatça yerleştir, dizlerini kilitleme ve üç doğal nefes al.</span>
+      </div>
+      <div className={styles.setupList}>
+        <span><b>01</b><i>İki adımlık boş alan</i><small>Özel ekipman gerekmiyor.</small></span>
+        <span><b>02</b><i>Rahat kıyafet</i><small>Ayakkabı zorunlu değil.</small></span>
+        <span><b>03</b><i>Kamera isteğe bağlı</i><small>İlk pratiğe kamerayı açmadan da başlayabilirsin.</small></span>
+        <button
+          className={styles.supportToggle}
+          onClick={() => patch("movementSupport", profile.movementSupport === "supported" ? "gentle-range" : "supported")}
+          type="button"
+        >
+          <span>Yakınımda sandalye veya duvar olsun</span>
+          <b>{profile.movementSupport === "supported" ? "Açık" : "Kapalı"}</b>
+        </button>
+        <p>Ağrı veya baş dönmesi hissedersen dur. Bu deneyim tıbbi değerlendirme yerine geçmez.</p>
+      </div>
     </div>
   );
 }
@@ -670,8 +731,14 @@ function ResultStep({
         </small>
         <h2>Bugün sana {result.name} eşlik edecek.</h2>
         <p>
-          İlk pratiğini dikkatini sadeleştirecek yumuşak bir akışla hazırladık.
+          {plan.reasonSummary}
         </p>
+        <div className={styles.firstWeek} aria-label="İlk 7 gün planı">
+          <strong>İlk 7 günün</strong>
+          <span><b>Bugün</b><i>Temel duruş + 3 doğal nefes</i><small>5 dk</small></span>
+          <span><b>3. gün</b><i>İki hareketi birbirine bağla</i><small>{Math.min(plan.dailyMinutes, 10)} dk</small></span>
+          <span><b>7. gün</b><i>Kısa akış + beden kontrolü</i><small>{plan.dailyMinutes} dk</small></span>
+        </div>
         <button
           aria-label={`Müziği ${musicState === "açık" ? "kapat" : "aç"}`}
           aria-pressed={musicState === "açık"}

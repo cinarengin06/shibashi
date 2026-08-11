@@ -761,6 +761,35 @@
   margin-top: 12px;
   text-transform: uppercase;
 }
+.setupStage {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(230px, .8fr) minmax(320px, 1.2fr);
+}
+.setupPreview {
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 26px;
+  min-height: 470px;
+  overflow: hidden;
+  position: relative;
+}
+.setupPreview img { filter: brightness(.72) saturate(.78); object-fit: cover; }
+.setupPreview:after { background: linear-gradient(180deg, transparent 45%, rgba(5,10,7,.96)); content: ""; inset: 0; position: absolute; }
+.setupPreview > span { bottom: 24px; display: grid; font-size: 13px; gap: 7px; left: 24px; line-height: 1.55; position: absolute; right: 24px; z-index: 2; }
+.setupPreview b { color: var(--accent); font-size: 12px; letter-spacing: .13em; text-transform: uppercase; }
+.setupList { display: grid; gap: 10px; }
+.setupList > span { background: rgba(17,23,19,.9); border: 1px solid rgba(255,255,255,.08); border-radius: 17px; display: grid; gap: 4px; grid-template-columns: 38px 1fr; padding: 15px 17px; }
+.setupList > span b { color: var(--accent); font-size: 12px; grid-row: 1 / 3; padding-top: 2px; }
+.setupList > span i { font-size: 15px; font-style: normal; font-weight: 700; }
+.setupList > span small { color: #a7ada6; font-size: 12px; }
+.supportToggle { align-items: center; background: color-mix(in srgb, var(--accent) 10%, #111713); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 17px; color: #f2eee7; cursor: pointer; display: flex; font: inherit; justify-content: space-between; min-height: 58px; padding: 12px 17px; text-align: left; }
+.supportToggle b { color: var(--accent); font-size: 12px; }
+.setupList > p { color: #8e968f; font-size: 12px; line-height: 1.55; margin: 4px 0 0; }
+.firstWeek { background: rgba(5,10,7,.7); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; display: grid; margin: 10px 0 18px; padding: 12px 14px; }
+.firstWeek > strong { color: var(--accent); font-size: 11px; letter-spacing: .14em; margin-bottom: 4px; text-transform: uppercase; }
+.firstWeek > span { align-items: center; border-top: 1px solid rgba(255,255,255,.08); display: grid; font-size: 12px; gap: 8px; grid-template-columns: 58px 1fr auto; padding: 9px 0; }
+.firstWeek i { color: #f2eee7; font-style: normal; }
+.firstWeek small { color: var(--accent); }
 .segments {
   display: grid;
   gap: 10px;

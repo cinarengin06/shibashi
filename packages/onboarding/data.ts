@@ -7,10 +7,11 @@ export const onboardingStages:ReadonlyArray<{id:Exclude<OnboardingStage,'complet
  {id:'body-scan',label:'İhtiyacın',title:'Bugün neye ihtiyacın var?'},
  {id:'first-movement',label:'Bedenin',title:'Bedeninde en çok nereyle ilgilenmek istersin?'},
  {id:'profile',label:'Başlangıcın',title:'Sana uygun başlangıç hangisi?'},
+ {id:'practice-setup',label:'Hazırlık',title:'İlk pratiğin için yer açalım.'},
  {id:'first-plan',label:'Ritmin',title:'Sana eşlik edecek ritmi bulduk.'},
 ];
 
-export const emptyOnboardingProfile:OnboardingProfile={name:'',experienceLevel:'none',practiceIntention:'calm',bodyFocus:'whole-body',standingCapacity:'5-15',protectedArea:'none',guidancePreference:'both',bodyState:50,breathState:50,energyState:50};
+export const emptyOnboardingProfile:OnboardingProfile={name:'',experienceLevel:'none',practiceIntention:'calm',bodyFocus:'whole-body',standingCapacity:'5-15',movementSupport:'free-standing',protectedArea:'none',guidancePreference:'both',bodyState:50,breathState:50,energyState:50};
 
 export const profileQuestions={
  experience:[{value:'none',label:'Hayır'},{value:'some',label:'Biraz'},{value:'regular',label:'Evet'}],

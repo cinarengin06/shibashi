@@ -61,7 +61,7 @@ export function HomeDashboard(props: HomeDashboardProps) {
   );
 }
 
-function HomeHero({ onHistory, onPractice, onShen, shen, shenOptions, userName }: HomeDashboardProps) {
+function HomeHero({ onPractice, onShen, shen, shenOptions, userName }: HomeDashboardProps) {
   return (
     <article className={styles.hero}>
       <div aria-hidden="true" className={styles.heroWallpapers}>
@@ -82,14 +82,8 @@ function HomeHero({ onHistory, onPractice, onShen, shen, shenOptions, userName }
         <p className={styles.eyebrow}><span>Hoş geldin,</span> <strong>{userName || "Çınar"}</strong></p>
         <h1>{shen.heroTitle}</h1>
         <p className={styles.lead}>{shen.heroBody}</p>
-        <blockquote>
-          <span aria-hidden="true">“</span>
-          <p>{shen.motto}</p>
-          <cite>— {shen.name} rehberi</cite>
-        </blockquote>
         <div className={styles.heroActions}>
           <button className={styles.primaryAction} onClick={onPractice} type="button"><span aria-hidden="true">▶</span> {shen.actionLabel}</button>
-          <button className={styles.textAction} onClick={onHistory} type="button">Pratik geçmişimi gör <span aria-hidden="true">→</span></button>
         </div>
       </div>
       <DailyShenCard onShen={onShen} shen={shen} />
@@ -101,16 +95,16 @@ function ShenSelector({ activeShen, onSelect, options }: { activeShen: HomeShenS
   return (
     <section className={styles.shenSelector} aria-label="Beş Shen seçimi">
       <div className={styles.shenSelectorIntro}>
-        <span>Bugünün iç alanı</span>
-        <strong>{activeShen.name}</strong>
-        <small>{activeShen.shortLabel}</small>
+        <span>5 Shen · Beş iç hal</span>
+        <strong>{activeShen.shortLabel}</strong>
+        <small>{activeShen.name}</small>
       </div>
       <div className={styles.shenChoices}>
         {options.map((option) => {
           const active = option.id === activeShen.id;
           return (
             <button
-              aria-label={`${option.name}: ${option.shortLabel}`}
+              aria-label={`${option.shortLabel}: ${option.name}`}
               aria-pressed={active}
               className={active ? styles.shenChoiceActive : styles.shenChoice}
               key={option.id}
@@ -119,12 +113,11 @@ function ShenSelector({ activeShen, onSelect, options }: { activeShen: HomeShenS
               type="button"
             >
               <i aria-hidden="true">{option.symbol}</i>
-              <span><strong>{option.name}</strong><small>{option.shortLabel}</small></span>
+              <span><strong>{option.shortLabel}</strong><small>{option.name}</small></span>
             </button>
           );
         })}
       </div>
-      <p><span aria-hidden="true">♫</span> Müzik açıksa seçtiğin Shen’in sesi de birlikte değişir.</p>
     </section>
   );
 }

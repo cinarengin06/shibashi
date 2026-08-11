@@ -9144,6 +9144,72 @@ img {
   width: 100%;
 }
 
+.neijing-body-map {
+  background: #020806;
+  border-color: color-mix(in srgb, var(--shen-accent) 34%, rgba(255, 250, 238, 0.16));
+}
+
+.neijing-body-map::before {
+  background:
+    linear-gradient(180deg, rgba(1, 5, 4, 0.08), transparent 22%, transparent 74%, rgba(1, 5, 4, 0.32)),
+    radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.24));
+}
+
+.neijing-body-map .neijing-map-image {
+  filter: saturate(0.94) contrast(1.04) brightness(0.92);
+  object-fit: cover;
+}
+
+.neijing-current-gate-badge {
+  backdrop-filter: blur(16px) saturate(1.2);
+  background: rgba(4, 12, 9, 0.82);
+  border: 1px solid rgba(235, 195, 112, 0.42);
+  border-radius: 15px;
+  display: grid;
+  gap: 2px;
+  left: 14px;
+  max-width: 148px;
+  padding: 10px 12px;
+  position: absolute;
+  top: 14px;
+  z-index: 7;
+}
+
+.neijing-current-gate-badge span {
+  color: #ddb86f;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.neijing-current-gate-badge strong {
+  color: #fff7e9;
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.neijing-current-gate-badge small {
+  color: rgba(242, 238, 231, 0.62);
+  font-size: 0.75rem;
+}
+
+.neijing-map-hint {
+  backdrop-filter: blur(12px);
+  background: rgba(3, 10, 7, 0.74);
+  border: 1px solid rgba(255, 250, 238, 0.12);
+  border-radius: 999px;
+  bottom: 14px;
+  color: rgba(255, 250, 238, 0.74);
+  font-size: 0.75rem;
+  font-weight: 760;
+  left: 50%;
+  padding: 8px 12px;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 7;
+}
+
 .inner-walk-scene {
   background:
     radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--shen-accent) 24%, transparent), transparent 30%),
@@ -9560,6 +9626,19 @@ img {
   background: var(--shen-accent);
   color: #071019;
   transform: translate(-50%, -50%) scale(1.14);
+}
+
+.neijing-hotspot-current {
+  border-color: #ffe09a;
+  box-shadow:
+    0 0 0 7px rgba(255, 216, 133, 0.18),
+    0 0 0 13px rgba(255, 216, 133, 0.07),
+    0 0 34px rgba(255, 198, 91, 0.72);
+}
+
+.neijing-hotspot-current::after {
+  border-color: rgba(255, 224, 154, 0.8);
+  opacity: 1;
 }
 
 .gate-info-card {
@@ -17808,6 +17887,242 @@ body {
   }
 }
 
+/* Posture scan v2 — three neutral views, stable two-state tracking and audible coaching. */
+.posture-live-camera {
+  isolation: isolate;
+}
+
+/* Keep the complete webcam frame visible. `cover` was cropping landscape
+   webcams into the portrait stage and looked like a digital zoom. */
+.posture-live-camera .camera-preview,
+.posture-live-camera .camera-pose-canvas {
+  object-fit: contain !important;
+}
+
+.posture-live-camera .camera-preview {
+  background: #050908;
+}
+
+.posture-live-voice {
+  color: #e7c77e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.08em;
+}
+
+.posture-live-score-overlay {
+  align-items: center;
+  background: rgba(7, 13, 10, 0.9);
+  border: 1px solid rgba(255, 91, 87, 0.44);
+  border-radius: 16px;
+  display: flex;
+  gap: 12px;
+  left: 50%;
+  padding: 10px 15px;
+  position: absolute;
+  top: 16px;
+  transform: translateX(-50%);
+  z-index: 7;
+}
+
+.posture-live-score-overlay.is-aligned {
+  border-color: rgba(114, 224, 140, 0.52);
+}
+
+.posture-live-score-overlay > span {
+  color: #c5cbc4;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.posture-live-score-overlay > strong {
+  color: #f4f0e7;
+  font-family: var(--font-metric), Manrope, sans-serif;
+  font-size: 1.55rem;
+  font-weight: 550;
+  line-height: 1;
+}
+
+.posture-live-score-overlay > strong small {
+  color: #a7ada6;
+  font-size: 0.75rem;
+  margin-left: 2px;
+}
+
+.posture-live-side-panel {
+  gap: 16px;
+  min-width: 292px;
+  padding: 20px;
+}
+
+.posture-live-score-card {
+  background: #0d1511;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+}
+
+.posture-live-score-card > span {
+  color: #a7ada6;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.posture-live-score-card > strong {
+  color: #f4f0e7;
+  font-family: var(--font-metric), Manrope, sans-serif;
+  font-size: 3.1rem;
+  font-weight: 470;
+  line-height: 1;
+}
+
+.posture-live-score-card > strong small {
+  color: #a9d977;
+  font-size: 1.1rem;
+  margin-left: 2px;
+}
+
+.posture-live-score-card > b {
+  color: #a9d977;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.posture-live-score-card > div {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  height: 5px;
+  margin-top: 7px;
+  overflow: hidden;
+}
+
+.posture-live-score-card > div i {
+  background: linear-gradient(90deg, #d4aa58, #72e08c);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width 300ms ease;
+}
+
+.posture-live-region-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.posture-live-region-summary span {
+  align-items: center;
+  color: #c7ccc5;
+  display: flex;
+  font-size: 0.75rem;
+  gap: 6px;
+}
+
+.posture-live-region-summary i {
+  border-radius: 50%;
+  height: 8px;
+  width: 8px;
+}
+
+.posture-live-region-summary .good { background: #72e08c; }
+.posture-live-region-summary .fix { background: #ff5b57; }
+
+.posture-live-reference {
+  align-items: center;
+  background: radial-gradient(circle at 50% 42%, rgba(212, 170, 88, 0.1), transparent 60%), #0d1511;
+  border: 1px solid rgba(212, 170, 88, 0.2);
+  border-radius: 18px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 96px 1fr;
+  min-height: 158px;
+  overflow: hidden;
+  padding: 10px 16px 10px 10px;
+}
+
+.posture-live-reference > span {
+  color: #e5d6b6;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.05rem;
+}
+
+.posture-neutral-reference {
+  border: 1px solid rgba(212, 170, 88, 0.28);
+  border-radius: 13px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  display: block;
+  height: 138px;
+  object-fit: cover;
+  object-position: center;
+  width: 96px;
+}
+
+.posture-live-coach-card {
+  align-items: center;
+  background: rgba(212, 170, 88, 0.08);
+  border: 1px solid rgba(212, 170, 88, 0.2);
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 34px 1fr;
+  padding: 12px;
+}
+
+.posture-live-coach-card > i {
+  align-items: center;
+  border: 1px solid rgba(212, 170, 88, 0.36);
+  border-radius: 50%;
+  color: #e4be70;
+  display: flex;
+  font-style: normal;
+  height: 34px;
+  justify-content: center;
+}
+
+.posture-live-coach-card > div { display: grid; gap: 3px; }
+.posture-live-coach-card span { color: #a7ada6; font-size: 0.75rem; }
+.posture-live-coach-card strong { color: #f2eee7; font-size: 0.82rem; font-weight: 520; line-height: 1.4; }
+
+.posture-feedback-user-photo {
+  aspect-ratio: 3 / 4;
+  border: 1px solid rgba(212, 170, 88, 0.24);
+  border-radius: 12px;
+  height: 116px;
+  object-fit: cover;
+  object-position: center;
+  width: 88px;
+}
+
+@media (min-width: 900px) {
+  .posture-live-shell {
+    grid-template-columns: minmax(0, 1fr) 310px;
+  }
+
+  .posture-live-camera {
+    /* Match the stage to the actual webcam stream. A forced portrait stage
+       made a landscape laptop feed look like a small, digitally zoomed strip. */
+    align-self: start;
+    aspect-ratio: var(--posture-camera-aspect, 4 / 3);
+    height: auto;
+    max-height: calc(100dvh - 122px);
+    min-height: 0;
+  }
+}
+
+@media (max-width: 899px) {
+  .posture-live-guide {
+    background: rgba(8, 13, 10, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    bottom: 22px;
+    padding: 12px 14px;
+    width: calc(100% - 28px);
+  }
+}
+
 /* Supabase Auth — calm account gate shared by login and first-time signup. */
 .shibashi-auth-gate {
   align-items: center;
@@ -18592,7 +18907,7 @@ body { font-size: 16px; line-height: 1.55; }
 .journey-framework-hero { max-width: 900px; padding: clamp(22px, 4vw, 58px) 0 30px; }
 .journey-framework-hero h1 { color: #f7efe4; font-family: var(--font-display); font-size: clamp(2.6rem, 5vw, 5.7rem); font-weight: 500; letter-spacing: -.045em; line-height: .98; margin: 12px 0 20px; }
 .journey-framework-hero p { color: rgba(247, 239, 228, .68); font-size: clamp(1rem, 1.4vw, 1.2rem); line-height: 1.7; max-width: 720px; }
-.journey-framework-flow { align-items: stretch; display: grid; grid-template-columns: 1fr 42px 1fr 42px 1fr; margin: 16px 0 24px; }
+.journey-framework-flow { align-items: stretch; display: grid; grid-template-columns: 1fr 30px 1fr 30px 1fr 30px 1fr; margin: 16px 0 24px; }
 .journey-framework-connector { align-items: center; color: rgba(224, 190, 126, .5); display: flex; font-size: 1.4rem; justify-content: center; }
 .journey-framework-card { --journey-accent: #d9b36b; background: linear-gradient(145deg, rgba(17, 29, 22, .98), rgba(7, 14, 10, .98)); border: 1px solid color-mix(in srgb, var(--journey-accent) 38%, transparent); border-radius: 4px; color: #f7efe4; cursor: pointer; min-height: 340px; overflow: hidden; padding: clamp(22px, 2.4vw, 38px); position: relative; text-align: left; transition: border-color .25s ease, transform .25s ease; }
 .journey-framework-card:hover { border-color: var(--journey-accent); transform: translateY(-5px); }
@@ -18605,13 +18920,18 @@ body { font-size: 16px; line-height: 1.55; }
 .journey-framework-card strong { color: var(--journey-accent); display: block; font-size: .9rem; line-height: 1.5; }
 .journey-framework-card em { bottom: 28px; color: rgba(247, 239, 228, .7); font-size: .82rem; font-style: normal; position: absolute; }
 .journey-framework-card-guide { --journey-accent: #d8b16b; }
+.journey-framework-card-map {
+  background:
+    linear-gradient(145deg, rgba(6, 15, 11, .9), rgba(4, 10, 7, .98)),
+    url("/images/body-map-eight-gates-3d-v2.jpg") center 18% / 118% auto no-repeat;
+}
 .journey-today-synthesis { align-items: center; background: linear-gradient(90deg, rgba(190, 149, 82, .14), rgba(13, 23, 17, .88)); border: 1px solid rgba(224, 190, 126, .3); display: flex; justify-content: space-between; padding: 25px 30px; }
 .journey-today-synthesis h2 { color: #f7efe4; font-family: var(--font-display); font-size: clamp(1.35rem, 2vw, 2.1rem); font-weight: 500; margin-top: 6px; }
 .journey-framework-note, .journey-term-note { color: rgba(247, 239, 228, .5); display: block; font-size: .78rem; line-height: 1.6; margin: 16px 0; max-width: 900px; }
 .journey-header-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 @media (max-width: 980px) {
-  .journey-framework-flow { gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .journey-framework-flow { gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .journey-framework-connector { display: none; }
   .journey-framework-card { min-height: 310px; }
 }

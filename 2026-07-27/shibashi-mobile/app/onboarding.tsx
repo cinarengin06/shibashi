@@ -26,12 +26,12 @@ import {
   profileQuestions,
   type BodyFocus,
   type ExperienceLevel,
+  type MovementSupport,
   type OnboardingProfile,
   type PracticeIntention,
   type StandingCapacity,
 } from "../../../packages/onboarding";
 import { colors, fonts } from "../constants/theme";
-import { getShen } from "../data/fiveShen";
 import { useApp } from "../store/AppStore";
 import { useShenExperience } from "../store/ShenExperience";
 
@@ -60,7 +60,7 @@ export default function Onboarding() {
   const savedIndex = onboardingStages.findIndex(
     (item) => item.id === (profile.onboardingStage ?? "welcome"),
   );
-  const [step, setStep] = useState(Math.max(0, Math.min(6, savedIndex)));
+  const [step, setStep] = useState(Math.max(0, Math.min(7, savedIndex)));
   const [data, setData] = useState<OnboardingProfile>({
     ...emptyOnboardingProfile,
     ...profile.onboardingProfile,
@@ -71,7 +71,6 @@ export default function Onboarding() {
   });
   const plan = useMemo(() => createFirstJourneyPlan(data), [data]);
   const result = onboardingShenResults[plan.recommendedShen];
-  const recommendedShen = getShen(plan.recommendedShen);
   const patch = <K extends keyof OnboardingProfile>(
     key: K,
     value: OnboardingProfile[K],
@@ -81,7 +80,7 @@ export default function Onboarding() {
     if (haptic) void Haptics.selectionAsync();
   };
   const goTo = (nextStep: number) => {
-    const safe = Math.max(0, Math.min(6, nextStep));
+    const safe = Math.max(0, Math.min(7, nextStep));
     saveProfile({
       onboardingStage: onboardingStages[safe].id,
       onboardingProfile: data,
@@ -89,7 +88,7 @@ export default function Onboarding() {
     setStep(safe);
   };
   const next = () => {
-    if (step === 5) {
+    if (step === 6) {
       saveProfile({
         name: data.name.trim() || "Gezgin",
         selectedShenId: plan.recommendedShen,
@@ -98,7 +97,7 @@ export default function Onboarding() {
         onboardingProfile: data,
         firstJourneyPlan: plan,
       });
-      setStep(6);
+      setStep(7);
       startSound();
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return;
@@ -123,7 +122,7 @@ export default function Onboarding() {
       selectedShenId: plan.recommendedShen,
       soundEnabled: true,
       onboardingDone: true,
-      onboardingVersion: 8,
+      onboardingVersion: 9,
       onboardingCheckin: {
         body: data.bodyState,
         breath: data.breathState,
@@ -137,7 +136,7 @@ export default function Onboarding() {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace(
       destination === "practice"
-        ? `/practice-session?practiceId=${recommendedShen.practiceId}`
+        ? "/(tabs)/pratik2"
         : "/(tabs)",
     );
   };
@@ -158,7 +157,7 @@ export default function Onboarding() {
           contentContainerStyle={[
             m.content,
             step === 0 && m.welcomeContent,
-            step === 6 && m.resultContent,
+            step === 7 && m.resultContent,
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -221,6 +220,16 @@ export default function Onboarding() {
           ) : null}
           {step === 5 ? <Preferences data={data} patch={patch} /> : null}
           {step === 6 ? (
+            <>
+              <QuestionCopy
+                kicker="6 / 6"
+                title="İlk pratiğin için yer açalım."
+                body="Kamera zorunlu değil. Önce rahat ve güvenli bir başlangıç yapacağız."
+              />
+              <PracticeSetup data={data} patch={patch} />
+            </>
+          ) : null}
+          {step === 7 ? (
             <Result
               background={background}
               playing={playing}
@@ -231,7 +240,7 @@ export default function Onboarding() {
             />
           ) : null}
         </ScrollView>
-        {step > 0 && step < 6 ? (
+        {step > 0 && step < 7 ? (
           <View style={m.footer}>
             <Pressable
               disabled={!canContinue}
@@ -243,8 +252,8 @@ export default function Onboarding() {
               ]}
             >
               <Text style={m.primaryText}>
-                {step === 5
-                  ? "YOLUMU HAZIRLA"
+                {step === 6
+                  ? "RİTMİMİ GÖSTER"
                   : step === 3
                     ? "DEVAM ET"
                     : "DEVAM ET"}
@@ -253,14 +262,14 @@ export default function Onboarding() {
             </Pressable>
           </View>
         ) : null}
-        {step === 6 ? (
+        {step === 7 ? (
           <View style={m.resultFooter}>
             <Pressable
               onPress={() => finish("practice")}
               style={({ pressed }) => [m.primary, pressed && m.pressed]}
             >
               <Ionicons color={colors.ink} name="play" size={17} />
-              <Text style={m.primaryText}>İLK PRATİĞİME BAŞLA</Text>
+              <Text style={m.primaryText}>5 DAKİKALIK İLK PRATİĞİ BAŞLAT</Text>
             </Pressable>
             <Pressable onPress={() => finish("home")}>
               <Text style={[m.secondary, { color: shen.color }]}>
@@ -298,7 +307,7 @@ function Welcome({ onStart }: { onStart: () => void }) {
           Sana iyi gelecek yolu birlikte bulalım.
         </Text>
         <Text style={m.welcomeBody}>
-          Birkaç kısa soruyla sana uygun başlangıcı hazırlayacağız.
+          Deneyim ve ekipman gerektirmez. Altı kısa adımda ilk 5 dakikalık pratiğini hazırlayacağız.
         </Text>
         <Pressable
           onPress={onStart}
@@ -309,7 +318,7 @@ function Welcome({ onStart }: { onStart: () => void }) {
         </Pressable>
         <View style={m.minute}>
           <Ionicons color={colors.gold} name="time-outline" size={15} />
-          <Text style={m.minuteText}>Yaklaşık 1 dakika</Text>
+          <Text style={m.minuteText}>Yaklaşık 2 dakika · Kamera isteğe bağlı</Text>
         </View>
       </LinearGradient>
     </ImageBackground>
@@ -317,7 +326,7 @@ function Welcome({ onStart }: { onStart: () => void }) {
 }
 
 function Header({ back, step }: { back: () => void; step: number }) {
-  const question = Math.min(5, step);
+  const question = Math.min(6, step);
   return (
     <View style={m.header}>
       <Pressable
@@ -328,14 +337,14 @@ function Header({ back, step }: { back: () => void; step: number }) {
         <Ionicons color={colors.cream} name="arrow-back" size={20} />
       </Pressable>
       <View style={m.progress}>
-        {[1, 2, 3, 4, 5].map((item) => (
+        {[1, 2, 3, 4, 5, 6].map((item) => (
           <View
             key={item}
             style={[m.progressLine, item <= question && m.progressActive]}
           />
         ))}
       </View>
-      <Text style={m.stepText}>{step < 6 ? `${question} / 5` : "SONUCUN"}</Text>
+      <Text style={m.stepText}>{step < 7 ? `${question} / 6` : "SONUCUN"}</Text>
     </View>
   );
 }
@@ -678,6 +687,71 @@ function Preferences({
           );
         })}
       </View>
+      <Text style={[m.groupLabel, m.timeLabel]}>HAREKET EDERKEN</Text>
+      <View style={m.segmentRow}>
+        {([
+          { value: "free-standing", label: "Rahatça ayakta" },
+          { value: "gentle-range", label: "Küçük hareketlerle" },
+          { value: "supported", label: "Destek yakınımda" },
+        ] as const).map((item) => {
+          const active = data.movementSupport === item.value;
+          return (
+            <Pressable
+              key={item.value}
+              onPress={() => patch("movementSupport", item.value as MovementSupport)}
+              style={[m.segment, active && m.segmentActive]}
+            >
+              <Text style={[m.segmentText, active && m.segmentTextActive]}>{item.label}</Text>
+              {active ? <Ionicons color={colors.gold} name="checkmark-circle" size={17} /> : null}
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function PracticeSetup({
+  data,
+  patch,
+}: {
+  data: OnboardingProfile;
+  patch: <K extends keyof OnboardingProfile>(key: K, value: OnboardingProfile[K]) => void;
+}) {
+  return (
+    <View style={m.setupCard}>
+      <ImageBackground
+        imageStyle={m.setupImage}
+        source={require("../assets/living-learning/curtains-opening.png")}
+        style={m.setupPreview}
+      >
+        <LinearGradient colors={["transparent", "rgba(4,9,6,.96)"]} style={m.setupShade}>
+          <View style={m.setupSpace} />
+          <Text style={m.setupKicker}>İLK KÜÇÜK BAŞARI</Text>
+          <Text style={m.setupCue}>Ayaklarını rahatça yerleştir, dizlerini kilitleme ve üç doğal nefes al.</Text>
+        </LinearGradient>
+      </ImageBackground>
+      {[
+        ["01", "İki adımlık boş alan", "Özel ekipman gerekmiyor."],
+        ["02", "Rahat kıyafet", "Ayakkabı zorunlu değil."],
+        ["03", "Kamera isteğe bağlı", "İlk pratiğe kamerayı açmadan başlayabilirsin."],
+      ].map(([number, title, note]) => (
+        <View key={number} style={m.setupRow}>
+          <Text style={m.setupNumber}>{number}</Text>
+          <View style={m.setupText}>
+            <Text style={m.setupTitle}>{title}</Text>
+            <Text style={m.setupNote}>{note}</Text>
+          </View>
+        </View>
+      ))}
+      <Pressable
+        onPress={() => patch("movementSupport", data.movementSupport === "supported" ? "gentle-range" : "supported")}
+        style={[m.supportToggle, data.movementSupport === "supported" && m.supportToggleActive]}
+      >
+        <Text style={m.supportText}>Yakınımda sandalye veya duvar olsun</Text>
+        <Ionicons color={colors.gold} name={data.movementSupport === "supported" ? "toggle" : "toggle-outline"} size={28} />
+      </Pressable>
+      <Text style={m.safetyNote}>Ağrı veya baş dönmesi hissedersen dur. Bu deneyim tıbbi değerlendirme yerine geçmez.</Text>
     </View>
   );
 }
@@ -715,8 +789,22 @@ function Result({
           {result.mode} · {plan.focuses[0]}
         </Text>
         <Text style={m.resultBody}>
-          İlk pratiğini dikkatini sadeleştirecek yumuşak bir akışla hazırladık.
+          {plan.reasonSummary}
         </Text>
+        <View style={m.firstWeek}>
+          <Text style={[m.firstWeekTitle, { color: shenColor }]}>İLK 7 GÜNÜN</Text>
+          {[
+            ["Bugün", "Temel duruş + 3 doğal nefes", "5 dk"],
+            ["3. gün", "İki hareketi birbirine bağla", `${Math.min(plan.dailyMinutes, 10)} dk`],
+            ["7. gün", "Kısa akış + beden kontrolü", `${plan.dailyMinutes} dk`],
+          ].map(([day, title, time]) => (
+            <View key={day} style={m.firstWeekRow}>
+              <Text style={m.firstWeekDay}>{day}</Text>
+              <Text style={m.firstWeekText}>{title}</Text>
+              <Text style={[m.firstWeekTime, { color: shenColor }]}>{time}</Text>
+            </View>
+          ))}
+        </View>
         <Pressable
           accessibilityLabel={`Müziği ${playing ? "kapat" : "aç"}`}
           accessibilityRole="button"
@@ -1048,6 +1136,48 @@ const m = StyleSheet.create({
     textAlign: "center",
   },
   segmentTextActive: { color: colors.cream, fontFamily: fonts.sansStrong },
+  setupCard: { gap: 10 },
+  setupPreview: {
+    borderColor: "rgba(198,165,106,.5)",
+    borderRadius: 20,
+    borderWidth: 1,
+    height: 230,
+    overflow: "hidden",
+  },
+  setupImage: { borderRadius: 19 },
+  setupShade: { flex: 1, padding: 18 },
+  setupSpace: { flex: 1 },
+  setupKicker: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 12, letterSpacing: 1.3 },
+  setupCue: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 16, lineHeight: 23, marginTop: 6 },
+  setupRow: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 66,
+    padding: 12,
+  },
+  setupNumber: { color: colors.gold, fontFamily: fonts.sansBold, fontSize: 12 },
+  setupText: { flex: 1, gap: 3 },
+  setupTitle: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 15 },
+  setupNote: { color: colors.muted, fontFamily: fonts.sans, fontSize: 13 },
+  supportToggle: {
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: 58,
+    paddingHorizontal: 14,
+  },
+  supportToggleActive: { backgroundColor: "rgba(198,165,106,.12)", borderColor: colors.gold },
+  supportText: { color: colors.cream, flex: 1, fontFamily: fonts.sansMedium, fontSize: 14 },
+  safetyNote: { color: colors.muted, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, paddingHorizontal: 4 },
   footer: {
     backgroundColor: "rgba(6,11,8,.97)",
     borderTopColor: colors.line,
@@ -1102,6 +1232,19 @@ const m = StyleSheet.create({
     lineHeight: 24,
     marginTop: 12,
   },
+  firstWeek: {
+    backgroundColor: "rgba(4,9,6,.76)",
+    borderColor: colors.line,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 14,
+    padding: 12,
+  },
+  firstWeekTitle: { fontFamily: fonts.sansBold, fontSize: 11, letterSpacing: 1.3, marginBottom: 4 },
+  firstWeekRow: { alignItems: "center", borderTopColor: colors.line, borderTopWidth: 1, flexDirection: "row", gap: 8, minHeight: 38 },
+  firstWeekDay: { color: colors.muted, fontFamily: fonts.sansBold, fontSize: 12, width: 48 },
+  firstWeekText: { color: colors.cream, flex: 1, fontFamily: fonts.sans, fontSize: 12 },
+  firstWeekTime: { fontFamily: fonts.sansBold, fontSize: 12 },
   music: {
     alignItems: "center",
     backgroundColor: "rgba(4,9,6,.74)",

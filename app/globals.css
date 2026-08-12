@@ -5618,6 +5618,10 @@ img {
 .posture-live-tools button:disabled { cursor: not-allowed; opacity: 0.42; }
 .posture-live-tools b { color: #efc451; font-size: 1.25rem; font-weight: 500; }
 .posture-live-camera-wait { color: var(--ink-soft); left: 50%; position: absolute; top: 44%; transform: translate(-50%, -50%); z-index: 4; }
+.posture-camera-zoom { align-items:center; background:rgba(5,10,7,.86); border:1px solid rgba(242,238,229,.18); border-radius:999px; display:flex; gap:4px; padding:5px; position:absolute; right:16px; top:16px; z-index:7; }
+.posture-camera-zoom button { align-items:center; background:rgba(242,238,229,.08); border:0; border-radius:50%; color:#f2eee5; cursor:pointer; display:flex; font-size:1.15rem; height:36px; justify-content:center; width:36px; }
+.posture-camera-zoom button:disabled { cursor:not-allowed; opacity:.3; }
+.posture-camera-zoom span { color:rgba(242,238,229,.7); font-size:.72rem; min-width:48px; text-align:center; }
 
 .posture-live-guide {
   align-items: center;

@@ -68,6 +68,7 @@ export function NewPostureScreen({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const detectorRef = useRef<{ detectForVideo: (video: HTMLVideoElement, timestamp: number) => { landmarks?: Array<Array<{ x: number; y: number; visibility?: number }>> }; close?: () => void } | null>(null);
   const animationRef = useRef(0);
   const detectionSessionRef = useRef(0);
@@ -100,6 +101,7 @@ export function NewPostureScreen({
   const [viewReady, setViewReady] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
   const [resultView, setResultView] = useState<MirrorView>("front");
+  const [zoom, setZoom] = useState<{ min: number; max: number; step: number; value: number } | null>(null);
 
   const view = views[viewIndex] ?? views[0];
   const assessment = useMemo(() => assessLandmarks(landmarks, view.id), [landmarks, view.id]);
@@ -121,6 +123,8 @@ export function NewPostureScreen({
     }, 180);
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+    cameraTrackRef.current = null;
+    setZoom(null);
     setCameraState("idle");
     setLandmarks([]);
     if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
@@ -206,6 +210,16 @@ export function NewPostureScreen({
         return;
       }
       streamRef.current = stream;
+      const cameraTrack = stream.getVideoTracks()[0] ?? null;
+      cameraTrackRef.current = cameraTrack;
+      const capabilities = cameraTrack?.getCapabilities() as MediaTrackCapabilities & { zoom?: { min: number; max: number; step: number } };
+      if (cameraTrack && capabilities?.zoom && Number.isFinite(capabilities.zoom.min)) {
+        const minimumZoom = capabilities.zoom.min;
+        setZoom({ min: minimumZoom, max: capabilities.zoom.max, step: Math.max(capabilities.zoom.step || 0.1, 0.1), value: minimumZoom });
+        await cameraTrack.applyConstraints({ advanced: [{ zoom: minimumZoom }] } as unknown as MediaTrackConstraints).catch(() => undefined);
+      } else {
+        setZoom(null);
+      }
       video.srcObject = stream;
       await video.play();
       const module = await import("@/lib/pose/createPoseLandmarker");
@@ -254,6 +268,14 @@ export function NewPostureScreen({
       setCameraState(error instanceof DOMException && (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") ? "denied" : "error");
     }
   }, [speakCalmly]);
+
+  const changeZoom = useCallback(async (direction: -1 | 1) => {
+    const track = cameraTrackRef.current;
+    if (!track || !zoom) return;
+    const nextValue = Math.max(zoom.min, Math.min(zoom.max, zoom.value + zoom.step * direction));
+    await track.applyConstraints({ advanced: [{ zoom: nextValue }] } as unknown as MediaTrackConstraints).catch(() => undefined);
+    setZoom((current) => current ? { ...current, value: nextValue } : current);
+  }, [zoom]);
 
   const captureAndContinue = useCallback(() => {
     if (captureLockRef.current) return;
@@ -409,6 +431,7 @@ export function NewPostureScreen({
             <div className={styles.score}><span>TEMELİN</span><strong>{displayScore ?? "—"}</strong></div>
             <div className={`${styles.cue} ${captureState === "holding" ? styles.cueHolding : ""}`}><i aria-hidden="true" /><strong>{captureState === "holding" ? `Tamam. ${Math.max(1, Math.ceil((100 - holdProgress) / 50))} saniye bekle.` : captureState === "captured" ? "Fotoğraf çekildi." : assessment.cue}</strong>{captureState === "holding" ? <span className={styles.holdBar}><b style={{ width: `${holdProgress}%` }} /></span> : null}</div>
             <button aria-label={voiceEnabled ? "Sesli yönlendirmeyi kapat" : "Sesli yönlendirmeyi aç"} aria-pressed={voiceEnabled} className={styles.sound} onClick={() => setVoiceEnabled((current) => !current)} type="button">{voiceEnabled ? "◖))" : "◖×"}</button>
+            <div className={styles.zoom} title={zoom ? "Kamera zoom seviyesi" : "Bu kamera donanımsal zoom desteklemiyor"}><button aria-label="Kamerayı uzaklaştır" disabled={!zoom || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)} type="button">−</button><span>{zoom ? `${zoom.value.toFixed(1)}×` : "Zoom yok"}</span><button aria-label="Kamerayı yakınlaştır" disabled={!zoom || zoom.value >= zoom.max} onClick={() => void changeZoom(1)} type="button">+</button></div>
             <button className={styles.close} onClick={() => { stopCamera(); setStage("intro"); }} type="button" aria-label="Beden aynasını kapat">×</button>
             <div className={styles.stepper}>{views.map((item, index) => <button key={item.id} aria-current={index === viewIndex ? "step" : undefined} className={index === viewIndex ? styles.stepActive : index < viewIndex ? styles.stepDone : undefined} disabled type="button"><i />{item.label}</button>)}</div>
             <div className={styles.autoCapture}>{!captureReady ? "Önce yönlendirmeyi uygula" : assessment.matched ? "Otomatik çekim hazırlanıyor" : `${view.label} görünümünü hizala`}</div>
@@ -440,7 +463,7 @@ function assessLandmarks(items: readonly Landmark[], view: MirrorView) {
     const legLean = Math.abs(hip.x - ankle.x) / bodyHeight;
     const centerError = Math.abs((shoulder.x + hip.x + knee.x + ankle.x) / 4 - 0.5);
     const score = Math.round(Math.max(42, Math.min(98, 97 - torsoLean * 125 - legLean * 55 - centerError * 80)));
-    if (shoulderPerspective > 0.22) return { ready: true, matched: false, score, cue: "Vücudunu tamamen yana çevir.", problemJoint: undefined as string | undefined };
+    if (shoulderPerspective > 0.17) return { ready: true, matched: false, score, cue: "Henüz önden görünüyorsun. Vücudunu tam yana çevir.", problemJoint: undefined as string | undefined };
     if (centerError > 0.17) return { ready: true, matched: false, score, cue: shoulder.x < 0.5 ? "Biraz sağına yerleş." : "Biraz soluna yerleş.", problemJoint: "center" };
     if (torsoLean > 0.085) return { ready: true, matched: false, score, cue: "Başını kalçanın üzerinde sakinçe hizala.", problemJoint: `${side}_shoulder` };
     if (legLean > 0.12) return { ready: true, matched: false, score, cue: "Ağırlığını iki ayağının ortasına getir.", problemJoint: `${side}_hip` };
@@ -450,6 +473,7 @@ function assessLandmarks(items: readonly Landmark[], view: MirrorView) {
   const required = ["left_shoulder", "right_shoulder", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"];
   if (required.some((name) => !visible.get(name))) return { ready: false, matched: false, score: 0, cue: view === "back" ? "Arkanı dön ve tam bedeninle kadrajda kal." : "Tam bedeninle kadraja gir.", problemJoint: undefined as string | undefined };
   if (view === "front" && faceConfidence < 0.3) return { ready: true, matched: false, score: 60, cue: "Yüzün kameraya dönük olsun.", problemJoint: undefined as string | undefined };
+  if (view === "back" && faceConfidence >= 0.26) return { ready: true, matched: false, score: 60, cue: "Hâlâ yüzünü görüyorum. Arkanı tamamen kameraya dön.", problemJoint: undefined as string | undefined };
   const leftShoulder = visible.get("left_shoulder")!;
   const rightShoulder = visible.get("right_shoulder")!;
   const leftHip = visible.get("left_hip")!;

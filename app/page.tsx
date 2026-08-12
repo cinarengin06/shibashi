@@ -3507,6 +3507,7 @@ function PostureScreen({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const postureCameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const detectorRef = useRef<PoseDetector | null>(null);
   const rafRef = useRef<number | null>(null);
   const scoreTimerRef = useRef<number | null>(null);
@@ -3538,6 +3539,7 @@ function PostureScreen({
   const [captureFlash, setCaptureFlash] = useState(false);
   const [capturedView, setCapturedView] = useState<PostureView | null>(null);
   const [postureVoiceEnabled, setPostureVoiceEnabled] = useState(true);
+  const [postureZoom, setPostureZoom] = useState<{ min: number; max: number; step: number; value: number } | null>(null);
   const captureTransitionRef = useRef<number | null>(null);
   postureStepRef.current = postureStep;
   const activeScanView = postureStep === "front" || postureStep === "side" || postureStep === "back" ? postureStep : postureView;
@@ -3827,9 +3829,20 @@ function PostureScreen({
         zoom?: { min: number; max: number; step: number };
       };
       if (cameraTrack && capabilities?.zoom && Number.isFinite(capabilities.zoom.min)) {
+        const minimumZoom = capabilities.zoom.min;
+        postureCameraTrackRef.current = cameraTrack;
+        setPostureZoom({
+          min: minimumZoom,
+          max: capabilities.zoom.max,
+          step: Math.max(capabilities.zoom.step || 0.1, 0.1),
+          value: minimumZoom,
+        });
         await cameraTrack.applyConstraints({
-          advanced: [{ zoom: capabilities.zoom.min }],
+          advanced: [{ zoom: minimumZoom }],
         } as unknown as MediaTrackConstraints).catch(() => undefined);
+      } else {
+        postureCameraTrackRef.current = cameraTrack ?? null;
+        setPostureZoom(null);
       }
 
       streamRef.current = stream;
@@ -3848,6 +3861,8 @@ function PostureScreen({
   function shutdownPostureCamera() {
     if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
+    postureCameraTrackRef.current = null;
+    setPostureZoom(null);
     streamRef.current = null;
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -3860,6 +3875,17 @@ function PostureScreen({
     targetScoreRef.current = 0;
     setMovementScore(0);
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }
+
+  async function changePostureZoom(direction: -1 | 1) {
+    const track = postureCameraTrackRef.current;
+    if (!track || !postureZoom) return;
+    const nextValue = Math.max(
+      postureZoom.min,
+      Math.min(postureZoom.max, postureZoom.value + postureZoom.step * direction),
+    );
+    await track.applyConstraints({ advanced: [{ zoom: nextValue }] } as unknown as MediaTrackConstraints).catch(() => undefined);
+    setPostureZoom((current) => current ? { ...current, value: nextValue } : current);
   }
 
   function togglePostureVoice() {
@@ -4019,6 +4045,8 @@ function PostureScreen({
       selectedShen={selectedShen}
       voiceEnabled={postureVoiceEnabled}
       onVoiceToggle={togglePostureVoice}
+      onZoomChange={(direction) => void changePostureZoom(direction)}
+      zoom={postureZoom}
       step={postureStep}
       videoRef={videoRef}
       view={postureView}
@@ -5552,6 +5580,7 @@ function PostureAssessmentScreen({
   onModeChange,
   onOpenCamera,
   onVoiceToggle = () => undefined,
+  onZoomChange = () => undefined,
   onDeleteSavedReport,
   onOpenSavedReport,
   onRetake,
@@ -5569,6 +5598,7 @@ function PostureAssessmentScreen({
   videoRef,
   view,
   voiceEnabled = true,
+  zoom,
   frameReadiness,
 }: {
   autoCaptureProgress?: number;
@@ -5587,6 +5617,7 @@ function PostureAssessmentScreen({
   onModeChange: (mode: PostureRenderMode) => void;
   onOpenCamera: () => void;
   onVoiceToggle?: () => void;
+  onZoomChange?: (direction: -1 | 1) => void;
   onDeleteSavedReport?: (reportId: string) => void;
   onOpenSavedReport?: (report: PostureReport) => void;
   onRetake: () => void;
@@ -5604,6 +5635,7 @@ function PostureAssessmentScreen({
   videoRef: RefObject<HTMLVideoElement | null>;
   view: PostureView;
   voiceEnabled?: boolean;
+  zoom?: { min: number; max: number; step: number; value: number } | null;
   frameReadiness?: ReturnType<typeof evaluateWebPostureFrame>;
 }) {
   const activeView = step === "front" || step === "side" || step === "back" ? step : view;
@@ -5668,12 +5700,14 @@ function PostureAssessmentScreen({
         onClose={onClose}
         onRestart={onRetake}
         onVoiceToggle={onVoiceToggle}
+        onZoomChange={onZoomChange}
         poseStatus={poseStatus}
         scanGuidance={scanGuidance}
         score={postureScore}
         selectedShen={selectedShen}
         videoRef={videoRef}
         voiceEnabled={voiceEnabled}
+        zoom={zoom}
       />
     );
   }
@@ -5899,12 +5933,14 @@ function PostureAutoCaptureScreen({
   onClose,
   onRestart,
   onVoiceToggle,
+  onZoomChange,
   poseStatus,
   scanGuidance,
   score,
   selectedShen,
   videoRef,
   voiceEnabled,
+  zoom,
 }: {
   activeView: PostureView;
   analysis: ReturnType<typeof analyzePosture>;
@@ -5920,12 +5956,14 @@ function PostureAutoCaptureScreen({
   onClose: () => void;
   onRestart: () => void;
   onVoiceToggle: () => void;
+  onZoomChange: (direction: -1 | 1) => void;
   poseStatus: "bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata";
   scanGuidance: PostureScanGuidance;
   score: number;
   selectedShen: (typeof fiveShen)[number];
   videoRef: RefObject<HTMLVideoElement | null>;
   voiceEnabled: boolean;
+  zoom?: { min: number; max: number; step: number; value: number } | null;
 }) {
   const viewLabel = activeView === "front" ? "Ön" : activeView === "side" ? "Yan" : "Arka";
   const expectedInstruction =
@@ -5965,6 +6003,11 @@ function PostureAutoCaptureScreen({
             <button className="posture-live-icon-button posture-live-voice" onClick={onVoiceToggle} type="button" aria-label={voiceEnabled ? "Sesli yönlendirmeyi kapat" : "Sesli yönlendirmeyi aç"}>
               {voiceEnabled ? "◖))" : "◖×"}
             </button>
+          </div>
+          <div className="posture-camera-zoom" title={zoom ? "Kamera zoom seviyesi" : "Bu kamera donanımsal zoom desteklemiyor"}>
+            <button aria-label="Kamerayı uzaklaştır" disabled={!zoom || zoom.value <= zoom.min} onClick={() => onZoomChange(-1)} type="button">−</button>
+            <span>{zoom ? `${zoom.value.toFixed(1)}×` : "Zoom yok"}</span>
+            <button aria-label="Kamerayı yakınlaştır" disabled={!zoom || zoom.value >= zoom.max} onClick={() => onZoomChange(1)} type="button">+</button>
           </div>
           <video
             className={`camera-preview ${cameraStatus === "ready" ? "camera-preview-active" : ""}`}
@@ -9342,10 +9385,10 @@ function evaluateWebPostureFrame(
   const faceConfidence = faceNames.reduce((sum, name) => sum + (byName.get(name)?.score ?? 0), 0) / faceNames.length;
   const angleReady =
     view === "side"
-      ? shoulderWidthRatio < 0.52
+      ? shoulderWidthRatio < 0.19
       : view === "front"
         ? shoulderWidthRatio >= 0.18 && faceConfidence >= 0.3
-        : shoulderWidthRatio >= 0.18;
+        : shoulderWidthRatio >= 0.18 && faceConfidence < 0.26;
 
   const measurablePoints = keypoints.filter((point) => (point.score ?? 0) >= 0.35);
   const width = frameWidth || Math.max(1, ...measurablePoints.map((point) => point.x));

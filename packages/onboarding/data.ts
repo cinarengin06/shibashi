@@ -1,4 +1,5 @@
 import type{OnboardingProfile,OnboardingStage}from'./types';
+import {fiveShenContent}from'../five-shen-content';
 
 export const onboardingStages:ReadonlyArray<{id:Exclude<OnboardingStage,'completed'>;label:string;title:string}>=[
  {id:'welcome',label:'Hoş geldin',title:'Sana iyi gelecek yolu birlikte bulalım.'},
@@ -34,9 +35,9 @@ export const profileQuestions={
  ],
 }as const;
 export const onboardingShenResults={
- hun:{name:'Hun',mode:'Yenilenme ritmi',title:'Senin ritmin: ileriye açılan hareket.',description:'Merak, canlılık ve yeni bir yön arıyorsun. Pratiklerinde akış, yan beden ve genişleyen hareketler sana iyi eşlik edecek.',symbol:'木'},
- shen:{name:'Shen',mode:'Bütünlük ritmi',title:'Senin ritmin: kendinle yeniden buluşmak.',description:'Bedeninle daha sıcak bir bağ ve günün içinde daha fazla açıklık arıyorsun. Pratiklerinde nefes, göğüs alanı ve yumuşak bütünlük öne çıkacak.',symbol:'火'},
- yi:{name:'Yi',mode:'Odak ritmi',title:'Senin ritmin: sade ve kararlı ilerlemek.',description:'Dağınıklığı azaltıp sürdürülebilir bir düzen kurmak istiyorsun. Pratiklerinde merkez, denge ve anlaşılır tekrarlar öne çıkacak.',symbol:'土'},
- po:{name:'Po',mode:'Bırakma ritmi',title:'Senin ritmin: yükü hafifletmek.',description:'Nefesine alan açmak ve bedendeki gereksiz gerginliği bırakmak istiyorsun. Pratiklerinde omuzlar, nefes ve yumuşama öne çıkacak.',symbol:'金'},
- zhi:{name:'Zhi',mode:'Köklenme ritmi',title:'Senin ritmin: sakin gücü korumak.',description:'Zor günlerde acele etmeden devam etmek ve daha sağlam hissetmek istiyorsun. Pratiklerinde ayaklar, dizler ve güvenli yerleşme öne çıkacak.',symbol:'水'},
+ hun:{name:'Hun',mode:fiveShenContent.hun.familiarName,title:'Bugün sana yön ve hayal eşlik edecek.',description:`${fiveShenContent.hun.balancedExpression} Pratiklerinde akış, yan beden ve genişleyen hareketler öne çıkacak.`,symbol:'木'},
+ shen:{name:'Shen',mode:fiveShenContent.shen.familiarName,title:'Bugün sana berrak farkındalık eşlik edecek.',description:`${fiveShenContent.shen.balancedExpression} Pratiklerinde nefes, göğüs alanı ve yumuşak bütünlük öne çıkacak.`,symbol:'火'},
+ yi:{name:'Yi',mode:fiveShenContent.yi.familiarName,title:'Bugün sana odaklı niyet eşlik edecek.',description:`${fiveShenContent.yi.balancedExpression} Pratiklerinde merkez, denge ve anlaşılır tekrarlar öne çıkacak.`,symbol:'土'},
+ po:{name:'Po',mode:fiveShenContent.po.familiarName,title:'Bugün sana nefes ve duyum eşlik edecek.',description:`${fiveShenContent.po.balancedExpression} Pratiklerinde omuzlar, nefes ve yumuşama öne çıkacak.`,symbol:'金'},
+ zhi:{name:'Zhi',mode:fiveShenContent.zhi.familiarName,title:'Bugün sana sessiz irade eşlik edecek.',description:`${fiveShenContent.zhi.balancedExpression} Pratiklerinde ayaklar, dizler ve güvenli yerleşme öne çıkacak.`,symbol:'水'},
 }as const;

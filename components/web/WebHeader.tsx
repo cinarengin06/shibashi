@@ -1,13 +1,14 @@
 import Link from "next/link";
 import styles from "./web-header.module.css";
 
-type WebHeaderTab = "home" | "practice" | "practice2" | "posture" | "journey" | "learning" | "journal" | "profile";
+type WebHeaderTab = "home" | "practice" | "practice2" | "posture" | "newPosture" | "journey" | "learning" | "journal" | "profile";
 
 const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
   { id: "home", label: "Özel Odam", href: "/" },
-  { id: "practice", label: "Yolculuk", href: "/?tab=practice" },
   { id: "practice2", label: "Akışa Gir", href: "/pratik2" },
+  { id: "practice", label: "Yolculuk", href: "/?tab=practice" },
   { id: "posture", label: "Bedenini Gör", href: "/?tab=posture" },
+  { id: "newPosture", label: "New_posture", href: "/?tab=newPosture" },
   { id: "journey", label: "Haritan", href: "/?tab=journey" },
   { id: "learning", label: "Yaşayarak Öğren", href: "/yasayarak-ogren" },
   { id: "journal", label: "Günlüğüm", href: "/?tab=journal" },

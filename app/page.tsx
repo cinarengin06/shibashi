@@ -8,6 +8,7 @@ import { LivingLearningScreen } from "@/components/living-learning/LivingLearnin
 import { Practice2Screen } from "@/features/practice2/components/Practice2Screen";
 import { PremiumOnboarding } from "@/features/onboarding/components/PremiumOnboarding";
 import { HomeDashboard } from "@/features/home/components/HomeDashboard";
+import { NewPostureScreen, type NewPostureArchiveReport } from "@/features/new-posture/components/NewPostureScreen";
 import type { HomeFlowSummary } from "@/features/home/types/home";
 import type { LivingPracticeResult } from "@/packages/living-learning";
 import { getStaticPractice, shortFlowDefinitions } from "@/packages/practice2";
@@ -16,6 +17,7 @@ import {getBrowserSyncCode,setBrowserSyncCode,syncBrowserState} from "@/lib/shib
 import { useShibashiAuth } from "@/lib/supabase-auth";
 import { shenThemes, visualThemes, type VisualThemeId } from "@/packages/design-tokens";
 import { getJourneyDay } from "@/packages/experience-design";
+import { fiveShenContent, fiveShenTraditionNote } from "@/packages/five-shen-content";
 import type { OnboardingProfile } from "@/packages/onboarding";
 import {
   breathingPatterns,
@@ -45,7 +47,7 @@ import {
   type TraceMode,
 } from "@/packages/shen-domain";
 
-type TabId = "home" | "practice" | "practice2" | "posture" | "journey" | "learning" | "journal" | "profile";
+type TabId = "home" | "practice" | "practice2" | "posture" | "newPosture" | "journey" | "learning" | "journal" | "profile";
 type ShenId = "hun" | "shen" | "yi" | "po" | "zhi";
 type PostureRenderMode = "3d" | "2d";
 type PostureView = "front" | "side" | "back";
@@ -243,7 +245,22 @@ type PostureReport = {
 
 function toWebPracticeSnapshot(record:SyncRecord):PracticeSnapshot|null {
  if(typeof record.id!=="string")return null;
- if(typeof record.movementId==="number"&&typeof record.score==="number")return record as unknown as PracticeSnapshot;
+ if(typeof record.movementId==="number"&&typeof record.score==="number"){
+  const movement=movements.find(item=>item.id===record.movementId)??movements[0];
+  const createdAt=typeof record.createdAt==="string"?record.createdAt:typeof record.date==="string"?record.date:new Date().toISOString();
+  return{
+   ...(record as unknown as PracticeSnapshot),
+   id:record.id,
+   createdAt,
+   dateKey:typeof record.dateKey==="string"?record.dateKey:formatSnapshotDate(new Date(createdAt)),
+   timeLabel:typeof record.timeLabel==="string"?record.timeLabel:formatSnapshotTime(new Date(createdAt)),
+   movementId:record.movementId,
+   movementName:typeof record.movementName==="string"?record.movementName:movement?.name??"App pratiği",
+   score:record.score,
+   shenName:typeof record.shenName==="string"?record.shenName:"App",
+   imageData:portableHistoryImage(record.imageData,movement?.image??""),
+  };
+ }
  const createdAt=typeof record.date==="string"?record.date:typeof record.createdAt==="string"?record.createdAt:new Date().toISOString();
  const score=Number(record.flowScore??record.postureScore??record.balanceScore??0);
  const movementMatch=String(record.practiceId??"").match(/\d+/);
@@ -544,9 +561,10 @@ function getInnerJourneyScene(movementId: number) {
 
 const tabs: { id: TabId; label: string; icon: string }[] = [
   { id: "home", label: "Özel Odam", icon: "◉" },
-  { id: "practice", label: "Yolculuk", icon: "◎" },
   { id: "practice2", label: "Akışa Gir", icon: "⌁" },
+  { id: "practice", label: "Yolculuk", icon: "◎" },
   { id: "posture", label: "Bedenini Gör", icon: "↕" },
+  { id: "newPosture", label: "New_posture", icon: "◫" },
   { id: "journey", label: "Haritan", icon: "☯" },
   { id: "learning", label: "Yaşayarak Öğren", icon: "✦" },
   { id: "journal", label: "Günlüğüm", icon: "◌" },
@@ -559,7 +577,7 @@ const fiveShen = [
   {
     id: "hun",
     name: "Hun",
-    label: "Yön ve umut",
+    label: fiveShenContent.hun.familiarName,
     value: 64,
     note: "Bugün geniş bakış açık.",
     organ: "Karaciğer",
@@ -570,17 +588,17 @@ const fiveShen = [
     image: "/images/shen-home/hun-web.webp",
     music: "/videos/shen-music-hun.mp4",
     tone: 196,
-    hero: "Vizyonunu genişlet, hareketi büyüyen ormana bağla.",
-    dailyName: "Akış Modu",
-    dailyPrompt: "Bugün yeni olasılıkları fark etmeye, yön değiştirmeye ve daha geniş bakmaya hazırsın.",
-    recommendation: "Bugün keşif, esneklik, spiral hareket ve uzun vadeli yön duygusu öne çıkıyor.",
+    hero: fiveShenContent.hun.balancedExpression,
+    dailyName: fiveShenContent.hun.familiarName,
+    dailyPrompt: fiveShenContent.hun.dailyPrompt,
+    recommendation: fiveShenContent.hun.overview,
     bagua: "Zhen",
     baguaText: "Ağaç • Şimşek • Başlatma",
-    task: "Bir karar vermeden önce yönünü tek cümleyle yaz.",
+    task: fiveShenContent.hun.practiceCue,
     mapStage: 4,
     mapTitle: "Hun Ormanı",
     world: "Gün doğumu, rüzgâr, açık ufuk ve büyüyen yeşil",
-    essence: "Vizyon • Büyüme • Umut",
+    essence: fiveShenContent.hun.shortMeaning,
     motif: "orman",
     symbol: "木",
     element: "Ağaç • Karaciğer",
@@ -592,7 +610,7 @@ const fiveShen = [
   {
     id: "shen",
     name: "Shen",
-    label: "Huzur ve birlik",
+    label: fiveShenContent.shen.familiarName,
     value: 48,
     note: "Sakinleşmeye alan aç.",
     organ: "Kalp",
@@ -603,17 +621,17 @@ const fiveShen = [
     image: "/images/shen-home/shen-fire-web.webp",
     music: "/videos/shen-music-shen.mp4",
     tone: 256,
-    hero: "Kalpteki ışığı aç, neşeyi sakin bilinçle taşı.",
-    dailyName: "Açıklık Modu",
-    dailyPrompt: "Bugün temas kurmak, yumuşamak ve içindeki canlılığı görünür kılmak daha kolay.",
-    recommendation: "Bugün neşe ve açıklık veren sosyal, ritmik ve kalp merkezli görevler öne çıkıyor.",
+    hero: fiveShenContent.shen.balancedExpression,
+    dailyName: fiveShenContent.shen.familiarName,
+    dailyPrompt: fiveShenContent.shen.dailyPrompt,
+    recommendation: fiveShenContent.shen.overview,
     bagua: "Li",
     baguaText: "Ateş • Işık • Açıklık",
-    task: "Bir konuşmada cevap vermeden önce üç nefes bekle.",
+    task: fiveShenContent.shen.practiceCue,
     mapStage: 3,
     mapTitle: "Kalp Tapınağı",
     world: "Bütün elementlerin birleştiği yumuşak altın ışık",
-    essence: "Huzur • Birlik • Farkındalık",
+    essence: fiveShenContent.shen.shortMeaning,
     motif: "ates",
     symbol: "火",
     element: "Ateş • Kalp",
@@ -625,7 +643,7 @@ const fiveShen = [
   {
     id: "yi",
     name: "Yi",
-    label: "Dikkat ve iç denge",
+    label: fiveShenContent.yi.familiarName,
     value: 72,
     note: "Pratik hedefi net.",
     organ: "Dalak",
@@ -636,17 +654,17 @@ const fiveShen = [
     image: "/images/shen-home/yi-web.webp",
     music: "/videos/shen-music-yi.mp4",
     tone: 220,
-    hero: "Merkezini kur, ritmi sade ve kararlı tut.",
-    dailyName: "Netlik Modu",
-    dailyPrompt: "Bugün dağınık olanı sadeleştirmek, plan yapmak ve bir işi sonuna kadar taşımak için iyi bir gün.",
-    recommendation: "Bugün plan, tekrar, öğrenme, seri tamamlama ve istikrarlı rutin öne çıkıyor.",
+    hero: fiveShenContent.yi.balancedExpression,
+    dailyName: fiveShenContent.yi.familiarName,
+    dailyPrompt: fiveShenContent.yi.dailyPrompt,
+    recommendation: fiveShenContent.yi.overview,
     bagua: "Kun",
     baguaText: "Dağ • Toprak • Merkez",
-    task: "Bugünkü pratiğin niyetini tek kelime seç.",
+    task: fiveShenContent.yi.practiceCue,
     mapStage: 2,
     mapTitle: "Yi Toprağı",
     world: "Sis, yumuşak ışık, dikkat ve sessiz iç denge",
-    essence: "Dikkat • Odak • İç denge",
+    essence: fiveShenContent.yi.shortMeaning,
     motif: "dag",
     symbol: "土",
     element: "Toprak • Dalak",
@@ -658,7 +676,7 @@ const fiveShen = [
   {
     id: "po",
     name: "Po",
-    label: "Güven ve sakin güç",
+    label: fiveShenContent.po.familiarName,
     value: 58,
     note: "Omuzlarda çözülme bekliyor.",
     organ: "Akciğer",
@@ -669,17 +687,17 @@ const fiveShen = [
     image: "/images/shen-home/po-web.webp",
     music: "/videos/shen-music-po.mp4",
     tone: 174,
-    hero: "Bedenin duyumunu dinle, bırakış göl gibi yayılsın.",
-    dailyName: "Hafifleme Modu",
-    dailyPrompt: "Bugün fazlalığı bırakmak, omuzları yumuşatmak ve bedenden gelen küçük sinyalleri duymak öne çıkıyor.",
-    recommendation: "Bugün duyum, bırakma, nefes, somatik farkındalık ve sadeleşme öne çıkıyor.",
+    hero: fiveShenContent.po.balancedExpression,
+    dailyName: fiveShenContent.po.familiarName,
+    dailyPrompt: fiveShenContent.po.dailyPrompt,
+    recommendation: fiveShenContent.po.overview,
     bagua: "Dui",
     baguaText: "Göl • Metal • Bırakma",
-    task: "Omuzları yumuşatıp bir dakika sadece nefesi izle.",
+    task: fiveShenContent.po.practiceCue,
     mapStage: 7,
     mapTitle: "Po Gölü",
     world: "Toprak tonları, ağır nefes, güven ve sakin merkez",
-    essence: "Güven • Merkez • Sakin güç",
+    essence: fiveShenContent.po.shortMeaning,
     motif: "gol",
     symbol: "金",
     element: "Metal • Akciğer",
@@ -691,7 +709,7 @@ const fiveShen = [
   {
     id: "zhi",
     name: "Zhi",
-    label: "Sessizlik ve irade",
+    label: fiveShenContent.zhi.familiarName,
     value: 69,
     note: "Kısa tekrar yeterli.",
     organ: "Böbrek",
@@ -702,17 +720,17 @@ const fiveShen = [
     image: "/images/shen-home/zhi-web.webp",
     music: "/videos/shen-music-zhi.mp4",
     tone: 146,
-    hero: "Derine köklen, iradeyi sessiz süreklilikle taşı.",
-    dailyName: "Dayanıklılık Modu",
-    dailyPrompt: "Bugün acele etmeden devam etmek, korkuyu küçültmek ve köklenmek seni güçlendirecek.",
-    recommendation: "Bugün sabır, süreklilik, korkuyla temas ve köklenme öne çıkıyor.",
+    hero: fiveShenContent.zhi.balancedExpression,
+    dailyName: fiveShenContent.zhi.familiarName,
+    dailyPrompt: fiveShenContent.zhi.dailyPrompt,
+    recommendation: fiveShenContent.zhi.overview,
     bagua: "Kan",
     baguaText: "Okyanus • Su • Derinlik",
-    task: "Günün zor işini küçük, bitirilebilir bir adıma indir.",
+    task: fiveShenContent.zhi.practiceCue,
     mapStage: 0,
     mapTitle: "Zhi Okyanusu",
     world: "Gece, ay ışığı, derin su ve sessiz irade",
-    essence: "Sessizlik • Derinlik • İrade",
+    essence: fiveShenContent.zhi.shortMeaning,
     motif: "okyanus",
     symbol: "水",
     element: "Su • Böbrek",
@@ -766,47 +784,47 @@ const shenTodayCopy: Record<ShenId, {
 }> = {
   hun: {
     action: "Yönünü bul",
-    body: "Yönünü zorlamadan fark et. Bugün yeni bir ihtimale sakin bir adım aç.",
-    identity: "Yönünü ve büyüme isteğini taşır",
+    body: fiveShenContent.hun.dailyPrompt,
+    identity: fiveShenContent.hun.identity,
     motto: "Rüzgâr yönü gösterir; adımı sen seçersin.",
     practice: "Ufuk Açan Akış",
-    shortLabel: "Yön · Umut",
+    shortLabel: fiveShenContent.hun.familiarName,
     title: "Ufku genişlet.",
   },
   shen: {
-    action: "Birliğe dön",
-    body: "Beden, nefes ve dikkat bugün aynı yerde buluşabilir.",
-    identity: "Kalp açıklığını ve birlik duygusunu taşır",
+    action: "Berraklığı aç",
+    body: fiveShenContent.shen.dailyPrompt,
+    identity: fiveShenContent.shen.identity,
     motto: "Kalp yumuşadığında parçalar birbirini duyar.",
     practice: "Kalp Merkezinde Akış",
-    shortLabel: "Huzur · Birlik",
-    title: "Bütünü bir araya getir.",
+    shortLabel: fiveShenContent.shen.familiarName,
+    title: "Berrak ve ilgili kal.",
   },
   yi: {
     action: "Odağını kur",
-    body: "Dağınık olanı sadeleştir. Şimdi yalnızca bir sonraki adımla kal.",
-    identity: "Niyetini ve sakin dikkatini taşır",
+    body: fiveShenContent.yi.dailyPrompt,
+    identity: fiveShenContent.yi.identity,
     motto: "Bir anda tek şey; bir nefeste tek yön.",
     practice: "Merkezleyen Tekrar",
-    shortLabel: "Dikkat · Denge",
-    title: "Dikkatini sadeleştir.",
+    shortLabel: fiveShenContent.yi.familiarName,
+    title: "Niyetini eyleme taşı.",
   },
   po: {
     action: "Bedene dön",
-    body: "Ayaklarını hisset, omuzlarını çöz. Nefesin güvene dönüşsün.",
-    identity: "Bedensel duyumu ve bırakmayı taşır",
+    body: fiveShenContent.po.dailyPrompt,
+    identity: fiveShenContent.po.identity,
     motto: "Beden bıraktığında nefes yerini bulur.",
     practice: "Nefes ve Bırakış",
-    shortLabel: "Güven · Beden",
-    title: "Ağırlığını bırak.",
+    shortLabel: fiveShenContent.po.familiarName,
+    title: "Nefesi ve bedeni duy.",
   },
   zhi: {
-    action: "Kökünü hisset",
-    body: "Acele etmeden devam et. Gücünü koruyarak en küçük adımı seç.",
-    identity: "Sessiz iradeyi ve devam gücünü taşır",
+    action: "İradeni koru",
+    body: fiveShenContent.zhi.dailyPrompt,
+    identity: fiveShenContent.zhi.identity,
     motto: "Derin su acele etmez; yine de yolunu bulur.",
     practice: "Köklenme Akışı",
-    shortLabel: "Sessizlik · İrade",
+    shortLabel: fiveShenContent.zhi.familiarName,
     title: "Sessizce devam et.",
   },
 };
@@ -1292,7 +1310,11 @@ export default function RitimKapisiOS() {
     }
     void loadPostureReportsFromIndexedDb().then((storedReports) => {
       if (!storedReports.length) return;
-      setPostureReports((current) => mergePostureReports(current, storedReports));
+      setPostureReports((current) => {
+        const merged = mergePostureReports(current, storedReports);
+        persistPostureReportsToLocalStorage(merged);
+        return merged;
+      });
     });
     void loadPracticeSnapshotsFromIndexedDb().then((storedSnapshots) => {
       if (!storedSnapshots.length) return;
@@ -1754,7 +1776,6 @@ export default function RitimKapisiOS() {
           <DojoHomeScreen
             energyScores={energyScores}
             onJournal={() => setActiveTab("journal")}
-            onLearning={() => setActiveTab("learning")}
             onPractice={() => setActiveTab("practice")}
             onPractice2={(flowId) => {
               setSelectedPractice2FlowId(flowId);
@@ -1818,6 +1839,12 @@ export default function RitimKapisiOS() {
             selectedShen={selectedShen}
           />
         ) : null}
+        {onboardingComplete && activeTab === "newPosture" ? (
+          <NewPostureScreen
+            onNavigateToPractice={() => setActiveTab("practice")}
+            onReportCaptured={(report: NewPostureArchiveReport) => savePostureReport(report as PostureReport)}
+          />
+        ) : null}
         {onboardingComplete && activeTab === "journey" ? (
           <FiveShenJourneyWeb
             activities={shenActivities}
@@ -1870,10 +1897,10 @@ export default function RitimKapisiOS() {
 
         {onboardingComplete ? (
           <nav className="bottom-nav" aria-label="Ana gezinme" style={{ "--nav-count": visibleTabs.length } as CSSProperties}>
-            <div className="web-nav-brand" aria-label="Shibashi EFE">
+            <button className="web-nav-brand" aria-label="Shibashi EFE ana sayfasını aç" onClick={() => setActiveTab("home")} type="button">
               <i aria-hidden="true" />
               <span>SHIBASHI EFE</span>
-            </div>
+            </button>
             {visibleTabs.map((tab) => (
               <button
                 className={`nav-button nav-tab-${tab.id} ${activeTab === tab.id ? "nav-button-active" : ""}`}
@@ -2158,7 +2185,6 @@ function getPracticeStreak(practiceGallery: PracticeSnapshot[], activities: Shen
 function DojoHomeScreen({
   energyScores,
   onJournal,
-  onLearning,
   onPractice,
   onPractice2,
   onPosture,
@@ -2172,7 +2198,6 @@ function DojoHomeScreen({
 }: {
   energyScores: EnergyScores;
   onJournal: () => void;
-  onLearning: () => void;
   onPractice: () => void;
   onPractice2: (flowId?: string) => void;
   onPosture: () => void;
@@ -2225,14 +2250,19 @@ function DojoHomeScreen({
     onPosture={onPosture}
     onReset={onReset}
     onSelectShen={onSelectShen}
-    onShen={onLearning}
     postureCount={postureCount}
     recommendedFlow={recommendedFlow}
-    shen={{ actionLabel: shenTodayCopy[selectedShen.id].action, color: selectedShen.color, description: selectedShen.dailyPrompt, element: `${selectedShen.element.split("•")[0]?.trim()} Zamanı`, heroBody: shenTodayCopy[selectedShen.id].body, heroTitle: shenTodayCopy[selectedShen.id].title, id: selectedShen.id, motto: shenTodayCopy[selectedShen.id].motto, name: selectedShen.name, organ: selectedShen.organ, period: "Bugünün odağı", shortLabel: shenTodayCopy[selectedShen.id].shortLabel, symbol: selectedShen.symbol, wallpaper: selectedShen.image }}
-    shenOptions={fiveShen.map((shen) => ({ actionLabel: shenTodayCopy[shen.id].action, color: shen.color, description: shen.dailyPrompt, element: `${shen.element.split("•")[0]?.trim()} Zamanı`, heroBody: shenTodayCopy[shen.id].body, heroTitle: shenTodayCopy[shen.id].title, id: shen.id, motto: shenTodayCopy[shen.id].motto, name: shen.name, organ: shen.organ, period: shen.dailyName, shortLabel: shenTodayCopy[shen.id].shortLabel, symbol: shen.symbol, wallpaper: shen.image }))}
+    shen={{ actionLabel: shenTodayCopy[selectedShen.id].action, color: selectedShen.color, description: selectedShen.dailyPrompt, element: selectedShen.element.split("•")[0]?.trim() ?? "", heroBody: shenTodayCopy[selectedShen.id].body, heroTitle: shenTodayCopy[selectedShen.id].title, icon: `/images/five-shen-icons/${selectedShen.id}.png`, id: selectedShen.id, motto: shenTodayCopy[selectedShen.id].motto, name: selectedShen.name, organ: selectedShen.organ, period: "Bugünün odağı", shortLabel: shenTodayCopy[selectedShen.id].shortLabel, symbol: selectedShen.symbol, wallpaper: selectedShen.image }}
+    shenOptions={fiveShen.map((shen) => ({ actionLabel: shenTodayCopy[shen.id].action, color: shen.color, description: shen.dailyPrompt, element: shen.element.split("•")[0]?.trim() ?? "", heroBody: shenTodayCopy[shen.id].body, heroTitle: shenTodayCopy[shen.id].title, icon: `/images/five-shen-icons/${shen.id}.png`, id: shen.id, motto: shenTodayCopy[shen.id].motto, name: shen.name, organ: shen.organ, period: shen.dailyName, shortLabel: shenTodayCopy[shen.id].shortLabel, symbol: shen.symbol, wallpaper: shen.image }))}
     streak={getPracticeStreak(practiceGallery, shenActivities)}
     userName={userName}
-    week={{ dailyMinutes, minutes: recentPractices.reduce((total, item) => total + (item.minutes ?? 0), 0), practiceCount: recentPractices.length }}
+    week={{
+      dailyMinutes,
+      dayDescriptions: recentDays.map((day, index) => `${new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", weekday: "long" }).format(day)}${index === recentDays.length - 1 ? " · Bugün" : ""}`),
+      dayLabels: recentDays.map((day) => new Intl.DateTimeFormat("tr-TR", { weekday: "narrow" }).format(day)),
+      minutes: recentPractices.reduce((total, item) => total + (item.minutes ?? 0), 0),
+      practiceCount: recentPractices.length,
+    }}
   />;
 }
 
@@ -2289,20 +2319,20 @@ function LegacyDojoHomeScreen({
         <div aria-hidden="true" className="dojo-home-bagua"><span>☰</span><span>☱</span><span>☲</span><span>☳</span><span>☴</span><span>☵</span><span>☶</span><span>☷</span><b>{selectedShen.symbol}</b></div>
         <header className="dojo-home-head"><div><span>İyi akşamlar, {userName || "yol arkadaşım"}</span><small>{new Intl.DateTimeFormat("tr-TR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}</small></div><div><b>{journeyDay}</b><small>GÜN</small></div></header>
         <div className="dojo-home-copy">
-          <div className="dojo-home-meta"><span>BUGÜN {selectedShen.name.toLocaleUpperCase("tr-TR")} SENİNLE</span><small>{selectedShen.dailyName}</small></div>
+          <div className="dojo-home-meta"><span>BUGÜN {selectedShen.dailyName.toLocaleUpperCase("tr-TR")} SENİNLE</span><small>{selectedShen.name}</small></div>
           <h2>{todayCopy.title}</h2>
           <p>{todayCopy.body}</p>
           <div className="dojo-home-actions"><button onClick={onPractice} type="button">Bugünün pratiğine başla <span>→</span></button><button onClick={onLearning} type="button">{selectedShen.name}’yi keşfet <span>→</span></button></div>
         </div>
         <span aria-hidden="true" className="dojo-energy-curtain" />
         <DojoEnergyBars scores={energyScores} />
-        <nav className="dojo-shen-index" aria-label="Beş Shen seçimi">{fiveShen.map((shen) => { const copy = shenTodayCopy[shen.id]; return <button aria-label={`${shen.name}, ${copy.shortLabel}`} aria-pressed={selectedShen.id === shen.id} className={selectedShen.id === shen.id ? "active" : ""} key={shen.id} onClick={() => onSelectShen(shen.id)} style={{ "--world-color": shen.color } as CSSProperties} type="button"><span><i /><b>{shen.name}</b><small>— {copy.shortLabel.split(" · ")[0]}</small></span>{selectedShen.id === shen.id ? <em>{selectedShen.element} · Merkez</em> : null}</button>; })}</nav>
+        <nav className="dojo-shen-index" aria-label="Beş Shen: iç yaşamın beş ilişkili yönü">{fiveShen.map((shen) => { const copy = shenTodayCopy[shen.id]; return <button aria-label={`${copy.shortLabel}; geleneksel adı ${shen.name}; ${shen.element}`} aria-pressed={selectedShen.id === shen.id} className={selectedShen.id === shen.id ? "active" : ""} key={shen.id} onClick={() => onSelectShen(shen.id)} style={{ "--world-color": shen.color } as CSSProperties} type="button"><span><i /><b>{copy.shortLabel}</b><small>— {shen.name}</small></span>{selectedShen.id === shen.id ? <em>{shen.element}</em> : null}</button>; })}</nav>
       </article>
 
       <section className="dojo-manifesto">
         <span>SHIBASHI EFE · BEDENİN İÇ HARİTASI</span>
         <h3>Hareket yalnızca yaptığın şey değil; içinde açtığın alandır.</h3>
-        <p>18 hareket, Beş Shen, postür zekâsı ve gündelik hayatın içinden pratikler tek bir sakin yolculukta buluşuyor.</p>
+        <p>{fiveShenTraditionNote} Burada bu harita, günlük pratiğinin tonunu ve odağını seçmene yardım eder.</p>
       </section>
 
       <section className="dojo-experience-grid" aria-label="Öne çıkan deneyimler">
@@ -2450,28 +2480,28 @@ function OnboardingScreen({
   };
   const shenLearning: Record<ShenId, { intro: string; detail: string; micro: string }> = {
     hun: {
-      intro: "Hun, içinde yön gören ve yeni bir ihtimali hayal eden yanındır. Akış Modu, sıkıştığın yerde başka bir yol fark etmene yardım eder.",
-      detail: "Geleneksel 5 Shen yaklaşımında Hun; Ağaç elementi ve Karaciğer ekseniyle ilişkilendirilir. Tai Chi’de bakışın yönü, spiral hareket ve değişime uyum üzerinden hissedilir.",
+      intro: `${fiveShenContent.hun.overview} ${fiveShenContent.hun.balancedExpression}`,
+      detail: "Geleneksel Beş Shen yaklaşımında Hun, Ağaç elementi ve Karaciğer sistemiyle eşleştirilir. Tai Chi’de bakışın yönü, spiral hareket, plan kurma ve değişime uyum üzerinden keşfedilir.",
       micro: "Bugün dene: Önündeki işi yapmadan önce varmak istediğin yönü tek cümleyle söyle.",
     },
     shen: {
-      intro: "Shen, fark eden ve hayatla temas kuran yanındır. Açıklık Modu, daha canlı ama sakin bir şekilde görünür olmana alan açar.",
-      detail: "Geleneksel 5 Shen yaklaşımında Shen; Ateş elementi ve Kalp ekseniyle ilişkilendirilir. Tai Chi’de yumuşak bakış, açık göğüs hattı ve çevreyle kurulan uyanık temasla anlatılır.",
+      intro: `${fiveShenContent.shen.overview} ${fiveShenContent.shen.balancedExpression}`,
+      detail: "Geleneksel Beş Shen yaklaşımında Shen, Ateş elementi ve Kalp sistemiyle eşleştirilir. Tai Chi’de yumuşak bakış, açık göğüs hattı, ayırt etme ve çevreyle uyanık temas üzerinden keşfedilir.",
       micro: "Bugün dene: Bir konuşmadan önce nefes ver, gözlerini yumuşat ve gerçekten karşındakine dön.",
     },
     yi: {
-      intro: "Yi, dikkatini bir yerde tutan ve niyetini harekete bağlayan yanındır. Netlik Modu, dağınık enerjiyi tek bir adıma toplar.",
-      detail: "Geleneksel 5 Shen yaklaşımında Yi; Toprak elementi ve Dalak ekseniyle ilişkilendirilir. Tai Chi’de merkez, tekrar ve zihnin hareketi nazikçe yönlendirmesiyle çalışılır.",
+      intro: `${fiveShenContent.yi.overview} ${fiveShenContent.yi.balancedExpression}`,
+      detail: "Geleneksel Beş Shen yaklaşımında Yi, Toprak elementi ve Dalak sistemiyle eşleştirilir. Tai Chi’de merkez, tekrar, öğrenme ve zihnin hareketi nazikçe yönlendirmesiyle çalışılır.",
       micro: "Bugün dene: Yapacağın ilk işi seç ve bitirene kadar yalnızca onunla kal.",
     },
     po: {
-      intro: "Po, bedenin şimdi ve burada ne söylediğini duyan yanındır. Hafifleme Modu, tutunduğun gerginliği fark edip bırakmana yardım eder.",
-      detail: "Geleneksel 5 Shen yaklaşımında Po; Metal elementi ve Akciğer ekseniyle ilişkilendirilir. Tai Chi’de nefes, sınırlar, dokunma duyusu ve gereksiz kasılmayı bırakma üzerinden görünür olur.",
+      intro: `${fiveShenContent.po.overview} ${fiveShenContent.po.balancedExpression}`,
+      detail: "Geleneksel Beş Shen yaklaşımında Po, Metal elementi ve Akciğer sistemiyle eşleştirilir. Tai Chi’de nefes, fiziksel duyum, beden koordinasyonu ve gereksiz kasılmayı bırakma üzerinden keşfedilir.",
       micro: "Bugün dene: Omuzlarını kaldır, nefes verirken serbest bırak ve ayak tabanlarını hisset.",
     },
     zhi: {
-      intro: "Zhi, seni zorlayarak değil enerjini koruyarak devam ettiren sessiz iradendir. Dayanıklılık Modu, korkuyu küçültüp bir sonraki adımı görünür kılar.",
-      detail: "Geleneksel 5 Shen yaklaşımında Zhi; Su elementi ve Böbrek ekseniyle ilişkilendirilir. Tai Chi’de köklenme, acele etmeden ağırlık aktarma ve sakin süreklilik üzerinden çalışılır.",
+      intro: `${fiveShenContent.zhi.overview} ${fiveShenContent.zhi.balancedExpression}`,
+      detail: "Geleneksel Beş Shen yaklaşımında Zhi, Su elementi ve Böbrek sistemiyle eşleştirilir. Tai Chi’de köklenme, korku karşısında sakinlik, ağırlık aktarma ve süreklilik üzerinden çalışılır.",
       micro: "Bugün dene: Zor görünen işi, şimdi tamamlayabileceğin en küçük adıma indir.",
     },
   };
@@ -3592,7 +3622,7 @@ function PostureScreen({
     postureSmoothedPointsRef.current = [];
     postureSampleAnalysesRef.current = [];
     postureAutoCaptureLockRef.current = false;
-    postureReadyAtRef.current = Date.now() + (postureStep === "front" ? 0 : 2200);
+    postureReadyAtRef.current = Date.now() + (postureStep === "front" ? 0 : 1200);
     setAutoCaptureProgress(0);
     window.scrollTo({ top: 0 });
     document.querySelector<HTMLElement>(".mobile-frame")?.scrollTo({ top: 0 });
@@ -3630,7 +3660,7 @@ function PostureScreen({
       setAutoCaptureProgress(0);
       return;
     }
-    if (!previousPoints.length || getPoseStabilityDistance(previousPoints, keypoints) > 8) {
+    if (!previousPoints.length || getPoseStabilityDistance(previousPoints, keypoints) > 18) {
       postureStableSinceRef.current = Date.now();
       postureSampleAnalysesRef.current = [];
       setAutoCaptureProgress(0);
@@ -3642,7 +3672,7 @@ function PostureScreen({
     if (sample.confidence >= 50) {
       postureSampleAnalysesRef.current = [...postureSampleAnalysesRef.current.slice(-119), sample];
     }
-    const progress = Math.min(100, ((Date.now() - postureStableSinceRef.current) / 3000) * 100);
+    const progress = Math.min(100, ((Date.now() - postureStableSinceRef.current) / 2000) * 100);
     setAutoCaptureProgress(progress);
 
     if (progress >= 100 && !postureAutoCaptureLockRef.current) {
@@ -3696,57 +3726,65 @@ function PostureScreen({
 
       const detect = async () => {
         if (isCancelled() || !videoRef.current || cameraStatus !== "ready") return;
+        try {
+          const poses = await detectorRef.current?.estimatePoses(videoRef.current, { flipHorizontal: false });
+          if (isCancelled()) return;
+          const pose = poses?.[0];
+          syncPoseCanvasSize(canvasRef.current, videoRef.current);
 
-        const poses = await detectorRef.current?.estimatePoses(videoRef.current, { flipHorizontal: false });
-        const pose = poses?.[0];
-        syncPoseCanvasSize(canvasRef.current, videoRef.current);
-
-        if (!pose?.keypoints?.length) {
-          if (poseStatusRef.current !== "beden-yok") {
-            poseStatusRef.current = "beden-yok";
-            setPoseStatus("beden-yok");
-            setKeypoints([]);
+          if (!pose?.keypoints?.length) {
+            if (poseStatusRef.current !== "beden-yok") {
+              poseStatusRef.current = "beden-yok";
+              setPoseStatus("beden-yok");
+              setKeypoints([]);
+            }
+            drawPoseCanvas(canvasRef.current, undefined, selectedShen.color);
+            targetScoreRef.current = 0;
+          } else {
+            const smoothedKeypoints = smoothPoseKeypoints(postureSmoothedPointsRef.current, pose.keypoints, 0.24);
+            postureSmoothedPointsRef.current = smoothedKeypoints;
+            const importantVisible = [
+              "nose",
+              "left_shoulder",
+              "right_shoulder",
+              "left_hip",
+              "right_hip",
+              "left_knee",
+              "right_knee",
+              "left_ankle",
+              "right_ankle",
+            ].filter((name) => (smoothedKeypoints.find((point) => point.name === name)?.score ?? 0) > 0.28);
+            const nextStatus=importantVisible.length>=6?"aktif":"beden-yok";
+            if(poseStatusRef.current!==nextStatus){
+              poseStatusRef.current=nextStatus;
+              setPoseStatus(nextStatus);
+            }
+            const now=performance.now();
+            if(now-lastPoseUiUpdateRef.current>=100){
+              lastPoseUiUpdateRef.current=now;
+              setKeypoints(smoothedKeypoints);
+            }
+            const currentView =
+              postureStepRef.current === "front" || postureStepRef.current === "side" || postureStepRef.current === "back"
+                ? postureStepRef.current
+                : "front";
+            const liveAnalysis = analyzePosture(smoothedKeypoints, 0, selectedShen.id, currentView);
+            drawPoseCanvas(canvasRef.current, { ...pose, keypoints: smoothedKeypoints }, selectedShen.color, liveAnalysis);
+            targetScoreRef.current = nextStatus === "aktif" ? getPostureOverallScore(liveAnalysis) : 0;
           }
-          drawPoseCanvas(canvasRef.current, undefined, selectedShen.color);
+        } catch (error) {
+          if (isCancelled() || isPostureDetectorAbort(error)) return;
+          poseStatusRef.current = "yükleniyor";
+          setPoseStatus("yükleniyor");
           targetScoreRef.current = 0;
-        } else {
-          const smoothedKeypoints = smoothPoseKeypoints(postureSmoothedPointsRef.current, pose.keypoints, 0.24);
-          postureSmoothedPointsRef.current = smoothedKeypoints;
-          const importantVisible = [
-            "nose",
-            "left_shoulder",
-            "right_shoulder",
-            "left_hip",
-            "right_hip",
-            "left_knee",
-            "right_knee",
-            "left_ankle",
-            "right_ankle",
-          ].filter((name) => (smoothedKeypoints.find((point) => point.name === name)?.score ?? 0) > 0.35);
-          const nextStatus=importantVisible.length>=6?"aktif":"beden-yok";
-          if(poseStatusRef.current!==nextStatus){
-            poseStatusRef.current=nextStatus;
-            setPoseStatus(nextStatus);
-          }
-          const now=performance.now();
-          if(now-lastPoseUiUpdateRef.current>=100){
-            lastPoseUiUpdateRef.current=now;
-            setKeypoints(smoothedKeypoints);
-          }
-          const currentView =
-            postureStepRef.current === "front" || postureStepRef.current === "side" || postureStepRef.current === "back"
-              ? postureStepRef.current
-              : "front";
-          const liveAnalysis = analyzePosture(smoothedKeypoints, 0, selectedShen.id, currentView);
-          drawPoseCanvas(canvasRef.current, { ...pose, keypoints: smoothedKeypoints }, selectedShen.color, liveAnalysis);
-          targetScoreRef.current = nextStatus === "aktif" ? getPostureOverallScore(liveAnalysis) : 0;
         }
 
-        rafRef.current = window.requestAnimationFrame(detect);
+        if (!isCancelled()) rafRef.current = window.requestAnimationFrame(detect);
       };
 
       rafRef.current = window.requestAnimationFrame(detect);
-    } catch {
+    } catch (error) {
+      if (isCancelled() || isPostureDetectorAbort(error)) return;
       poseStatusRef.current = "hata";
       setPoseStatus("hata");
     }
@@ -5906,7 +5944,7 @@ function PostureAutoCaptureScreen({
             : scanGuidance === "capturing"
               ? "Görünüm kaydedildi"
               : coachCue;
-  const secondsLeft = Math.max(1, Math.ceil(((100 - autoCaptureProgress) / 100) * 3));
+  const secondsLeft = Math.max(1, Math.ceil(((100 - autoCaptureProgress) / 100) * 2));
   const angleSteps = [
     ["front", "Ön"],
     ["side", "Yan"],
@@ -5954,7 +5992,7 @@ function PostureAutoCaptureScreen({
               <strong>{instruction}</strong>
               <span>
                 {scanGuidance === "hold"
-                  ? "Gerçek ölçüm sürüyor; üç saniye aynı duruşu koruyun"
+                  ? "Gerçek ölçüm sürüyor; iki saniye aynı duruşu koruyun"
                   : scanGuidance === "reposition"
                     ? "Kılavuz yeşile döndüğünde ölçüm başlayacak"
                   : scanGuidance === "wrong-angle"
@@ -7266,7 +7304,7 @@ function HumanMap({
       </div>
       <div className="neijing-map-shell neijing-map-shell-with-panel">
         <div
-          className="neijing-map neijing-body-map"
+          className="neijing-map"
           aria-label={`Sekiz kapılı beden haritası. Şu anki kapın ${selectedShen.mapTitle}`}
           style={
             {
@@ -7275,12 +7313,12 @@ function HumanMap({
           }
         >
           <NextImage
-            alt="Enerji merkezleri aydınlatılmış üç boyutlu insan bedeni"
+            alt="Bedenin iç dünyasını ve sekiz kapıyı gösteren özgün insan haritası"
             className="neijing-map-image"
             fill
             priority
             sizes="(min-width: 1024px) 460px, (min-width: 700px) 55vw, 340px"
-            src="/images/body-map-eight-gates-3d-v2.jpg"
+            src="/images/neijing-map.jpg"
           />
           <div className="neijing-current-gate-badge" aria-live="polite">
             <span>ŞU ANKİ KAPIN</span>
@@ -8052,6 +8090,7 @@ function JournalScreen({
   const [reflection, setReflection] = useState("");
   const [saved, setSaved] = useState(false);
   const [mood, setMood] = useState("Sakin");
+  const [selectedSnapshot, setSelectedSnapshot] = useState<PracticeSnapshot | null>(null);
   const recentScores = [...gallery].slice(0, 7).map((item) => item.score);
   const averagePracticeScore = recentScores.length ? Math.round(recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length) : 0;
   const averagePostureScore = postureReports.length ? Math.round(postureReports.slice(0, 7).reduce((sum, item) => sum + item.score, 0) / Math.min(7, postureReports.length)) : 0;
@@ -8061,6 +8100,15 @@ function JournalScreen({
     setReflection(window.localStorage.getItem("ritim-kapisi-daily-reflection") ?? "");
     setMood(window.localStorage.getItem("ritim-kapisi-daily-mood") ?? "Sakin");
   }, []);
+
+  useEffect(() => {
+    if (!selectedSnapshot) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedSnapshot(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [selectedSnapshot]);
 
   function saveReflection() {
     window.localStorage.setItem("ritim-kapisi-daily-reflection", reflection.trim());
@@ -8149,7 +8197,7 @@ function JournalScreen({
             <div className="daily-practice-list">
               {todaysPractices.map((snapshot) => (
                 <article key={snapshot.id}>
-                  <img src={snapshot.imageData} alt="" />
+                  <button aria-label={`${snapshot.movementName} fotoğrafını aç`} className="snapshot-thumb-button" onClick={() => setSelectedSnapshot(snapshot)} type="button"><img src={snapshot.imageData} alt={`${snapshot.movementName} sırasında kaydedilen pozun`} /></button>
                   <div><strong>{snapshot.movementName}</strong><small>{snapshot.timeLabel} · %{snapshot.score} uyum</small></div>
                   <span>{snapshot.score}</span>
                 </article>
@@ -8205,7 +8253,7 @@ function JournalScreen({
             <div className="daily-archive-row">
               {snapshots.map((snapshot) => (
                 <article key={snapshot.id}>
-                  <img src={snapshot.imageData} alt={`${snapshot.movementName} ekran görüntüsü`} />
+                  <button aria-label={`${snapshot.movementName} fotoğrafını aç`} className="snapshot-thumb-button" onClick={() => setSelectedSnapshot(snapshot)} type="button"><img src={snapshot.imageData} alt={`${snapshot.movementName} sırasında kaydedilen pozun`} /></button>
                   <div>
                     <strong>{snapshot.movementName}</strong>
                     <small>{snapshot.timeLabel} · %{snapshot.score} · {snapshot.source === "practice2" ? "Poz eşleştirme" : snapshot.shenName}</small>
@@ -8223,6 +8271,15 @@ function JournalScreen({
           </div>
         )) : <div className="empty-gallery">Henüz arşivlenmiş pratik yok.</div>}
       </div>
+      {selectedSnapshot ? (
+        <div aria-label="Kaydedilen poz görüntüsü" aria-modal="true" className="snapshot-viewer" onClick={() => setSelectedSnapshot(null)} role="dialog">
+          <div className="snapshot-viewer-card" onClick={(event) => event.stopPropagation()}>
+            <button aria-label="Görüntüyü kapat" className="snapshot-viewer-close" onClick={() => setSelectedSnapshot(null)} type="button">×</button>
+            <div className="snapshot-viewer-image"><img src={selectedSnapshot.imageData} alt={`${selectedSnapshot.movementName} tam ekran poz kaydı`} /></div>
+            <div className="snapshot-viewer-copy"><span>{selectedSnapshot.source === "practice2" ? "KAYDEDİLEN POZUN" : "PRATİK KAYDIN"}</span><h2>{selectedSnapshot.movementName}</h2><p>{selectedSnapshot.dateKey} · {selectedSnapshot.timeLabel}</p><strong>%{selectedSnapshot.score} uyum</strong></div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -8662,6 +8719,7 @@ function getTitle(tab: TabId): string {
     practice: "Ritüel",
     practice2: "Pratik2",
     posture: "Postür",
+    newPosture: "Tai Chi Beden Aynası",
     journey: "Yolculuğum",
     learning: "Öğren",
     journal: "Günlük",
@@ -8700,7 +8758,7 @@ async function createMoveNetDetector(): Promise<PoseDetector> {
   let lastTimestamp = 0;
 
   return {
-    dispose: () => undefined,
+    dispose: () => landmarker.close(),
     estimatePoses: async (input) => {
       const timestamp = Math.max(performance.now(), lastTimestamp + 0.01);
       lastTimestamp = timestamp;
@@ -9213,6 +9271,11 @@ function getPostureOrientationCue(view: PostureView) {
   return "Şimdi arkanı kameraya dön. Ağırlığını iki ayağına eşit dağıt ve doğal dur.";
 }
 
+function isPostureDetectorAbort(error: unknown) {
+  const message = error instanceof Error ? `${error.name} ${error.message}` : String(error ?? "");
+  return /abort(?:ed)?|deleted object|not found/i.test(message);
+}
+
 function getPostureLiveCoachCue(
   view: PostureView,
   readiness: ReturnType<typeof evaluateWebPostureFrame>,
@@ -9251,7 +9314,8 @@ function evaluateWebPostureFrame(
     const point = byName.get(name);
     return Boolean(point && (point.score ?? 0) >= threshold);
   };
-  const headReady = ["nose", "left_ear", "right_ear"].some((name) => visible(name, 0.28));
+  const headThreshold = view === "back" ? 0.12 : view === "side" ? 0.2 : 0.28;
+  const headReady = ["nose", "left_ear", "right_ear"].some((name) => visible(name, headThreshold));
   const pairReady = (left: string, right: string, threshold: number) =>
     view === "side"
       ? visible(left, threshold) || visible(right, threshold)
@@ -9264,23 +9328,24 @@ function evaluateWebPostureFrame(
     pairReady("left_ankle", "right_ankle", 0.3);
   if (!bodyReady) return { bodyReady: false, angleReady: false, positionReady: false, positionCue: "Tam bedenini kadraja al." };
 
-  const leftShoulder = byName.get("left_shoulder")!;
-  const rightShoulder = byName.get("right_shoulder")!;
-  const leftAnkle = byName.get("left_ankle")!;
-  const rightAnkle = byName.get("right_ankle")!;
-  const shoulderCenterY = (leftShoulder.y + rightShoulder.y) / 2;
-  const ankleCenterY = (leftAnkle.y + rightAnkle.y) / 2;
+  const leftShoulder = visible("left_shoulder", 0.28) ? byName.get("left_shoulder") : undefined;
+  const rightShoulder = visible("right_shoulder", 0.28) ? byName.get("right_shoulder") : undefined;
+  const leftAnkle = visible("left_ankle", 0.22) ? byName.get("left_ankle") : undefined;
+  const rightAnkle = visible("right_ankle", 0.22) ? byName.get("right_ankle") : undefined;
+  const shoulderPoints = [leftShoulder, rightShoulder].filter((point): point is PoseKeypoint => Boolean(point));
+  const anklePoints = [leftAnkle, rightAnkle].filter((point): point is PoseKeypoint => Boolean(point));
+  const shoulderCenterY = shoulderPoints.reduce((sum, point) => sum + point.y, 0) / shoulderPoints.length;
+  const ankleCenterY = anklePoints.reduce((sum, point) => sum + point.y, 0) / anklePoints.length;
   const bodyHeight = Math.max(1, Math.abs(ankleCenterY - shoulderCenterY));
-  const shoulderWidthRatio = Math.abs(leftShoulder.x - rightShoulder.x) / bodyHeight;
+  const shoulderWidthRatio = leftShoulder && rightShoulder ? Math.abs(leftShoulder.x - rightShoulder.x) / bodyHeight : 0;
   const faceNames = ["nose", "left_eye", "right_eye", "left_ear", "right_ear"];
   const faceConfidence = faceNames.reduce((sum, name) => sum + (byName.get(name)?.score ?? 0), 0) / faceNames.length;
-  const anatomicalOrder = leftShoulder.x - rightShoulder.x;
   const angleReady =
     view === "side"
-      ? shoulderWidthRatio < 0.42
+      ? shoulderWidthRatio < 0.52
       : view === "front"
-        ? shoulderWidthRatio >= 0.25 && faceConfidence >= 0.5 && anatomicalOrder > -bodyHeight * 0.04
-        : shoulderWidthRatio >= 0.25 && (faceConfidence < 0.5 || anatomicalOrder < bodyHeight * 0.04);
+        ? shoulderWidthRatio >= 0.18 && faceConfidence >= 0.3
+        : shoulderWidthRatio >= 0.18;
 
   const measurablePoints = keypoints.filter((point) => (point.score ?? 0) >= 0.35);
   const width = frameWidth || Math.max(1, ...measurablePoints.map((point) => point.x));
@@ -9599,10 +9664,40 @@ async function loadPracticeSnapshotsFromIndexedDb(): Promise<PracticeSnapshot[]>
 
 function mergePostureReports(...collections: PostureReport[][]): PostureReport[] {
   const reports = new Map<string, PostureReport>();
-  collections.flat().forEach((report) => reports.set(report.id, report));
+  collections.flat().forEach((report) => {
+    const current = reports.get(report.id);
+    if (!current) {
+      reports.set(report.id, report);
+      return;
+    }
+    reports.set(report.id, mergePostureReportCopies(current, report));
+  });
   return Array.from(reports.values())
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
     .slice(0, 18);
+}
+
+function mergePostureReportCopies(first: PostureReport, second: PostureReport): PostureReport {
+  const imageWeight = (report: PostureReport) =>
+    (["front", "side", "back"] as const).reduce((total, view) => total + (report.captures?.[view]?.imageData?.length ?? 0), 0);
+  const full = imageWeight(second) > imageWeight(first) ? second : first;
+  const metadata = full === first ? second : first;
+  return {
+    ...metadata,
+    ...full,
+    trainerVisible: metadata.trainerVisible ?? full.trainerVisible,
+    captures: Object.fromEntries(
+      (["front", "side", "back"] as const).map((view) => {
+        const primary = full.captures?.[view];
+        const fallback = metadata.captures?.[view];
+        return [view, {
+          ...fallback,
+          ...primary,
+          imageData: primary?.imageData || fallback?.imageData || "",
+        }];
+      }),
+    ) as PostureReport["captures"],
+  };
 }
 
 function mergePracticeSnapshots(...collections: PracticeSnapshot[][]): PracticeSnapshot[] {
@@ -9617,15 +9712,17 @@ function persistPostureReportsToLocalStorage(reports: PostureReport[]) {
   const lightweightReports = reports.slice(0, 18).map((report, reportIndex) => ({
     ...report,
     captures: Object.fromEntries(
-      (["front", "side", "back"] as const).map((view) => [
-        view,
-        {
-          ...report.captures[view],
-          imageData: reportIndex < 2
-            ? report.captures[view].imageData
-            : portableHistoryImage(report.captures[view].imageData, ""),
-        },
-      ]),
+      (["front", "side", "back"] as const).map((view) => {
+        const capture = report.captures?.[view];
+        const imageData = portableHistoryImage(capture?.imageData, "");
+        return [
+          view,
+          {
+            ...capture,
+            imageData: reportIndex < 2 && typeof capture?.imageData === "string" ? capture.imageData : imageData,
+          },
+        ];
+      }),
     ) as PostureReport["captures"],
   }));
   writeLightweightHistory("ritim-kapisi-posture-reports", lightweightReports);
@@ -9642,7 +9739,8 @@ function persistPracticeSnapshotsToLocalStorage(snapshots: PracticeSnapshot[]) {
   writeLightweightHistory("ritim-kapisi-practice-gallery", lightweightSnapshots);
 }
 
-function portableHistoryImage(value: string, fallback: string) {
+function portableHistoryImage(value: unknown, fallback: string) {
+  if (typeof value !== "string" || !value.trim()) return fallback;
   return /^(?:data:|blob:)/i.test(value) || value.length > 64_000 ? fallback : value;
 }
 

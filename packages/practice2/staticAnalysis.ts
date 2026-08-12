@@ -6,6 +6,8 @@ import type{Practice2Analysis,Practice2Metric,Practice2PosePoint,Practice2PoseSa
 export function analyzeStaticPractice(current:readonly Practice2PoseSample[],now:Practice2PoseSample,target:readonly Practice2PosePoint[]=bowStanceTarget):Practice2Analysis{
  const pose=now.keypoints,required=['left_shoulder','right_shoulder','left_elbow','right_elbow','left_wrist','right_wrist','left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle'],count=required.filter(name=>visible(pose,name)).length,confidence=count/required.length;
  if(count<practice2MinimumLandmarks)return{overallScore:null,confidence,metrics:[],correction:'Başından ayaklarına kadar kadrajda kal.'};
+ const targetCount=required.filter(name=>visible(target,name)).length;
+ if(targetCount<required.length)return{overallScore:null,confidence,metrics:[],correction:'Bu hareketin referans ölçümü hazırlanıyor.'};
  const p=(name:string)=>visible(pose,name)!,t=(name:string)=>visible(target,name)!;
  const shoulderTilt=Math.abs((p('left_shoulder').y-p('right_shoulder').y)-(t('left_shoulder').y-t('right_shoulder').y)),hipTilt=Math.abs((p('left_hip').y-p('right_hip').y)-(t('left_hip').y-t('right_hip').y));
  const shoulderScore=errorScore(shoulderTilt,.08),hipScore=errorScore(hipTilt,.08);

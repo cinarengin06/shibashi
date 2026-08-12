@@ -7,6 +7,7 @@ export type HomeShenSummary = {
   element: string;
   heroBody: string;
   heroTitle: string;
+  icon: string;
   id: HomeShenId;
   motto: string;
   name: string;
@@ -31,6 +32,8 @@ export type HomeLevelSummary = {
 };
 
 export type HomeWeekSummary = {
+  dayDescriptions: string[];
+  dayLabels: string[];
   dailyMinutes: number[];
   minutes: number;
   practiceCount: number;

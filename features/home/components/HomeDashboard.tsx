@@ -24,7 +24,6 @@ type HomeDashboardProps = {
   onPosture: () => void;
   onReset: () => void;
   onSelectShen: (shenId: HomeShenId) => void;
-  onShen: () => void;
   postureCount: number;
   recommendedFlow: HomeFlowSummary;
   shen: HomeShenSummary;
@@ -33,8 +32,6 @@ type HomeDashboardProps = {
   userName: string;
   week: HomeWeekSummary;
 };
-
-const dayLabels = ["P", "S", "Ç", "P", "C", "C", "P"];
 
 export function HomeDashboard(props: HomeDashboardProps) {
   return (
@@ -61,7 +58,7 @@ export function HomeDashboard(props: HomeDashboardProps) {
   );
 }
 
-function HomeHero({ onPractice, onShen, shen, shenOptions, userName }: HomeDashboardProps) {
+function HomeHero({ onPractice, shen, shenOptions, userName }: HomeDashboardProps) {
   return (
     <article className={styles.hero}>
       <div aria-hidden="true" className={styles.heroWallpapers}>
@@ -86,7 +83,6 @@ function HomeHero({ onPractice, onShen, shen, shenOptions, userName }: HomeDashb
           <button className={styles.primaryAction} onClick={onPractice} type="button"><span aria-hidden="true">▶</span> {shen.actionLabel}</button>
         </div>
       </div>
-      <DailyShenCard onShen={onShen} shen={shen} />
     </article>
   );
 }
@@ -95,7 +91,7 @@ function ShenSelector({ activeShen, onSelect, options }: { activeShen: HomeShenS
   return (
     <section className={styles.shenSelector} aria-label="Beş Shen seçimi">
       <div className={styles.shenSelectorIntro}>
-        <span>5 Shen · Beş iç hal</span>
+        <span>Beş Shen · İç yaşamın beş yönü</span>
         <strong>{activeShen.shortLabel}</strong>
         <small>{activeShen.name}</small>
       </div>
@@ -112,8 +108,8 @@ function ShenSelector({ activeShen, onSelect, options }: { activeShen: HomeShenS
               style={{ "--choice-color": option.color } as CSSProperties}
               type="button"
             >
-              <i aria-hidden="true">{option.symbol}</i>
-              <span><strong>{option.shortLabel}</strong><small>{option.name}</small></span>
+              <i aria-hidden="true"><Image alt="" height={34} src={option.icon} width={34} /></i>
+              <span><strong>{option.shortLabel}</strong><small>{option.name} · {option.organ}</small></span>
             </button>
           );
         })}
@@ -122,54 +118,45 @@ function ShenSelector({ activeShen, onSelect, options }: { activeShen: HomeShenS
   );
 }
 
-function DailyShenCard({ onShen, shen }: { onShen: () => void; shen: HomeShenSummary }) {
-  return (
-    <aside className={styles.shenCard} style={{ "--home-shen": shen.color } as CSSProperties}>
-      <header><span className={styles.shenGlyph} aria-hidden="true">{shen.symbol}</span><small>Bugünkü Shen’in</small></header>
-      <h2>{shen.name}</h2>
-      <p className={styles.shenElement}>{shen.element} · {shen.organ}</p>
-      <time>{shen.period}</time>
-      <p>{shen.description}</p>
-      <button onClick={onShen} type="button">Daha fazla bilgi <span aria-hidden="true">→</span></button>
-    </aside>
-  );
-}
-
 function HomeStatsRow({ energy, level, streak, week }: Pick<HomeDashboardProps, "energy" | "level" | "streak" | "week">) {
   return (
     <section className={styles.stats} aria-label="Kısa ilerleme özeti">
       <article className={styles.statCard}>
-        <header><span>♨</span><h2>Seri</h2></header>
+        <header><span>♨</span><h2>Seri</h2><StatInfo id="streak-help" label="Seri nasıl artar?">Bir günde en az bir pratik tamamlandığında o gün işaretlenir. Ardışık tamamlanan günler serini oluşturur. Soldan sağa son yedi gün gösterilir; en sağdaki bugün.</StatInfo></header>
         <div className={styles.streakValue}><strong>{streak.current}</strong><span>gün</span></div>
-        <div className={styles.dayDots}>{dayLabels.map((day, index) => <span className={streak.activeDays[index] ? styles.dayActive : ""} key={`${day}-${index}`}><i>{streak.activeDays[index] ? "✓" : ""}</i><small>{day}</small></span>)}</div>
+        <div className={styles.dayDots}>{week.dayLabels.map((day, index) => <span aria-label={`${week.dayDescriptions[index]}: ${streak.activeDays[index] ? "pratik tamamlandı" : "pratik yok"}`} className={streak.activeDays[index] ? styles.dayActive : ""} key={`${week.dayDescriptions[index]}-${index}`} title={week.dayDescriptions[index]}><i>{streak.activeDays[index] ? "✓" : ""}</i><small>{day}</small></span>)}</div>
         <p>En uzun seri: {streak.longest || "—"} gün</p>
       </article>
 
       <article className={styles.statCard}>
-        <header><h2>Seviye</h2></header>
+        <header><h2>Seviye</h2><StatInfo id="level-help" label="Seviye nasıl artar?">Tamamladığın pratikler deneyim puanı kazandırır. Her 240 XP seni bir sonraki seviyeye taşır.</StatInfo></header>
         <div className={styles.levelRow}><div><strong>{level.level}</strong><span>Yolcu</span></div><span className={styles.levelSeal} aria-hidden="true">⌁</span></div>
         <div className={styles.progress}><i style={{ width: `${level.progress}%` }} /></div>
         <p>{level.experience} / {level.nextLevelExperience} XP</p>
       </article>
 
       <article className={styles.statCard}>
-        <header><h2>Bu Hafta</h2></header>
-        <div className={styles.weekRow}><div><strong>{week.practiceCount}</strong><span>pratik</span></div><MiniBars values={week.dailyMinutes} /></div>
+        <header><h2>Son 7 Gün</h2><StatInfo id="week-help" label="Son yedi gün neyi gösterir?">Son yedi günde tamamladığın pratik sayısını ve toplam süreyi gösterir. Çubukların yüksekliği her gün yaptığın pratik dakikasına göre değişir.</StatInfo></header>
+        <div className={styles.weekRow}><div><strong>{week.practiceCount}</strong><span>pratik</span></div><MiniBars labels={week.dayLabels} values={week.dailyMinutes} /></div>
         <p>Toplam {week.minutes} dakika</p>
       </article>
 
       <article className={styles.statCard}>
-        <header><h2>Enerjin (Shen)</h2></header>
-        <div className={styles.energyRow}><div className={styles.energyScore}><strong>{energy.score ?? "—"}</strong><span>{energy.score === null ? "Ölçüm bekliyor" : energy.score >= 75 ? "İyi" : energy.score >= 50 ? "Dengeleniyor" : "İlgi istiyor"}</span></div><MiniTrend values={energy.trend} /></div>
+        <header><h2>Enerjin (Shen)</h2><StatInfo id="energy-help" label="Shen puanı nasıl hesaplanır?">Son yedi günde pratik veya postür kaydı bulunan günlerin oranıdır. Daha düzenli kayıt, daha yüksek devamlılık puanı oluşturur.</StatInfo></header>
+        <div className={styles.energyRow}><div className={styles.energyScore}><strong>{energy.score ?? "—"}</strong>{energy.score !== null ? <span>{energy.score >= 75 ? "İyi" : energy.score >= 50 ? "Dengeleniyor" : "İlgi istiyor"}</span> : null}</div><MiniTrend values={energy.trend} /></div>
         <p>Son 7 gün</p>
       </article>
     </section>
   );
 }
 
-function MiniBars({ values }: { values: number[] }) {
+function StatInfo({ children, id, label }: { children: string; id: string; label: string }) {
+  return <span className={styles.statInfo}><button aria-describedby={id} aria-label={label} type="button">?</button><span id={id} role="tooltip">{children}</span></span>;
+}
+
+function MiniBars({ labels, values }: { labels: string[]; values: number[] }) {
   const max = Math.max(1, ...values);
-  return <div className={styles.miniBars} aria-label="Son yedi günün pratik dakikaları">{values.map((value, index) => <span key={index}><i style={{ height: `${Math.max(value ? 20 : 6, (value / max) * 100)}%` }} /><small>{dayLabels[index]}</small></span>)}</div>;
+  return <div className={styles.miniBars} aria-label="Son yedi günün pratik dakikaları">{values.map((value, index) => <span key={index}><i style={{ height: `${Math.max(value ? 20 : 6, (value / max) * 100)}%` }} /><small>{labels[index]}</small></span>)}</div>;
 }
 
 function MiniTrend({ values }: { values: number[] }) {

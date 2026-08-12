@@ -50,9 +50,9 @@
 .heroImageActive { opacity: 1; transform: scale(1); z-index: 1; }
 .heroShade { background: linear-gradient(90deg, rgba(4, 10, 7, .97) 0%, rgba(5, 11, 8, .86) 30%, rgba(5, 11, 8, .18) 63%, rgba(5, 11, 8, .32) 100%), linear-gradient(0deg, rgba(4, 10, 7, .78), transparent 40%); inset: 0; position: absolute; }
 .heroCopy { display: flex; flex-direction: column; justify-content: center; min-height: 440px; padding: 34px 0 36px 8px; position: relative; width: min(47%, 650px); z-index: 2; }
-.eyebrow { align-items: baseline; display: flex; gap: 7px; letter-spacing: .06em; margin: 0 0 15px; }
-.eyebrow span { color: rgba(242, 238, 231, .72); font-size: 13px; font-weight: 600; }
-.eyebrow strong { color: var(--gold); font-family: var(--font-display), Georgia, serif; font-size: 21px; font-weight: 500; letter-spacing: .01em; }
+.eyebrow { align-items: baseline; display: flex; gap: 9px; letter-spacing: .025em; margin: 0 0 16px; }
+.eyebrow span { color: rgba(242, 238, 231, .82); font-size: clamp(16px, 1.15vw, 18px); font-weight: 600; }
+.eyebrow strong { color: var(--home-accent); font-family: var(--font-display), Georgia, serif; font-size: clamp(25px, 1.9vw, 31px); font-weight: 500; letter-spacing: 0; line-height: 1; text-shadow: 0 0 28px color-mix(in srgb, var(--home-accent) 34%, transparent); }
 .hero h1 { font-family: var(--font-display), "DM Serif Display", Georgia, serif; font-size: clamp(42px, 4.2vw, 62px); font-weight: 400; letter-spacing: -.025em; line-height: 1.05; margin: 0; }
 .hero h1 span { font-size: .6em; vertical-align: .12em; }
 .lead { color: rgba(242, 238, 231, .8); font-size: clamp(16px, 1.3vw, 19px); line-height: 1.7; margin: 18px 0 22px; }
@@ -61,17 +61,6 @@
 .primaryAction { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 72%, #f4efe4), var(--gold)); border: 0; border-radius: var(--action-radius); color: #09100c; font-size: 15px; font-weight: 700; letter-spacing: .05em; min-height: 52px; padding: 0 24px; text-transform: uppercase; transition: background .8s ease, border-radius .65s ease, filter .5s ease, transform .5s ease; }
 .primaryAction:hover { filter: brightness(1.08); transform: translateY(-2px); }
 .primaryAction span { font-size: 12px; margin-right: 7px; }
-
-.shenCard { --home-shen: var(--gold); animation: ambientFloat 7s ease-in-out infinite; backdrop-filter: blur(12px); background: rgba(5, 13, 9, .9); border: 1px solid color-mix(in srgb, var(--home-shen) 42%, transparent); border-radius: var(--card-radius); bottom: 28px; box-shadow: 0 24px 60px rgba(0, 0, 0, .34); padding: 20px; position: absolute; right: 20px; transition: border-radius .65s ease; width: 280px; z-index: 3; }
-.shenCard header { align-items: center; display: flex; gap: 10px; }
-.shenCard header small { color: var(--muted); font-size: 13px; }
-.shenGlyph { align-items: center; border: 1px solid var(--home-shen); border-radius: 50%; color: var(--home-shen); display: inline-flex; font-family: Georgia, serif; height: 34px; justify-content: center; width: 34px; }
-.shenCard h2 { color: var(--home-shen); font-family: var(--font-display), Georgia, serif; font-size: 25px; font-weight: 400; margin: 13px 0 1px; }
-.shenCard p { color: rgba(242, 238, 231, .75); font-size: 14px; line-height: 1.65; margin: 12px 0; }
-.shenCard .shenElement { color: var(--home-shen); margin: 0; }
-.shenCard time { display: block; font-size: 14px; margin-top: 7px; }
-.shenCard button { background: transparent; border: 0; color: var(--home-shen); cursor: pointer; font-size: 14px; font-weight: 700; letter-spacing: .07em; padding: 5px 0 0; text-transform: uppercase; }
-.shenCard button span { margin-left: 12px; }
 
 .shenSelector { align-items: center; backdrop-filter: blur(18px); background: color-mix(in srgb, #0a120d 92%, var(--gold)); border: 1px solid color-mix(in srgb, var(--gold) 24%, rgba(255, 255, 255, .08)); border-radius: var(--card-radius); display: grid; gap: 12px; grid-template-columns: 210px minmax(0, 1fr); min-height: 64px; padding: 7px 10px; transition: background .8s ease, border-color .8s ease, border-radius .65s ease; }
 .shenSelectorIntro { border-right: 1px solid color-mix(in srgb, var(--gold) 22%, transparent); display: grid; grid-template-columns: auto 1fr; padding: 2px 16px 2px 4px; }
@@ -84,7 +73,9 @@
 .shenChoice:hover { border-color: color-mix(in srgb, var(--choice-color) 48%, transparent); transform: translateY(-2px); }
 .shenChoiceActive { background: color-mix(in srgb, var(--choice-color) 18%, rgba(255, 255, 255, .035)); border-color: color-mix(in srgb, var(--choice-color) 70%, transparent); box-shadow: inset 0 0 28px color-mix(in srgb, var(--choice-color) 11%, transparent), 0 9px 30px rgba(0, 0, 0, .18); }
 .shenChoice i,
-.shenChoiceActive i { align-items: center; border: 1px solid var(--choice-color); border-radius: 50%; color: var(--choice-color); display: flex; flex: 0 0 26px; font-family: Georgia, serif; font-size: 12px; font-style: normal; height: 26px; justify-content: center; }
+.shenChoiceActive i { align-items: center; border: 1px solid color-mix(in srgb, var(--choice-color) 70%, transparent); border-radius: 50%; color: var(--choice-color); display: flex; flex: 0 0 34px; font-family: Georgia, serif; font-size: 12px; font-style: normal; height: 34px; justify-content: center; overflow: hidden; }
+.shenChoice i img,
+.shenChoiceActive i img { height: 100%; object-fit: cover; width: 100%; }
 .shenChoice > span,
 .shenChoiceActive > span { display: grid; min-width: 0; }
 .shenChoice strong,
@@ -93,12 +84,17 @@
 .shenChoiceActive small { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .stats { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.statCard { background: linear-gradient(145deg, rgba(23, 29, 25, .97), rgba(12, 19, 15, .98)); border: 1px solid rgba(255, 255, 255, .08); border-radius: var(--card-radius); min-height: 132px; padding: 16px 18px; transition: border-color .6s ease, border-radius .65s ease, transform .6s ease; }
-.statCard:hover { border-color: color-mix(in srgb, var(--gold) 34%, transparent); transform: translateY(-2px); }
+.statCard { background: linear-gradient(145deg, rgba(23, 29, 25, .97), rgba(12, 19, 15, .98)); border: 1px solid rgba(255, 255, 255, .08); border-radius: var(--card-radius); min-height: 132px; padding: 16px 18px; position: relative; transition: border-color .6s ease, border-radius .65s ease, transform .6s ease; }
+.statCard:hover { border-color: color-mix(in srgb, var(--gold) 34%, transparent); transform: translateY(-2px); z-index: 8; }
 .statCard header { align-items: center; display: flex; gap: 8px; }
 .statCard header > span { color: var(--gold); }
 .statCard h2 { font-size: 15px; font-weight: 500; margin: 0; }
 .statCard p { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+.statInfo { margin-left: auto; position: relative; }
+.statInfo > button { align-items: center; background: rgba(255, 255, 255, .035); border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent); border-radius: 50%; color: var(--gold); cursor: help; display: flex; font-family: var(--font-sans), sans-serif; font-size: 12px; height: 23px; justify-content: center; padding: 0; width: 23px; }
+.statInfo > span { background: #111a14; border: 1px solid color-mix(in srgb, var(--gold) 38%, transparent); border-radius: 9px; box-shadow: 0 18px 44px rgba(0, 0, 0, .42); color: rgba(242, 238, 231, .86); font-size: 13px; font-weight: 400; line-height: 1.55; opacity: 0; padding: 12px 13px; pointer-events: none; position: absolute; right: 0; top: 31px; transform: translateY(-4px); transition: opacity .18s ease, transform .18s ease; visibility: hidden; width: min(270px, calc(100vw - 48px)); z-index: 20; }
+.statInfo:hover > span,
+.statInfo:focus-within > span { opacity: 1; transform: translateY(0); visibility: visible; }
 .streakValue { align-items: baseline; display: inline-flex; gap: 5px; margin-top: 3px; }
 .streakValue strong, .weekRow strong { color: var(--gold); font-family: Manrope, var(--font-sans), sans-serif; font-size: 31px; font-weight: 500; }
 .streakValue span, .weekRow span { font-size: 13px; }
@@ -190,7 +186,6 @@
   .lead { font-size: 15px; margin: 12px 0 18px; }
   .heroActions { align-items: stretch; flex-direction: column; gap: 4px; margin-top: 0; }
   .primaryAction { width: 100%; }
-  .shenCard { animation: none; background: #111813; bottom: auto; margin: 0 16px 18px; order: 2; padding: 17px; position: relative; right: auto; width: auto; }
   .shenSelector { display: block; order: 3; overflow: hidden; padding: 14px 12px 12px; }
   .shenSelectorIntro { border-bottom: 1px solid color-mix(in srgb, var(--gold) 22%, transparent); border-right: 0; margin-bottom: 10px; padding: 0 4px 10px; }
   .shenChoices { display: flex; margin-right: -12px; overflow-x: auto; padding: 0 12px 6px 0; scroll-snap-type: x mandatory; }

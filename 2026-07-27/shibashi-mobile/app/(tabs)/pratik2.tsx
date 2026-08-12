@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
+import * as Speech from "expo-speech";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ImageBackground,
@@ -123,7 +124,8 @@ export default function Practice2() {
     modeRef = useRef(mode),
     lastPhaseRef = useRef(""),
     matchedAtRef = useRef(0),
-    capturedRef = useRef(false);
+    capturedRef = useRef(false),
+    staticAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedPractice = staticPracticeDefinitions[selectedStatic],
     targetPose = staticReferencePoses[selectedPractice.id],
     flow = shortFlowDefinitions[selectedFlow],
@@ -136,6 +138,14 @@ export default function Practice2() {
     displayReference = staticReferencePoses[activeFlowStep.practiceId];
   elapsedRef.current = elapsedMs;
   modeRef.current = mode;
+  useEffect(
+    () => () => {
+      if (staticAdvanceTimerRef.current)
+        clearTimeout(staticAdvanceTimerRef.current);
+      void Speech.stop();
+    },
+    [],
+  );
   useEffect(() => {
     if (!running) return;
     const tick = mode === "static" ? 1000 : 80,
@@ -257,6 +267,35 @@ export default function Practice2() {
               void Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Success,
               );
+              if (isStatic) {
+                const hasNext = selectedStatic < staticPracticeDefinitions.length - 1;
+                setTimeout(() => {
+                  void Speech.stop();
+                  void Speech.speak(
+                    hasNext
+                      ? "Sıradaki akışa geçiyoruz."
+                      : "Statik pozlar tamamlandı.",
+                    { language: "tr-TR", rate: 0.82, pitch: 0.96 },
+                  );
+                }, 300);
+                if (hasNext) {
+                  staticAdvanceTimerRef.current = setTimeout(() => {
+                    setSelectedStatic((index) =>
+                      Math.min(index + 1, staticPracticeDefinitions.length - 1),
+                    );
+                    historyRef.current = [];
+                    matchedAtRef.current = 0;
+                    capturedRef.current = false;
+                    setPose([]);
+                    setAnalysis(null);
+                    setElapsedMs(0);
+                    setCaptureState("matching");
+                    setHoldProgress(0);
+                    setFeedback("Tam bedenini kadrajda tut.");
+                    setRunning(true);
+                  }, 2300);
+                }
+              }
             }
           }
         } else if (!capturedRef.current) {
@@ -289,6 +328,9 @@ export default function Practice2() {
     };
   }, [flowFrames, permission?.granted, running, started, targetPose]);
   const begin = async () => {
+    if (staticAdvanceTimerRef.current)
+      clearTimeout(staticAdvanceTimerRef.current);
+    void Speech.stop();
     if (!permission?.granted) {
       const response = await requestPermission();
       if (!response.granted) return;
@@ -307,6 +349,9 @@ export default function Practice2() {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
   const switchMode = (next: "static" | "dynamic") => {
+    if (staticAdvanceTimerRef.current)
+      clearTimeout(staticAdvanceTimerRef.current);
+    void Speech.stop();
     setMode(next);
     setStarted(false);
     setRunning(false);
@@ -325,6 +370,9 @@ export default function Practice2() {
       height: event.nativeEvent.layout.height,
     });
   const leaveStaticCapture = () => {
+    if (staticAdvanceTimerRef.current)
+      clearTimeout(staticAdvanceTimerRef.current);
+    void Speech.stop();
     setStarted(false);
     setRunning(false);
     setElapsedMs(0);

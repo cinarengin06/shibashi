@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
+  Image,
   ImageBackground,
   Pressable,
   ScrollView,
@@ -20,7 +21,12 @@ import { getShen } from "../../data/fiveShen";
 import { useApp } from "../../store/AppStore";
 import { useShenExperience } from "../../store/ShenExperience";
 import { fiveShen } from "../../data/fiveShen";
+import { shenIcons } from "../../data/shenIcons";
 import { shenThemes } from "../../../../packages/design-tokens";
+import {
+  fiveShenContent,
+  fiveShenTraditionNote,
+} from "../../../../packages/five-shen-content";
 import { ShenId } from "../../types";
 import {
   ensureSystemNotifications,
@@ -40,42 +46,42 @@ const shenTodayCopy: Record<
 > = {
   hun: {
     action: "Yönünü bul",
-    body: "Yönünü zorlamadan fark et. Bugün yeni bir ihtimale sakin bir adım aç.",
-    identity: "Yönünü ve büyüme isteğini taşır",
+    body: fiveShenContent.hun.dailyPrompt,
+    identity: fiveShenContent.hun.identity,
     motto: "Rüzgâr yönü gösterir; adımı sen seçersin.",
-    shortLabel: "Yön · Umut",
+    shortLabel: fiveShenContent.hun.familiarName,
     title: "Ufku genişlet.",
   },
   shen: {
-    action: "Birliğe dön",
-    body: "Beden, nefes ve dikkat bugün aynı yerde buluşabilir.",
-    identity: "Kalp açıklığını ve birlik duygusunu taşır",
+    action: "Berraklığı aç",
+    body: fiveShenContent.shen.dailyPrompt,
+    identity: fiveShenContent.shen.identity,
     motto: "Kalp yumuşadığında parçalar birbirini duyar.",
-    shortLabel: "Huzur · Birlik",
-    title: "Bütünü bir araya getir.",
+    shortLabel: fiveShenContent.shen.familiarName,
+    title: "Berrak ve ilgili kal.",
   },
   yi: {
     action: "Odağını kur",
-    body: "Dağınık olanı sadeleştir. Şimdi yalnızca bir sonraki adımla kal.",
-    identity: "Niyetini ve sakin dikkatini taşır",
+    body: fiveShenContent.yi.dailyPrompt,
+    identity: fiveShenContent.yi.identity,
     motto: "Bir anda tek şey; bir nefeste tek yön.",
-    shortLabel: "Dikkat · Denge",
-    title: "Dikkatini sadeleştir.",
+    shortLabel: fiveShenContent.yi.familiarName,
+    title: "Niyetini eyleme taşı.",
   },
   po: {
     action: "Bedene dön",
-    body: "Ayaklarını hisset, omuzlarını çöz. Nefesin güvene dönüşsün.",
-    identity: "Bedensel duyumu ve bırakmayı taşır",
+    body: fiveShenContent.po.dailyPrompt,
+    identity: fiveShenContent.po.identity,
     motto: "Beden bıraktığında nefes yerini bulur.",
-    shortLabel: "Güven · Beden",
-    title: "Ağırlığını bırak.",
+    shortLabel: fiveShenContent.po.familiarName,
+    title: "Nefesi ve bedeni duy.",
   },
   zhi: {
-    action: "Kökünü hisset",
-    body: "Acele etmeden devam et. Gücünü koruyarak en küçük adımı seç.",
-    identity: "Sessiz iradeyi ve devam gücünü taşır",
+    action: "İradeni koru",
+    body: fiveShenContent.zhi.dailyPrompt,
+    identity: fiveShenContent.zhi.identity,
     motto: "Derin su acele etmez; yine de yolunu bulur.",
-    shortLabel: "Sessizlik · İrade",
+    shortLabel: fiveShenContent.zhi.familiarName,
     title: "Sessizce devam et.",
   },
 };
@@ -329,8 +335,9 @@ export default function Today() {
         style={[s.shenChooser, { borderColor: `${personality.primary}38` }]}
       >
         <Text style={[s.shenChooserLabel, { color: personality.light }]}>
-          BUGÜN HANGİ ALAN SANA EŞLİK ETSİN?
+          BEŞ SHEN · BUGÜN HANGİ YÖN SANA EŞLİK ETSİN?
         </Text>
+        <Text style={s.shenChooserIntro}>{fiveShenTraditionNote}</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -367,12 +374,7 @@ export default function Today() {
                 ]}
               >
                 <View style={s.worldChoiceTop}>
-                  <View
-                    style={[
-                      s.worldDot,
-                      { backgroundColor: itemPersonality.primary },
-                    ]}
-                  />
+                  <Image source={shenIcons[item.id]} style={s.worldIcon} />
                   <Text
                     style={[
                       s.worldName,
@@ -387,7 +389,7 @@ export default function Today() {
                       },
                     ]}
                   >
-                    {item.name}
+                    {copy.shortLabel}
                   </Text>
                 </View>
                 <Text
@@ -396,7 +398,7 @@ export default function Today() {
                     active && { color: itemPersonality.light },
                   ]}
                 >
-                  ({copy.shortLabel})
+                  {item.name} · {item.element}
                 </Text>
               </Pressable>
             );
@@ -418,9 +420,7 @@ export default function Today() {
               { borderColor: shen.color, backgroundColor: `${shen.color}16` },
             ]}
           >
-            <Text style={[s.shenIdentitySymbolText, { color: shen.color }]}>
-              {shen.symbol}
-            </Text>
+            <Image source={shenIcons[shen.id]} style={s.shenIdentityImage} />
           </View>
           <View style={s.shenIdentityCopy}>
             <Text style={s.shenIdentityTitle}>
@@ -713,6 +713,12 @@ const s = StyleSheet.create({
     fontSize: 13,
     letterSpacing: 1.05,
   },
+  shenChooserIntro: {
+    color: colors.muted,
+    fontFamily: fonts.sans,
+    fontSize: 13,
+    lineHeight: 19,
+  },
   worldPicker: { gap: 8, paddingRight: 18, paddingTop: 4 },
   worldChoice: {
     alignItems: "flex-start",
@@ -720,13 +726,13 @@ const s = StyleSheet.create({
     borderWidth: 1,
     gap: 5,
     justifyContent: "center",
-    minHeight: 70,
+    minHeight: 80,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    width: 122,
+    width: 158,
   },
   worldChoiceTop: { alignItems: "center", flexDirection: "row", gap: 7 },
-  worldDot: { borderRadius: 5, height: 10, width: 10 },
+  worldIcon: { borderRadius: 15, height: 30, width: 30 },
   worldName: {
     color: colors.cream,
     fontFamily: fonts.displayMedium,
@@ -753,9 +759,10 @@ const s = StyleSheet.create({
     borderWidth: 1,
     height: 48,
     justifyContent: "center",
+    overflow: "hidden",
     width: 48,
   },
-  shenIdentitySymbolText: { fontFamily: fonts.displayStrong, fontSize: 22 },
+  shenIdentityImage: { height: "100%", width: "100%" },
   shenIdentityCopy: { flex: 1, gap: 4 },
   shenIdentityTitle: {
     color: colors.cream,

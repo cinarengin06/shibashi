@@ -7,6 +7,7 @@ export function analyzeDynamicMovement(history:readonly Practice2PoseSample[],no
  const required=['left_shoulder','right_shoulder','left_elbow','right_elbow','left_wrist','right_wrist','left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle'],count=required.filter(name=>visible(now.keypoints,name)).length,confidence=count/required.length;
  if(count<practice2MinimumLandmarks)return{overallScore:null,confidence,metrics:[],correction:'Tam bedenini kamera içinde tut.'};
  const reference=interpolatePractice2Reference(now.timestampMs,referenceFrames),user=normalizePose(now.keypoints),target=normalizePose(reference.keypoints);if(!user||!target)return{overallScore:null,confidence,metrics:[],correction:'Omuz ve kalça hattını görünür tut.'};
+ if(required.some(name=>!visible(target,name)))return{overallScore:null,confidence,metrics:[],correction:'Hareket referansı hazırlanıyor.'};
  const u=(name:string)=>visible(user,name)!,t=(name:string)=>visible(target,name)!;
  const wristError=(distance(u('left_wrist'),t('left_wrist'))+distance(u('right_wrist'),t('right_wrist')))/2,movementPath=errorScore(wristError,1.25);
  const userElbows=[angle(u('left_shoulder'),u('left_elbow'),u('left_wrist')),angle(u('right_shoulder'),u('right_elbow'),u('right_wrist'))],targetElbows=[angle(t('left_shoulder'),t('left_elbow'),t('left_wrist')),angle(t('right_shoulder'),t('right_elbow'),t('right_wrist'))],armSync=errorScore((Math.abs(userElbows[0]-targetElbows[0])+Math.abs(userElbows[1]-targetElbows[1]))/2,70);

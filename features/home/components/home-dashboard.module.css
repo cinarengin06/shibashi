@@ -103,6 +103,10 @@
 .dayDots i { align-items: center; background: rgba(255, 255, 255, .06); border-radius: 50%; color: #152014; display: flex; font-size: 12px; font-style: normal; height: 16px; justify-content: center; width: 16px; }
 .dayDots small { color: var(--muted); font-size: 12px; }
 .dayDots .dayActive i { background: var(--gold); }
+.dayDots .dayToday { position: relative; }
+.dayDots .dayToday::before { color: var(--gold); content: "▼"; font-size: 8px; left: 50%; line-height: 1; position: absolute; top: -11px; transform: translateX(-50%); }
+.dayDots .dayToday small { color: var(--gold); font-weight: 700; }
+.dayDots .dayToday i { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 42%, transparent); }
 .levelRow, .weekRow, .energyRow { align-items: center; display: flex; justify-content: space-between; }
 .levelRow > div:first-child, .weekRow > div:first-child { display: flex; flex-direction: column; }
 .levelRow strong { color: var(--gold); font-family: Manrope, sans-serif; font-size: 31px; font-weight: 500; line-height: 1; }

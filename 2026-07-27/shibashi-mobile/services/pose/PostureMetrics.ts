@@ -9,7 +9,9 @@ export function isLandmarkVisible(point:PoseLandmark|undefined,threshold=.38){
 
 export function evaluatePoseFrame(points:PoseLandmark[],view:PostureView):PoseFrameReadiness{
  if(points.length<33)return{bodyReady:false,angleReady:false};
- const headReady=[0,7,8].some(index=>isLandmarkVisible(points[index],.25));
+ // Arka görünümde yüz/baş landmark'ları doğal olarak kaybolabilir. Son adımı
+ // yüz görünürlüğüne bağlamak bazı cihazlarda taramayı sonsuza kadar kilitler.
+ const headReady=view==='back'||[0,7,8].some(index=>isLandmarkVisible(points[index],.25));
  const pairReady=(left:number,right:number,threshold:number)=>view==='side'
   ?[left,right].some(index=>isLandmarkVisible(points[index],threshold))
   :[left,right].every(index=>isLandmarkVisible(points[index],threshold));
@@ -31,7 +33,7 @@ export function evaluatePoseFrame(points:PoseLandmark[],view:PostureView):PoseFr
   ?widthRatio<.42
   :view==='front'
    ?widthRatio>=.24&&faceConfidence>=.5&&anatomicalOrder>-.025
-   :widthRatio>=.24&&(faceConfidence<.5||anatomicalOrder<.025);
+   :true;
  return{bodyReady,angleReady};
 }
 

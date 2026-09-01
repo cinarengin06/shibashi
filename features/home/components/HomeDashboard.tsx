@@ -119,12 +119,18 @@ function ShenSelector({ activeShen, onSelect, options }: { activeShen: HomeShenS
 }
 
 function HomeStatsRow({ energy, level, streak, week }: Pick<HomeDashboardProps, "energy" | "level" | "streak" | "week">) {
+  const calendarDayLabels = ["P", "S", "Ç", "P", "C", "C", "P"];
+  const calendarDayNames = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
   return (
     <section className={styles.stats} aria-label="Kısa ilerleme özeti">
       <article className={styles.statCard}>
-        <header><span>♨</span><h2>Seri</h2><StatInfo id="streak-help" label="Seri nasıl artar?">Bir günde en az bir pratik tamamlandığında o gün işaretlenir. Ardışık tamamlanan günler serini oluşturur. Soldan sağa son yedi gün gösterilir; en sağdaki bugün.</StatInfo></header>
+        <header><span>♨</span><h2>Seri</h2><StatInfo id="streak-help" label="Seri nasıl artar?">Bir günde en az bir pratik tamamlandığında o gün işaretlenir. Ardışık tamamlanan günler serini oluşturur. Günler her zaman Pazartesi’den Pazar’a aynı sırada gösterilir.</StatInfo></header>
         <div className={styles.streakValue}><strong>{streak.current}</strong><span>gün</span></div>
-        <div className={styles.dayDots}>{week.dayLabels.map((day, index) => <span aria-label={`${week.dayDescriptions[index]}: ${streak.activeDays[index] ? "pratik tamamlandı" : "pratik yok"}`} className={streak.activeDays[index] ? styles.dayActive : ""} key={`${week.dayDescriptions[index]}-${index}`} title={week.dayDescriptions[index]}><i>{streak.activeDays[index] ? "✓" : ""}</i><small>{day}</small></span>)}</div>
+        <div className={styles.dayDots}>{calendarDayLabels.map((day, index) => {
+          const isToday = index === streak.todayIndex;
+          const state = streak.activeDays[index] ? "pratik tamamlandı" : "pratik yok";
+          return <span aria-current={isToday ? "date" : undefined} aria-label={`${calendarDayNames[index]}${isToday ? ", bugün" : ""}: ${state}`} className={`${streak.activeDays[index] ? styles.dayActive : ""} ${isToday ? styles.dayToday : ""}`} key={calendarDayNames[index]} title={`${calendarDayNames[index]}${isToday ? " · Bugün" : ""}`}><i>{streak.activeDays[index] ? "✓" : ""}</i><small>{day}</small></span>;
+        })}</div>
         <p>En uzun seri: {streak.longest || "—"} gün</p>
       </article>
 

@@ -258,7 +258,7 @@ function toWebPracticeSnapshot(record:SyncRecord):PracticeSnapshot|null {
    movementName:typeof record.movementName==="string"?record.movementName:movement?.name??"App pratiği",
    score:record.score,
    shenName:typeof record.shenName==="string"?record.shenName:"App",
-   imageData:portableHistoryImage(record.imageData,movement?.image??""),
+   imageData:portableHistoryImage(record.imageData,""),
   };
  }
  const createdAt=typeof record.date==="string"?record.date:typeof record.createdAt==="string"?record.createdAt:new Date().toISOString();
@@ -275,7 +275,7 @@ function toWebPracticeSnapshot(record:SyncRecord):PracticeSnapshot|null {
   movementName:movement?.name??"App pratiği",
   score:Number.isFinite(score)?score:0,
   shenName:"App",
-  imageData:movement?.image??"",
+  imageData:"",
  };
 }
 
@@ -2173,13 +2173,16 @@ function getPracticeStreak(practiceGallery: PracticeSnapshot[], activities: Shen
     if (dates.has(key)) current += 1;
     else if (offset > 0 || dates.size > 0) break;
   }
+  const todayIndex = (today.getDay() + 6) % 7;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - todayIndex);
   const activeDays = Array.from({ length: 7 }, (_, index) => {
-    const day = new Date(today);
-    day.setDate(today.getDate() - (6 - index));
+    const day = new Date(monday);
+    day.setDate(monday.getDate() + index);
     const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
     return dates.has(key);
   });
-  return { activeDays, current, longest };
+  return { activeDays, current, longest, todayIndex };
 }
 
 function DojoHomeScreen({
@@ -8161,7 +8164,7 @@ function JournalScreen({
   }
 
   async function shareSnapshot(snapshot: PracticeSnapshot) {
-    if (!navigator.share) return;
+    if (!navigator.share || !isCapturedPracticePhoto(snapshot.imageData)) return;
     try {
       const response = await fetch(snapshot.imageData);
       const blob = await response.blob();
@@ -8240,7 +8243,7 @@ function JournalScreen({
             <div className="daily-practice-list">
               {todaysPractices.map((snapshot) => (
                 <article key={snapshot.id}>
-                  <button aria-label={`${snapshot.movementName} fotoğrafını aç`} className="snapshot-thumb-button" onClick={() => setSelectedSnapshot(snapshot)} type="button"><img src={snapshot.imageData} alt={`${snapshot.movementName} sırasında kaydedilen pozun`} /></button>
+                  {isCapturedPracticePhoto(snapshot.imageData) ? <button aria-label={`${snapshot.movementName} fotoğrafını aç`} className="snapshot-thumb-button" onClick={() => setSelectedSnapshot(snapshot)} type="button"><img src={snapshot.imageData} alt={`${snapshot.movementName} sırasında kaydedilen pozun`} /></button> : <div className="snapshot-photo-missing" aria-label="Bu pratiğin kullanıcı fotoğrafı bu cihazda bulunmuyor"><span>◎</span></div>}
                   <div><strong>{snapshot.movementName}</strong><small>{snapshot.timeLabel} · %{snapshot.score} uyum</small></div>
                   <span>{snapshot.score}</span>
                 </article>
@@ -8287,27 +8290,17 @@ function JournalScreen({
 
       <div className="glass-card all-practices-card">
         <div className="section-heading">
-          <div><span className="eyebrow">Arşiv</span><h2>Tüm pratikler</h2></div>
+          <div><span className="eyebrow">Senin Galerin</span><h2>Yaptığın pratikler</h2><p>Otomatik çekilen kendi pozların, tarih ve skorlarıyla burada.</p></div>
           <span>{gallery.length} kayıt</span>
         </div>
         {groupedGallery.length ? groupedGallery.map(([dateKey, snapshots]) => (
           <div className="gallery-day" key={dateKey}>
             <div className="gallery-date">{dateKey}</div>
-            <div className="daily-archive-row">
+            <div className="practice-photo-grid">
               {snapshots.map((snapshot) => (
-                <article key={snapshot.id}>
-                  <button aria-label={`${snapshot.movementName} fotoğrafını aç`} className="snapshot-thumb-button" onClick={() => setSelectedSnapshot(snapshot)} type="button"><img src={snapshot.imageData} alt={`${snapshot.movementName} sırasında kaydedilen pozun`} /></button>
-                  <div>
-                    <strong>{snapshot.movementName}</strong>
-                    <small>{snapshot.timeLabel} · %{snapshot.score} · {snapshot.source === "practice2" ? "Poz eşleştirme" : snapshot.shenName}</small>
-                    <div className="snapshot-sharing-actions">
-                      <label>
-                        <input checked={snapshot.trainerVisible ?? false} onChange={(event) => onSetTrainerVisibility(snapshot.id, event.target.checked)} type="checkbox" />
-                        <span>{snapshot.trainerVisible ? "Eğitmene açık" : "Yalnızca ben"}</span>
-                      </label>
-                      <button onClick={() => void shareSnapshot(snapshot)} type="button">Paylaş</button>
-                    </div>
-                  </div>
+                <article className={isCapturedPracticePhoto(snapshot.imageData) ? "practice-photo-card" : "practice-photo-card practice-photo-card-missing"} key={snapshot.id}>
+                  {isCapturedPracticePhoto(snapshot.imageData) ? <button aria-label={`${snapshot.movementName} fotoğrafını aç`} onClick={() => setSelectedSnapshot(snapshot)} type="button"><img src={snapshot.imageData} alt={`${snapshot.movementName} sırasında kaydedilen kendi pozun`} /><span className="practice-photo-score">%{snapshot.score}</span></button> : <div className="practice-photo-placeholder"><span>◎</span><strong>Fotoğraf bu cihazda yok</strong><small>Referans videosu yerine yalnızca kendi çekimin gösterilir.</small></div>}
+                  <div className="practice-photo-copy"><strong>{snapshot.movementName}</strong><span>{snapshot.timeLabel}</span></div>
                 </article>
               ))}
             </div>
@@ -8319,7 +8312,7 @@ function JournalScreen({
           <div className="snapshot-viewer-card" onClick={(event) => event.stopPropagation()}>
             <button aria-label="Görüntüyü kapat" className="snapshot-viewer-close" onClick={() => setSelectedSnapshot(null)} type="button">×</button>
             <div className="snapshot-viewer-image"><img src={selectedSnapshot.imageData} alt={`${selectedSnapshot.movementName} tam ekran poz kaydı`} /></div>
-            <div className="snapshot-viewer-copy"><span>{selectedSnapshot.source === "practice2" ? "KAYDEDİLEN POZUN" : "PRATİK KAYDIN"}</span><h2>{selectedSnapshot.movementName}</h2><p>{selectedSnapshot.dateKey} · {selectedSnapshot.timeLabel}</p><strong>%{selectedSnapshot.score} uyum</strong></div>
+            <div className="snapshot-viewer-copy"><span>KAYDEDİLEN POZUN</span><h2>{selectedSnapshot.movementName}</h2><p>{selectedSnapshot.dateKey} · {selectedSnapshot.timeLabel}</p><strong>%{selectedSnapshot.score} uyum</strong><div className="snapshot-viewer-actions"><label><input checked={selectedSnapshot.trainerVisible ?? false} onChange={(event) => { onSetTrainerVisibility(selectedSnapshot.id, event.target.checked); setSelectedSnapshot({ ...selectedSnapshot, trainerVisible: event.target.checked }); }} type="checkbox" />{selectedSnapshot.trainerVisible ? "Eğitmene açık" : "Yalnızca ben"}</label><button onClick={() => void shareSnapshot(selectedSnapshot)} type="button">Paylaş</button></div></div>
           </div>
         </div>
       ) : null}
@@ -9358,7 +9351,11 @@ function evaluateWebPostureFrame(
     return Boolean(point && (point.score ?? 0) >= threshold);
   };
   const headThreshold = view === "back" ? 0.12 : view === "side" ? 0.2 : 0.28;
-  const headReady = ["nose", "left_ear", "right_ear"].some((name) => visible(name, headThreshold));
+  // Back-facing pose models often hide every facial landmark even when the
+  // whole body is perfectly framed. Requiring a nose/ear here made the final
+  // step impossible on those cameras; shoulders and ankles already provide
+  // the framing evidence needed for the back view.
+  const headReady = view === "back" || ["nose", "left_ear", "right_ear"].some((name) => visible(name, headThreshold));
   const pairReady = (left: string, right: string, threshold: number) =>
     view === "side"
       ? visible(left, threshold) || visible(right, threshold)
@@ -9381,14 +9378,15 @@ function evaluateWebPostureFrame(
   const ankleCenterY = anklePoints.reduce((sum, point) => sum + point.y, 0) / anklePoints.length;
   const bodyHeight = Math.max(1, Math.abs(ankleCenterY - shoulderCenterY));
   const shoulderWidthRatio = leftShoulder && rightShoulder ? Math.abs(leftShoulder.x - rightShoulder.x) / bodyHeight : 0;
+  const shoulderFacingRatio = leftShoulder && rightShoulder ? (leftShoulder.x - rightShoulder.x) / bodyHeight : 0;
   const faceNames = ["nose", "left_eye", "right_eye", "left_ear", "right_ear"];
   const faceConfidence = faceNames.reduce((sum, name) => sum + (byName.get(name)?.score ?? 0), 0) / faceNames.length;
   const angleReady =
     view === "side"
       ? shoulderWidthRatio < 0.19
       : view === "front"
-        ? shoulderWidthRatio >= 0.18 && faceConfidence >= 0.3
-        : shoulderWidthRatio >= 0.18 && faceConfidence < 0.26;
+        ? shoulderFacingRatio >= 0.12 && faceConfidence >= 0.3
+        : true;
 
   const measurablePoints = keypoints.filter((point) => (point.score ?? 0) >= 0.35);
   const width = frameWidth || Math.max(1, ...measurablePoints.map((point) => point.x));
@@ -9745,7 +9743,18 @@ function mergePostureReportCopies(first: PostureReport, second: PostureReport): 
 
 function mergePracticeSnapshots(...collections: PracticeSnapshot[][]): PracticeSnapshot[] {
   const snapshots = new Map<string, PracticeSnapshot>();
-  collections.flat().forEach((snapshot) => snapshots.set(snapshot.id, snapshot));
+  collections.flat().forEach((snapshot) => {
+    const current = snapshots.get(snapshot.id);
+    if (!current) {
+      snapshots.set(snapshot.id, snapshot);
+      return;
+    }
+    snapshots.set(snapshot.id, {
+      ...current,
+      ...snapshot,
+      imageData: isCapturedPracticePhoto(snapshot.imageData) ? snapshot.imageData : current.imageData,
+    });
+  });
   return Array.from(snapshots.values())
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
     .slice(0, 24);
@@ -9774,10 +9783,7 @@ function persistPostureReportsToLocalStorage(reports: PostureReport[]) {
 function persistPracticeSnapshotsToLocalStorage(snapshots: PracticeSnapshot[]) {
   const lightweightSnapshots = snapshots.slice(0, 24).map((snapshot) => ({
     ...snapshot,
-    imageData: portableHistoryImage(
-      snapshot.imageData,
-      movements.find((movement) => movement.id === snapshot.movementId)?.image ?? "",
-    ),
+    imageData: portableHistoryImage(snapshot.imageData, ""),
   }));
   writeLightweightHistory("ritim-kapisi-practice-gallery", lightweightSnapshots);
 }
@@ -9785,6 +9791,10 @@ function persistPracticeSnapshotsToLocalStorage(snapshots: PracticeSnapshot[]) {
 function portableHistoryImage(value: unknown, fallback: string) {
   if (typeof value !== "string" || !value.trim()) return fallback;
   return /^(?:data:|blob:)/i.test(value) || value.length > 64_000 ? fallback : value;
+}
+
+function isCapturedPracticePhoto(value: unknown): value is string {
+  return typeof value === "string" && /^(?:data:image\/|blob:|https?:\/\/)/i.test(value.trim());
 }
 
 function writeLightweightHistory(key: string, value: unknown) {

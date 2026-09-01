@@ -22,6 +22,7 @@ export type HomeStreakSummary = {
   activeDays: boolean[];
   current: number;
   longest: number;
+  todayIndex: number;
 };
 
 export type HomeLevelSummary = {

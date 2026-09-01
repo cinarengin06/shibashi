@@ -472,13 +472,13 @@ function assessLandmarks(items: readonly Landmark[], view: MirrorView) {
 
   const required = ["left_shoulder", "right_shoulder", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"];
   if (required.some((name) => !visible.get(name))) return { ready: false, matched: false, score: 0, cue: view === "back" ? "Arkanı dön ve tam bedeninle kadrajda kal." : "Tam bedeninle kadraja gir.", problemJoint: undefined as string | undefined };
-  if (view === "front" && faceConfidence < 0.3) return { ready: true, matched: false, score: 60, cue: "Yüzün kameraya dönük olsun.", problemJoint: undefined as string | undefined };
-  if (view === "back" && faceConfidence >= 0.26) return { ready: true, matched: false, score: 60, cue: "Hâlâ yüzünü görüyorum. Arkanı tamamen kameraya dön.", problemJoint: undefined as string | undefined };
   const leftShoulder = visible.get("left_shoulder")!;
   const rightShoulder = visible.get("right_shoulder")!;
   const leftHip = visible.get("left_hip")!;
   const rightHip = visible.get("right_hip")!;
   const shoulderWidth = Math.max(0.001, Math.abs(leftShoulder.x - rightShoulder.x));
+  const shoulderFacing = leftShoulder.x - rightShoulder.x;
+  if (view === "front" && (faceConfidence < 0.3 || shoulderFacing < 0.06)) return { ready: true, matched: false, score: 60, cue: "Yüzün ve göğsün kameraya dönük olsun.", problemJoint: undefined as string | undefined };
   const shoulderDifference = Math.abs(leftShoulder.y - rightShoulder.y) / shoulderWidth;
   const hipDifference = Math.abs(leftHip.y - rightHip.y) / shoulderWidth;
   const center = (leftHip.x + rightHip.x) / 2;

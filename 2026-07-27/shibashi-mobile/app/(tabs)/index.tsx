@@ -27,7 +27,7 @@ import {
   fiveShenContent,
   fiveShenTraditionNote,
 } from "../../../../packages/five-shen-content";
-import { ShenId } from "../../types";
+import { PostureReport, PracticeSession, ShenId } from "../../types";
 import {
   ensureSystemNotifications,
   unreadNotificationCount,
@@ -142,6 +142,10 @@ export default function Today() {
   );
   const hasPracticedToday = todaySessions.length > 0;
   const earnedXp = sessions.reduce((total, item) => total + (item.xp ?? 0), 0);
+  const recentMovementPhotos = sessions
+    .filter((item): item is PracticeSession & { imageData: string } => typeof item.imageData === "string" && /^(?:data:image\/|file:|https?:\/\/)/i.test(item.imageData))
+    .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
+    .slice(0, 5);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useFocusEffect(
@@ -459,6 +463,34 @@ export default function Today() {
         />
       </View>
 
+      <View style={s.recentPhotosHead}>
+        <View>
+          <Text style={[s.kicker, { color: personality.light }]}>HAREKET ARŞİVİN</Text>
+          <Text style={s.sectionTitle}>Son hareketlerin</Text>
+        </View>
+        <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/journal")}>
+          <Text style={[s.recentPhotosLink, { color: personality.primary }]}>Galeriyi aç →</Text>
+        </Pressable>
+      </View>
+      {recentMovementPhotos.length ? (
+        <ScrollView contentContainerStyle={s.recentPhotos} horizontal showsHorizontalScrollIndicator={false}>
+          {recentMovementPhotos.map((item) => (
+            <Pressable accessibilityLabel={`${item.movementName ?? "Hareket"} fotoğrafını aç`} accessibilityRole="button" key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.recentPhotoCard, { borderColor: `${personality.primary}58` }]}>
+              <Image source={{ uri: item.imageData }} style={s.recentPhotoImage} />
+              <LinearGradient colors={["transparent", "rgba(4,9,7,.96)"]} style={s.recentPhotoShade}>
+                <Text numberOfLines={2} style={s.recentPhotoTitle}>{item.movementName ?? "Hareket"}</Text>
+                <Text style={[s.recentPhotoScore, { color: personality.primary }]}>%{Math.round(item.postureScore ?? item.flowScore ?? 0)}</Text>
+              </LinearGradient>
+            </Pressable>
+          ))}
+        </ScrollView>
+      ) : (
+        <View style={[s.recentPhotosEmpty, { borderColor: `${personality.primary}42` }]}>
+          <Ionicons color={personality.primary} name="camera-outline" size={25} />
+          <View style={{ flex: 1 }}><Text style={s.recentPhotosEmptyTitle}>Henüz hareket fotoğrafın yok</Text><Text style={s.recentPhotosEmptyText}>Kamerayla tamamladığın hareketler burada birikir.</Text></View>
+        </View>
+      )}
+
       <View style={s.portalsHead}>
         <Text style={[s.kicker, { color: personality.light }]}>
           KEŞİF ALANLARI
@@ -466,17 +498,10 @@ export default function Today() {
         <Text style={s.sectionTitle}>Bugün nereye bakmak istersin?</Text>
       </View>
       <View style={s.portalGrid}>
-        <FeaturePortal
+        <HomePostureCard
           accent={personality.primary}
           image={homePortalImages.posture}
-          label="BEDEN AYNASI"
-          note={
-            postureReports.length
-              ? `Son ölçüm ${postureReports[0].score}`
-              : "Duruş çizgini ölç"
-          }
-          onPress={() => router.push("/posture")}
-          title="Postür Analizi"
+          reports={postureReports}
         />
         <FeaturePortal
           accent={personality.primary}
@@ -512,6 +537,28 @@ export default function Today() {
 
       <Text style={s.closing}>“Yol, tek bir sakin adımla görünür olur.”</Text>
     </Screen>
+  );
+}
+
+function HomePostureCard({ accent, image, reports }: { accent: string; image: ImageSourcePropType; reports: PostureReport[] }) {
+  const recentReports = reports.slice(0, 3);
+  const openReport = (reportId: string) => router.push({ pathname: "/posture", params: { reportId } });
+  return (
+    <View style={[s.postureCard, { borderColor: `${accent}48` }]}>
+      <Image resizeMode="contain" source={image} style={s.postureModel} />
+      <LinearGradient colors={["rgba(8,14,11,.98)", "rgba(8,14,11,.88)", "rgba(8,14,11,.18)"]} locations={[0, .62, 1]} style={StyleSheet.absoluteFill} />
+      <View style={s.postureCardContent}>
+        <Text style={[s.portalLabel, { color: accent }]}>BEDEN AYNASI</Text>
+        <Text style={s.postureCardTitle}>Postür Analizi</Text>
+        {recentReports.length ? <View style={s.postureHistory}>
+          {recentReports.map((report) => <Pressable accessibilityLabel={`${report.score} puanlı postür analizini aç`} key={report.id} onPress={() => openReport(report.id)} style={s.postureHistoryRow}>
+            <View style={[s.postureHistoryScore, { borderColor: `${accent}88` }]}><Text style={[s.postureHistoryScoreText, { color: accent }]}>{report.score}</Text></View>
+            <View style={s.postureHistoryCopy}><Text style={s.postureHistoryDate}>{new Date(report.date).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" })}</Text><Text numberOfLines={1} style={s.postureHistorySummary}>{report.summary}</Text><Text style={[s.postureHistoryLink, { color: accent }]}>İlgili analize git →</Text></View>
+          </Pressable>)}
+        </View> : <Text style={s.postureEmpty}>Henüz kayıt yok. İlk beden çizgini ölç.</Text>}
+        <Pressable onPress={() => router.push("/posture-session")} style={[s.newPostureButton, { borderColor: `${accent}88` }]}><Text style={[s.newPostureButtonText, { color: accent }]}>Yeni analiz</Text><Ionicons color={accent} name="scan-outline" size={18} /></Pressable>
+      </View>
+    </View>
   );
 }
 
@@ -878,6 +925,17 @@ const s = StyleSheet.create({
     textAlign: "center",
   },
   realProgress: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  recentPhotosHead:{alignItems:"flex-end",flexDirection:"row",justifyContent:"space-between",marginTop:4},
+  recentPhotosLink:{fontFamily:fonts.sansBold,fontSize:12,letterSpacing:.4,marginBottom:12,textTransform:"uppercase"},
+  recentPhotos:{gap:10,paddingRight:18},
+  recentPhotoCard:{backgroundColor:colors.surface,borderRadius:19,borderWidth:1,height:210,overflow:"hidden",width:148},
+  recentPhotoImage:{height:"100%",width:"100%"},
+  recentPhotoShade:{bottom:0,left:0,padding:12,paddingTop:42,position:"absolute",right:0},
+  recentPhotoTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:18,lineHeight:20},
+  recentPhotoScore:{fontFamily:fonts.sansBold,fontSize:12,marginTop:5},
+  recentPhotosEmpty:{alignItems:"center",backgroundColor:"rgba(4,11,8,.68)",borderRadius:18,borderWidth:1,flexDirection:"row",gap:12,minHeight:82,padding:14},
+  recentPhotosEmptyTitle:{color:colors.cream,fontFamily:fonts.sansBold,fontSize:14},
+  recentPhotosEmptyText:{color:colors.muted,fontFamily:fonts.sans,fontSize:12,lineHeight:17,marginTop:3},
   metricCard: {
     backgroundColor: "rgba(4,11,8,.76)",
     borderRadius: 17,
@@ -916,6 +974,21 @@ const s = StyleSheet.create({
     marginBottom: 8,
   },
   portalGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  postureCard:{backgroundColor:colors.surface,borderRadius:22,borderWidth:1,minHeight:336,overflow:'hidden',position:'relative',width:'100%'},
+  postureModel:{bottom:-8,height:'92%',opacity:.78,position:'absolute',right:-15,width:'47%'},
+  postureCardContent:{flex:1,padding:16,width:'72%'},
+  postureCardTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:27,lineHeight:31,marginBottom:10,marginTop:3},
+  postureHistory:{gap:6},
+  postureHistoryRow:{alignItems:'center',backgroundColor:'rgba(4,10,7,.66)',borderColor:colors.line,borderRadius:12,borderWidth:1,flexDirection:'row',gap:9,minHeight:61,padding:7},
+  postureHistoryScore:{alignItems:'center',borderRadius:19,borderWidth:1,height:38,justifyContent:'center',width:38},
+  postureHistoryScoreText:{fontFamily:fonts.sansBold,fontSize:14},
+  postureHistoryCopy:{flex:1,minWidth:0},
+  postureHistoryDate:{color:colors.cream,fontFamily:fonts.sansBold,fontSize:12},
+  postureHistorySummary:{color:colors.muted,fontFamily:fonts.sansMedium,fontSize:11,marginTop:1},
+  postureHistoryLink:{fontFamily:fonts.sansBold,fontSize:10,marginTop:2},
+  postureEmpty:{color:colors.muted,fontFamily:fonts.sansMedium,fontSize:14,lineHeight:21,marginVertical:12},
+  newPostureButton:{alignItems:'center',alignSelf:'flex-start',borderRadius:15,borderWidth:1,flexDirection:'row',gap:7,marginTop:'auto',minHeight:43,paddingHorizontal:14},
+  newPostureButtonText:{fontFamily:fonts.sansBold,fontSize:13,letterSpacing:.4,textTransform:'uppercase'},
   portal: {
     backgroundColor: colors.surface,
     borderRadius: 22,

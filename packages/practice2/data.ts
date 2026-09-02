@@ -11,7 +11,7 @@ export const staticReferencePoses:Readonly<Record<string,readonly Practice2PoseP
  'qi-shi':points([['nose',.5,.12],['left_shoulder',.42,.29],['right_shoulder',.58,.29],['left_elbow',.40,.43],['right_elbow',.60,.43],['left_wrist',.46,.53],['right_wrist',.54,.53],['left_hip',.45,.55],['right_hip',.55,.55],['left_knee',.44,.75],['right_knee',.56,.75],['left_ankle',.43,.93],['right_ankle',.57,.93]]),
  'push-forward':bowStanceTarget,
  'raise-and-open':points([['nose',.5,.12],['left_shoulder',.42,.29],['right_shoulder',.58,.29],['left_elbow',.30,.30],['right_elbow',.70,.30],['left_wrist',.18,.25],['right_wrist',.82,.25],['left_hip',.45,.55],['right_hip',.55,.55],['left_knee',.43,.75],['right_knee',.57,.75],['left_ankle',.39,.93],['right_ankle',.61,.93]]),
- 'bend-and-pull':points([['nose',.53,.13],['left_shoulder',.43,.29],['right_shoulder',.63,.30],['left_elbow',.38,.39],['right_elbow',.68,.38],['left_wrist',.50,.45],['right_wrist',.78,.34],['left_hip',.45,.55],['right_hip',.60,.56],['left_knee',.34,.73],['right_knee',.68,.70],['left_ankle',.23,.92],['right_ankle',.80,.92]]),
+ 'bend-and-pull':points([['nose',.43,.30],['left_shoulder',.55,.36],['right_shoulder',.34,.39],['left_elbow',.70,.39],['right_elbow',.25,.45],['left_wrist',.89,.33],['right_wrist',.37,.44],['left_hip',.58,.54],['right_hip',.37,.54],['left_knee',.72,.62],['right_knee',.18,.61],['left_ankle',.85,.74],['right_ankle',.02,.73]]),
  'push-clouds':points([['nose',.52,.12],['left_shoulder',.42,.29],['right_shoulder',.62,.29],['left_elbow',.37,.37],['right_elbow',.70,.36],['left_wrist',.49,.43],['right_wrist',.80,.33],['left_hip',.45,.55],['right_hip',.58,.55],['left_knee',.34,.73],['right_knee',.67,.72],['left_ankle',.23,.92],['right_ankle',.79,.92]]),
 };
 

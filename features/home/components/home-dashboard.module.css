@@ -149,13 +149,28 @@
 .flowCards small { align-self: flex-start; background: rgba(3, 8, 5, .82); border-radius: 4px; font-size: 12px; margin: -22px 6px 8px; padding: 3px 5px; position: relative; }
 .flowCards strong { font-size: 14px; line-height: 1.25; min-height: 35px; padding: 0 7px; }
 .flowCards em { color: var(--gold); font-size: 12px; font-style: normal; margin-top: 4px; padding: 0 7px; }
+.practicePhotoEmpty { align-items: center; color: var(--muted); display: flex; flex-direction: column; height: 194px; justify-content: center; text-align: center; }
+.practicePhotoEmpty span { border: 1px solid color-mix(in srgb, var(--gold) 42%, transparent); border-radius: 50%; color: var(--gold); display: grid; font-size: 25px; height: 48px; place-items: center; width: 48px; }
+.practicePhotoEmpty strong { color: var(--text); font-family: var(--font-display), Georgia, serif; font-size: 17px; font-weight: 400; margin-top: 10px; }
+.practicePhotoEmpty p { font-size: 12px; margin: 5px 0 0; }
 
-.postureCard { display: grid; grid-template-columns: 1fr 1.25fr; padding: 16px; position: relative; }
-.postureCard > div:first-child { position: relative; z-index: 2; }
+.postureCard { display: grid; grid-template-columns: 1.25fr 1fr; min-height: 310px; padding: 16px; position: relative; }
+.postureContent { display: flex; flex-direction: column; min-width: 0; position: relative; z-index: 2; }
 .postureCard p { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 12px 0 18px; }
-.postureCard button { background: transparent; border: 1px solid color-mix(in srgb, var(--gold) 46%, transparent); border-radius: var(--action-radius); color: var(--gold); cursor: pointer; font-size: 14px; letter-spacing: .06em; min-height: 42px; padding: 0 13px; text-transform: uppercase; transition: border-radius .65s ease; }
+.postureCard button { cursor: pointer; }
+.postureHistory { display: grid; gap: 5px; margin: 10px 0 12px; }
+.postureHistory > button { align-items: center; background: rgba(5, 12, 8, .64); border: 1px solid rgba(255, 255, 255, .07); border-radius: 9px; color: var(--text); display: grid; gap: 8px; grid-template-columns: 34px minmax(0, 1fr); min-height: 54px; padding: 7px 9px; text-align: left; transition: background .25s ease, border-color .25s ease, transform .25s ease; }
+.postureHistory > button:hover { background: color-mix(in srgb, var(--gold) 9%, rgba(5, 12, 8, .75)); border-color: color-mix(in srgb, var(--gold) 38%, transparent); transform: translateX(2px); }
+.postureHistory > button > strong { align-items: center; border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); border-radius: 50%; color: var(--gold); display: flex; font-family: Manrope, sans-serif; font-size: 13px; height: 32px; justify-content: center; width: 32px; }
+.postureHistory span { display: grid; min-width: 0; }
+.postureHistory span b { font-size: 12px; font-weight: 600; }
+.postureHistory span small { margin: 2px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.postureHistory em { color: var(--gold); font-size: 10px; font-style: normal; grid-column: 2; letter-spacing: .04em; margin-top: -5px; }
+.postureHistory em i { font-style: normal; }
+.postureCard .newPostureButton { align-self: flex-start; background: transparent; border: 1px solid color-mix(in srgb, var(--gold) 46%, transparent); border-radius: var(--action-radius); color: var(--gold); font-size: 13px; letter-spacing: .06em; margin-top: auto; min-height: 40px; padding: 0 13px; text-transform: uppercase; transition: border-radius .65s ease, background .25s ease; }
+.postureCard .newPostureButton:hover { background: color-mix(in srgb, var(--gold) 10%, transparent); }
 .postureCard small { color: var(--muted); display: block; font-size: 12px; margin-top: 10px; }
-.postureModels { align-items: end; display: flex; inset: 26px 0 4px 43%; overflow: hidden; position: absolute; }
+.postureModels { align-items: end; display: flex; inset: 26px 0 4px 52%; overflow: hidden; position: absolute; }
 .postureModels img { filter: sepia(.22) hue-rotate(65deg); object-fit: contain; object-position: bottom; opacity: .72; position: relative !important; width: 46% !important; }
 .postureModels img:nth-child(1) { transform: scaleX(-1) rotateY(58deg) scale(.87); transform-origin: bottom; }
 .postureModels img:nth-child(2) { margin-left: -24%; z-index: 2; }

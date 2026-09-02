@@ -137,23 +137,37 @@ export function NewPostureScreen({
 
   const speakCalmly = useCallback((text: string, force = false) => {
     if (!voiceEnabled || typeof window === "undefined" || !text) return;
+    const synthesis = window.speechSynthesis;
     const now = Date.now();
-    if (!force && (now - lastVoiceAtRef.current < 2000 || window.speechSynthesis.speaking)) return;
+    if (!force && (now - lastVoiceAtRef.current < 2000 || synthesis.speaking)) return;
     if (voiceTimerRef.current) window.clearTimeout(voiceTimerRef.current);
-    const speakWhenQuiet = () => {
-      if (window.speechSynthesis.speaking) {
-        voiceTimerRef.current = window.setTimeout(speakWhenQuiet, 260);
+    const speakWhenQuiet = (attempt = 0) => {
+      if (synthesis.speaking && !force && attempt < 12) {
+        voiceTimerRef.current = window.setTimeout(() => speakWhenQuiet(attempt + 1), 260);
         return;
       }
+      if (force) synthesis.cancel();
+      synthesis.resume();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "tr-TR";
       utterance.rate = 0.72;
       utterance.pitch = 0.92;
-      window.speechSynthesis.speak(utterance);
+      const voices = synthesis.getVoices();
+      utterance.voice = voices.find((voice) => voice.lang.toLocaleLowerCase("tr-TR").startsWith("tr")) ?? null;
+      synthesis.speak(utterance);
       lastVoiceAtRef.current = Date.now();
     };
-    voiceTimerRef.current = window.setTimeout(speakWhenQuiet, force ? 240 : 1100);
+    if (force) speakWhenQuiet();
+    else voiceTimerRef.current = window.setTimeout(() => speakWhenQuiet(), 900);
   }, [voiceEnabled]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.getVoices();
+    const loadVoices = () => window.speechSynthesis.getVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
+  }, []);
 
   useEffect(() => {
     if (voiceEnabled) return;
@@ -192,6 +206,8 @@ export function NewPostureScreen({
   }, [assessment.cue, cameraState, captureState, speakCalmly, stage, viewReady]);
 
   const startCamera = useCallback(async () => {
+    speakCalmly("Beden aynası hazırlanıyor. Önce kameraya dön ve tam bedenini kadraja al.", true);
+    setStage("live");
     const sessionId = detectionSessionRef.current + 1;
     detectionSessionRef.current = sessionId;
     setCameraState("requesting");
@@ -260,12 +276,14 @@ export function NewPostureScreen({
           streamRef.current?.getTracks().forEach((track) => track.stop());
           streamRef.current = null;
           setCameraState("error");
+          setStage("intro");
         }
       };
       animationRef.current = window.requestAnimationFrame(detect);
     } catch (error) {
       if (sessionId !== detectionSessionRef.current || isMediaPipeAbort(error)) return;
       setCameraState(error instanceof DOMException && (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") ? "denied" : "error");
+      setStage("intro");
     }
   }, [speakCalmly]);
 
@@ -400,6 +418,33 @@ export function NewPostureScreen({
     setHoldProgress(0);
   }, []);
 
+  if (stage === "intro") {
+    return (
+      <section className="screen posture-flow-screen posture-landing-screen">
+        <div className="posture-flow-shell posture-landing-shell">
+          {onNavigateToPractice ? <button className="posture-back-button" onClick={onNavigateToPractice} type="button" aria-label="New Posture ekranından çık">‹</button> : null}
+          <div className="posture-landing-content">
+            <span className="eyebrow">Beden Hattın</span>
+            <h1>Postürünün bugünkü izini çıkar.</h1>
+            <p>Ön, yan ve arka görünümünü üç saniyelik sakin duruşlarla ölçelim; zaman içindeki değişimi birlikte görelim.</p>
+            <div className="posture-landing-actions">
+              <button className="posture-landing-primary" disabled={cameraState === "requesting"} onClick={() => void startCamera()} type="button">
+                <span>{cameraState === "requesting" ? "Kamera hazırlanıyor…" : "Postür Analizini Başlat"}</span>
+                <i aria-hidden="true">→</i>
+              </button>
+              {cameraState === "denied" ? <div className={styles.landingError}>Kamera izni verilmedi. Tarayıcı ayarlarından kamera iznini açıp yeniden dene.</div> : null}
+              {cameraState === "error" ? <div className={styles.landingError}>Kamera başlatılamadı. Başka bir kamera veya tarayıcıyla yeniden dene.</div> : null}
+            </div>
+          </div>
+          <div className="posture-landing-figure" aria-hidden="true">
+            <NewPostureLandingPreview />
+            <span className="posture-landing-figure-label">Nötr duruş · üç açıdan izlenecek</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (stage === "result") {
     return (
       <section className={styles.page}>
@@ -425,7 +470,7 @@ export function NewPostureScreen({
           <video className={styles.video} muted playsInline ref={videoRef} />
           <canvas className={styles.canvas} ref={canvasRef} />
           <div className={styles.cameraShade} />
-          {cameraState !== "ready" ? <div className={styles.cameraWelcome}><span aria-hidden="true">◎</span><h2>Üç sakin açı. Tek, anlaşılır sonuç.</h2><p>Kamera açıldığında önden, yandan ve arkadan görünümünü sırayla kaydedeceğiz.</p><button className={styles.primary} disabled={cameraState === "requesting"} onClick={startCamera} type="button">{cameraState === "requesting" ? "Kamera hazırlanıyor…" : "Beden aynasını başlat"}</button>{cameraState === "denied" ? <small>Kamera izni verilmedi. Tarayıcı ayarlarından izin verebilirsin.</small> : null}{cameraState === "error" ? <small>Kamera başlatılamadı. Başka bir kamera veya tarayıcıyla tekrar dene.</small> : null}</div> : null}
+          {cameraState !== "ready" ? <div className={styles.cameraWelcome}><span aria-hidden="true">◎</span><h2>Kamera hazırlanıyor.</h2><p>Birazdan önden görünümle başlayacağız.</p></div> : null}
           {cameraState === "ready" ? <>
             <div className={styles.viewBadge}>{viewIndex + 1} / 3 <strong>{view.label.toLocaleUpperCase("tr-TR")}</strong></div>
             <div className={styles.score}><span>TEMELİN</span><strong>{displayScore ?? "—"}</strong></div>
@@ -440,6 +485,19 @@ export function NewPostureScreen({
       </div>
     </section>
   );
+}
+
+function NewPostureLandingPreview() {
+  const joints = [[110,40,"good"],[82,88,"warn"],[138,88,"warn"],[91,158,"good"],[129,158,"good"],[94,218,"good"],[126,218,"good"],[94,272,"good"],[126,272,"good"]] as const;
+  return <div className="posture-premium-preview" role="img" aria-label="Arkadan görünen yarı saydam postür modeli">
+    <img src="/images/posture/posture-back-translucent.png" alt="" />
+    <svg aria-hidden="true" viewBox="0 0 220 310">
+      <line className="posture-preview-axis" x1="110" x2="110" y1="30" y2="280" />
+      <line className="posture-preview-measure posture-preview-shoulders" x1="72" x2="148" y1="88" y2="88" />
+      <line className="posture-preview-measure posture-preview-hips" x1="78" x2="142" y1="158" y2="158" />
+      {joints.map(([cx, cy, tone], index) => <circle className={`posture-preview-joint posture-preview-${tone}`} cx={cx} cy={cy} key={index} r={tone === "warn" ? 5 : 4.2} />)}
+    </svg>
+  </div>;
 }
 
 function assessLandmarks(items: readonly Landmark[], view: MirrorView) {

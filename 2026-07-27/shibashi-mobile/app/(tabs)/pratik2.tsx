@@ -124,6 +124,8 @@ export default function Practice2() {
     modeRef = useRef(mode),
     lastPhaseRef = useRef(""),
     matchedAtRef = useRef(0),
+    lastMatchedAtRef = useRef(0),
+    dynamicAdvanceAllowedRef = useRef(false),
     capturedRef = useRef(false),
     staticAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedPractice = staticPracticeDefinitions[selectedStatic],
@@ -154,15 +156,14 @@ export default function Practice2() {
           setElapsedMs((value) =>
             mode === "static"
               ? value + 1000
-              : Math.min(flowDurationMs, value + 80),
+              : dynamicAdvanceAllowedRef.current
+                ? Math.min(flowDurationMs, value + 80)
+                : value,
           ),
         tick,
       );
     return () => clearInterval(timer);
   }, [flowDurationMs, mode, running]);
-  useEffect(() => {
-    if (mode === "dynamic" && elapsedMs >= flowDurationMs) setRunning(false);
-  }, [elapsedMs, flowDurationMs, mode]);
   useEffect(() => {
     if (
       mode !== "dynamic" ||
@@ -209,8 +210,15 @@ export default function Practice2() {
           movementName = isStatic
             ? selectedPractice.title
             : `${flow.title} · Akış`;
-        if (score >= CAPTURE_THRESHOLD && !capturedRef.current) {
-          const now = Date.now();
+        const now = Date.now();
+        if (score >= CAPTURE_THRESHOLD) lastMatchedAtRef.current = now;
+        const matchIsStable =
+          score >= CAPTURE_THRESHOLD ||
+          (matchedAtRef.current > 0 && now - lastMatchedAtRef.current < 1100);
+        if (!isStatic) dynamicAdvanceAllowedRef.current = matchIsStable;
+        const readyToCapture =
+          isStatic || elapsedRef.current >= flowDurationMs - 120;
+        if (matchIsStable && readyToCapture && !capturedRef.current) {
           if (!matchedAtRef.current) matchedAtRef.current = now;
           const held = now - matchedAtRef.current;
           setCaptureState("hold");
@@ -299,7 +307,7 @@ export default function Practice2() {
             }
           }
         } else if (!capturedRef.current) {
-          matchedAtRef.current = 0;
+          if (!matchIsStable || readyToCapture) matchedAtRef.current = 0;
           setCaptureState("matching");
           setHoldProgress(0);
           setFeedback(
@@ -337,6 +345,8 @@ export default function Practice2() {
     }
     historyRef.current = [];
     matchedAtRef.current = 0;
+    lastMatchedAtRef.current = 0;
+    dynamicAdvanceAllowedRef.current = false;
     capturedRef.current = false;
     setCaptureState("matching");
     setHoldProgress(0);
@@ -361,6 +371,8 @@ export default function Practice2() {
     setCaptureState("idle");
     setHoldProgress(0);
     matchedAtRef.current = 0;
+    lastMatchedAtRef.current = 0;
+    dynamicAdvanceAllowedRef.current = false;
     capturedRef.current = false;
     historyRef.current = [];
   };
@@ -381,6 +393,8 @@ export default function Practice2() {
     setCaptureState("idle");
     setHoldProgress(0);
     matchedAtRef.current = 0;
+    lastMatchedAtRef.current = 0;
+    dynamicAdvanceAllowedRef.current = false;
     capturedRef.current = false;
     historyRef.current = [];
   };

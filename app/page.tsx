@@ -1193,6 +1193,7 @@ export default function RitimKapisiOS() {
   }, []);
   const [introVideoVisible, setIntroVideoVisible] = useState(WEB_INTRO_VIDEO_ENABLED);
   const [selectedPractice2FlowId, setSelectedPractice2FlowId] = useState<string>();
+  const [selectedHomePostureReportId, setSelectedHomePostureReportId] = useState<string>();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [experienceDay, setExperienceDay] = useState(1);
   const [posturePreviewLive, setPosturePreviewLive] = useState(false);
@@ -1781,11 +1782,15 @@ export default function RitimKapisiOS() {
               setSelectedPractice2FlowId(flowId);
               setActiveTab("practice2");
             }}
-            onPosture={() => setActiveTab("posture")}
+            onPosture={(reportId) => {
+              setSelectedHomePostureReportId(reportId);
+              setActiveTab("posture");
+            }}
             onReset={() => void resetLocalExperience()}
             onSelectShen={selectShen}
             practiceGallery={practiceGallery}
             postureCount={postureReports.length}
+            postureReports={postureReports}
             selectedShen={selectedShen}
             shenActivities={shenActivities}
             userName={userName}
@@ -1835,6 +1840,7 @@ export default function RitimKapisiOS() {
             onSetTrainerVisibility={setPostureReportTrainerVisibility}
             onStopMusic={stopShenMusic}
             postureReports={postureReports}
+            initialReportId={selectedHomePostureReportId}
             previewLive={posturePreviewLive}
             selectedShen={selectedShen}
           />
@@ -2195,6 +2201,7 @@ function DojoHomeScreen({
   onSelectShen,
   practiceGallery,
   postureCount,
+  postureReports,
   selectedShen,
   shenActivities,
   userName,
@@ -2203,11 +2210,12 @@ function DojoHomeScreen({
   onJournal: () => void;
   onPractice: () => void;
   onPractice2: (flowId?: string) => void;
-  onPosture: () => void;
+  onPosture: (reportId?: string) => void;
   onReset: () => void;
   onSelectShen: (shenId: ShenId) => void;
   practiceGallery: PracticeSnapshot[];
   postureCount: number;
+  postureReports: PostureReport[];
   selectedShen: (typeof fiveShen)[number];
   shenActivities: ShenActivity[];
   userName: string;
@@ -2240,6 +2248,11 @@ function DojoHomeScreen({
     };
   });
   const recommendedFlow = flowCards[selectedShen.mapStage % flowCards.length] ?? flowCards[0];
+  const practicePhotos = practiceGallery
+    .filter((snapshot) => isCapturedPracticePhoto(snapshot.imageData))
+    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+    .slice(0, 5)
+    .map((snapshot) => ({ date: snapshot.createdAt, id: snapshot.id, image: snapshot.imageData, movementName: snapshot.movementName, score: snapshot.score }));
   const experienceIntoLevel = progress.experience % 240;
 
   return <HomeDashboard
@@ -2254,6 +2267,8 @@ function DojoHomeScreen({
     onReset={onReset}
     onSelectShen={onSelectShen}
     postureCount={postureCount}
+    postureReports={postureReports.map((report) => ({ date: report.date, id: report.id, score: report.score, summary: report.summary }))}
+    practicePhotos={practicePhotos}
     recommendedFlow={recommendedFlow}
     shen={{ actionLabel: shenTodayCopy[selectedShen.id].action, color: selectedShen.color, description: selectedShen.dailyPrompt, element: selectedShen.element.split("•")[0]?.trim() ?? "", heroBody: shenTodayCopy[selectedShen.id].body, heroTitle: shenTodayCopy[selectedShen.id].title, icon: `/images/five-shen-icons/${selectedShen.id}.png`, id: selectedShen.id, motto: shenTodayCopy[selectedShen.id].motto, name: selectedShen.name, organ: selectedShen.organ, period: "Bugünün odağı", shortLabel: shenTodayCopy[selectedShen.id].shortLabel, symbol: selectedShen.symbol, wallpaper: selectedShen.image }}
     shenOptions={fiveShen.map((shen) => ({ actionLabel: shenTodayCopy[shen.id].action, color: shen.color, description: shen.dailyPrompt, element: shen.element.split("•")[0]?.trim() ?? "", heroBody: shenTodayCopy[shen.id].body, heroTitle: shenTodayCopy[shen.id].title, icon: `/images/five-shen-icons/${shen.id}.png`, id: shen.id, motto: shenTodayCopy[shen.id].motto, name: shen.name, organ: shen.organ, period: shen.dailyName, shortLabel: shenTodayCopy[shen.id].shortLabel, symbol: shen.symbol, wallpaper: shen.image }))}
@@ -3489,6 +3504,7 @@ function SevenDayPathPanel({
 }
 
 function PostureScreen({
+  initialReportId,
   latestPostureReport,
   onDeletePostureReport,
   onPostureReportCaptured,
@@ -3498,6 +3514,7 @@ function PostureScreen({
   previewLive = false,
   selectedShen,
 }: {
+  initialReportId?: string;
   latestPostureReport?: PostureReport;
   onDeletePostureReport: (reportId: string) => void;
   onPostureReportCaptured: (report: PostureReport) => void;
@@ -3543,6 +3560,17 @@ function PostureScreen({
   const [capturedView, setCapturedView] = useState<PostureView | null>(null);
   const [postureVoiceEnabled, setPostureVoiceEnabled] = useState(true);
   const [postureZoom, setPostureZoom] = useState<{ min: number; max: number; step: number; value: number } | null>(null);
+
+  useEffect(() => {
+    if (!initialReportId) return;
+    const report = postureReports.find((item) => item.id === initialReportId);
+    if (!report) return;
+    setPostureCaptures(report.captures);
+    setPostureResult(report);
+    setPostureView("front");
+    setViewingSavedReport(true);
+    setPostureStep("result");
+  }, [initialReportId, postureReports]);
   const captureTransitionRef = useRef<number | null>(null);
   postureStepRef.current = postureStep;
   const activeScanView = postureStep === "front" || postureStep === "side" || postureStep === "back" ? postureStep : postureView;

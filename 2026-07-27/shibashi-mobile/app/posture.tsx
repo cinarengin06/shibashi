@@ -1,6 +1,6 @@
 import {Ionicons} from '@expo/vector-icons';
-import {router} from 'expo-router';
-import {useState} from 'react';
+import {router,useLocalSearchParams} from 'expo-router';
+import {useEffect,useState} from 'react';
 import {Image,Pressable,StyleSheet,Text,View} from 'react-native';
 import Svg,{Circle,Line} from 'react-native-svg';
 import {Card,Eyebrow,PrimaryButton,ProgressBar,Screen,Section,Title} from '../components/ui';
@@ -14,8 +14,10 @@ const viewLabels:Record<PostureView,string>={front:'Ön',side:'Yan',back:'Arka'}
 
 export default function Posture(){
  const{profile,postureReports}=useApp();
+ const{reportId}=useLocalSearchParams<{reportId?:string}>();
  const shen=getShen(profile.selectedShenId);
  const[openedReport,setOpenedReport]=useState<PostureReport|null>(null);
+ useEffect(()=>{if(!reportId)return;const report=postureReports.find(item=>item.id===reportId);if(report)setOpenedReport(report)},[postureReports,reportId]);
 
  if(openedReport)return <ReportDetail report={openedReport} shen={shen} onBack={()=>setOpenedReport(null)}/>;
 

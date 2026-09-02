@@ -6,6 +6,8 @@ import type {
   HomeEnergySummary,
   HomeFlowSummary,
   HomeLevelSummary,
+  HomePracticePhoto,
+  HomePostureSummary,
   HomeShenId,
   HomeShenSummary,
   HomeStreakSummary,
@@ -21,10 +23,12 @@ type HomeDashboardProps = {
   onFlowSelect: (flowId: string) => void;
   onHistory: () => void;
   onPractice: () => void;
-  onPosture: () => void;
+  onPosture: (reportId?: string) => void;
   onReset: () => void;
   onSelectShen: (shenId: HomeShenId) => void;
   postureCount: number;
+  postureReports: HomePostureSummary[];
+  practicePhotos: HomePracticePhoto[];
   recommendedFlow: HomeFlowSummary;
   shen: HomeShenSummary;
   shenOptions: HomeShenSummary[];
@@ -45,8 +49,8 @@ export function HomeDashboard(props: HomeDashboardProps) {
       <HomeStatsRow energy={props.energy} level={props.level} streak={props.streak} week={props.week} />
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
         <TodayPracticeCard flow={props.recommendedFlow} onFlowSelect={props.onFlowSelect} />
-        <ShortFlowsRow flows={props.flows} onFlowSelect={props.onFlowSelect} onFlows={props.onFlows} />
-        <PostureAnalysisCard count={props.postureCount} onPosture={props.onPosture} />
+        <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
+        <PostureAnalysisCard onPosture={props.onPosture} reports={props.postureReports} />
       </section>
       <footer className={styles.footer}>
         <span>© 2026 Shibashi EFE</span>
@@ -184,19 +188,30 @@ function TodayPracticeCard({ flow, onFlowSelect }: { flow: HomeFlowSummary; onFl
   );
 }
 
-function ShortFlowsRow({ flows, onFlowSelect, onFlows }: { flows: HomeFlowSummary[]; onFlowSelect: (flowId: string) => void; onFlows: () => void }) {
+function RecentPracticePhotos({ onHistory, photos }: { onHistory: () => void; photos: HomePracticePhoto[] }) {
   return (
     <section className={styles.flowsPanel}>
-      <header><h2>Kısa Akışlar</h2><button onClick={onFlows} type="button">Tümünü gör <span aria-hidden="true">→</span></button></header>
-      <div className={styles.flowCards}>{flows.slice(0, 5).map((flow) => <button key={flow.id} onClick={() => onFlowSelect(flow.id)} type="button"><span className={styles.flowImage}><Image alt={flow.title} fill sizes="180px" src={flow.image} /></span><small>{flow.durationMinutes} dk</small><strong>{flow.title}</strong><em>{flow.level} · {flow.focus}</em></button>)}</div>
+      <header><h2>Son Hareketlerin</h2><button onClick={onHistory} type="button">Galeriyi aç <span aria-hidden="true">→</span></button></header>
+      {photos.length ? <div className={styles.flowCards}>{photos.slice(0, 5).map((photo) => <button aria-label={`${photo.movementName} hareket fotoğrafını aç`} key={photo.id} onClick={onHistory} type="button"><span className={styles.flowImage}><Image alt={`${photo.movementName} sırasında çekilen fotoğrafın`} fill sizes="180px" src={photo.image} unoptimized /></span><small>%{photo.score}</small><strong>{photo.movementName}</strong><em>{new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short" }).format(new Date(photo.date))}</em></button>)}</div> : <div className={styles.practicePhotoEmpty}><span aria-hidden="true">◎</span><strong>Henüz hareket fotoğrafın yok</strong><p>Kamerayla tamamladığın hareketler burada birikir.</p></div>}
     </section>
   );
 }
 
-function PostureAnalysisCard({ count, onPosture }: { count: number; onPosture: () => void }) {
+function PostureAnalysisCard({ onPosture, reports }: { onPosture: (reportId?: string) => void; reports: HomePostureSummary[] }) {
+  const recentReports = reports.slice(0, 3);
   return (
     <article className={styles.postureCard}>
-      <div><h2>Postür Analizi</h2><p>Duruşunu analiz et, farkı gör,<br />gelişimini takip et.</p><button onClick={onPosture} type="button">Analize başla</button>{count > 0 ? <small>{count} kayıtlı analiz</small> : null}</div>
+      <div className={styles.postureContent}>
+        <h2>Postür Analizi</h2>
+        {recentReports.length ? <div className={styles.postureHistory}>
+          {recentReports.map((report) => <button aria-label={`${report.score} puanlı postür analizini aç`} key={report.id} onClick={() => onPosture(report.id)} type="button">
+            <strong>{report.score}</strong>
+            <span><b>{new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric" }).format(new Date(report.date))}</b><small>{report.summary}</small></span>
+            <em>İlgili analize git <i aria-hidden="true">→</i></em>
+          </button>)}
+        </div> : <p>Duruşunu analiz et, farkı gör,<br />gelişimini takip et.</p>}
+        <button className={styles.newPostureButton} onClick={() => onPosture()} type="button">Yeni analiz</button>
+      </div>
       <div className={styles.postureModels} aria-hidden="true"><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /></div>
     </article>
   );

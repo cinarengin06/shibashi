@@ -12,6 +12,15 @@
   margin: 0 auto 24px;
   max-width: 820px;
 }
+.landingError {
+  background: rgba(123, 50, 43, .16);
+  border: 1px solid rgba(217, 149, 134, .34);
+  border-radius: 12px;
+  color: #d99586;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 12px 14px;
+}
 .titleBlock span {
   color: #cda65d;
   font-size: 12px;

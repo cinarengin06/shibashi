@@ -54,3 +54,18 @@ export type HomeFlowSummary = {
   level: string;
   title: string;
 };
+
+export type HomePostureSummary = {
+  date: string;
+  id: string;
+  score: number;
+  summary: string;
+};
+
+export type HomePracticePhoto = {
+  date: string;
+  id: string;
+  image: string;
+  movementName: string;
+  score: number;
+};

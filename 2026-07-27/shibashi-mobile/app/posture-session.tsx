@@ -1,6 +1,5 @@
 import {Ionicons} from '@expo/vector-icons';
 import {CameraView,useCameraPermissions} from 'expo-camera';
-import {useAudioPlayer,type AudioPlayer} from 'expo-audio';
 import * as Speech from 'expo-speech';
 import {router} from 'expo-router';
 import {useEffect,useRef,useState} from 'react';
@@ -32,17 +31,6 @@ const scanCopy:Record<PostureView,{start:string;turn:string;waiting:string}>={
  side:{start:'Şimdi yana dön. Yan duruşun algılandığında üç saniye bekle.',turn:'Şimdi yana dön.',waiting:'Yan görünümünü algılıyorum.'},
  back:{start:'Şimdi arkaya dön. Arka görünüm algılandığında üç saniye bekle.',turn:'Şimdi arkaya dön.',waiting:'Arka görünümünü algılıyorum.'},
 };
-
-function pausePlayerSafely(player:AudioPlayer){
- try{player.pause()}catch{}
-}
-
-async function restartPlayerSafely(player:AudioPlayer){
- try{
-  await player.seekTo(0);
-  player.play();
- }catch{}
-}
 
 export default function PostureSession(){
  const[permission,requestPermission]=useCameraPermissions();
@@ -76,9 +64,6 @@ export default function PostureSession(){
  const stableCapturesRef=useRef<PostureCapture[]>([]);
  const capturesRef=useRef<PostureCapture[]>([]);
  const speakingRef=useRef('');
- const frontVoice=useAudioPlayer(require('../assets/audio/posture/tai/front-3s.mp3'),{downloadFirst:true});
- const sideVoice=useAudioPlayer(require('../assets/audio/posture/tai/side-3s.mp3'),{downloadFirst:true});
- const backVoice=useAudioPlayer(require('../assets/audio/posture/tai/back-3s.mp3'),{downloadFirst:true});
 
  useEffect(()=>setVision3DActive(isAppleVision3DAvailable()),[]);
 
@@ -92,11 +77,7 @@ export default function PostureSession(){
  useEffect(()=>{
   if(!permission?.granted||!cameraReady||phase!=='scan')return;
   if(speakingRef.current===`view-${view}`)return;
-  speakingRef.current=`view-${view}`;
-  Speech.stop();
-  const player=view==='front'?frontVoice:view==='side'?sideVoice:backVoice;
-  pausePlayerSafely(frontVoice);pausePlayerSafely(sideVoice);pausePlayerSafely(backVoice);
-  void restartPlayerSafely(player);
+  speakOnce(`view-${view}`,scanCopy[view].start);
  },[view,cameraReady,phase,permission?.granted]);
 
  useEffect(()=>()=>{
@@ -183,6 +164,7 @@ export default function PostureSession(){
     setLiveLandmarks([]);
     const average=Math.round(nextCaptures.reduce((sum,saved)=>sum+saved.score,0)/Math.max(1,nextCaptures.length));
     setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,analysisSource:nextCaptures.some(saved=>saved.analysisSource==='vision-3d+mediapipe-33')?'vision-3d+mediapipe-33':'mediapipe-33',summary:average>=82?'Beden eksenin dengeli ve sakin.':average>=68?'Temel hat dengeli; küçük ayarlar gelişimi hızlandırır.':'Merkez ve omuz hattı için yumuşak tekrar öneriliyor.',asymmetrySignal:average>=80?'Sağ-sol farkı düşük':'Omuz ve kalça hattını yeniden dengele'});
+    speakOnce('complete','Bitti. Üç görünüm tamamlandı. Postür raporun hazırlanıyor.');
     setPhase('processing');
    }catch(error){
     if(scanSessionRef.current!==session)return;

@@ -7,6 +7,7 @@ import {Animated,Image,Pressable,StyleSheet,Text,View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {compareMovement,getGhostSequence,getInterpolatedGhostFrame,getMasterSentence,getPracticeForShen,toDomainShenId,type PoseKeypoint,type ReferencePoseFrame} from '../../../packages/shen-domain';
 import {PrimaryButton} from '../components/ui';
+import {CameraZoomControl} from '../components/CameraZoomControl';
 import {colors,radii} from '../constants/theme';
 import {movements,practices} from '../data/content';
 import {livingGhostTeacherImages} from '../data/livingLearning';
@@ -37,6 +38,7 @@ export default function PracticeSession(){
  const[validSamples,setValidSamples]=useState(0);
  const[modelState,setModelState]=useState<'loading'|'ready'|'error'>('loading');
  const[index,setIndex]=useState(0);
+ const[cameraZoom,setCameraZoom]=useState(0);
  const cameraRef=useRef<CameraView|null>(null);
  const bridgeRef=useRef<MediaPipePoseBridgeRef|null>(null);
  const secondsRef=useRef(0);
@@ -111,7 +113,8 @@ export default function PracticeSession(){
  if(!permission.granted)return <SafeAreaView style={c.permission}><View style={c.permissionIcon}><Ionicons name="camera-outline" size={42} color={colors.gold}/></View><Text style={c.permissionTitle}>Kamera rehberini aç</Text><Text style={c.permissionBody}>Görüntün kaydedilmez veya sunucuya gönderilmez. Poz ölçümü cihazdaki akışta işlenir.</Text><PrimaryButton label="Kameraya izin ver" icon="camera" onPress={requestPermission}/><Pressable onPress={leavePractice}><Text style={c.cancel}>Şimdi değil</Text></Pressable></SafeAreaView>;
 
  return <View style={c.root}>
-  <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active={!paused} mirror/>
+  <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active={!paused} mirror zoom={cameraZoom}/>
+  <CameraZoomControl onChange={setCameraZoom} zoom={cameraZoom}/>
   <View style={c.shade}/>
   <GhostCanvas frame={referenceFrame} ready={fullBodyReady} opacity={practicePreferences.ghostOpacity}/>
   <SafeAreaView style={c.overlay} pointerEvents="box-none">
@@ -149,7 +152,7 @@ function toNamedPose(landmarks:PoseLandmark[]):PoseKeypoint[]{return landmarks.m
 
 const c=StyleSheet.create({
  root:{flex:1,backgroundColor:colors.ink},
- shade:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(5,10,7,.18)'},
+ shade:{...StyleSheet.absoluteFill,backgroundColor:'rgba(5,10,7,.18)'},
  overlay:{flex:1,justifyContent:'space-between'},
  top:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16},
  topCenter:{minHeight:50,minWidth:190,paddingHorizontal:20,borderRadius:25,backgroundColor:'rgba(17,23,19,.82)',borderWidth:1,borderColor:'rgba(242,238,231,.16)',alignItems:'center',justifyContent:'center'},

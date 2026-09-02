@@ -85,7 +85,7 @@ export default function Auth(){
 
 const a=StyleSheet.create({
  background:{backgroundColor:'#030705',flex:1},
- shade:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(3,7,5,.7)'},
+ shade:{...StyleSheet.absoluteFill,backgroundColor:'rgba(3,7,5,.7)'},
  safe:{alignItems:'center',flex:1,justifyContent:'center',padding:18},
  card:{backgroundColor:'rgba(7,15,11,.92)',borderColor:'rgba(216,195,148,.28)',borderRadius:28,borderWidth:1,gap:14,maxWidth:460,padding:26,shadowColor:'#000',shadowOffset:{width:0,height:24},shadowOpacity:.55,shadowRadius:38,width:'100%'},
  mark:{alignItems:'center',alignSelf:'center',borderColor:'rgba(216,195,148,.48)',borderRadius:31,borderWidth:1,height:62,justifyContent:'center',width:62},

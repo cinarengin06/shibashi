@@ -7,6 +7,7 @@ import {ActivityIndicator,Pressable,ScrollView,StyleSheet,Text,View,type LayoutC
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Svg,{Circle,Line} from 'react-native-svg';
 import {PrimaryButton} from '../components/ui';
+import {CameraZoomControl} from '../components/CameraZoomControl';
 import {colors,radii} from '../constants/theme';
 import {getShen} from '../data/fiveShen';
 import {analyzeWithAppleVision3D,isAppleVision3DAvailable} from '../services/pose/AppleVisionPose3D';
@@ -52,6 +53,7 @@ export default function PostureSession(){
  const[analysisError,setAnalysisError]=useState('');
  const[vision3DActive,setVision3DActive]=useState(false);
  const[cameraError,setCameraError]=useState(false);
+ const[cameraZoom,setCameraZoom]=useState(0);
  const[tipVisible,setTipVisible]=useState(false);
  const[saving,setSaving]=useState(false);
  const view=views[index]??'front';
@@ -222,7 +224,8 @@ export default function PostureSession(){
   </View>
   <View style={styles.sessionContent}>
    <View onLayout={(event:LayoutChangeEvent)=>{const{width,height}=event.nativeEvent.layout;setPreviewSize(current=>current.width===width&&current.height===height?current:{width,height})}} style={[styles.cameraStage,{borderColor:`${shen.color}55`}]}>
-    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active zoom={0} onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
+    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active zoom={cameraZoom} onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
+    <CameraZoomControl onChange={setCameraZoom} zoom={cameraZoom}/>
     <View style={styles.cameraShade}/>
     <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>
     <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize} view={view}/>
@@ -374,8 +377,8 @@ const styles=StyleSheet.create({
  root:{flex:1,backgroundColor:colors.ink},
  sessionContent:{flex:1,gap:12,paddingBottom:12,paddingHorizontal:12,paddingTop:8},
  cameraStage:{flex:1,backgroundColor:'#020403',borderRadius:22,borderWidth:1,overflow:'hidden',position:'relative',width:'100%'},
- cameraShade:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(0,14,10,.25)'},
- realPoseOverlay:{...StyleSheet.absoluteFillObject,zIndex:5},
+ cameraShade:{...StyleSheet.absoluteFill,backgroundColor:'rgba(0,14,10,.25)'},
+ realPoseOverlay:{...StyleSheet.absoluteFill,zIndex:5},
  overlay:{flex:1},
  flex:{flex:1},
  topbar:{zIndex:8,flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingHorizontal:16,paddingTop:4},

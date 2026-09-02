@@ -121,7 +121,7 @@ const w = StyleSheet.create({
   media: { position: "absolute", left: 0, top: 0 },
   videoLoading: { opacity: 0 },
   scrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(2,6,4,.18)",
     borderBottomWidth: 260,
     borderBottomColor: "rgba(2,6,4,.52)",

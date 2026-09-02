@@ -60,6 +60,8 @@
   inset: 0;
   position: absolute;
   width: 100%;
+  transform-origin: center;
+  transition: transform 220ms ease-in-out;
 }
 .video {
   object-fit: contain;

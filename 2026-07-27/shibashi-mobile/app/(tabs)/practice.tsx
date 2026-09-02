@@ -32,7 +32,7 @@ export default function Practice(){
 const p=StyleSheet.create({
  suggestion:{height:278,borderRadius:radii.lg,overflow:'hidden',padding:17,justifyContent:'space-between',borderWidth:1,borderColor:'rgba(243,235,221,.14)',shadowColor:'#000',shadowOpacity:.25,shadowRadius:18,shadowOffset:{width:0,height:10},elevation:5},
  suggestionImage:{borderRadius:radii.lg},
- shade:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(3,13,11,.38)'},
+ shade:{...StyleSheet.absoluteFill,backgroundColor:'rgba(3,13,11,.38)'},
  suggestionTop:{flexDirection:'row',alignItems:'center',gap:9},
  shenSymbol:{width:50,height:50,borderRadius:25,borderWidth:1,alignItems:'center',justifyContent:'center'},
  shenLabel:{fontSize:16,fontWeight:'900',letterSpacing:1.2},
@@ -56,7 +56,7 @@ const p=StyleSheet.create({
  routine:{flexDirection:'row',alignItems:'center',gap:13},
  cover:{width:64,height:64,borderRadius:16,overflow:'hidden',alignItems:'center',justifyContent:'center'},
  coverImage:{borderRadius:16},
- coverShade:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(3,13,11,.35)'},
+ coverShade:{...StyleSheet.absoluteFill,backgroundColor:'rgba(3,13,11,.35)'},
  title:{color:colors.cream,fontWeight:'800',fontSize:17},
  meta:{color:colors.muted,fontSize:17,lineHeight:27},
  doneText:{fontSize:17,fontWeight:'900',letterSpacing:1},

@@ -69,6 +69,7 @@ export function NewPostureScreen({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
+  const hardwareZoomRef = useRef(false);
   const detectorRef = useRef<{ detectForVideo: (video: HTMLVideoElement, timestamp: number) => { landmarks?: Array<Array<{ x: number; y: number; visibility?: number }>> }; close?: () => void } | null>(null);
   const animationRef = useRef(0);
   const detectionSessionRef = useRef(0);
@@ -101,7 +102,7 @@ export function NewPostureScreen({
   const [viewReady, setViewReady] = useState(false);
   const [captureReady, setCaptureReady] = useState(false);
   const [resultView, setResultView] = useState<MirrorView>("front");
-  const [zoom, setZoom] = useState<{ min: number; max: number; step: number; value: number } | null>(null);
+  const [zoom, setZoom] = useState<{ min: number; max: number; step: number; value: number }>({ min: 1, max: 2.5, step: 0.25, value: 1 });
 
   const view = views[viewIndex] ?? views[0];
   const assessment = useMemo(() => assessLandmarks(landmarks, view.id), [landmarks, view.id]);
@@ -124,7 +125,8 @@ export function NewPostureScreen({
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     cameraTrackRef.current = null;
-    setZoom(null);
+    hardwareZoomRef.current = false;
+    setZoom({ min: 1, max: 2.5, step: 0.25, value: 1 });
     setCameraState("idle");
     setLandmarks([]);
     if (transitionTimerRef.current) window.clearTimeout(transitionTimerRef.current);
@@ -230,11 +232,13 @@ export function NewPostureScreen({
       cameraTrackRef.current = cameraTrack;
       const capabilities = cameraTrack?.getCapabilities() as MediaTrackCapabilities & { zoom?: { min: number; max: number; step: number } };
       if (cameraTrack && capabilities?.zoom && Number.isFinite(capabilities.zoom.min)) {
+        hardwareZoomRef.current = true;
         const minimumZoom = capabilities.zoom.min;
         setZoom({ min: minimumZoom, max: capabilities.zoom.max, step: Math.max(capabilities.zoom.step || 0.1, 0.1), value: minimumZoom });
         await cameraTrack.applyConstraints({ advanced: [{ zoom: minimumZoom }] } as unknown as MediaTrackConstraints).catch(() => undefined);
       } else {
-        setZoom(null);
+        hardwareZoomRef.current = false;
+        setZoom({ min: 1, max: 2.5, step: 0.25, value: 1 });
       }
       video.srcObject = stream;
       await video.play();
@@ -289,9 +293,9 @@ export function NewPostureScreen({
 
   const changeZoom = useCallback(async (direction: -1 | 1) => {
     const track = cameraTrackRef.current;
-    if (!track || !zoom) return;
+    if (!track) return;
     const nextValue = Math.max(zoom.min, Math.min(zoom.max, zoom.value + zoom.step * direction));
-    await track.applyConstraints({ advanced: [{ zoom: nextValue }] } as unknown as MediaTrackConstraints).catch(() => undefined);
+    if (hardwareZoomRef.current) await track.applyConstraints({ advanced: [{ zoom: nextValue }] } as unknown as MediaTrackConstraints).catch(() => undefined);
     setZoom((current) => current ? { ...current, value: nextValue } : current);
   }, [zoom]);
 
@@ -467,8 +471,8 @@ export function NewPostureScreen({
       <header className={styles.titleBlock}><span>BEDENİNİ GÖR</span><h1>Tai Chi Beden Aynası</h1><p>Nasıl durduğunu gör. Aynı anda yalnızca bir şeyi düzelt.</p></header>
       <div className={styles.mirror}>
         <div className={styles.camera}>
-          <video className={styles.video} muted playsInline ref={videoRef} />
-          <canvas className={styles.canvas} ref={canvasRef} />
+          <video className={styles.video} muted playsInline ref={videoRef} style={{ transform: `scaleX(-1) scale(${hardwareZoomRef.current ? 1 : zoom.value})` }} />
+          <canvas className={styles.canvas} ref={canvasRef} style={{ transform: `scale(${hardwareZoomRef.current ? 1 : zoom.value})` }} />
           <div className={styles.cameraShade} />
           {cameraState !== "ready" ? <div className={styles.cameraWelcome}><span aria-hidden="true">◎</span><h2>Kamera hazırlanıyor.</h2><p>Birazdan önden görünümle başlayacağız.</p></div> : null}
           {cameraState === "ready" ? <>
@@ -476,7 +480,7 @@ export function NewPostureScreen({
             <div className={styles.score}><span>TEMELİN</span><strong>{displayScore ?? "—"}</strong></div>
             <div className={`${styles.cue} ${captureState === "holding" ? styles.cueHolding : ""}`}><i aria-hidden="true" /><strong>{captureState === "holding" ? `Tamam. ${Math.max(1, Math.ceil((100 - holdProgress) / 50))} saniye bekle.` : captureState === "captured" ? "Fotoğraf çekildi." : assessment.cue}</strong>{captureState === "holding" ? <span className={styles.holdBar}><b style={{ width: `${holdProgress}%` }} /></span> : null}</div>
             <button aria-label={voiceEnabled ? "Sesli yönlendirmeyi kapat" : "Sesli yönlendirmeyi aç"} aria-pressed={voiceEnabled} className={styles.sound} onClick={() => setVoiceEnabled((current) => !current)} type="button">{voiceEnabled ? "◖))" : "◖×"}</button>
-            <div className={styles.zoom} title={zoom ? "Kamera zoom seviyesi" : "Bu kamera donanımsal zoom desteklemiyor"}><button aria-label="Kamerayı uzaklaştır" disabled={!zoom || zoom.value <= zoom.min} onClick={() => void changeZoom(-1)} type="button">−</button><span>{zoom ? `${zoom.value.toFixed(1)}×` : "Zoom yok"}</span><button aria-label="Kamerayı yakınlaştır" disabled={!zoom || zoom.value >= zoom.max} onClick={() => void changeZoom(1)} type="button">+</button></div>
+            <div className={styles.zoom} title="Kamera zoom seviyesi"><button aria-label="Kamerayı uzaklaştır" disabled={zoom.value <= zoom.min} onClick={() => void changeZoom(-1)} type="button">−</button><span>{`${zoom.value.toFixed(1)}×`}</span><button aria-label="Kamerayı yakınlaştır" disabled={zoom.value >= zoom.max} onClick={() => void changeZoom(1)} type="button">+</button></div>
             <button className={styles.close} onClick={() => { stopCamera(); setStage("intro"); }} type="button" aria-label="Beden aynasını kapat">×</button>
             <div className={styles.stepper}>{views.map((item, index) => <button key={item.id} aria-current={index === viewIndex ? "step" : undefined} className={index === viewIndex ? styles.stepActive : index < viewIndex ? styles.stepDone : undefined} disabled type="button"><i />{item.label}</button>)}</div>
             <div className={styles.autoCapture}>{!captureReady ? "Önce yönlendirmeyi uygula" : assessment.matched ? "Otomatik çekim hazırlanıyor" : `${view.label} görünümünü hizala`}</div>

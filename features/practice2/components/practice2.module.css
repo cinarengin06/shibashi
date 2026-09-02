@@ -1106,6 +1106,11 @@
   border: 1px solid rgba(242, 238, 231, 0.09);
   border-radius: 15px;
 }
+.cameraZoom { align-items: center; background: rgba(5,10,8,.88); border: 1px solid rgba(242,238,229,.2); border-radius: 999px; display: flex; gap: 3px; padding: 4px; position: absolute; right: 14px; top: 14px; z-index: 12; }
+.cameraZoom button { background: rgba(255,255,255,.09); border: 0; border-radius: 50%; color: #f2eee5; cursor: pointer; font-size: 18px; height: 34px; width: 34px; }
+.cameraZoom button:disabled { cursor: not-allowed; opacity: .28; }
+.cameraZoom span { color: rgba(242,238,229,.78); font-size: 11px; min-width: 36px; text-align: center; }
+.cameraVideo, .poseCanvas { transform-origin: center; transition: transform 220ms ease-in-out; }
 .dynamicCamera .scoreRing {
   width: 88px;
   height: 88px;

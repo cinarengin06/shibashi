@@ -29,6 +29,7 @@ import {
 } from "../../../../packages/practice2";
 import { toDomainShenId } from "../../../../packages/shen-domain";
 import { LivingPoseOverlay } from "../../components/living-learning/LivingPoseOverlay";
+import { CameraZoomControl } from "../../components/CameraZoomControl";
 import { colors, fonts } from "../../constants/theme";
 import {
   MediaPipePoseBridge,
@@ -105,6 +106,7 @@ export default function Practice2() {
     [permission, requestPermission] = useCameraPermissions(),
     [started, setStarted] = useState(false),
     [running, setRunning] = useState(false),
+    [cameraZoom, setCameraZoom] = useState(0),
     [elapsedMs, setElapsedMs] = useState(0),
     [pose, setPose] = useState<Practice2PosePoint[]>([]),
     [imageSize, setImageSize] = useState({ width: 1, height: 1 }),
@@ -410,8 +412,10 @@ export default function Practice2() {
           facing="front"
           mirror
           active={running}
+          zoom={cameraZoom}
           onLayout={layout}
         />
+        <CameraZoomControl onChange={setCameraZoom} zoom={cameraZoom} />
         <View pointerEvents="none" style={s.staticLiveShade} />
         <SafeAreaView edges={["top", "bottom"]} style={s.staticLiveOverlay}>
           <View style={s.staticLiveTop}>
@@ -646,13 +650,17 @@ export default function Practice2() {
                 </View>
                 <View style={s.userPane} onLayout={layout}>
                   {started ? (
+                    <>
                     <CameraView
                       ref={cameraRef}
                       style={StyleSheet.absoluteFill}
                       facing="front"
                       mirror
                       active={running}
+                      zoom={cameraZoom}
                     />
+                    <CameraZoomControl onChange={setCameraZoom} zoom={cameraZoom} />
+                    </>
                   ) : (
                     <View style={s.cameraEmpty}>
                       <Ionicons
@@ -828,13 +836,17 @@ export default function Practice2() {
                 </View>
                 <View style={s.userPane} onLayout={layout}>
                   {started ? (
+                    <>
                     <CameraView
                       ref={cameraRef}
                       style={StyleSheet.absoluteFill}
                       facing="front"
                       mirror
                       active={running}
+                      zoom={cameraZoom}
                     />
+                    <CameraZoomControl onChange={setCameraZoom} zoom={cameraZoom} />
+                    </>
                   ) : (
                     <View style={s.cameraEmpty}>
                       <Ionicons
@@ -1157,7 +1169,7 @@ const s = StyleSheet.create({
   },
   staticHeroImage: { borderRadius: 24 },
   staticHeroShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,8,6,.12)",
   },
   staticHeroCopy: {
@@ -1197,7 +1209,7 @@ const s = StyleSheet.create({
   staticStartText: { color: colors.ink, fontFamily: fonts.sansBold, fontSize: 16 },
   staticLiveRoot: { backgroundColor: "#030604", flex: 1 },
   staticLiveShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(3,7,5,.08)",
   },
   staticLiveOverlay: { flex: 1, position: "relative" },
@@ -1352,7 +1364,7 @@ const s = StyleSheet.create({
   },
   storyImage: { borderRadius: 16 },
   storyShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,8,6,.46)",
   },
   storyTime: {
@@ -1412,11 +1424,11 @@ const s = StyleSheet.create({
     borderColor: "rgba(198,165,106,.2)",
   },
   placeholderShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,8,6,.28)",
   },
   cameraEmpty: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
@@ -1436,7 +1448,7 @@ const s = StyleSheet.create({
     maxWidth: 240,
   },
   cameraShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,8,6,.12)",
   },
   cameraTop: {
@@ -1666,7 +1678,7 @@ const s = StyleSheet.create({
   },
   duoImage: { borderTopLeftRadius: 24, borderBottomLeftRadius: 24 },
   duoShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,8,6,.2)",
   },
   paneLabel: {
@@ -1753,7 +1765,7 @@ const s = StyleSheet.create({
   },
   referenceImage: { borderRadius: 22 },
   referenceShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,8,6,.28)",
   },
   referenceTop: { flexDirection: "row", justifyContent: "space-between" },

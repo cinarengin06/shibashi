@@ -2267,7 +2267,7 @@ function DojoHomeScreen({
     onReset={onReset}
     onSelectShen={onSelectShen}
     postureCount={postureCount}
-    postureReports={postureReports.map((report) => ({ date: report.date, id: report.id, score: report.score, summary: report.summary }))}
+    postureReports={postureReports.map((report) => ({ date: report.createdAt, id: report.id, score: report.score, summary: report.summary }))}
     practicePhotos={practicePhotos}
     recommendedFlow={recommendedFlow}
     shen={{ actionLabel: shenTodayCopy[selectedShen.id].action, color: selectedShen.color, description: selectedShen.dailyPrompt, element: selectedShen.element.split("•")[0]?.trim() ?? "", heroBody: shenTodayCopy[selectedShen.id].body, heroTitle: shenTodayCopy[selectedShen.id].title, icon: `/images/five-shen-icons/${selectedShen.id}.png`, id: selectedShen.id, motto: shenTodayCopy[selectedShen.id].motto, name: selectedShen.name, organ: selectedShen.organ, period: "Bugünün odağı", shortLabel: shenTodayCopy[selectedShen.id].shortLabel, symbol: selectedShen.symbol, wallpaper: selectedShen.image }}

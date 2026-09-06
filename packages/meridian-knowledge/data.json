@@ -1,0 +1,877 @@
+{
+  "source": {
+    "title": "Shibashi EFE 18 Hareketin Anatomi–Meridyen–Nokta Haritası",
+    "workbook": "shibashi_meridyen_ana_veritabani.xlsx",
+    "teachingDocument": "shibashi_meridyen_ogretim_metni.docx",
+    "version": "2026-09-02"
+  },
+  "movements": [
+    {
+      "movementId": "movement-1",
+      "order": 1,
+      "sourceTitle": "Başlangıç Formu",
+      "appAliases": [
+        "Açılış Formu"
+      ],
+      "anatomy": "Diyaframla eşzamanlı omuz fleksiyonu; skapulotorasik ritim; kalça-diz-ayak bileğinde küçük eksenel yükselme ve çökme; nötr omurga.",
+      "primaryMeridians": [
+        "Akciğer (LU)",
+        "Böbrek (KI)"
+      ],
+      "secondaryMeridians": [
+        "Dalak (SP)",
+        "Mide (ST)"
+      ],
+      "extraordinaryMeridians": [
+        "Ren Mai",
+        "Chong Mai"
+      ],
+      "pointCodes": [
+        "LU7",
+        "KI6",
+        "REN6",
+        "ST36",
+        "KI1"
+      ],
+      "teachingConnection": "Nefesle yükselme–çökme, ön orta hattın açılması ve alt dantiana dönüş. LU7–KI6, Ren Mai/Yin Qiao eşleşmesini öğretmek için; REN6 ise merkezleme imgesi için kullanılabilir.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Hareket tarifi + kılavuzun alt dantian açıklaması; kanal eşleştirmesi anatomik/klasik çıkarım.",
+      "bodyCue": "Kollar yükselirken omuzları yumuşak tut; inerken ağırlığını ayak tabanına bırak."
+    },
+    {
+      "movementId": "movement-2",
+      "order": 2,
+      "sourceTitle": "Göğsün Genişletilmesi",
+      "appAliases": [
+        "Bağrını Açmak"
+      ],
+      "anatomy": "Omuz horizontal abdüksiyon-adduksiyonu; pektoralis majör/minör, interkostaller ve torasik kafes hareketi; kontrollü inspirasyon-ekspirasyon.",
+      "primaryMeridians": [
+        "Akciğer (LU)",
+        "Perikard (PC)"
+      ],
+      "secondaryMeridians": [
+        "Kalp (HT)"
+      ],
+      "extraordinaryMeridians": [
+        "Ren Mai",
+        "Yin Wei Mai"
+      ],
+      "pointCodes": [
+        "REN17",
+        "LU1",
+        "LU7",
+        "PC6",
+        "HT7"
+      ],
+      "teachingConnection": "Göğüs merkezinin açılıp kapanması; solunum, göğüs Qi’si ve iç kol hatlarının fark edilmesi. PC6, Yin Wei Mai’nin göğüs bağlantısını öğretmek için güçlü bir köprüdür.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Hareket anatomisi + Deadman kanal/nokta işlevleri; kılavuzun göğüs ve nefes vurgusu.",
+      "bodyCue": "Göğsü zorlamadan aç; kürek kemiklerinin arkada rahatça kaymasına izin ver."
+    },
+    {
+      "movementId": "movement-3",
+      "order": 3,
+      "sourceTitle": "Gökkuşakları ile Dans Etmek",
+      "appAliases": [
+        "Gökkuşakları ile Dans"
+      ],
+      "anatomy": "Lateral ağırlık aktarımı; omuz abdüksiyonu; servikal rotasyon ve görsel takip; gluteus medius ile kalça stabilizasyonu.",
+      "primaryMeridians": [
+        "Safra Kesesi (GB)",
+        "San Jiao (SJ)"
+      ],
+      "secondaryMeridians": [
+        "Perikard (PC)"
+      ],
+      "extraordinaryMeridians": [
+        "Dai Mai",
+        "Yang Wei Mai"
+      ],
+      "pointCodes": [
+        "GB41",
+        "SJ5",
+        "GB21",
+        "PC8",
+        "DU20"
+      ],
+      "teachingConnection": "Yan uzam, denge ve yukarı-aşağı yönlenme. Kılavuz PC8’in DU20’ye yönelmesini açıkça tarif eder; GB41–SJ5 ise Dai/Yang Wei eksenini görünür kılar.",
+      "evidenceLevel": "Doğrudan + güçlü",
+      "basis": "Kılavuzda Laogong–Baihui açık bağlantısı; diğerleri kanal güzergâhı ve açılma noktalarından çıkarım.",
+      "bodyCue": "Ağırlığını yana taşırken başını uzat, bakışını elinle birlikte gezdir."
+    },
+    {
+      "movementId": "movement-4",
+      "order": 4,
+      "sourceTitle": "Kolları Çevirmek",
+      "appAliases": [
+        "İçten Dışa"
+      ],
+      "anatomy": "Omuz fleksiyonu ve geniş dairesel hareket; skapulanın yukarı rotasyonu; el bileği pronasyon-supinasyonu; torasik ekstansiyon kontrolü.",
+      "primaryMeridians": [
+        "Perikard (PC)",
+        "San Jiao (SJ)"
+      ],
+      "secondaryMeridians": [
+        "Akciğer (LU)"
+      ],
+      "extraordinaryMeridians": [
+        "Yin Wei Mai",
+        "Yang Wei Mai"
+      ],
+      "pointCodes": [
+        "PC6",
+        "PC8",
+        "SJ5",
+        "LU7",
+        "DU20"
+      ],
+      "teachingConnection": "İç ve dış kapıların, yin ve yang kol yüzlerinin karşılaştırılması. Kılavuz bileklerin PC6 düzeyinde kesişmesini açıkça belirtir.",
+      "evidenceLevel": "Doğrudan",
+      "basis": "Shibashi Set 1 kılavuzunda Neiguan’ın konumu ve kullanımına açık atıf.",
+      "bodyCue": "Daireyi omuzdan değil gövde ve kürek kemiğinin birlikte hareketinden doğur."
+    },
+    {
+      "movementId": "movement-5",
+      "order": 5,
+      "sourceTitle": "Beli Kıvırma ve Kolları Sallama",
+      "appAliases": [
+        "Maymunu İtekle"
+      ],
+      "anatomy": "Kalça sabitken torakolomber rotasyon; oblik karın kasları, multifidus ve spiral fasya zincirleri; karşılıklı itme-çekme.",
+      "primaryMeridians": [
+        "Safra Kesesi (GB)",
+        "Karaciğer (LR)"
+      ],
+      "secondaryMeridians": [
+        "San Jiao (SJ)"
+      ],
+      "extraordinaryMeridians": [
+        "Dai Mai",
+        "Yang Wei Mai"
+      ],
+      "pointCodes": [
+        "GB26",
+        "GB41",
+        "LR3",
+        "SJ5",
+        "REN6"
+      ],
+      "teachingConnection": "Dikey hatları kuşatan yatay kuşak ve spiral kuvvet aktarımı. Kılavuz hareketin ‘bel meridyenini’ uyardığını açıkça söyler.",
+      "evidenceLevel": "Doğrudan + güçlü",
+      "basis": "Kılavuzda Dai Mai/bel meridyeni açıklaması; noktalar Deadman ve klasik açılma noktası ilişkisi.",
+      "bodyCue": "Kalçayı sabit tut; dönüşü bel çevresinde yumuşak bir spiral gibi hisset."
+    },
+    {
+      "movementId": "movement-6",
+      "order": 6,
+      "sourceTitle": "Kayıkta Kürek Çekmek",
+      "appAliases": [
+        "Kayıkta Kürek Çek"
+      ],
+      "anatomy": "Omuz ekstansiyonundan fleksiyona geniş yay; kalça menteşesi ve diz fleksiyonu; latissimus dorsi, erector spinae ve posterior zincir.",
+      "primaryMeridians": [
+        "Mesane (BL)",
+        "Böbrek (KI)"
+      ],
+      "secondaryMeridians": [
+        "İnce Bağırsak (SI)"
+      ],
+      "extraordinaryMeridians": [
+        "Du Mai",
+        "Yang Qiao Mai"
+      ],
+      "pointCodes": [
+        "SI3",
+        "BL62",
+        "DU4",
+        "BL23",
+        "KI3"
+      ],
+      "teachingConnection": "Arka hattın uzayıp toparlanması ve kürek imgesiyle omurga-kol bütünlüğü. SI3–BL62, Du/Yang Qiao eşleştirmesini öğretmek için uygundur.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Hareket anatomisi ve posterior kanal güzergâhları; açılma noktaları Deadman.",
+      "bodyCue": "Kalçadan katlanırken omurgayı uzun tut; yükselirken kolları geniş bir yayda taşı."
+    },
+    {
+      "movementId": "movement-7",
+      "order": 7,
+      "sourceTitle": "Topu Tutmak",
+      "appAliases": [
+        "Balonla Oyna"
+      ],
+      "anatomy": "Gövde rotasyonu ve çapraz ağırlık aktarımı; omuzların yuvarlak çerçevesi; el-göz koordinasyonu; oblik ve adduktor zincirleri.",
+      "primaryMeridians": [
+        "Dalak (SP)",
+        "Perikard (PC)"
+      ],
+      "secondaryMeridians": [
+        "Karaciğer (LR)"
+      ],
+      "extraordinaryMeridians": [
+        "Chong Mai",
+        "Yin Wei Mai"
+      ],
+      "pointCodes": [
+        "SP4",
+        "PC6",
+        "LR3",
+        "REN12",
+        "PC8"
+      ],
+      "teachingConnection": "İki avuç arasında merkezlenmiş küre; orta jiao ile göğüs arasındaki bağ. SP4–PC6, Chong/Yin Wei çiftini somutlaştırır.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Küre/merkez anatomisi öğretim yorumu; klasik eşleşme Deadman.",
+      "bodyCue": "Avuçlarının arasındaki küreyi korurken ağırlığı iki ayak arasında sessizce değiştir."
+    },
+    {
+      "movementId": "movement-8",
+      "order": 8,
+      "sourceTitle": "Ay’ı Taşımak",
+      "appAliases": [
+        "Ayı Göğe Gönder"
+      ],
+      "anatomy": "Omuz fleksiyonu, gövde rotasyonu ve kontrollü ekstansiyon; torasik mobilite; servikal takip; kalça stabilitesi.",
+      "primaryMeridians": [
+        "Safra Kesesi (GB)",
+        "Mesane (BL)"
+      ],
+      "secondaryMeridians": [
+        "İnce Bağırsak (SI)"
+      ],
+      "extraordinaryMeridians": [
+        "Dai Mai",
+        "Du Mai"
+      ],
+      "pointCodes": [
+        "GB41",
+        "SI3",
+        "DU20",
+        "GB20",
+        "BL23"
+      ],
+      "teachingConnection": "Yerden göğe yükselen spiral ve arka-yan gövde hattı. Baş geriye atılmaz; uzama DU20 üzerinden sürdürülür.",
+      "evidenceLevel": "Orta",
+      "basis": "Hareket anatomisi ile klasik kanal güzergâhlarının pedagojik eşleştirmesi.",
+      "bodyCue": "Yukarı uzanırken başını geriye atma; tepeden büyürken belini sıkıştırma."
+    },
+    {
+      "movementId": "movement-9",
+      "order": 9,
+      "sourceTitle": "Beli Kıvırma ve Elleri İtme",
+      "appAliases": [
+        "Karnın ile İt"
+      ],
+      "anatomy": "Torakolomber rotasyon; skapular protraksiyon-retraksiyon; dirsek ekstansiyonu; karşılıklı alt-üst gövde kuvvet aktarımı.",
+      "primaryMeridians": [
+        "Kalın Bağırsak (LI)",
+        "Akciğer (LU)"
+      ],
+      "secondaryMeridians": [
+        "Karaciğer (LR)",
+        "Safra Kesesi (GB)"
+      ],
+      "extraordinaryMeridians": [
+        "Dai Mai"
+      ],
+      "pointCodes": [
+        "LI4",
+        "LI11",
+        "LU7",
+        "LR3",
+        "GB26"
+      ],
+      "teachingConnection": "Belden doğan kuvvetin kola iletilmesi; metal kanal çifti ile Dai Mai’nin yatay organizasyonu birlikte okunabilir.",
+      "evidenceLevel": "Güçlü",
+      "basis": "İtme anatomisi + kol kanal güzergâhları; Dai bağlantısı rotasyon örüntüsünden çıkarım.",
+      "bodyCue": "İtişi ellerden önce bel başlatsın; dirsekleri kilitlemeden gücü öne aktar."
+    },
+    {
+      "movementId": "movement-10",
+      "order": 10,
+      "sourceTitle": "Bulutlarla Oynamak",
+      "appAliases": [
+        "Bulutlarla Dans"
+      ],
+      "anatomy": "Sürekli lateral ağırlık aktarımı; bel rotasyonu; skapular kayma; el bileği rotasyonu ve görsel takip.",
+      "primaryMeridians": [
+        "Dalak (SP)",
+        "Mide (ST)"
+      ],
+      "secondaryMeridians": [
+        "Perikard (PC)",
+        "San Jiao (SJ)"
+      ],
+      "extraordinaryMeridians": [
+        "Chong Mai",
+        "Dai Mai"
+      ],
+      "pointCodes": [
+        "SP6",
+        "ST36",
+        "PC6",
+        "SJ5",
+        "GB41"
+      ],
+      "teachingConnection": "Merkezden çevreye kesintisiz spiral; alt ekstremite ağırlık hattı ile el hareketinin birleşmesi. Bulut hareketi tek bir kanala indirgenmemelidir.",
+      "evidenceLevel": "Orta",
+      "basis": "Bütün-bedensel anatomi ve kanal yüzeylerinin karşılaştırılması; yorumlayıcı eşleştirme.",
+      "bodyCue": "Ayak, bel, bakış ve eller aynı kesintisiz dalganın içinde yön değiştirsin."
+    },
+    {
+      "movementId": "movement-11",
+      "order": 11,
+      "sourceTitle": "Denizden Kaşıklamak",
+      "appAliases": [
+        "Okyanustan Suyu Göğe Taşı"
+      ],
+      "anatomy": "Kalça menteşesi, diz fleksiyonu ve ardından eksenel uzama; omuz fleksiyonu; posterior zincir ve diyafram-pelvik taban koordinasyonu.",
+      "primaryMeridians": [
+        "Böbrek (KI)",
+        "Mesane (BL)"
+      ],
+      "secondaryMeridians": [
+        "Akciğer (LU)"
+      ],
+      "extraordinaryMeridians": [
+        "Ren Mai",
+        "Du Mai",
+        "Chong Mai"
+      ],
+      "pointCodes": [
+        "KI1",
+        "KI3",
+        "REN6",
+        "DU4",
+        "DU20"
+      ],
+      "teachingConnection": "Yeryüzünden toplama, alt dantian üzerinden yükseltme. KI1–DU20 ekseni kılavuzların Yer-Gök Qi anlatımıyla uyumludur.",
+      "evidenceLevel": "Doğrudan + güçlü",
+      "basis": "Qigong postür kılavuzunda KI1 ve DU20’nin Yer/Gök bağlantısı; hareket anatomisi.",
+      "bodyCue": "Aşağı inerken kalçadan katlan; yerden topladığın hareketi omurga boyunca yükselt."
+    },
+    {
+      "movementId": "movement-12",
+      "order": 12,
+      "sourceTitle": "Dalgalarla Oynamak",
+      "appAliases": [
+        "Dalgalarla Oyna"
+      ],
+      "anatomy": "Öne-arkaya ağırlık aktarımı; ayak bileği dorsifleksiyon/plantar fleksiyon; kalça-diz eşgüdümü; kollarla dalga benzeri itme-çekme.",
+      "primaryMeridians": [
+        "Mide (ST)",
+        "Böbrek (KI)"
+      ],
+      "secondaryMeridians": [
+        "Akciğer (LU)",
+        "Kalın Bağırsak (LI)"
+      ],
+      "extraordinaryMeridians": [
+        "Chong Mai",
+        "Ren Mai"
+      ],
+      "pointCodes": [
+        "ST36",
+        "KI1",
+        "KI3",
+        "LU7",
+        "LI4"
+      ],
+      "teachingConnection": "Kökten ele ilerleyen kuvvet dalgası; ön hat ile ayak tabanı arasındaki bağ. Dizler ayak yönünü izlemeli ve parmakları aşmamalıdır.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Shibashi ve postür kılavuzlarının ağırlık/ayak/diz ilkeleri; kanal eşleştirmesi anatomik çıkarım.",
+      "bodyCue": "Dizlerin ayak yönünü izlesin; ağırlığı topuk ve ön ayak arasında dalga gibi taşı."
+    },
+    {
+      "movementId": "movement-13",
+      "order": 13,
+      "sourceTitle": "Kanatlarını Açmak",
+      "appAliases": [
+        "Yaban Kazı Kanatlarını Açıyor"
+      ],
+      "anatomy": "Omuz horizontal abdüksiyonu ve adduksiyonu; skapular retraksiyon/protraksiyon; torasik kafes genişlemesi; denge.",
+      "primaryMeridians": [
+        "Akciğer (LU)",
+        "Kalp (HT)"
+      ],
+      "secondaryMeridians": [
+        "Perikard (PC)",
+        "İnce Bağırsak (SI)"
+      ],
+      "extraordinaryMeridians": [
+        "Ren Mai",
+        "Yin Wei Mai"
+      ],
+      "pointCodes": [
+        "REN17",
+        "LU1",
+        "HT7",
+        "PC6",
+        "SI11"
+      ],
+      "teachingConnection": "Göğüs ön yüzü ile skapular arka yüzün dengelenmesi; kalp-akciğer alanının açılması. Klinik vaat yerine solunum ve üst kuşak farkındalığı vurgulanır.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Hareket anatomisi + göğüs/kol kanal güzergâhları ve nokta işlevleri.",
+      "bodyCue": "Kollar açılırken göğüste alan bırak; kürek kemiklerini birbirine sıkıştırma."
+    },
+    {
+      "movementId": "movement-14",
+      "order": 14,
+      "sourceTitle": "Yumruklama",
+      "appAliases": [
+        "Yumruklama"
+      ],
+      "anatomy": "Kalça ve gövde rotasyonuyla sıralı kuvvet üretimi; skapular protraksiyon; dirsek ekstansiyonu; kavrama ve önkol kas aktivitesi.",
+      "primaryMeridians": [
+        "Kalın Bağırsak (LI)",
+        "Akciğer (LU)"
+      ],
+      "secondaryMeridians": [
+        "Kalp (HT)",
+        "Perikard (PC)"
+      ],
+      "extraordinaryMeridians": [
+        "Dai Mai",
+        "Yang Wei Mai"
+      ],
+      "pointCodes": [
+        "LI4",
+        "LI11",
+        "LU7",
+        "PC6",
+        "GB41"
+      ],
+      "teachingConnection": "Kuvvetin ayaktan bele, belden yumruğa aktarılması. Yumruk omuzdan kopuk değil, Dai Mai tarafından düzenlenen bütünsel spiral içinde okunur.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Biyomekanik zincir + kol kanalları; sıradışı meridyen bağlantısı öğretim çıkarımı.",
+      "bodyCue": "Yumruğu omuzdan değil ayak, kalça ve belin sıralı dönüşünden gönder."
+    },
+    {
+      "movementId": "movement-15",
+      "order": 15,
+      "sourceTitle": "Kaz Gibi Uçmak",
+      "appAliases": [
+        "Yaban Kazı Yükseliyor"
+      ],
+      "anatomy": "Omuz abdüksiyonu-adduksiyonu; skapular yukarı-aşağı rotasyon; küçük diz/kalça salınımı; postüral denge.",
+      "primaryMeridians": [
+        "San Jiao (SJ)",
+        "Safra Kesesi (GB)"
+      ],
+      "secondaryMeridians": [
+        "Akciğer (LU)"
+      ],
+      "extraordinaryMeridians": [
+        "Yang Wei Mai",
+        "Yang Qiao Mai"
+      ],
+      "pointCodes": [
+        "SJ5",
+        "GB21",
+        "GB41",
+        "BL62",
+        "DU20"
+      ],
+      "teachingConnection": "Yang dış yüzlerde hafiflik, yan denge ve başın tepesinden uzama. Kollar zorlanmadan ‘tüy kadar hafif’ yükselir.",
+      "evidenceLevel": "Doğrudan + güçlü",
+      "basis": "Qigong postür kılavuzunda bu hareket için kolların hafifliği egzersizi; kanal eşleştirmesi.",
+      "bodyCue": "Kollar hafifçe yükselirken ayak tabanını canlı, başını tepeden uzun tut."
+    },
+    {
+      "movementId": "movement-16",
+      "order": 16,
+      "sourceTitle": "Çıkrık Çevirme",
+      "appAliases": [
+        "Değirmeni Döndür"
+      ],
+      "anatomy": "Omuz kuşağı ve gövdenin ardışık dairesel hareketi; el bileği rotasyonu; torakolomber spiral; ritmik ağırlık aktarımı.",
+      "primaryMeridians": [
+        "İnce Bağırsak (SI)",
+        "San Jiao (SJ)"
+      ],
+      "secondaryMeridians": [
+        "Safra Kesesi (GB)",
+        "Karaciğer (LR)"
+      ],
+      "extraordinaryMeridians": [
+        "Dai Mai",
+        "Yang Wei Mai"
+      ],
+      "pointCodes": [
+        "SI3",
+        "SJ5",
+        "GB41",
+        "LR3",
+        "GB26"
+      ],
+      "teachingConnection": "Çıkrık imgesi süreklilik, daire ve kuşak hattını birleştirir; omuz eklemi tek başına değil bel ve skapula ile birlikte döner.",
+      "evidenceLevel": "Orta",
+      "basis": "Hareket anatomisi ve kanal güzergâhlarının yorumlayıcı eşleştirmesi.",
+      "bodyCue": "Büyük daireyi bel, gövde ve kürek kemiğinin birlikte dönmesiyle sürdür."
+    },
+    {
+      "movementId": "movement-17",
+      "order": 17,
+      "sourceTitle": "Topu Zıplatmak",
+      "appAliases": [
+        "Topu Sektir"
+      ],
+      "anatomy": "Tek taraflı ağırlık aktarımı; karşı kol salınımı; ayak bileği yaylanması; vestibüler ve el-göz koordinasyonu.",
+      "primaryMeridians": [
+        "Mide (ST)",
+        "Dalak (SP)"
+      ],
+      "secondaryMeridians": [
+        "Safra Kesesi (GB)",
+        "Mesane (BL)"
+      ],
+      "extraordinaryMeridians": [
+        "Yang Qiao Mai",
+        "Yin Qiao Mai"
+      ],
+      "pointCodes": [
+        "ST36",
+        "SP6",
+        "BL62",
+        "KI6",
+        "KI1"
+      ],
+      "teachingConnection": "Sağ-sol denge, topuk-ayak tabanı duyusu ve ritim. Qiao Mai çifti, medial-lateral dengeyi açıklamak için kullanılabilir.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Hareketin denge anatomisi + Qiao Mai klasik işlev/güzergâhları.",
+      "bodyCue": "Karşı el ve ayağı aynı ritimde buluştur; yaylanmayı ayak bileğinde yumuşat."
+    },
+    {
+      "movementId": "movement-18",
+      "order": 18,
+      "sourceTitle": "Avuç İçlerini Bastırma",
+      "appAliases": [
+        "Kapanış Formu"
+      ],
+      "anatomy": "Omuz ve dirseklerin kontrollü ekstansiyonu; skapular depresyon; diz-kalça ile yumuşak çökme; uzun ekspirasyon.",
+      "primaryMeridians": [
+        "Perikard (PC)",
+        "Akciğer (LU)"
+      ],
+      "secondaryMeridians": [
+        "Böbrek (KI)",
+        "Mide (ST)"
+      ],
+      "extraordinaryMeridians": [
+        "Ren Mai",
+        "Yin Wei Mai"
+      ],
+      "pointCodes": [
+        "PC8",
+        "PC6",
+        "REN6",
+        "KI1",
+        "ST36"
+      ],
+      "teachingConnection": "Dağılmış dikkatin avuçlardan merkeze ve yere indirilmesi; kapanışta nefes, alt dantian ve köklenme bütünleşir.",
+      "evidenceLevel": "Güçlü",
+      "basis": "Kılavuzun kapanış/enerjiyi merkeze toplama yaklaşımı; nokta ve kanal bağlantıları.",
+      "bodyCue": "Avuçları indirirken omuzları bırak, nefesi uzat ve ağırlığını merkeze topla."
+    }
+  ],
+  "points": [
+    {
+      "code": "LU7",
+      "pinyin": "Lieque",
+      "anatomicalLocation": "Radius stiloid çıkıntısının proksimalinde, bilek çizgisinin yaklaşık 1.5 cun üstünde; iki işaret parmağı kenetlendiğinde parmak ucunun ulaştığı çöküntü.",
+      "classicalSummary": "Akciğer Luo noktası; Ren Mai açılma noktası; baş-boyun, Akciğer inişi ve yüzey düzenlenmesiyle ilişkilendirilir.",
+      "extraordinaryConnection": "Ren Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "LI4",
+      "pinyin": "Hegu",
+      "anatomicalLocation": "El sırtında, 1. ve 2. metakarp kemikleri arasında, 2. metakarpın radial orta noktasında.",
+      "classicalSummary": "Qi dolaşımını düzenleyen güçlü distal nokta; yüz/baş ve ağrı örüntülerinde klasik kullanım.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "LI11",
+      "pinyin": "Quchi",
+      "anatomicalLocation": "Dirsek fleksiyonda, lateral kubital çizginin dış ucundaki çöküntü.",
+      "classicalSummary": "Isıyı temizleme, kanalı açma ve üst ekstremite işlevleriyle ilişkilendirilir.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "ST36",
+      "pinyin": "Zusanli",
+      "anatomicalLocation": "Diz kapağının alt sınırının 3 cun altında, tibia ön kenarının bir parmak genişliği lateralinde.",
+      "classicalSummary": "Mide-Dalak, Qi ve kanı destekleme; bacak ve genel dayanıklılık için temel noktalardan.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "ST40",
+      "pinyin": "Fenglong",
+      "anatomicalLocation": "Dış malleol ile diz arası hattın ortasında, tibia ön kenarından yaklaşık iki parmak lateral.",
+      "classicalSummary": "Balgamı dönüştürme ve Mide Luo ağı üzerinden göğüs/boğaz-zihin belirtilerini düzenleme.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "SP4",
+      "pinyin": "Gongsun",
+      "anatomicalLocation": "1. metatars tabanının distal-alt kenarında, kırmızı-beyaz deri sınırında.",
+      "classicalSummary": "Dalak Luo noktası ve Chong Mai açılma noktası; orta jiao ve karın-göğüs bağlantısı.",
+      "extraordinaryConnection": "Chong Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "SP6",
+      "pinyin": "Sanyinjiao",
+      "anatomicalLocation": "Medial malleol tepesinin 3 cun üstünde, tibianın medial kenarının arkasında.",
+      "classicalSummary": "Üç bacak yin kanalının buluşması; Dalak, Karaciğer ve Böbrek ilişkileri.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "HT7",
+      "pinyin": "Shenmen",
+      "anatomicalLocation": "Bilek palmar çizgisinde, pisiform kemiğin radial yanında.",
+      "classicalSummary": "Kalbi besleme, Shen’i sakinleştirme ve bilek kanalını düzenleme.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "SI3",
+      "pinyin": "Houxi",
+      "anatomicalLocation": "El yumruk yapıldığında 5. metakarp başının proksimalindeki çizgi ucunda.",
+      "classicalSummary": "İnce Bağırsak shu-stream noktası; Du Mai açılma noktası; boyun-sırt ve posterior hat.",
+      "extraordinaryConnection": "Du Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "SI11",
+      "pinyin": "Tianzong",
+      "anatomicalLocation": "Skapula üzerinde, spina scapulae ile alt açı arasındaki mesafenin yaklaşık üçte birinde, infraspinöz fossada.",
+      "classicalSummary": "Skapula ve omuz bölgesini açma, lokal ağrı ve hareket kısıtlılığı için klasik kullanım.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "BL23",
+      "pinyin": "Shenshu",
+      "anatomicalLocation": "L2 spinöz çıkıntısının alt kenarı düzeyinde, orta hattın 1.5 cun lateralinde.",
+      "classicalSummary": "Böbrek back-shu noktası; bel ve Böbrek sistemini destekleme.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "BL62",
+      "pinyin": "Shenmai",
+      "anatomicalLocation": "Dış malleolün hemen altında, malleol alt kenarındaki çöküntüde.",
+      "classicalSummary": "Yang Qiao Mai açılma noktası; dış bacak, denge, gözler ve posterior hatla ilişkilidir.",
+      "extraordinaryConnection": "Yang Qiao Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "KI1",
+      "pinyin": "Yongquan",
+      "anatomicalLocation": "Ayak tabanında, ayak parmakları fleksiyondayken oluşan çöküntüde; tabanın ön üçte biri ile arka üçte ikisinin birleşiminde.",
+      "classicalSummary": "Qi’yi aşağı çeken, baştaki aşırı yükselmeyi sakinleştiren ve köklenmeyi simgeleyen Jing-Well noktası.",
+      "extraordinaryConnection": null,
+      "source": "Deadman + Qigong postür kılavuzu"
+    },
+    {
+      "code": "KI3",
+      "pinyin": "Taixi",
+      "anatomicalLocation": "Medial malleol ile Aşil tendonu arasındaki çöküntüde.",
+      "classicalSummary": "Böbrek yuan-source noktası; bel, diz, köklenme ve Böbrek sistemini destekleme.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "KI6",
+      "pinyin": "Zhaohai",
+      "anatomicalLocation": "Medial malleol tepesinin yaklaşık 1 cun altında, malleol alt kenarındaki çöküntüde.",
+      "classicalSummary": "Yin Qiao Mai açılma noktası; medial bacak, boğaz, uyku ve yin düzenlenmesi.",
+      "extraordinaryConnection": "Yin Qiao Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "PC6",
+      "pinyin": "Neiguan",
+      "anatomicalLocation": "Palmar bilek çizgisinin 2 cun proksimalinde, palmaris longus ve flexor carpi radialis tendonları arasında.",
+      "classicalSummary": "Perikard Luo noktası ve Yin Wei Mai açılma noktası; göğüs, kalp ritmi hissi, bulantı ve Shen.",
+      "extraordinaryConnection": "Yin Wei Mai",
+      "source": "Deadman + Shibashi kılavuzu"
+    },
+    {
+      "code": "PC8",
+      "pinyin": "Laogong",
+      "anatomicalLocation": "Avuç içinde, yumruk yapıldığında orta parmak ucunun değdiği bölgede, 2. ve 3. metakarplar arasında.",
+      "classicalSummary": "Perikard ying-spring noktası; avuç merkezi, ısı ve zihinsel ajitasyonla ilişkilidir.",
+      "extraordinaryConnection": null,
+      "source": "Deadman + Shibashi kılavuzu"
+    },
+    {
+      "code": "SJ5",
+      "pinyin": "Waiguan",
+      "anatomicalLocation": "Dorsal bilek çizgisinin 2 cun proksimalinde, radius ve ulna arasında.",
+      "classicalSummary": "San Jiao Luo noktası ve Yang Wei Mai açılma noktası; dış kol, baş-boyun ve dış yang ağları.",
+      "extraordinaryConnection": "Yang Wei Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "GB20",
+      "pinyin": "Fengchi",
+      "anatomicalLocation": "Oksiput altında, sternokleidomastoid ve trapez üst lifleri arasındaki çöküntüde.",
+      "classicalSummary": "Baş, gözler, boyun ve rüzgâr örüntüleri için klasik nokta.",
+      "extraordinaryConnection": "Yang Wei Mai ile kesişim",
+      "source": "Deadman"
+    },
+    {
+      "code": "GB21",
+      "pinyin": "Jianjing",
+      "anatomicalLocation": "Omuz tepesinde, DU14 ile akromion ucu arasındaki orta noktada.",
+      "classicalSummary": "Omuz-boyun bölgesini açma ve Qi’nin inişini düzenleme; gebelikte iğneleme açısından özel dikkat.",
+      "extraordinaryConnection": "Yang Wei Mai ile kesişim",
+      "source": "Deadman"
+    },
+    {
+      "code": "GB26",
+      "pinyin": "Daimai",
+      "anatomicalLocation": "11. kaburga serbest ucunun altındaki dikey hat üzerinde, göbek düzeyinde.",
+      "classicalSummary": "Dai Mai’nin adını taşıyan nokta; bel kuşağı ve alt jiao düzenlenmesi.",
+      "extraordinaryConnection": "Dai Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "GB41",
+      "pinyin": "Zulinqi",
+      "anatomicalLocation": "Ayak sırtında, 4. ve 5. metatars tabanlarının birleşim yerinin distalindeki çöküntüde.",
+      "classicalSummary": "Dai Mai açılma noktası; yan gövde, kalça, başın yanları ve kuşak hattı.",
+      "extraordinaryConnection": "Dai Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "LR3",
+      "pinyin": "Taichong",
+      "anatomicalLocation": "Ayak sırtında, 1. ve 2. metatars kemikleri arasında, kemik birleşiminin distalindeki çöküntüde.",
+      "classicalSummary": "Karaciğer yuan-source noktası; Qi akışını yayma, tendonlar ve iç bacak hattı.",
+      "extraordinaryConnection": null,
+      "source": "Deadman"
+    },
+    {
+      "code": "REN6",
+      "pinyin": "Qihai",
+      "anatomicalLocation": "Ön orta hatta, göbeğin 1.5 cun altında.",
+      "classicalSummary": "Qi denizi; Qi’yi destekleme, alt jiao ve merkezleme.",
+      "extraordinaryConnection": "Ren Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "REN17",
+      "pinyin": "Shanzhong",
+      "anatomicalLocation": "Ön orta hatta, 4. interkostal aralık düzeyinde.",
+      "classicalSummary": "Qi’nin hui-meeting noktası; göğüs, solunum ve toplanan Qi.",
+      "extraordinaryConnection": "Ren Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "DU4",
+      "pinyin": "Mingmen",
+      "anatomicalLocation": "Arka orta hatta, L2 spinöz çıkıntısının altında.",
+      "classicalSummary": "Yaşam Kapısı; bel, Böbrek yangı ve Du Mai ekseniyle ilişkilendirilir.",
+      "extraordinaryConnection": "Du Mai",
+      "source": "Deadman"
+    },
+    {
+      "code": "DU20",
+      "pinyin": "Baihui",
+      "anatomicalLocation": "Başın orta hattında, kulak tepelerini birleştiren çizginin orta noktasına yakın.",
+      "classicalSummary": "Çok sayıda yang kanalının buluşması; başı yükseltme, eksen ve Shen.",
+      "extraordinaryConnection": "Du Mai",
+      "source": "Deadman + Qigong postür kılavuzu"
+    }
+  ],
+  "extraordinaryMeridians": [
+    {
+      "id": "du-mai",
+      "name": "Du Mai",
+      "teachingSummary": "Arka orta hat; omurga, baş ve yang organizasyonu",
+      "openingPoint": "SI3 Houxi",
+      "pairedPoint": "BL62 Shenmai",
+      "immortalName": "Lü Dongbin",
+      "coachId": "lu",
+      "dominantTheme": "Arka zincir, eksenel uzama, omurga organizasyonu"
+    },
+    {
+      "id": "ren-mai",
+      "name": "Ren Mai",
+      "teachingSummary": "Ön orta hat; yin, göğüs-karın-pelvis sürekliliği",
+      "openingPoint": "LU7 Lieque",
+      "pairedPoint": "KI6 Zhaohai",
+      "immortalName": "He Xiangu",
+      "coachId": "he",
+      "dominantTheme": "Nefes, ön gövde, merkez ve pelvis"
+    },
+    {
+      "id": "chong-mai",
+      "name": "Chong Mai",
+      "teachingSummary": "Derin merkez; kan, karın-göğüs ekseni",
+      "openingPoint": "SP4 Gongsun",
+      "pairedPoint": "PC6 Neiguan",
+      "immortalName": "Li Tieguai",
+      "coachId": "li",
+      "dominantTheme": "Merkez, iç bacak, göğüs ve dantian"
+    },
+    {
+      "id": "dai-mai",
+      "name": "Dai Mai",
+      "teachingSummary": "Bel çevresinde yatay kuşak",
+      "openingPoint": "GB41 Zulinqi",
+      "pairedPoint": "SJ5 Waiguan",
+      "immortalName": "Han Xiangzi",
+      "coachId": "han",
+      "dominantTheme": "Bel rotasyonu, yan gövde, spiral koordinasyon"
+    },
+    {
+      "id": "yin-qiao-mai",
+      "name": "Yin Qiao Mai",
+      "teachingSummary": "Medial bacak ve yin taraf; denge/uyku-göz bağlantıları",
+      "openingPoint": "KI6 Zhaohai",
+      "pairedPoint": "LU7 Lieque",
+      "immortalName": "Zhang Guolao",
+      "coachId": "zhang",
+      "dominantTheme": "Medial ağırlık hattı ve sağ-sol denge"
+    },
+    {
+      "id": "yang-qiao-mai",
+      "name": "Yang Qiao Mai",
+      "teachingSummary": "Lateral bacak ve yang taraf; postüral tonus",
+      "openingPoint": "BL62 Shenmai",
+      "pairedPoint": "SI3 Houxi",
+      "immortalName": "Lan Caihe",
+      "coachId": "lan",
+      "dominantTheme": "Lateral denge, dış bacak ve posterior hat"
+    },
+    {
+      "id": "yin-wei-mai",
+      "name": "Yin Wei Mai",
+      "teachingSummary": "İç yin ağları ve göğüs/kalp alanı",
+      "openingPoint": "PC6 Neiguan",
+      "pairedPoint": "SP4 Gongsun",
+      "immortalName": "Cao Guojiu",
+      "coachId": "cao",
+      "dominantTheme": "İç kol, göğüs, duygusal merkez"
+    },
+    {
+      "id": "yang-wei-mai",
+      "name": "Yang Wei Mai",
+      "teachingSummary": "Dış yang ağları; yan gövde, baş-boyun",
+      "openingPoint": "SJ5 Waiguan",
+      "pairedPoint": "GB41 Zulinqi",
+      "immortalName": "Zhongli Quan",
+      "coachId": "zhongli",
+      "dominantTheme": "Dış kol, yan hat ve üst gövde bağlantısı"
+    }
+  ]
+}

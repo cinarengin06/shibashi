@@ -3,15 +3,18 @@ import {router,useLocalSearchParams} from 'expo-router';
 import {useEffect,useRef} from 'react';
 import {StyleSheet,Text,View} from 'react-native';
 import {Card,Eyebrow,Metric,PrimaryButton,Screen,Section,Title} from '../components/ui';
+import {PracticeMeridianSummaryCard} from '../components/MeridianKnowledge';
 import {colors,fonts} from '../constants/theme';
 import {getShen} from '../data/fiveShen';
 import {useApp} from '../store/AppStore';
+import {practices} from '../data/content';
 import {getMasterSentence,masterSentences,toDomainShenId} from '../../../packages/shen-domain';
 
 export default function Result(){
  const p=useLocalSearchParams<{practiceId:string;duration:string;posture:string;balance:string;flow:string;samples?:string;shenId?:string;masterSentenceId?:string;feedback?:string}>();const{profile,addSession,addShenActivity,saveMasterSentence,savedMasterSentences}=useApp();const domainShenId=toDomainShenId(p.shenId||profile.selectedShenId);const shen=getShen(domainShenId==='xin'?'shen':domainShenId);const saved=useRef(false);
  const duration=Math.max(1,Number(p.duration)||1),posture=Number(p.posture),balance=Number(p.balance),flow=Number(p.flow),samples=Math.max(0,Number(p.samples)||0);
  const hasMeasurement=[posture,balance,flow].every(Number.isFinite)&&samples>=3;
+ const practiceMovementIds=p.practiceId?.startsWith('movement-')?[p.practiceId]:(practices.find(item=>item.id===p.practiceId)?.movementIds??[]);
  const fallbackSentence=getMasterSentence(domainShenId,0);const sentenceId=p.masterSentenceId||fallbackSentence.id;const sentence=masterSentences.find(item=>item.id===sentenceId)??fallbackSentence;const sentenceSaved=savedMasterSentences.some(item=>item.masterSentenceId===sentenceId);
  useEffect(()=>{if(saved.current||!hasMeasurement)return;saved.current=true;const now=new Date().toISOString();const xp=Math.max(0,Math.round(duration*5+(posture+balance+flow)/3));addSession({id:Date.now().toString(),practiceId:p.practiceId||'free',date:now,duration,postureScore:posture,balanceScore:balance,flowScore:flow,xp,corrections:[p.feedback||'Geçişleri sakin tut']});addShenActivity({id:`activity-${Date.now()}`,shenId:domainShenId,type:'practice',createdAt:now,minutes:duration,completed:true,movementQuality:flow,practiceId:p.practiceId||'free'})},[addSession,addShenActivity,balance,domainShenId,duration,flow,hasMeasurement,p.feedback,p.practiceId,posture]);
  return <Screen>
@@ -21,6 +24,7 @@ export default function Result(){
   {hasMeasurement?<View style={r.metrics}><Metric label="Duruş" value={posture} color={shen.color}/><Metric label="Akış" value={flow} color={shen.color}/><Metric label="Denge" value={balance} color={shen.color}/></View>:null}
   <Section title={`${shen.name} koç yorumu`}><Card style={{gap:10}}><Text style={r.coach}>“{p.feedback||'Tam beden görünürlüğünü koruyarak hareketi yeniden deneyebilirsin.'}”</Text><View style={r.line}/><Text style={[r.good,{color:shen.color}]}>ÖLÇÜM KAYNAĞI · MediaPipe 33 nokta</Text><Text style={r.improve}>Nefes puanlanmadı; kamera nefes kalitesini güvenilir biçimde ölçmez.</Text></Card></Section>
   <Card style={[r.task,{borderColor:`${shen.color}55`}]}><Ionicons name="sparkles" color={shen.color} size={22}/><View style={{flex:1}}><Text style={[r.taskLabel,{color:shen.color}]}>PRATİK SONRASI MİKRO GÖREV</Text><Text style={r.taskText}>{shen.task}</Text></View></Card>
+  <PracticeMeridianSummaryCard movementIds={practiceMovementIds} accent={shen.color}/>
   <Card style={r.master}><Text style={[r.taskLabel,{color:shen.color}]}>USTADAN BİR CÜMLE</Text><Text style={r.masterText}>“{sentence.text}”</Text><PrimaryButton label={sentenceSaved?'Defterine eklendi':'Defterime ekle'} icon={sentenceSaved?'checkmark':'bookmark-outline'} disabled={sentenceSaved} onPress={()=>saveMasterSentence({id:`saved-${Date.now()}`,masterSentenceId:sentenceId,savedAt:new Date().toISOString(),practiceId:p.practiceId})}/><PrimaryButton label="Bugün bende ne ifade etti?" icon="create-outline" onPress={()=>router.push({pathname:'/reflection',params:{shenId:domainShenId,practiceId:p.practiceId,masterSentenceId:sentenceId}})}/></Card>
   <Text style={r.summary}>{duration} dakika · {samples} geçerli ölçüm karesi · Nefes puanlanmadı</Text>
   <PrimaryButton label="Ana ekrana dön" icon="home" onPress={()=>router.replace('/(tabs)')}/><PrimaryButton label={`${shen.name} günlüğüne not ekle`} icon="book-outline" onPress={()=>router.replace('/(tabs)/journal')}/>

@@ -4,6 +4,7 @@ import {router,useLocalSearchParams} from 'expo-router';
 import {useMemo,useState} from 'react';
 import {Pressable,StyleSheet,Text,TextInput,View} from 'react-native';
 import {Card,Eyebrow,Screen,Title} from '../components/ui';
+import {CoachMeridianConnection} from '../components/MeridianKnowledge';
 import {colors,radii} from '../constants/theme';
 import {coachIntents,CoachIntent,inferCoachIntent,shibashiCoaches} from '../data/coaches';
 import {getShen} from '../data/fiveShen';
@@ -32,6 +33,7 @@ export default function Coaches(){
    <View style={s.intents}>{coachIntents.map(item=><Pressable key={item.id} onPress={()=>send(item.label,item.id)} style={s.intent}><Text style={s.intentText}>{item.label}</Text></Pressable>)}</View>
    <View style={s.inputRow}><TextInput value={input} onChangeText={setInput} onSubmitEditing={()=>send(input)} placeholder="Bugün nasıl hissettiğini yaz…" placeholderTextColor={colors.muted} style={s.input}/><Pressable onPress={()=>send(input)} style={[s.send,{backgroundColor:shen.color}]}><Ionicons name="arrow-up" color={colors.ink} size={20}/></Pressable></View>
   </Card>
+  <CoachMeridianConnection coachId={coach.id} accent={shen.color}/>
  </Screen>;
 }
 

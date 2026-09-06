@@ -1,7 +1,7 @@
 import Link from "next/link";
 import styles from "./web-header.module.css";
 
-type WebHeaderTab = "home" | "practice" | "practice2" | "posture" | "newPosture" | "journey" | "learning" | "journal" | "profile";
+type WebHeaderTab = "home" | "practice" | "practice2" | "posture" | "newPosture" | "journey" | "bodyLines" | "learning" | "journal" | "profile";
 
 const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
   { id: "home", label: "Özel Odam", href: "/" },
@@ -10,6 +10,7 @@ const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
   { id: "posture", label: "Bedenini Gör", href: "/?tab=posture" },
   { id: "newPosture", label: "New_posture", href: "/?tab=newPosture" },
   { id: "journey", label: "Haritan", href: "/?tab=journey" },
+  { id: "bodyLines", label: "Beden Hatları", href: "/beden-hatlari" },
   { id: "learning", label: "Yaşayarak Öğren", href: "/yasayarak-ogren" },
   { id: "journal", label: "Günlüğüm", href: "/?tab=journal" },
   { id: "profile", label: "Gelişimim", href: "/?tab=profile" },

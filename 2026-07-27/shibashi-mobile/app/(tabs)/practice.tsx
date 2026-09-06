@@ -3,6 +3,7 @@ import {router} from 'expo-router';
 import {useMemo,useState} from 'react';
 import {ImageBackground,Pressable,StyleSheet,Text,View} from 'react-native';
 import {Card,Eyebrow,ProgressBar,Screen,Title} from '../../components/ui';
+import {PersonalMeridianSuggestionMobile} from '../../components/MeridianKnowledge';
 import {colors,radii} from '../../constants/theme';
 import {movements,practices} from '../../data/content';
 import {getShen} from '../../data/fiveShen';
@@ -14,6 +15,7 @@ const filters=['Tümü','Rahatlama','Enerji','Denge','Nefes'] as const;
 export default function Practice(){
  const{profile,sessions,postureReports,completedStories}=useApp();const shen=getShen(profile.selectedShenId);const[filter,setFilter]=useState<(typeof filters)[number]>('Tümü');
  const suggested=practices.find(x=>x.id===shen.practiceId&&x.movementIds.every(id=>Boolean(getGhostSequence(id))))??practices.find(x=>x.movementIds.every(id=>Boolean(getGhostSequence(id))))??practices[0];
+ const completedMovementIds=sessions.flatMap(session=>session.practiceId.startsWith('movement-')?[session.practiceId]:(practices.find(item=>item.id===session.practiceId)?.movementIds??[]));
  const visiblePractices=useMemo(()=>practices.filter(item=>filter==='Tümü'||item.focus===filter||(filter==='Nefes'&&item.movementIds.some(id=>movements.find(m=>m.id===id)?.focus==='Nefes'))),[filter]);
  return <Screen>
   <Eyebrow>PRATİK · ÖĞREN · HİZALAN</Eyebrow><Title>Bugün bedenin neye ihtiyaç duyuyor?</Title>
@@ -22,6 +24,8 @@ export default function Practice(){
    <Pressable onPress={()=>router.push('/living-learning')} style={[p.feature,{borderColor:`${shen.color}55`}]}><View style={[p.featureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name="sparkles-outline" color={shen.color} size={25}/></View><Text style={[p.featureLabel,{color:shen.color}]}>YAŞAYARAK ÖĞREN</Text><Text style={p.featureTitle}>Hikâyeyi yaşa</Text><Text style={p.featureMeta}>{Math.min(5,completedStories.length)}/5 sahne tamamlandı</Text><ProgressBar value={Math.min(100,completedStories.length/5*100)} color={shen.color}/></Pressable>
    <Pressable onPress={()=>router.push('/posture')} style={[p.feature,{borderColor:`${shen.color}55`}]}><View style={[p.featureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name="scan-outline" color={shen.color} size={25}/></View><Text style={[p.featureLabel,{color:shen.color}]}>POSTÜR AYNASI</Text><Text style={p.featureTitle}>Beden çizgini gör</Text><Text style={p.featureMeta}>{postureReports.length?`Son gerçek ölçüm ${postureReports[0].score}`:'Henüz ölçülmedi · ilk taramanı başlat'}</Text>{postureReports[0]?<ProgressBar value={postureReports[0].score} color={shen.color}/>:null}</Pressable>
   </View>
+  <Pressable onPress={()=>router.push('/body-lines')} style={[p.bodyLinesPortal,{borderColor:`${shen.color}55`}]}><View style={[p.bodyLinesIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name="git-network-outline" color={shen.color} size={27}/></View><View style={{flex:1}}><Text style={[p.featureLabel,{color:shen.color}]}>BEDEN HATLARI</Text><Text style={p.featureTitle}>18 hareketin bedenindeki yolunu gör</Text><Text style={p.featureMeta}>Beden · klasik hatlar · derin bağlantılar</Text></View><Ionicons name="arrow-forward-circle-outline" color={shen.color} size={28}/></Pressable>
+  <PersonalMeridianSuggestionMobile completedMovementIds={completedMovementIds} accent={shen.color} onSelect={movementId=>router.push({pathname:'/movement/[id]',params:{id:movementId}})}/>
   <View style={p.filters}>{filters.map(x=><Pressable key={x} onPress={()=>setFilter(x)} style={[p.chip,filter===x&&{backgroundColor:shen.color}]}><Text style={[p.chipText,filter===x&&{color:colors.ink}]}>{x}</Text></Pressable>)}</View>
   <Text style={p.section}>RUTİNLER</Text>
   {visiblePractices.length?visiblePractices.map(x=>{const done=sessions.some(s=>s.practiceId===x.id);const locked=Boolean(x.locked)||x.movementIds.some(id=>!getGhostSequence(id));return <Pressable key={x.id} disabled={locked} onPress={()=>router.push({pathname:'/practice-session',params:{practiceId:x.id}})}><Card style={[p.routine,locked&&{opacity:.45}]}><ImageBackground source={movementImages[movements.find(m=>m.id===x.movementIds[0])?.order??1]} style={p.cover} imageStyle={p.coverImage}><View style={p.coverShade}/><Ionicons name={locked?'lock-closed':done?'checkmark':'play'} color={colors.cream} size={22}/></ImageBackground><View style={{flex:1,gap:4}}><Text style={p.title}>{x.title}</Text><Text style={p.meta}>{x.duration} dk · {x.focus} · {x.movementIds.length} hareket</Text>{locked?<Text style={[p.doneText,{color:colors.gold}]}>KİLİTLİ · İLK 3 HAREKET HAZIR</Text>:done&&<Text style={[p.doneText,{color:shen.color}]}>TAMAMLANDI</Text>}</View><Ionicons name={locked?'lock-closed':'chevron-forward'} color={colors.muted} size={20}/></Card></Pressable>}) : <Card><Text style={p.meta}>Bu odakta henüz bir rutin yok. 18 temel hareketten seçim yapabilirsin.</Text></Card>}
@@ -42,6 +46,8 @@ const p=StyleSheet.create({
  play:{height:46,borderRadius:radii.pill,alignSelf:'flex-start',paddingHorizontal:16,flexDirection:'row',alignItems:'center',gap:8,marginTop:13,shadowColor:'#000',shadowOpacity:.2,shadowRadius:10,shadowOffset:{width:0,height:6},elevation:3},
  playText:{color:colors.ink,fontSize:16,fontWeight:'900'},
  featureGrid:{flexDirection:'row',gap:9},
+ bodyLinesPortal:{alignItems:'center',backgroundColor:colors.surface,borderRadius:radii.md,borderWidth:1,flexDirection:'row',gap:12,minHeight:108,padding:14},
+ bodyLinesIcon:{alignItems:'center',borderRadius:27,height:54,justifyContent:'center',width:54},
  feature:{flex:1,minHeight:196,borderRadius:radii.md,backgroundColor:colors.surface,padding:13,borderWidth:1,gap:7,shadowColor:'#000',shadowOpacity:.14,shadowRadius:12,shadowOffset:{width:0,height:7},elevation:3},
  featureIcon:{width:47,height:47,borderRadius:24,alignItems:'center',justifyContent:'center'},
  featureLabel:{fontSize:17,fontWeight:'900',letterSpacing:1},

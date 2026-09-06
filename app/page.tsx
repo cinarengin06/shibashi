@@ -13,6 +13,7 @@ import type { HomeFlowSummary } from "@/features/home/types/home";
 import type { LivingPracticeResult } from "@/packages/living-learning";
 import { getStaticPractice, shortFlowDefinitions } from "@/packages/practice2";
 import { ShibashiAuthGate } from "@/components/shibashi-auth-gate";
+import { CoachMeridianCard, MeridianExplorer, MovementMeridianCard, PersonalMeridianSuggestion, PracticeMeridianSummaryCard } from "@/components/meridian/MeridianKnowledge";
 import {getBrowserSyncCode,setBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
 import { useShibashiAuth } from "@/lib/supabase-auth";
 import { shenThemes, visualThemes, type VisualThemeId } from "@/packages/design-tokens";
@@ -559,13 +560,14 @@ function getInnerJourneyScene(movementId: number) {
   return innerJourneyScenes[index] ?? innerJourneyScenes[0];
 }
 
-const tabs: { id: TabId; label: string; icon: string }[] = [
+const tabs: { id: TabId | "bodyLines"; label: string; icon: string }[] = [
   { id: "home", label: "Özel Odam", icon: "◉" },
   { id: "practice2", label: "Akışa Gir", icon: "⌁" },
   { id: "practice", label: "Yolculuk", icon: "◎" },
   { id: "posture", label: "Bedenini Gör", icon: "↕" },
   { id: "newPosture", label: "New_posture", icon: "◫" },
   { id: "journey", label: "Haritan", icon: "☯" },
+  { id: "bodyLines", label: "Beden Hatları", icon: "⌇" },
   { id: "learning", label: "Yaşayarak Öğren", icon: "✦" },
   { id: "journal", label: "Günlüğüm", icon: "◌" },
   { id: "profile", label: "Gelişimim", icon: "☰" },
@@ -1798,6 +1800,7 @@ export default function RitimKapisiOS() {
         ) : null}
         {onboardingComplete && activeTab === "practice" ? (
           <PracticeScreen
+            completedMovementIds={shenActivities.map((activity) => activity.practiceId).filter((id): id is string => Boolean(id?.startsWith("movement-")))}
             completion={completion}
             movement={movement}
             musicState={soundState}
@@ -1911,7 +1914,7 @@ export default function RitimKapisiOS() {
               <button
                 className={`nav-button nav-tab-${tab.id} ${activeTab === tab.id ? "nav-button-active" : ""}`}
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => tab.id === "bodyLines" ? window.location.assign("/beden-hatlari") : setActiveTab(tab.id)}
                 type="button"
               >
                 <strong>{tab.icon}</strong>
@@ -4086,6 +4089,7 @@ function PostureScreen({
 }
 
 function PracticeScreen({
+  completedMovementIds,
   completion,
   latestPostureReport,
   movement,
@@ -4104,6 +4108,7 @@ function PracticeScreen({
   onStart,
   onStopMusic,
 }: {
+  completedMovementIds: string[];
   completion: number;
   latestPostureReport?: PostureReport;
   movement: Movement;
@@ -5108,6 +5113,9 @@ function PracticeScreen({
           </div>
         </div>
       </div>
+      {phase === "complete" ? <PracticeMeridianSummaryCard movementIds={[movement.id]} accent={selectedShen.color} /> : null}
+      <PersonalMeridianSuggestion completedMovementIds={completedMovementIds} accent={selectedShen.color} onSelectMovement={onSelectMovement} />
+      <MovementMeridianCard movementId={movement.id} accent={selectedShen.color} />
       <MovementLibraryShowcase activeMovementId={movement.id} onSelectMovement={onSelectMovement} />
     </section>
   );
@@ -7371,6 +7379,7 @@ function HumanMap({
   }
 
   return (
+    <>
     <div className="glass-card human-map-card neijing-card cut-safe-card">
       <div className="section-heading cut-safe-heading" style={{ margin: "0 0 12px" }}>
         <h2>8 Kapılı Beden Haritan</h2>
@@ -7488,6 +7497,8 @@ function HumanMap({
         </div>
       </div>
     </div>
+    <MeridianExplorer accent={selectedShen.color} />
+    </>
   );
 }
 
@@ -8059,6 +8070,7 @@ function JourneyGuideSelector({
           );
         })}
       </div>
+      <CoachMeridianCard coachId={selectedCoach.id} accent={getShenById(selectedCoach.shenId).color} />
       <div className="journey-guide-chat">
         <div className="journey-guide-chat-head"><span className="eyebrow">REHBERLE KONUŞ</span><button onClick={()=>speakCoach(lastCoachMessage,selectedCoach)} type="button">Sesi dinle ♪</button></div>
         <div className="journey-guide-chat-log">{messages.map(message=><p className={`journey-guide-message journey-guide-message-${message.from}`} key={message.id}>{message.text}</p>)}</div>

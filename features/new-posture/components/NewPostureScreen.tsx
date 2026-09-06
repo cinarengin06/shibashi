@@ -2,6 +2,7 @@
 
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./new-posture.module.css";
+import { meridianClinicalBoundary } from "@/packages/meridian-knowledge";
 
 type Landmark = { name: string; x: number; y: number; score: number };
 type MirrorView = "front" | "side" | "back";
@@ -439,6 +440,7 @@ export function NewPostureScreen({
               {cameraState === "denied" ? <div className={styles.landingError}>Kamera izni verilmedi. Tarayıcı ayarlarından kamera iznini açıp yeniden dene.</div> : null}
               {cameraState === "error" ? <div className={styles.landingError}>Kamera başlatılamadı. Başka bir kamera veya tarayıcıyla yeniden dene.</div> : null}
             </div>
+            <div className={styles.traditionBoundary}><strong>Ölçüm ve gelenek ayrı katmanlardır.</strong><span>Postür puanı yalnızca kamera ile görülen anatomik hizadan hesaplanır. Meridyen öğretimi puana dönüştürülmez.</span></div>
           </div>
           <div className="posture-landing-figure" aria-hidden="true">
             <NewPostureLandingPreview />
@@ -459,6 +461,7 @@ export function NewPostureScreen({
             <div className={styles.captureStrip}>{views.map((item) => <button aria-pressed={resultView === item.id} className={resultView === item.id ? styles.captureActive : undefined} key={item.id} onClick={() => setResultView(item.id)} type="button">{captures[item.id] ? <img alt={`${item.label} görünüm kaydı`} src={captures[item.id]} /> : null}<span>{item.label}</span></button>)}</div>
             <div className={styles.resultRows}>{metrics.map((metric) => <div className={styles.resultRow} key={metric.label}><span>{metric.label}</span><strong className={metric.value < 76 ? styles.metricWarm : undefined}>{metric.value}</strong></div>)}</div>
             <p className={styles.resultInsight}>Dengen iyi. Sol omzunda hafif yükselme var. Bugünkü pratiğinde omuzlarını bırakmaya odaklan.</p>
+            <p className={styles.traditionBoundary}><strong>Geleneksel öğretim notu</strong><span>{meridianClinicalBoundary}</span></p>
             <div className={styles.resultActions}><button className={styles.secondary} onClick={restart} type="button">Yeniden ölç</button><button className={styles.primary} onClick={onNavigateToPractice} type="button">Bugünkü pratiğe geç</button></div>
           </div>
         </div>

@@ -32,11 +32,11 @@ Before expanding data features, keep migrations additive, preserve `schemaVersio
 
 ## Refactor sequence
 
-The current extraction pass has moved web home/posture/practice/journey data and browser posture-canvas drawing helpers into `apps/web/features/`. On mobile, onboarding steps/styles and the home dashboard cards/styles now live under `apps/mobile/components/`; their route files are composition layers.
+The current extraction pass has moved web home/posture/practice/journey data, the posture assessment renderer, camera status labels, and browser posture-canvas drawing helpers into `apps/web/features/`. On mobile, onboarding steps/styles and the home dashboard cards/styles now live under `apps/mobile/components/`; their route files are composition layers.
 
 Remaining work, measured on 2026-10-18:
 
-1. Continue reducing `apps/web/app/page.tsx` (5,070 lines) by moving the practice and posture screen coordinators and their browser services into their existing feature folders. Preserve URL and tab navigation behavior.
+1. Continue reducing `apps/web/app/page.tsx` (4,731 lines) by moving the practice and posture screen coordinators and their browser services into their existing feature folders. Preserve URL and tab navigation behavior.
 2. Split the remaining mobile screens above roughly 500 lines. Current largest candidates are `apps/mobile/app/(tabs)/pratik2.tsx` (923), `apps/mobile/app/posture-session.tsx` (510), and `apps/mobile/app/(tabs)/profile.tsx` (490). The home route is now 542 lines and can be revisited if it grows.
 3. Prefer shared domain types and calculations over sharing React UI between Next.js and React Native. Extract a `packages/*` module only when it is genuinely platform independent and both clients consume it.
 4. Add cross-platform validation around sync payload migrations, auth/data ownership, camera permission flows, and offline behavior when implementation work is requested.

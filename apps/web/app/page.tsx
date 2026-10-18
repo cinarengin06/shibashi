@@ -156,7 +156,7 @@ const tabs: { id: TabId | "bodyLines"; label: string; icon: string }[] = [
   { id: "practice2", label: "Akışa Gir", icon: "⌁" },
   { id: "practice", label: "Yolculuk", icon: "◎" },
   { id: "posture", label: "Bedenini Gör", icon: "↕" },
-  { id: "newPosture", label: "New_posture", icon: "◫" },
+  { id: "newPosture", label: "Yeni Postür", icon: "◫" },
   { id: "journey", label: "Haritan", icon: "☯" },
   { id: "bodyLines", label: "Beden Hatları", icon: "⌇" },
   { id: "learning", label: "Yaşayarak Öğren", icon: "✦" },

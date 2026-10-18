@@ -8,6 +8,7 @@ import { CinematicPracticeStage } from "./CinematicPracticeStage";
 import { LivingCameraPractice } from "./LivingCameraPractice";
 import { PracticeCompletion } from "./PracticeCompletion";
 import { SceneSelector } from "./SceneSelector";
+import { MeridianLivingExercise } from "./MeridianLivingExercise";
 import styles from "./living-learning.module.css";
 
 export function LivingLearningScreen({ embedded = false }: { embedded?: boolean }) {
@@ -42,7 +43,8 @@ export function LivingLearningScreen({ embedded = false }: { embedded?: boolean 
           {mode === "watch" ? <div className={styles.memoryPath}><article className={styles.memoryPathActive}><span>01</span><div><strong>Sahneyi hisset</strong><small>{selectedScene.name} · {selectedScene.light}</small></div></article><i/><article><span>02</span><div><strong>Öğretmeni izle</strong><small>Beş okunur hareket karesi</small></div></article><i/><article><span>03</span><div><strong>Sen yap</strong><small>Kamerada aynı hikâyeyi canlandır</small></div></article></div> : null}
         </section>
 
-        {mode === "watch" ? <div className={styles.scenesWrap}><SceneSelector onSelect={setSelectedSceneId} scenes={livingScenes} selectedId={selectedSceneId} />
+        {mode === "watch" ? <div className={styles.scenesWrap}><MeridianLivingExercise />
+          <SceneSelector onSelect={setSelectedSceneId} scenes={livingScenes} selectedId={selectedSceneId} />
           <section className={styles.memoryPromise}><p className={styles.eyebrow}>Hafıza çapası</p><blockquote>“{selectedScene.metaphor}.”</blockquote><span>Yarın benzer bir yaşam anı geldiğinde bedenin bu hareketi kendiliğinden hatırlasın.</span></section>
         </div> : null}
       </>}

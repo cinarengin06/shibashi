@@ -39,7 +39,7 @@ Görseller OpenAI yerleşik görsel üretim aracıyla, ilk kare seri kimliği ol
 Her hareket için ana pozdan hemen önce gelen ikinci bir gerçek görsel üretildi. Üretim modu `identity-preserving image edit`: eğitmen, kıyafet, ışık, kamera, Bagua zemini ve dojo sabit tutulurken yalnızca ağırlık aktarımı ile kol/bacak fazı değiştirildi. Web ve mobile arayüzleri bu iki kare arasında 6.2 saniyelik `easeInOut` nefes ritminde ileri–geri geçiş yapar; yeşim-altın enerji taraması hareket yönünü güçlendirir.
 
 - Başlangıç kareleri (web): `public/images/body-lines-motion/01.jpg`–`18.jpg`
-- Başlangıç kareleri (mobile): `2026-07-27/shibashi-mobile/assets/body-lines-motion/01.jpg`–`18.jpg`
+- Başlangıç kareleri (mobile): `apps/mobile/assets/body-lines-motion/01.jpg`–`18.jpg`
 - Ana poz kareleri: ilgili platformdaki `body-lines/01.jpg`–`18.jpg`
 - Hareket kapatma: Görselin sağ üstündeki `CANLI` düğmesi.
 - Erişilebilirlik: İşletim sisteminde “hareketi azalt” açıksa geçiş durur ve ana poz gösterilir.

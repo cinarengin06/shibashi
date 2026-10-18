@@ -12,19 +12,19 @@ Bu proje Next.js ile hazirlanmis yerel bir demo uygulamasidir.
 Terminalde proje klasorune gir:
 
 ```bash
-cd ritim-kapisi-os
+cd /Users/cinarengin/Documents/Codex
 ```
 
 Bagimliliklari yukle:
 
 ```bash
-npm install
+npm ci --prefix apps/web
 ```
 
 Uygulamayi 3005 portunda baslat:
 
 ```bash
-npm run dev:3005
+npm run dev:web:sync
 ```
 
 Tarayicida ac:
@@ -39,5 +39,5 @@ http://127.0.0.1:3005
 - Eger 3005 portu doluysa su komutla baska portta calistirabilirsin:
 
 ```bash
-npm run dev -- --port 3006
+npm --prefix apps/web run dev -- --port 3006
 ```

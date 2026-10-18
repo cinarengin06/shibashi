@@ -17,8 +17,8 @@ CAMERA_OFF -> FIND_BODY -> READY_POSITION -> RAISING -> HOLDING -> LOWERING -> C
 
 ## Test
 
-1. `npm install`
-2. `npm run dev:3005`
+1. `npm ci --prefix apps/web`
+2. `npm run dev:web:sync`
 3. `http://127.0.0.1:3005` aç.
 4. Pratik > Hazırlık > `Isınma: Eklemleri Aç` dersini seç.
 5. Sağ panelde `Kamerayı Aç` butonuna bas ve kamera izni ver.

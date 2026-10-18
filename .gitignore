@@ -1,11 +1,16 @@
 .next
+.turbo
 node_modules
+node_modules*/
+coverage
 out
 dist
+.expo
+.vercel
 .DS_Store
 *.log
-.vercel
 .env*
 .env.local
 !.env.example
 .data
+*.tsbuildinfo

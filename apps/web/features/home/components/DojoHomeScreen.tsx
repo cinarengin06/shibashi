@@ -3,6 +3,7 @@
 import { calculateShenProgress, toDomainShenId, type ShenActivity } from "@/packages/shen-domain";
 import { getStaticPractice, shortFlowDefinitions } from "@/packages/practice2";
 import { HomeDashboard } from "./HomeDashboard";
+import { isCapturedPracticePhoto } from "../utils/practice-photo";
 import type { HomeFlowSummary, HomeShenId } from "../types/home";
 
 type PracticeRecord = {
@@ -99,10 +100,6 @@ export function getPracticeStreak(practiceGallery: Array<Pick<PracticeRecord, "c
     return dates.has(key);
   });
   return { activeDays, current, longest, todayIndex };
-}
-
-export function isCapturedPracticePhoto(value: unknown): value is string {
-  return typeof value === "string" && /^(?:data:image\/|blob:|https?:\/\/)/i.test(value.trim());
 }
 
 function toHomeShen(shen: ShenOption, copy: ShenCopy, period: string) {

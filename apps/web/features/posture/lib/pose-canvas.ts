@@ -197,3 +197,9 @@ export function colorWithAlpha(color: string, alpha: number) {
 }
 
 
+export function syncPoseCanvasSize(canvas: HTMLCanvasElement | null, video: HTMLVideoElement | null) {
+  if (!canvas || !video || video.videoWidth === 0 || video.videoHeight === 0) return;
+
+  if (canvas.width !== video.videoWidth) canvas.width = video.videoWidth;
+  if (canvas.height !== video.videoHeight) canvas.height = video.videoHeight;
+}

@@ -1,4 +1,4 @@
-import type { PostureAnalysisSnapshot, PostureView } from "@/packages/posture-analysis";
+import type { PoseKeypoint, PostureAnalysisSnapshot, PostureView } from "@/packages/posture-analysis";
 
 export type PostureRenderMode = "3d" | "2d";
 export type PostureAssessmentStep = "intro" | "history" | "captured" | "processing" | PostureView | "result";
@@ -23,4 +23,13 @@ export type PostureReport = {
   timeLabel: string;
   trainerVisible?: boolean;
   trendText: string;
+};
+
+export type Pose = {
+  keypoints?: PoseKeypoint[];
+};
+
+export type PoseDetector = {
+  dispose?: () => void;
+  estimatePoses: (input: HTMLVideoElement, config?: { flipHorizontal?: boolean }) => Promise<Pose[]>;
 };

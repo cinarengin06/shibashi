@@ -3,6 +3,8 @@
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./new-posture.module.css";
 import { meridianClinicalBoundary } from "@/packages/meridian-knowledge";
+import { analyzePosture, type PoseKeypoint, type PostureAnalysisSnapshot } from "@/packages/posture-analysis";
+import { aggregatePostureAnalysisSnapshots, toPostureAnalysisSnapshot } from "@/features/posture/lib/posture-session";
 
 type Landmark = { name: string; x: number; y: number; score: number };
 type MirrorView = "front" | "side" | "back";
@@ -85,7 +87,8 @@ export function NewPostureScreen({
   const captureReadyTimerRef = useRef<number | null>(null);
   const lastVoiceAtRef = useRef(0);
   const capturesRef = useRef<Partial<Record<MirrorView, string>>>({});
-  const viewScoresRef = useRef<Partial<Record<MirrorView, number>>>({});
+  const viewAnalysesRef = useRef<Partial<Record<MirrorView, PostureAnalysisSnapshot>>>({});
+  const postureAnalysisSamplesRef = useRef<Partial<Record<MirrorView, PostureAnalysisSnapshot[]>>>({});
   const assessmentScoreRef = useRef(70);
   const scoreTargetRef = useRef<number | null>(null);
   const viewReadyAfterRef = useRef(0);
@@ -96,6 +99,7 @@ export function NewPostureScreen({
   const [landmarks, setLandmarks] = useState<Landmark[]>([]);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [captures, setCaptures] = useState<Partial<Record<MirrorView, string>>>({});
+  const [reportAnalyses, setReportAnalyses] = useState<Partial<Record<MirrorView, PostureAnalysisSnapshot>>>({});
   const [finalScore, setFinalScore] = useState(78);
   const [captureState, setCaptureState] = useState<CaptureState>("aligning");
   const [holdProgress, setHoldProgress] = useState(0);
@@ -109,7 +113,21 @@ export function NewPostureScreen({
   const assessment = useMemo(() => assessLandmarks(landmarks, view.id), [landmarks, view.id]);
   const resultPhoto = captures.front ?? captures.side ?? captures.back;
   const selectedResultPhoto = captures[resultView] ?? resultPhoto;
-  const metrics = useMemo(() => buildMetrics(finalScore), [finalScore]);
+  const selectedAnalysis = reportAnalyses[resultView];
+  const metrics = useMemo(() => buildMetrics(selectedAnalysis), [selectedAnalysis]);
+
+  useEffect(() => {
+    if (stage !== "live" || cameraState !== "ready") return;
+    if (!assessment.matched) {
+      postureAnalysisSamplesRef.current[view.id] = [];
+      return;
+    }
+    if (!holdStartedRef.current || !landmarks.length) return;
+
+    const sample = toPostureAnalysisSnapshot(analyzePosture(toPoseKeypoints(landmarks), 0, "", view.id));
+    const samples = postureAnalysisSamplesRef.current[view.id] ?? [];
+    postureAnalysisSamplesRef.current[view.id] = [...samples.slice(-59), sample];
+  }, [assessment.matched, cameraState, landmarks, stage, view.id]);
 
   const stopCamera = useCallback(() => {
     detectionSessionRef.current += 1;
@@ -312,10 +330,16 @@ export function NewPostureScreen({
       return;
     }
     const nextCaptures = { ...capturesRef.current, [view.id]: image };
-    const nextScores = { ...viewScoresRef.current, [view.id]: assessmentScoreRef.current };
+    const rawSamples = postureAnalysisSamplesRef.current[view.id] ?? [];
+    const samples = rawSamples.length
+      ? rawSamples
+      : [toPostureAnalysisSnapshot(analyzePosture(toPoseKeypoints(landmarks), 0, "", view.id))];
+    const measuredAnalysis = aggregatePostureAnalysisSnapshots(samples);
+    const nextAnalyses = { ...viewAnalysesRef.current, [view.id]: measuredAnalysis };
     capturesRef.current = nextCaptures;
-    viewScoresRef.current = nextScores;
+    viewAnalysesRef.current = nextAnalyses;
     setCaptures(nextCaptures);
+    setReportAnalyses(nextAnalyses);
     setCaptureState("captured");
     setHoldProgress(100);
     playCaptureClick();
@@ -341,10 +365,10 @@ export function NewPostureScreen({
       }, 3300);
       return;
     }
-    const scores = Object.values(nextScores).filter((score): score is number => typeof score === "number");
-    const completedScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / Math.max(1, scores.length));
+    const analyses = Object.values(nextAnalyses).filter((analysis): analysis is PostureAnalysisSnapshot => Boolean(analysis));
+    const completedScore = Math.round(analyses.reduce((sum, analysis) => sum + analysis.axisScore, 0) / Math.max(1, analyses.length));
     setFinalScore(completedScore);
-    const report = buildArchiveReport(nextCaptures as Record<MirrorView, string>, nextScores, completedScore);
+    const report = buildArchiveReport(nextCaptures as Record<MirrorView, string>, nextAnalyses as Record<MirrorView, PostureAnalysisSnapshot>, completedScore);
     void saveMirrorSession(nextCaptures, completedScore);
     onReportCaptured?.(report);
     setResultView("front");
@@ -402,8 +426,10 @@ export function NewPostureScreen({
     setStage("intro");
     setViewIndex(0);
     setCaptures({});
+    setReportAnalyses({});
     capturesRef.current = {};
-    viewScoresRef.current = {};
+    viewAnalysesRef.current = {};
+    postureAnalysisSamplesRef.current = {};
     setLandmarks([]);
     setFinalScore(78);
     setDisplayScore(null);
@@ -459,8 +485,8 @@ export function NewPostureScreen({
           <div className={styles.resultPortrait}>{selectedResultPhoto ? <img alt={`${views.find((item) => item.id === resultView)?.label ?? "Bugünkü"} postür ölçümü`} src={selectedResultPhoto} /> : <div className={styles.emptyPortrait}>Fotoğraf bekleniyor</div>}<div className={styles.resultScore}><span>TEMELİN</span><strong>{finalScore}</strong></div></div>
           <div className={styles.resultPanel}>
             <div className={styles.captureStrip}>{views.map((item) => <button aria-pressed={resultView === item.id} className={resultView === item.id ? styles.captureActive : undefined} key={item.id} onClick={() => setResultView(item.id)} type="button">{captures[item.id] ? <img alt={`${item.label} görünüm kaydı`} src={captures[item.id]} /> : null}<span>{item.label}</span></button>)}</div>
-            <div className={styles.resultRows}>{metrics.map((metric) => <div className={styles.resultRow} key={metric.label}><span>{metric.label}</span><strong className={metric.value < 76 ? styles.metricWarm : undefined}>{metric.value}</strong></div>)}</div>
-            <p className={styles.resultInsight}>Dengen iyi. Sol omzunda hafif yükselme var. Bugünkü pratiğinde omuzlarını bırakmaya odaklan.</p>
+            <div className={styles.resultRows}>{metrics.map((metric) => <div className={styles.resultRow} key={metric.label}><span>{metric.label}</span><strong className={metric.score !== undefined && metric.score < 76 ? styles.metricWarm : undefined}>{metric.value}</strong></div>)}</div>
+            <p className={styles.resultInsight}>{selectedAnalysis?.feedback ?? "Bu görünüm için analiz verisi bulunamadı."}{selectedAnalysis?.flags.length ? ` ${selectedAnalysis.flags.join(" · ")}` : ""}</p>
             <p className={styles.traditionBoundary}><strong>Geleneksel öğretim notu</strong><span>{meridianClinicalBoundary}</span></p>
             <div className={styles.resultActions}><button className={styles.secondary} onClick={restart} type="button">Yeniden ölç</button><button className={styles.primary} onClick={onNavigateToPractice} type="button">Bugünkü pratiğe geç</button></div>
           </div>
@@ -555,13 +581,15 @@ function assessLandmarks(items: readonly Landmark[], view: MirrorView) {
   return { ready: true, matched: score >= 70, score, cue: view === "back" ? "Arka görünümün hazır. Bu sakinliği koru." : "Dengen iyi. Bu sakinliği koru.", problemJoint: undefined as string | undefined };
 }
 
-function buildMetrics(score: number) {
-  const base = score || 78;
+function buildMetrics(analysis?: PostureAnalysisSnapshot) {
+  if (!analysis) return [];
   return [
-    { label: "Dikey eksen", value: Math.min(96, base + 6) },
-    { label: "Omuz–kalça dengesi", value: Math.max(55, base - 6) },
-    { label: "Diz–ayak yönü", value: Math.min(94, base + 3) },
-    { label: "Beden merkezi", value: Math.max(58, base - 2) },
+    { label: "Omuz hizası", value: String(analysis.shoulderScore), score: analysis.shoulderScore },
+    { label: "Omuz eğimi", value: `${Math.abs(analysis.shoulderTilt).toFixed(1)}°` },
+    { label: "Kalça hizası", value: String(analysis.hipScore), score: analysis.hipScore },
+    { label: "Kalça eğimi", value: `${Math.abs(analysis.hipTilt).toFixed(1)}°` },
+    { label: "Gövde ekseni", value: `${Math.abs(analysis.spineShift).toFixed(1)}°`, score: analysis.axisScore },
+    { label: "Ölçüm güveni", value: `${analysis.confidence}% · ${analysis.sampleCount ?? 0} örnek` },
   ];
 }
 
@@ -651,31 +679,35 @@ function drawLandmarksOnCapture(
   context.restore();
 }
 
+function toPoseKeypoints(landmarks: readonly Landmark[]): PoseKeypoint[] {
+  return landmarks.map(({ name, score, x, y }) => ({ name, score, x, y }));
+}
+
 function buildArchiveReport(
   captures: Record<MirrorView, string>,
-  scores: Partial<Record<MirrorView, number>>,
+  analyses: Record<MirrorView, PostureAnalysisSnapshot>,
   score: number,
 ): NewPostureArchiveReport {
   const now = new Date();
   const dateKey = new Intl.DateTimeFormat("tr-TR", { day: "2-digit", month: "long", year: "numeric" }).format(now);
   const timeLabel = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit" }).format(now);
   const makeCapture = (view: MirrorView) => {
-    const viewScore = Math.round(scores[view] ?? score);
+    const analysis = analyses[view];
     return {
       view,
       createdAt: now.toISOString(),
       imageData: captures[view],
       analysis: {
-        axisScore: viewScore,
-        confidence: 88,
-        feedback: viewScore >= 80 ? "Duruşun dengeli ve kararlı." : "Tek bir küçük düzeltmeyle hizanı güçlendirebilirsin.",
-        flags: viewScore >= 80 ? [] : ["Hizayı bir sonraki ölçümde yeniden gözlemle."],
-        hipScore: Math.max(0, Math.min(100, viewScore - 2)),
-        hipTilt: 0,
-        shoulderScore: Math.max(0, Math.min(100, viewScore - 3)),
-        shoulderTilt: 0,
-        sampleCount: 1,
-        spineShift: 0,
+        axisScore: analysis.axisScore,
+        confidence: analysis.confidence,
+        feedback: analysis.feedback,
+        flags: analysis.flags,
+        hipScore: analysis.hipScore,
+        hipTilt: analysis.hipTilt,
+        shoulderScore: analysis.shoulderScore,
+        shoulderTilt: analysis.shoulderTilt,
+        sampleCount: analysis.sampleCount ?? 1,
+        spineShift: analysis.spineShift,
         view,
       },
     };

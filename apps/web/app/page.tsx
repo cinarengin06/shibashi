@@ -138,7 +138,6 @@ type CoachCueRequest = {
 
 const tabs: { id: TabId | "bodyLines"; label: string; icon: string }[] = [
   { id: "home", label: "Özel Odam", icon: "◉" },
-  { id: "practice", label: "Pratikler", icon: "◎" },
   { id: "bodyLines", label: "18 Hareketle Öğren", icon: "✦" },
   { id: "posture", label: "Postür Analizi", icon: "↕" },
   { id: "journey", label: "Haritam", icon: "☯" },

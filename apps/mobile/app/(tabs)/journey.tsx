@@ -1,142 +1,141 @@
-import {Ionicons} from '@expo/vector-icons';
-import {router,useLocalSearchParams} from 'expo-router';
-import {useEffect,useMemo,useRef,useState} from 'react';
-import {Animated,Image,Pressable,ScrollView,StyleSheet,Text,View} from 'react-native';
-import {breathingPatterns,calculateShenProgress,getMasterSentence,getPracticeForShen,getProgressLabel,getQuestionForShen,getShenRecommendation,masterSentences,shenProfiles,toDomainShenId,toLegacyShenId} from '../../../../packages/shen-domain';
-import {Card,Eyebrow,PrimaryButton,ProgressBar,Screen,Title} from '../../components/ui';
-import {CoachMeridianConnection,MeridianExplorerMobile} from '../../components/MeridianKnowledge';
-import {colors,fonts,radii} from '../../constants/theme';
-import {getShen} from '../../data/fiveShen';
-import {baguaDirections,humanMapStages} from '../../data/journey';
-import type {BaguaDirection} from '../../data/journey';
-import {shibashiCoaches} from '../../data/coaches';
-import {useApp} from '../../store/AppStore';
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Card, Eyebrow, Screen, Title } from "../../components/ui";
+import { colors, fonts, radii } from "../../constants/theme";
+import { humanMapStages } from "../../data/journey";
+import { getShen } from "../../data/fiveShen";
+import { useApp } from "../../store/AppStore";
 
-export default function Journey(){
- const params=useLocalSearchParams<{view?:string}>();
- const{profile,saveProfile,shenActivities,reflections,savedMasterSentences}=useApp();
- const[selected,setSelected]=useState(toDomainShenId(profile.selectedShenId));
- const progresses=useMemo(()=>shenProfiles.map(item=>calculateShenProgress(shenActivities,item.id)),[shenActivities]);
- const selectedProfile=shenProfiles.find(item=>item.id===selected)??shenProfiles[0];
- const progress=progresses.find(item=>item.shenId===selected)??progresses[0];
- const practice=getPracticeForShen(selected)[0];
- const question=getQuestionForShen(selected,reflections.length);
- const sentence=getMasterSentence(selected,progress.completedPractices);
- const breath=breathingPatterns.find(item=>item.id===practice.breathingPatternId);
- const recommendation=getShenRecommendation([...progresses]);
- const lastReflection=reflections[0];
- const lastSaved=savedMasterSentences[0]&&masterSentences.find(item=>item.id===savedMasterSentences[0].masterSentenceId);
- const[baguaIndex,setBaguaIndex]=useState(0);
- const[guideId,setGuideId]=useState(shibashiCoaches[0].id);
- const[journeyView,setJourneyView]=useState<'overview'|'shen'|'bagua'|'map'|'lines'|'guides'>(params.view==='map'?'map':'overview');
- useEffect(()=>{if(params.view==='overview'||params.view==='shen'||params.view==='map'||params.view==='lines'||params.view==='guides'||params.view==='bagua')setJourneyView(params.view)},[params.view]);
- const activeDirection=baguaDirections[baguaIndex]??baguaDirections[0];
- const openDirection=()=>{if(activeDirection.target==='practice')router.push('/(tabs)/practice');else if(activeDirection.target==='posture')router.push('/posture');else if(activeDirection.target==='journal')router.push('/(tabs)/journal');else if(activeDirection.target==='learning')router.push('/body-lines');else router.push('/(tabs)')};
- const choose=(id:typeof selected)=>{setSelected(id);saveProfile({selectedShenId:toLegacyShenId(id)})};
- return <Screen>
-  <Eyebrow>KİŞİSEL PUSULAN</Eyebrow>
-  <Title>Halini tanı. Yönünü seç. Rehberinle yürü.</Title>
-  <Text style={s.lead}>Terimleri bilmek zorunda değilsin. Her alan bugün ihtiyacın olan başka bir soruya cevap verir.</Text>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.journeyTabs}>{[['overview','Başlangıç','sparkles-outline'],['map','8 Kapı','body-outline'],['lines','Beden Hatları','git-network-outline'],['shen','5 Shen','heart-outline'],['bagua','8 Yön','compass-outline'],['guides','8 Rehber','people-outline']].map(([id,label,icon])=><Pressable accessibilityRole="tab" key={id} onPress={()=>id==='lines'?router.push('/body-lines'):setJourneyView(id as typeof journeyView)} style={[s.journeyTab,journeyView===id&&{borderColor:selectedProfile.primaryColor,backgroundColor:`${selectedProfile.primaryColor}18`}]}><Ionicons name={icon as keyof typeof Ionicons.glyphMap} color={journeyView===id?selectedProfile.primaryColor:colors.muted} size={18}/><Text numberOfLines={1} style={[s.journeyTabText,journeyView===id&&{color:selectedProfile.primaryColor}]}>{label}</Text></Pressable>)}</ScrollView>
-  {journeyView==='overview'?<JourneyOverview accent={selectedProfile.primaryColor} coachName={(shibashiCoaches.find(item=>item.id===guideId)??shibashiCoaches[0]).name} direction={activeDirection} onOpen={setJourneyView} profileName={selectedProfile.name} profileMeaning={selectedProfile.shortMeaning}/>:journeyView==='map'?<HumanMapMobile accent={selectedProfile.primaryColor} currentShenId={selected}/>:journeyView==='lines'?<MeridianExplorerMobile accent={selectedProfile.primaryColor}/>:journeyView==='guides'?<GuidesMobile activeId={guideId} onSelect={setGuideId}/>:journeyView==='bagua'?(
-  <Card style={[s.baguaCard,{borderColor:`${activeDirection.color}66`}]}><View style={s.baguaHeading}><View style={s.flex}><Text style={[s.kicker,{color:activeDirection.color}]}>02 · YÖN VE EYLEM</Text><Text style={s.baguaTitle}>8 Yön · Bagua</Text><Text style={s.muted}>Bugün hangi niteliğe ve çalışma alanına dönmek istediğini seç.</Text></View><View style={[s.baguaBadge,{borderColor:`${activeDirection.color}66`}]}><Text style={[s.baguaBadgeText,{color:activeDirection.color}]}>8 YÖN</Text></View></View>
-   <BaguaWheel active={baguaIndex} accent={activeDirection.color} onSelect={setBaguaIndex}/>
-   <View style={s.baguaSelected}><View style={s.flex}><Text style={[s.baguaSelectedLabel,{color:activeDirection.color}]}>{activeDirection.trigram} · {activeDirection.name} · {activeDirection.element}</Text><Text style={s.baguaSelectedTitle}>{activeDirection.module}</Text><Text style={s.muted}>{activeDirection.cue}</Text></View><Pressable onPress={openDirection} style={[s.baguaArrow,{backgroundColor:activeDirection.color}]}><Ionicons name="arrow-forward" color={colors.ink} size={19}/></Pressable></View>
-   <Pressable onPress={()=>setJourneyView('map')} style={s.bodyMapLink}><View><Text style={s.cardLabel}>AYRI BİR ÇALIŞMA MODELİ</Text><Text style={s.cardTitle}>Beden Haritasını aç</Text></View><Ionicons name="body-outline" color={activeDirection.color} size={24}/></Pressable>
-   <Text style={s.legacyNote}>8 Yön, Bagua’nın sekiz trigramından gelir. Beden Haritası ise uygulamanın bedensel farkındalık için oluşturduğu ayrı modeldir.</Text>
-  </Card>):<>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.shenRail}>
-   {shenProfiles.map(item=>{const itemProgress=progresses.find(value=>value.shenId===item.id)!;const active=item.id===selected;return <Pressable key={item.id} onPress={()=>choose(item.id)} style={[s.shenCard,active&&{borderColor:item.primaryColor,backgroundColor:item.darkColor}]}>
-    <Text style={[s.shenName,{color:active?item.lightColor:colors.cream}]}>{item.name}</Text>
-    <Text style={s.shenMeaning}>{item.shortMeaning}</Text>
-    <Text style={[s.shenStatus,{color:active?item.lightColor:colors.muted}]}>{getProgressLabel(itemProgress)}</Text>
-   </Pressable>})}
-  </ScrollView>
-  <Card style={[s.detail,{borderColor:`${selectedProfile.primaryColor}66`}]}><View style={s.row}><View style={s.flex}><Text style={[s.kicker,{color:selectedProfile.primaryColor}]}>BUGÜNÜN ALANI</Text><Text style={s.detailTitle}>{selectedProfile.name} · {selectedProfile.shortMeaning}</Text></View><Pressable onPress={()=>router.push(`/shen/${toLegacyShenId(selected)}`)}><Ionicons name="arrow-forward-circle-outline" color={selectedProfile.primaryColor} size={30}/></Pressable></View>
-   <Text style={s.body}>{selectedProfile.description}</Text>
-   <View style={s.progressRow}><Text style={s.muted}>{getProgressLabel(progress)}</Text><Text style={[s.level,{color:selectedProfile.primaryColor}]}>Seviye {progress.level}</Text></View>
-   <ProgressBar value={Object.values(progress.dimensions).reduce((a,b)=>a+b,0)/6} color={selectedProfile.primaryColor}/>
-   <View style={s.miniGrid}><Mini label="Pratik" value={`${progress.completedPractices}`}/><Mini label="Dakika" value={`${progress.practiceMinutes}`}/><Mini label="Yansıma" value={`${progress.reflectionCount}`}/></View>
-  </Card>
-  <Card style={s.practice}>
-   <View style={s.practiceIcon}><Ionicons name="play" color={selectedProfile.primaryColor} size={22}/></View>
-   <View style={s.flex}><Text style={s.cardLabel}>BUGÜNKÜ PRATİK</Text><Text style={s.cardTitle}>{practice.title}</Text><Text style={s.muted}>{practice.durationMinutes} dk · {practice.movementQualityIds.join(' · ')}</Text></View>
-  </Card>
-  <PrimaryButton label="Bugünkü pratiği başlat" icon="play" onPress={()=>router.push({pathname:'/practice-session',params:{practiceId:practice.id,shenId:toLegacyShenId(selected)}})}/>
-  <Card style={s.breath}><Ionicons name="water-outline" color={selectedProfile.primaryColor} size={22}/><View style={s.flex}><Text style={s.cardLabel}>NEFES RİTMİ</Text><Text style={s.cardTitle}>{breath?.name}</Text><Text style={s.muted}>{breath?.instruction}</Text></View></Card>
-  <Card style={s.quote}><Text style={[s.cardLabel,{color:selectedProfile.primaryColor}]}>USTADAN BİR CÜMLE</Text><Text style={s.quoteText}>“{sentence.text}”</Text><Pressable onPress={()=>router.push('/master-notebook')}><Text style={[s.link,{color:selectedProfile.primaryColor}]}>Ustanın Defteri →</Text></Pressable></Card>
-  <Card style={s.question}><Text style={s.cardLabel}>BUGÜNÜN SORUSU</Text><Text style={s.questionText}>{question.text}</Text><PrimaryButton label="Kısa yanıt ekle" icon="create-outline" onPress={()=>router.push({pathname:'/reflection',params:{shenId:selected,questionId:question.id,practiceId:practice.id,masterSentenceId:sentence.id}})}/></Card>
-  <View style={s.latest}><Text style={s.latestTitle}>Son izler</Text><Text style={s.muted}>{lastReflection?.responseText||lastReflection?.selectedFeeling||'Henüz kısa bir yansıma yok.'}</Text><Text style={s.muted}>{lastSaved?`Son kaydedilen cümle: “${lastSaved.text}”`:'Ustanın Defteri henüz boş.'}</Text></View>
-  </>}
- </Screen>;
-}
-function JourneyOverview({accent,coachName,direction,onOpen,profileName,profileMeaning}:{accent:string;coachName:string;direction:BaguaDirection;onOpen:(view:'overview'|'shen'|'bagua'|'map'|'lines'|'guides')=>void;profileName:string;profileMeaning:string}){
- const steps=[
-  {id:'shen' as const,no:'01',kicker:'İÇ DÜNYA',title:'5 Shen',question:'Şu an içimde ne oluyor?',result:`${profileName} · ${profileMeaning}`,symbol:'神',color:accent},
-  {id:'bagua' as const,no:'02',kicker:'YÖN VE EYLEM',title:'8 Yön · Bagua',question:'Bugün nereye yönelmeliyim?',result:`${direction.element} · ${direction.module}`,symbol:direction.trigram,color:direction.color},
-  {id:'guides' as const,no:'03',kicker:'HİKÂYE VE REHBERLİK',title:'8 Ölümsüz',question:'Bu yolda hangi ses bana iyi gelir?',result:`${coachName} ile başla`,symbol:'八仙',color:colors.gold},
- ];
- return <View style={s.overview}><View style={s.overviewLine}/>{steps.map((step,index)=><Pressable accessibilityRole="button" key={step.id} onPress={()=>onOpen(step.id)} style={[s.conceptCard,{borderColor:`${step.color}66`}]}><View style={[s.conceptIndex,{borderColor:step.color}]}><Text style={[s.conceptIndexText,{color:step.color}]}>{step.no}</Text></View><View style={s.flex}><Text style={[s.kicker,{color:step.color}]}>{step.kicker}</Text><Text style={s.conceptTitle}>{step.title}</Text><Text style={s.conceptQuestion}>{step.question}</Text><Text style={[s.conceptResult,{color:step.color}]}>{step.result}</Text></View><Text style={[s.conceptSymbol,{color:step.color}]}>{step.symbol}</Text><Ionicons name="arrow-forward-circle-outline" color={step.color} size={27}/></Pressable>)}<Card style={[s.synthesis,{borderColor:`${accent}55`}]}><Text style={[s.cardLabel,{color:accent}]}>BUGÜNKÜ BİRLEŞİMİN</Text><Text style={s.synthesisTitle}>{profileName} iç dünyan.</Text><Text style={s.body}>{direction.element} yönün. {coachName} rehberin.</Text><PrimaryButton label="Bu birleşimle pratiğe başla" icon="play" onPress={()=>router.push('/(tabs)/practice')}/></Card><Text style={s.legacyNote}>Bu üç gelenek tarihsel olarak bire bir eşleştirilmiş tek bir sistem değildir. Uygulama onları iç durum, yön ve rehberlik olarak birlikte kullanır.</Text></View>;
-}
-function HumanMapMobile({accent,currentShenId}:{accent:string;currentShenId:string}){
- const normalizedShenId=currentShenId==='xin'?'shen':currentShenId;
- const matchedGateIndex=humanMapStages.findIndex(item=>item.shenId===normalizedShenId);
- const currentGateIndex=matchedGateIndex>=0?matchedGateIndex:0;
- const[activeIndex,setActiveIndex]=useState(currentGateIndex);
- useEffect(()=>setActiveIndex(currentGateIndex),[currentGateIndex]);
- const stage=humanMapStages[activeIndex]??humanMapStages[0];
- const currentGate=humanMapStages[currentGateIndex]??humanMapStages[0];
- return <View style={s.subPage}>
-  <Eyebrow>HARİTAN · SEKİZ BEDEN KAPISI</Eyebrow><Title>Bedenindeki kapıları gör.</Title><Text style={s.lead}>Kapılara dokun; beden bölgesini, günlük karşılığını ve mini pratiğini aç. Altın halka şu an bulunduğun kapıyı gösterir.</Text>
-  <Card style={[s.mapCard,{borderColor:`${accent}66`}]}><View style={s.mapStage}><Image accessibilityLabel="Bedenin iç dünyasını ve sekiz kapıyı gösteren özgün insan haritası" source={require('../../assets/journey/neijing-map.jpg')} resizeMode="cover" style={s.mapImage}/><View style={s.mapShade}/><View style={s.currentGateBadge}><Text style={s.currentGateLabel}>ŞU ANKİ KAPIN</Text><Text style={s.currentGateTitle}>{currentGate.title}</Text></View>{humanMapStages.map((item,index)=>{const current=index===currentGateIndex;const active=index===activeIndex;return <Pressable accessibilityRole="button" accessibilityState={{selected:active}} key={item.id} onPress={()=>setActiveIndex(index)} style={[s.mapHotspot,{left:`${item.x}%`,top:`${item.y}%`},current&&s.mapHotspotCurrent,active&&{borderColor:accent,backgroundColor:`${accent}dd`,shadowColor:accent}]}><Text style={[s.mapHotspotText,active&&{color:colors.ink}]}>{index+1}</Text></Pressable>})}<Text style={s.mapHint}>Kapıya dokun · açıklamasını aç</Text></View><View style={s.mapProgress}><Text style={s.muted}>İncelenen kapı {activeIndex+1} / {humanMapStages.length}</Text><Text style={[s.mapProgressValue,{color:accent}]}>Mevcut kapı {currentGateIndex+1}</Text></View></Card>
-  <Card style={[s.mapInfo,{borderColor:`${accent}55`}]}><View style={s.mapInfoTop}><View style={s.flex}><Text style={[s.kicker,{color:accent}]}>{activeIndex===currentGateIndex?'ŞU AN BULUNDUĞUN KAPI':'İNCELEDİĞİN KAPI'}</Text><Text style={s.mapTitle}>{stage.title}</Text></View><Text style={[s.mapReward,{color:accent}]}>{stage.reward}</Text></View><Text style={s.body}>{stage.text}</Text><View style={s.benefitGrid}>{stage.benefits.map(item=><View key={item} style={s.benefit}><Ionicons name="checkmark" color={accent} size={14}/><Text style={s.benefitText}>{item}</Text></View>)}</View><View style={s.dailyNote}><Text style={[s.kicker,{color:accent}]}>GÜNLÜK HAYATTA</Text><Text style={s.body}>{stage.dailyUse}</Text></View><View style={s.dailyNote}><Text style={[s.kicker,{color:accent}]}>MİNİ PRATİK</Text><Text style={s.body}>{stage.microPractice}</Text></View><View style={s.mapActions}><Pressable disabled={activeIndex===0} onPress={()=>setActiveIndex(value=>Math.max(0,value-1))} style={[s.mapAction,activeIndex===0&&s.disabled]}><Text style={s.mapActionText}>Önceki</Text></Pressable><Pressable onPress={()=>setActiveIndex(value=>(value+1)%humanMapStages.length)} style={[s.mapActionPrimary,{backgroundColor:accent}]}><Text style={s.mapActionPrimaryText}>Sonraki kapı</Text><Ionicons name="arrow-forward" color={colors.ink} size={16}/></Pressable></View></Card>
- </View>;
+export default function Journey() {
+  const { profile } = useApp();
+  const selectedShen = getShen(profile.selectedShenId);
+  const accent = selectedShen.color;
+  const normalizedShenId = selectedShen.id === "xin" ? "shen" : selectedShen.id;
+  const matchedGateIndex = humanMapStages.findIndex((item) => item.shenId === normalizedShenId);
+  const currentGateIndex = matchedGateIndex >= 0 ? matchedGateIndex : 0;
+  const [activeIndex, setActiveIndex] = useState(currentGateIndex);
+
+  useEffect(() => setActiveIndex(currentGateIndex), [currentGateIndex]);
+
+  const stage = humanMapStages[activeIndex] ?? humanMapStages[0];
+  const currentGate = humanMapStages[currentGateIndex] ?? humanMapStages[0];
+  const isCurrentGate = activeIndex === currentGateIndex;
+
+  return (
+    <Screen>
+      <Eyebrow>HARİTAN · SEKİZ BEDEN KAPISI</Eyebrow>
+      <Title>Bedenindeki kapıları gör.</Title>
+      <Text style={styles.lead}>Kapılara dokun; beden bölgesini, günlük karşılığını ve mini pratiğini aç. Altın halka şu an bulunduğun kapıyı gösterir.</Text>
+
+      <Card style={[styles.mapCard, { borderColor: `${accent}66` }]}>
+        <View style={styles.mapStage}>
+          <Image
+            accessibilityLabel="Sekiz beden kapısını gösteren insan haritası"
+            source={require("../../assets/journey/neijing-map.jpg")}
+            resizeMode="cover"
+            style={styles.mapImage}
+          />
+          <View style={styles.mapShade} />
+          <View style={styles.currentGateBadge}>
+            <Text style={styles.currentGateLabel}>ŞU ANKİ KAPIN</Text>
+            <Text style={styles.currentGateTitle}>{currentGate.title}</Text>
+          </View>
+          {humanMapStages.map((item, index) => {
+            const current = index === currentGateIndex;
+            const active = index === activeIndex;
+            return (
+              <Pressable
+                accessibilityLabel={`${item.title} kapısını aç`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                key={item.id}
+                onPress={() => setActiveIndex(index)}
+                style={[styles.mapHotspot, { left: `${item.x}%`, top: `${item.y}%` }, current && styles.mapHotspotCurrent, active && { borderColor: accent, backgroundColor: `${accent}dd`, shadowColor: accent }]}
+              >
+                <Text style={[styles.mapHotspotText, active && { color: colors.ink }]}>{index + 1}</Text>
+              </Pressable>
+            );
+          })}
+          <Text style={styles.mapHint}>Kapıya dokun · açıklamasını aç</Text>
+        </View>
+
+        <View style={styles.mapProgress}>
+          <Text style={styles.progressText}>İncelenen kapı {activeIndex + 1} / {humanMapStages.length}</Text>
+          <Text style={[styles.progressCurrent, { color: accent }]}>Mevcut kapı {currentGateIndex + 1}</Text>
+        </View>
+      </Card>
+
+      <Card style={[styles.mapInfo, { borderColor: `${accent}55` }]}>
+        <View style={styles.mapInfoTop}>
+          <View style={styles.flex}>
+            <Text style={[styles.kicker, { color: accent }]}>{isCurrentGate ? "ŞU AN BULUNDUĞUN KAPI" : "İNCELEDİĞİN KAPI"}</Text>
+            <Text style={styles.mapTitle}>{stage.title}</Text>
+          </View>
+          <Text style={[styles.mapReward, { color: accent }]}>{stage.reward}</Text>
+        </View>
+        <Text style={styles.body}>{stage.text}</Text>
+        <View style={styles.benefitGrid}>
+          {stage.benefits.map((benefit) => (
+            <View key={benefit} style={styles.benefit}>
+              <Ionicons name="checkmark" color={accent} size={16} />
+              <Text style={styles.benefitText}>{benefit}</Text>
+            </View>
+          ))}
+        </View>
+        <View style={styles.dailyNote}>
+          <Text style={[styles.kicker, { color: accent }]}>GÜNLÜK HAYATTA</Text>
+          <Text style={styles.body}>{stage.dailyUse}</Text>
+        </View>
+        <View style={styles.dailyNote}>
+          <Text style={[styles.kicker, { color: accent }]}>MİNİ PRATİK</Text>
+          <Text style={styles.body}>{stage.microPractice}</Text>
+        </View>
+        <View style={styles.mapActions}>
+          <Pressable disabled={activeIndex === 0} onPress={() => setActiveIndex((value) => Math.max(0, value - 1))} style={[styles.mapAction, activeIndex === 0 && styles.disabled]}>
+            <Text style={styles.mapActionText}>Önceki</Text>
+          </Pressable>
+          <Pressable onPress={() => setActiveIndex((value) => (value + 1) % humanMapStages.length)} style={[styles.mapActionPrimary, { backgroundColor: accent }]}>
+            <Text style={styles.mapActionPrimaryText}>Sonraki kapı</Text>
+            <Ionicons name="arrow-forward" color={colors.ink} size={16} />
+          </Pressable>
+        </View>
+      </Card>
+    </Screen>
+  );
 }
 
-function GuidesMobile({activeId,onSelect}:{activeId:(typeof shibashiCoaches)[number]['id'];onSelect:(id:(typeof shibashiCoaches)[number]['id'])=>void}){
- const coach=shibashiCoaches.find(item=>item.id===activeId)??shibashiCoaches[0];
- return <View style={s.subPage}><Eyebrow>YOLCULUK REHBERİNİ SEÇ</Eyebrow><Title>8 Ölümsüz Rehber</Title><Text style={s.lead}>Bugün ihtiyacın olan tona göre bir rehber seç. İstersen onunla konuş, istersen pratiğe geç.</Text><View style={s.coachGrid}>{shibashiCoaches.map(item=>{const active=item.id===activeId;const color=getShen(item.shenId).color;return <Pressable accessibilityRole="button" key={item.id} onPress={()=>onSelect(item.id)} style={[s.coachChoice,active&&{borderColor:color,backgroundColor:`${color}18`}]}><Text style={[s.coachIcon,{color}]}>{item.icon}</Text><Text numberOfLines={1} style={s.coachName}>{item.name.split(' ')[0]}</Text><Text numberOfLines={1} style={s.coachRole}>{item.role.split(' ve ')[0]}</Text></Pressable>})}</View><Card style={s.coachCard}><View style={s.coachHero}><View style={[s.coachAvatar,{borderColor:getShen(coach.shenId).color}]}><Text style={[s.coachAvatarText,{color:getShen(coach.shenId).color}]}>{coach.icon}</Text></View><View style={s.flex}><Text style={s.coachNameLarge}>{coach.name}</Text><Text style={s.coachRoleLarge}>{coach.role}</Text></View></View><Text style={s.coachIntro}>“{coach.intro}”</Text><View style={s.coachTags}>{coach.voice.map(item=><Text key={item} style={s.coachTag}>{item}</Text>)}</View><PrimaryButton label="Rehberle konuş" icon="chatbubble-ellipses-outline" onPress={()=>router.push({pathname:'/coaches',params:{coach:coach.id}})}/></Card><CoachMeridianConnection coachId={coach.id} accent={getShen(coach.shenId).color}/><Text style={s.legacyNote}>Gelenekte bu sekiz karakter “Sekiz Ölümsüz” hikâyeleriyle anlatılır; uygulamada onları günlük hayatına eşlik eden rehberler olarak kullanabilirsin.</Text></View>;
-}
-function BaguaWheel({active,accent,onSelect}:{active:number;accent:string;onSelect:(index:number)=>void}){
- const spin=useRef(new Animated.Value(0)).current;
- useEffect(()=>{const loop=Animated.loop(Animated.timing(spin,{toValue:1,duration:36000,useNativeDriver:true}));loop.start();return()=>loop.stop()},[spin]);
- const rotate=spin.interpolate({inputRange:[0,1],outputRange:['0deg','360deg']});
- const reverse=spin.interpolate({inputRange:[0,1],outputRange:['0deg','-360deg']});
- const selected=baguaDirections[active]??baguaDirections[0];
- return <View style={[s.baguaWheel,{borderColor:`${accent}55`}]}>
-  <Animated.View pointerEvents="none" style={[s.baguaOrbit,s.baguaOrbitOuter,{transform:[{rotate}]}]}/>
-  <Animated.View pointerEvents="none" style={[s.baguaOrbit,s.baguaOrbitInner,{transform:[{rotate:reverse}]}]}/>
-  <View
-   style={[s.baguaDisc,{borderColor:`${accent}66`}]}
-  >
-   {baguaDirections.map((direction,index)=>(
-    <BaguaDirectionNode
-     active={index===active}
-     direction={direction}
-     index={index}
-     key={direction.id}
-     onSelect={onSelect}
-    />
-   ))}
-   <View style={[s.baguaCenter,{borderColor:accent,shadowColor:accent}]}><Text style={s.baguaTaiji}>☯</Text><Text style={[s.baguaCenterName,{color:accent}]}>{selected.name}</Text><Text style={s.baguaCenterModule}>{selected.module}</Text><Text style={s.baguaCenterHint}>SEÇİLİ YÖN</Text></View>
-  </View>
-  <View pointerEvents="none" style={[s.baguaPointer,{borderTopColor:accent}]}/>
- </View>;
-}
-function BaguaDirectionNode({active,direction,index,onSelect}:{active:boolean;direction:BaguaDirection;index:number;onSelect:(index:number)=>void}){
- const angle=index*45-90;
- const radians=angle*Math.PI/180;
- const position={left:`${50+Math.cos(radians)*38}%` as `${number}%`,top:`${50+Math.sin(radians)*38}%` as `${number}%`};
- return <Pressable
-  accessibilityLabel={`${direction.name} ${direction.element}`}
-  accessibilityRole="button"
-  onPress={()=>onSelect(index)}
-  style={[s.baguaNode,position,active&&{borderColor:direction.color,backgroundColor:`${direction.color}22`}]}
- >
-  <Text style={[s.baguaNodeTrigram,{color:active?direction.color:colors.cream}]}>{direction.trigram}</Text>
-  <Text numberOfLines={1} style={s.baguaNodeName}>{direction.name}</Text>
-  <Text numberOfLines={1} style={s.baguaNodeElement}>{direction.element}</Text>
- </Pressable>;
-}
-function Mini({label,value}:{label:string;value:string}){return <View style={s.mini}><Text style={s.miniValue}>{value}</Text><Text style={s.miniLabel}>{label}</Text></View>}
-const s=StyleSheet.create({lead:{color:colors.muted,fontSize:17,lineHeight:28,marginTop:-10},journeyTabs:{flexDirection:'row',gap:7,paddingRight:20},journeyTab:{width:108,minHeight:58,borderRadius:14,borderWidth:1,borderColor:colors.line,backgroundColor:colors.surface,alignItems:'center',justifyContent:'center',gap:3,paddingHorizontal:4},journeyTabText:{color:colors.muted,fontSize:13,fontWeight:'900',textAlign:'center'},overview:{gap:12,position:'relative'},overviewLine:{position:'absolute',left:28,top:34,bottom:180,width:1,backgroundColor:'rgba(206,169,101,.24)'},conceptCard:{minHeight:142,borderRadius:20,borderWidth:1,backgroundColor:'rgba(10,18,13,.96)',padding:16,paddingLeft:72,flexDirection:'row',alignItems:'center',gap:8,overflow:'hidden'},conceptIndex:{position:'absolute',left:15,top:18,width:34,height:34,borderRadius:17,borderWidth:1,backgroundColor:colors.deep,alignItems:'center',justifyContent:'center'},conceptIndexText:{fontSize:13,fontWeight:'900'},conceptTitle:{color:colors.cream,fontSize:24,fontFamily:fonts.displayStrong,marginTop:3},conceptQuestion:{color:colors.cream,fontSize:17,lineHeight:24,marginTop:3},conceptResult:{fontSize:14,fontWeight:'900',marginTop:8},conceptSymbol:{position:'absolute',right:12,top:8,fontSize:38,opacity:.14,fontFamily:fonts.displayStrong},synthesis:{gap:11,marginTop:4},synthesisTitle:{color:colors.cream,fontSize:23,fontFamily:fonts.displayStrong},bodyMapLink:{minHeight:70,borderTopWidth:1,borderTopColor:colors.line,flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingTop:12},subPage:{gap:14},shenRail:{gap:8,paddingRight:20},shenCard:{width:150,minHeight:112,borderRadius:radii.lg,borderWidth:1,borderColor:colors.line,backgroundColor:colors.surface,padding:14,justifyContent:'space-between'},shenName:{fontSize:22,fontFamily:fonts.displayStrong},shenMeaning:{color:colors.cream,fontSize:17},shenStatus:{fontSize:14,lineHeight:25},baguaCard:{gap:14,padding:14},baguaHeading:{flexDirection:'row',alignItems:'flex-start',gap:10},baguaTitle:{color:colors.cream,fontSize:21,fontFamily:fonts.displayStrong,marginTop:4},baguaBadge:{borderWidth:1,borderRadius:16,paddingHorizontal:9,paddingVertical:7},baguaBadgeText:{fontSize:13,fontWeight:'900',letterSpacing:1},baguaWheel:{width:'100%',aspectRatio:1,alignSelf:'center',maxWidth:370,position:'relative',alignItems:'center',justifyContent:'center'},baguaOrbit:{position:'absolute',borderRadius:999},baguaOrbitOuter:{top:2,left:2,right:2,bottom:2,borderWidth:1,borderColor:'rgba(243,207,139,.5)',borderStyle:'dashed'},baguaOrbitInner:{top:'11%',left:'11%',right:'11%',bottom:'11%',borderWidth:1,borderColor:'rgba(243,207,139,.3)'},baguaDisc:{position:'absolute',top:'13%',left:'13%',right:'13%',bottom:'13%',borderRadius:999,borderWidth:1,backgroundColor:'#0D1712',alignItems:'center',justifyContent:'center',shadowColor:'#000',shadowOpacity:.5,shadowRadius:20,shadowOffset:{width:0,height:8},elevation:4},baguaNode:{position:'absolute',width:68,height:68,marginLeft:-34,marginTop:-34,borderRadius:34,borderWidth:1,borderColor:'rgba(242,238,231,.18)',backgroundColor:'rgba(12,20,15,.95)',alignItems:'center',justifyContent:'center',paddingHorizontal:3,gap:1},baguaNodeTrigram:{fontSize:19,fontFamily:fonts.displayStrong,lineHeight:26},baguaNodeName:{color:colors.cream,fontSize:13,fontWeight:'900',letterSpacing:.4,textTransform:'uppercase'},baguaNodeElement:{color:colors.muted,fontSize:13},baguaCenter:{position:'absolute',width:'36%',height:'36%',borderRadius:999,borderWidth:1,backgroundColor:'#0B120E',alignItems:'center',justifyContent:'center',shadowOpacity:.35,shadowRadius:18},baguaTaiji:{color:'#F6DCA7',fontSize:42,lineHeight:43,textShadowColor:'#C6A56A',textShadowRadius:14},baguaCenterName:{fontSize:13,fontWeight:'900',letterSpacing:1,textTransform:'uppercase'},baguaCenterModule:{color:colors.cream,fontSize:14,fontWeight:'800',marginTop:2},baguaCenterHint:{color:colors.muted,fontSize:13,letterSpacing:1.4,marginTop:3},baguaPointer:{position:'absolute',top:-2,left:'50%',marginLeft:-4,width:0,height:0,borderLeftWidth:4,borderRightWidth:4,borderTopWidth:8,borderLeftColor:'transparent',borderRightColor:'transparent',borderStyle:'solid'},baguaSelected:{flexDirection:'row',alignItems:'center',gap:10,borderTopWidth:1,borderTopColor:colors.line,paddingTop:13},baguaSelectedLabel:{fontSize:13,fontWeight:'900',letterSpacing:1.1},baguaSelectedTitle:{color:colors.cream,fontSize:17,fontWeight:'800',marginTop:3},baguaArrow:{width:48,height:48,borderRadius:24,alignItems:'center',justifyContent:'center'},mapCard:{gap:12,padding:12},mapStage:{height:590,borderRadius:18,overflow:'hidden',position:'relative',backgroundColor:colors.deep},mapImage:{width:'100%',height:'100%'},mapShade:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'rgba(1,7,5,.08)'},currentGateBadge:{position:'absolute',left:12,top:12,maxWidth:142,borderWidth:1,borderColor:'rgba(235,195,112,.5)',borderRadius:14,backgroundColor:'rgba(4,12,9,.88)',paddingHorizontal:11,paddingVertical:9},currentGateLabel:{color:'#DDB86F',fontSize:12,fontWeight:'900',letterSpacing:1.2},currentGateTitle:{color:colors.cream,fontSize:14,fontWeight:'800',lineHeight:19,marginTop:3},mapHint:{position:'absolute',bottom:12,left:34,right:34,color:'rgba(242,238,231,.78)',backgroundColor:'rgba(3,10,7,.78)',borderRadius:99,paddingVertical:8,textAlign:'center',fontSize:13,fontWeight:'800'},mapHotspot:{position:'absolute',width:36,height:36,marginLeft:-18,marginTop:-18,borderRadius:18,borderWidth:1,borderColor:'rgba(242,238,231,.55)',backgroundColor:'rgba(10,18,13,.9)',alignItems:'center',justifyContent:'center',shadowOpacity:.25,shadowRadius:8},mapHotspotCurrent:{borderWidth:2,borderColor:'#FFE09A',shadowColor:'#FFC65B',shadowOpacity:.9,shadowRadius:15,elevation:8},mapHotspotText:{color:colors.cream,fontSize:14,fontWeight:'900'},mapProgress:{flexDirection:'row',justifyContent:'space-between',alignItems:'center'},mapProgressValue:{fontSize:14,fontWeight:'900'},mapInfo:{gap:13},mapInfoTop:{flexDirection:'row',alignItems:'flex-start',gap:10},mapTitle:{color:colors.cream,fontSize:24,fontFamily:fonts.displayStrong,marginTop:4},mapReward:{fontSize:14,fontWeight:'900',textAlign:'right',maxWidth:110},benefitGrid:{gap:7},benefit:{flexDirection:'row',alignItems:'center',gap:7},benefitText:{color:colors.cream,fontSize:17},dailyNote:{gap:4,borderTopWidth:1,borderTopColor:colors.line,paddingTop:10},mapActions:{flexDirection:'row',gap:8},mapAction:{flex:1,minHeight:48,borderRadius:13,borderWidth:1,borderColor:colors.line,alignItems:'center',justifyContent:'center'},mapActionPrimary:{flex:1,minHeight:48,borderRadius:13,flexDirection:'row',gap:7,alignItems:'center',justifyContent:'center'},mapActionText:{color:colors.muted,fontSize:17,fontWeight:'800'},mapActionPrimaryText:{color:colors.ink,fontSize:17,fontWeight:'900'},disabled:{opacity:.35},coachGrid:{flexDirection:'row',flexWrap:'wrap',gap:7},coachChoice:{width:'23%',minHeight:76,borderRadius:15,borderWidth:1,borderColor:colors.line,backgroundColor:colors.surface,alignItems:'center',justifyContent:'center',gap:3,paddingHorizontal:3},coachIcon:{fontSize:24},coachName:{color:colors.cream,fontSize:13,fontWeight:'800'},coachRole:{color:colors.muted,fontSize:13,textAlign:'center'},coachCard:{gap:13},coachHero:{flexDirection:'row',alignItems:'center',gap:11},coachAvatar:{width:58,height:58,borderRadius:29,borderWidth:1,backgroundColor:colors.deep,alignItems:'center',justifyContent:'center'},coachAvatarText:{fontSize:29},coachNameLarge:{color:colors.cream,fontSize:21,fontFamily:fonts.displayStrong},coachRoleLarge:{color:colors.muted,fontSize:16,marginTop:2},coachIntro:{color:colors.cream,fontSize:16,lineHeight:24,fontStyle:'italic'},coachTags:{flexDirection:'row',flexWrap:'wrap',gap:5},coachTag:{color:colors.muted,fontSize:13,borderWidth:1,borderColor:colors.line,borderRadius:99,paddingHorizontal:8,paddingVertical:5},legacyNote:{color:colors.muted,fontSize:15,lineHeight:23,paddingHorizontal:3},detail:{gap:13},row:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:12},flex:{flex:1},kicker:{fontSize:13,fontWeight:'900',letterSpacing:1.3},detailTitle:{color:colors.cream,fontSize:21,fontFamily:fonts.displayStrong,marginTop:4},body:{color:colors.muted,fontSize:16,lineHeight:26},progressRow:{flexDirection:'row',justifyContent:'space-between'},muted:{color:colors.muted,fontSize:17,lineHeight:28},level:{fontSize:14,fontWeight:'800'},miniGrid:{flexDirection:'row',gap:8},mini:{flex:1,backgroundColor:colors.deep,borderRadius:12,padding:10},miniValue:{color:colors.cream,fontSize:18,fontWeight:'800'},miniLabel:{color:colors.muted,fontSize:13,marginTop:2},practice:{flexDirection:'row',alignItems:'center',gap:12},practiceIcon:{width:48,height:48,borderRadius:24,backgroundColor:colors.deep,alignItems:'center',justifyContent:'center'},cardLabel:{color:colors.gold,fontSize:13,fontWeight:'900',letterSpacing:1.2},cardTitle:{color:colors.cream,fontSize:16,fontWeight:'700',marginTop:3},breath:{flexDirection:'row',gap:12,alignItems:'center'},quote:{gap:10},quoteText:{color:colors.cream,fontSize:19,lineHeight:28,fontFamily:fonts.displayStrong},link:{fontSize:17,fontWeight:'800'},question:{gap:12},questionText:{color:colors.cream,fontSize:17,lineHeight:25},latest:{gap:7,paddingHorizontal:4,paddingBottom:12},latestTitle:{color:colors.cream,fontSize:17,fontWeight:'700'}});
+const styles = StyleSheet.create({
+  lead: { color: colors.muted, fontSize: 16, lineHeight: 25, marginTop: -10 },
+  mapCard: { gap: 12, padding: 12 },
+  mapStage: { height: 590, borderRadius: 18, overflow: "hidden", position: "relative", backgroundColor: colors.deep },
+  mapImage: { width: "100%", height: "100%" },
+  mapShade: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(1,7,5,.08)" },
+  currentGateBadge: { position: "absolute", left: 12, top: 12, maxWidth: 160, borderWidth: 1, borderColor: "rgba(235,195,112,.5)", borderRadius: 14, backgroundColor: "rgba(4,12,9,.88)", paddingHorizontal: 11, paddingVertical: 9 },
+  currentGateLabel: { color: "#DDB86F", fontSize: 12, fontWeight: "900", letterSpacing: 1.2 },
+  currentGateTitle: { color: colors.cream, fontSize: 14, fontWeight: "800", lineHeight: 19, marginTop: 3 },
+  mapHint: { position: "absolute", bottom: 12, left: 26, right: 26, color: "rgba(242,238,231,.9)", backgroundColor: "rgba(3,10,7,.82)", borderRadius: 99, paddingVertical: 8, textAlign: "center", fontSize: 13, fontWeight: "800" },
+  mapHotspot: { position: "absolute", width: 36, height: 36, marginLeft: -18, marginTop: -18, borderRadius: 18, borderWidth: 1, borderColor: "rgba(242,238,231,.65)", backgroundColor: "rgba(10,18,13,.92)", alignItems: "center", justifyContent: "center", shadowOpacity: 0.25, shadowRadius: 8 },
+  mapHotspotCurrent: { borderWidth: 2, borderColor: "#FFE09A", shadowColor: "#FFC65B", shadowOpacity: 0.9, shadowRadius: 15, elevation: 8 },
+  mapHotspotText: { color: colors.cream, fontSize: 14, fontWeight: "900" },
+  mapProgress: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
+  progressText: { color: colors.muted, flexShrink: 1, fontSize: 14 },
+  progressCurrent: { fontSize: 14, fontWeight: "900" },
+  mapInfo: { gap: 13 },
+  mapInfoTop: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  flex: { flex: 1 },
+  kicker: { fontSize: 12, fontWeight: "900", letterSpacing: 1.2 },
+  mapTitle: { color: colors.cream, fontSize: 23, fontFamily: fonts.displayStrong, marginTop: 4 },
+  mapReward: { fontSize: 13, fontWeight: "900", textAlign: "right", maxWidth: 110 },
+  body: { color: colors.muted, fontSize: 16, lineHeight: 25 },
+  benefitGrid: { gap: 7 },
+  benefit: { flexDirection: "row", alignItems: "center", gap: 7 },
+  benefitText: { color: colors.cream, fontSize: 15 },
+  dailyNote: { gap: 4, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 10 },
+  mapActions: { flexDirection: "row", gap: 8 },
+  mapAction: { flex: 1, minHeight: 48, borderRadius: radii.md, borderWidth: 1, borderColor: colors.line, alignItems: "center", justifyContent: "center" },
+  mapActionPrimary: { flex: 1, minHeight: 48, borderRadius: radii.md, flexDirection: "row", gap: 7, alignItems: "center", justifyContent: "center" },
+  mapActionText: { color: colors.muted, fontSize: 15, fontWeight: "800" },
+  mapActionPrimaryText: { color: colors.ink, fontSize: 15, fontWeight: "900" },
+  disabled: { opacity: 0.35 },
+});

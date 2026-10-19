@@ -47,11 +47,10 @@ const bodyFocusMarkers: Record<BodyFocus, Array<{ height?: number; width?: numbe
   "whole-body": [{ height: 88, width: 54, x: 50, y: 49 }],
 };
 
-type Destination = "home" | "practice2";
 type Props = {
   embedded?: boolean;
   musicState?: "kapalı" | "açık";
-  onComplete?: (profile: OnboardingProfile, destination?: Destination) => void;
+  onComplete?: (profile: OnboardingProfile) => void;
   onShenRevealed?: (shenId: ShenId) => void;
   onToggleMusic?: () => void;
 };
@@ -143,7 +142,7 @@ export function PremiumOnboarding({
     }
     setStep((value) => Math.min(7, value + 1));
   };
-  const finish = (destination: Destination) => {
+  const finish = () => {
     const completeProfile = {
       ...profile,
       name: profile.name.trim(),
@@ -161,11 +160,8 @@ export function PremiumOnboarding({
       "ritim-kapisi-onboarding-profile",
       JSON.stringify(completeProfile),
     );
-    if (onComplete) onComplete(completeProfile, destination);
-    else
-      window.location.assign(
-        destination === "practice2" ? "/?tab=practice2" : "/",
-      );
+    if (onComplete) onComplete(completeProfile);
+    else window.location.assign("/");
   };
 
   if (!hydrated) return null;
@@ -299,17 +295,10 @@ export function PremiumOnboarding({
         <footer className={`${styles.footer} ${styles.resultFooter}`}>
           <button
             className={styles.primary}
-            onClick={() => finish("practice2")}
+            onClick={finish}
             type="button"
           >
-            ▶ 5 DAKİKALIK İLK PRATİĞİ BAŞLAT
-          </button>
-          <button
-            className={styles.secondary}
-            onClick={() => finish("home")}
-            type="button"
-          >
-            Önce ana sayfayı gör
+            Hadi Başlayalım <b aria-hidden="true">→</b>
           </button>
         </footer>
       ) : null}

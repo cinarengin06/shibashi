@@ -1,1 +1,1 @@
-export type TabId = "home" | "practice" | "practice2" | "posture" | "newPosture" | "journey" | "learning" | "journal" | "profile";
+export type TabId = "home" | "practice" | "posture" | "journey" | "journal" | "profile";

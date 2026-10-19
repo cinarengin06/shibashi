@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import type { CSSProperties } from "react";
 import { visualThemes, type VisualThemeId } from "@/packages/design-tokens";
-import type { SyncStatus } from "@/packages/shen-domain";
 
 type ProfileShen = {
   id: "hun" | "shen" | "yi" | "po" | "zhi";
@@ -18,50 +16,35 @@ type ProfilePostureReport = {
 
 export function ProfileScreen({
   authEmail,
-  lastSyncedAt,
   musicState,
-  onConnectSyncCode,
   onRestartOnboarding,
   onSelectShen,
   onSelectVisualTheme,
   onSignOut,
   onToggleMusic,
-  onSyncNow,
   postureReports,
   selectedShen,
   selectedShenId,
   visualThemeId,
-  syncCode,
-  syncMessage,
-  syncStatus,
   userName,
   shens,
   googleAuthEnabled,
 }: {
   authEmail?: string;
-  lastSyncedAt?: string;
   musicState: "açık" | "kapalı";
-  onConnectSyncCode: (code:string) => boolean;
   onRestartOnboarding: () => void;
   onSelectShen: (shen: ProfileShen["id"]) => void;
   onSelectVisualTheme: (theme: VisualThemeId) => void;
   onSignOut?: () => void;
   onToggleMusic: () => void;
-  onSyncNow: () => void;
   postureReports: ProfilePostureReport[];
   selectedShen: ProfileShen;
   selectedShenId: ProfileShen["id"];
   visualThemeId: VisualThemeId;
-  syncCode: string;
-  syncMessage?: string;
-  syncStatus: SyncStatus;
   userName: string;
   shens: readonly ProfileShen[];
   googleAuthEnabled: boolean;
 }) {
-  const[pairCode,setPairCode]=useState("");
-  const[pairError,setPairError]=useState("");
-  const connect=()=>{if(onConnectSyncCode(pairCode)){setPairCode("");setPairError("")}else setPairError("Kod XXXX-XXXX-XXXX biçiminde olmalı.")};
   return (
     <section className="screen profile-screen-simple">
       <div className="profile-intro">
@@ -87,26 +70,6 @@ export function ProfileScreen({
           </button>
         ) : null}
       </div> : null}
-      <div className="glass-card profile-sync-card">
-        <div className="section-heading" style={{ margin: 0 }}>
-          <div>
-            <span className="eyebrow">App + Web</span>
-            <h2>{syncStatus==="synced"?"Yolculuğun güncel":syncStatus==="syncing"?"Veriler eşitleniyor":"Çevrimdışı kuyruk açık"}</h2>
-          </div>
-          <span>{syncStatus==="synced"?"Bulut ✓":"Yerel"}</span>
-        </div>
-        <p>{lastSyncedAt?`Son eşitleme ${new Date(lastSyncedAt).toLocaleString("tr-TR")}`:syncMessage??"Geçmiş, seri ve yolculuk kayıtları bağlantı geldiğinde otomatik eşitlenir."}</p>
-        <div className="profile-sync-code-row">
-          <div><small>EŞLEŞTİRME KODUN</small><strong>{syncCode||"Hazırlanıyor…"}</strong></div>
-          <button onClick={onSyncNow} type="button">Şimdi eşitle</button>
-        </div>
-        <p>App’te aynı kodu girerek iki taraftaki kayıtları birleştir.</p>
-        <div className="profile-sync-connect">
-          <input aria-label="Eşleştirme kodu" maxLength={14} onChange={event=>setPairCode(event.target.value.toUpperCase())} placeholder="XXXX-XXXX-XXXX" value={pairCode}/>
-          <button disabled={!pairCode} onClick={connect} type="button">Bağla</button>
-        </div>
-        {pairError?<small className="profile-sync-error">{pairError}</small>:null}
-      </div>
       <div className="glass-card profile-quick-settings">
         <div className="section-heading" style={{ margin: 0 }}>
           <div>

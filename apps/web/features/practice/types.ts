@@ -19,5 +19,4 @@ export type PracticeSnapshot = {
   shenName: string;
   imageData: string;
   trainerVisible?: boolean;
-  source?: "practice2";
 };

@@ -35,7 +35,6 @@ export function PostureAssessmentScreen({
   onModeChange,
   onOpenCamera,
   onVoiceToggle = () => undefined,
-  onZoomChange = () => undefined,
   onDeleteSavedReport,
   onOpenSavedReport,
   onRetake,
@@ -53,7 +52,6 @@ export function PostureAssessmentScreen({
   videoRef,
   view,
   voiceEnabled = true,
-  zoom,
   frameReadiness,
 }: {
   autoCaptureProgress?: number;
@@ -72,7 +70,6 @@ export function PostureAssessmentScreen({
   onModeChange: (mode: PostureRenderMode) => void;
   onOpenCamera: () => void;
   onVoiceToggle?: () => void;
-  onZoomChange?: (direction: -1 | 1) => void;
   onDeleteSavedReport?: (reportId: string) => void;
   onOpenSavedReport?: (report: PostureReport) => void;
   onRetake: () => void;
@@ -155,14 +152,12 @@ export function PostureAssessmentScreen({
         onClose={onClose}
         onRestart={onRetake}
         onVoiceToggle={onVoiceToggle}
-        onZoomChange={onZoomChange}
         poseStatus={poseStatus}
         scanGuidance={scanGuidance}
         score={postureScore}
         selectedShen={selectedShen}
         videoRef={videoRef}
         voiceEnabled={voiceEnabled}
-        zoom={zoom}
       />
     );
   }

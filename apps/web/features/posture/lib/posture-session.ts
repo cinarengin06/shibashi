@@ -1,4 +1,4 @@
-import { analyzePosture, type PoseKeypoint, type PostureAnalysisSnapshot, type PostureView } from "@/packages/posture-analysis";
+import { analyzePosture, buildPostureNarrative, type PoseKeypoint, type PostureAnalysisSnapshot, type PostureNarrativeCapture, type PostureView } from "@/packages/posture-analysis";
 import { evaluateWebPostureFrame } from "../components/PostureScreens";
 import type { PostureAssessmentCapture, PostureReport } from "../types";
 import { formatSnapshotDate, formatSnapshotTime } from "@/lib/local-history-storage";
@@ -174,20 +174,28 @@ export function buildPostureReport(captures: Record<PostureView, PostureAssessme
     strongestSignal > 15 || score < 62 ? "yüksek" : strongestSignal > 8 || score < 78 ? "orta" : "düşük";
   const flags = Array.from(new Set(analyses.flatMap((analysis) => analysis.flags))).slice(0, 6);
   const now = new Date();
-  const trendDelta = previous ? score - previous.score : 0;
-  const trendText = previous
-    ? trendDelta > 2
-      ? `${trendDelta} puan iyileşme`
-      : trendDelta < -2
-        ? `${Math.abs(trendDelta)} puan gerileme sinyali`
-        : "önceki rapora yakın"
-    : "baz çizgi oluşturuldu";
-  const summary =
-    asymmetrySignal === "yüksek"
-      ? "Omuz, kalça veya merkez hattında belirgin asimetri sinyali var. Ağrı ya da şüphe varsa profesyonel değerlendirme önerilir."
-      : asymmetrySignal === "orta"
-        ? "Bazı açılarda takip edilmesi gereken postür asimetrisi görünüyor. Düzenli tekrar ile trendi izle."
-        : "Postür hattı sakin görünüyor. Bu rapor ilerideki iyileşme kıyası için baz olarak saklanabilir.";
+  const narrativeCaptures = analyses.map((analysis) => ({
+    axisScore: analysis.axisScore,
+    hipScore: analysis.hipScore,
+    hipTilt: analysis.hipTilt,
+    shoulderScore: analysis.shoulderScore,
+    shoulderTilt: analysis.shoulderTilt,
+    spineShift: analysis.spineShift,
+    view: analysis.view as PostureView,
+  })) satisfies PostureNarrativeCapture[];
+  const previousNarrative = previous ? {
+    score: previous.score,
+    captures: (["front", "side", "back"] as const).map((view) => ({
+      axisScore: previous.captures[view].analysis.axisScore,
+      hipScore: previous.captures[view].analysis.hipScore,
+      hipTilt: previous.captures[view].analysis.hipTilt,
+      shoulderScore: previous.captures[view].analysis.shoulderScore,
+      shoulderTilt: previous.captures[view].analysis.shoulderTilt,
+      spineShift: previous.captures[view].analysis.spineShift,
+      view,
+    })),
+  } : undefined;
+  const { summary, trendText } = buildPostureNarrative(narrativeCaptures, score, previousNarrative);
 
   return {
     asymmetrySignal,

@@ -24,7 +24,7 @@ import {
 import { fiveShen, type ShenId } from "@/features/home/data/shen";
 import { neijingStages, type NeijingStage } from "@/features/journey/data/scenes";
 import { aiCoaches, coachDialogues, inferCoachIntent, type AiCoach, type CoachIntent } from "@/features/practice/data/coaches";
-import { CoachMeridianCard, MeridianExplorer } from "@/components/meridian/MeridianKnowledge";
+import { CoachMeridianCard } from "@/components/meridian/MeridianKnowledge";
 import type { TabId } from "@/types/navigation";
 import { speakCoach } from "@/features/practice/lib/coach-audio";
 
@@ -181,7 +181,6 @@ function HumanMap({
         </div>
       </div>
     </div>
-    <MeridianExplorer accent={selectedShen.color} />
     </>
   );
 }

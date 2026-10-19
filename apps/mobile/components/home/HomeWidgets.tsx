@@ -22,7 +22,7 @@ export function HomePostureCard({ accent, image, reports }: { accent: string; im
             <View style={s.postureHistoryCopy}><Text style={s.postureHistoryDate}>{new Date(report.date).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" })}</Text><Text numberOfLines={1} style={s.postureHistorySummary}>{report.summary}</Text><Text style={[s.postureHistoryLink, { color: accent }]}>İlgili analize git →</Text></View>
           </Pressable>)}
         </View> : <Text style={s.postureEmpty}>Henüz kayıt yok. İlk beden çizgini ölç.</Text>}
-        <Pressable onPress={() => router.push("/posture-session")} style={[s.newPostureButton, { borderColor: `${accent}88` }]}><Text style={[s.newPostureButtonText, { color: accent }]}>Yeni analiz</Text><Ionicons color={accent} name="scan-outline" size={18} /></Pressable>
+        <Pressable onPress={() => router.push("/posture")} style={[s.postureAnalysisButton, { borderColor: `${accent}88` }]}><Text style={[s.postureAnalysisButtonText, { color: accent }]}>Yeni analiz</Text><Ionicons color={accent} name="scan-outline" size={18} /></Pressable>
       </View>
     </View>
   );

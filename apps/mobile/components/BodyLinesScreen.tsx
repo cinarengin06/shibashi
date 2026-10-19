@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
@@ -18,6 +18,7 @@ import {
   meridianMovements,
   meridianTeachingMethod,
   movementPointMarkers,
+  meridianLivingSteps,
 } from "../../../packages/meridian-knowledge";
 import { colors } from "../constants/theme";
 import {
@@ -34,7 +35,11 @@ import {
 import { s } from "./body-lines/styles";
 
 export function BodyLinesScreen() {
-  const [order, setOrder] = useState(1);
+  const params = useLocalSearchParams<{ movementOrder?: string }>();
+  const [order, setOrder] = useState(() => {
+    const requested = Number(params.movementOrder);
+    return Number.isInteger(requested) && requested >= 1 && requested <= 18 ? requested : 1;
+  });
   const [layer, setLayer] = useState<BodyLayer>("lines");
   const [remaining, setRemaining] = useState(60);
   const [running, setRunning] = useState(false);
@@ -46,6 +51,7 @@ export function BodyLinesScreen() {
     meridianMovements.find((item) => item.order === order) ??
     meridianMovements[0];
   const pointCount = movementPointMarkers[movement.order]?.length ?? 0;
+  const steps = meridianLivingSteps[order - 1];
   useEffect(() => {
     if (!running) return;
     if (remaining <= 0) {
@@ -143,14 +149,9 @@ export function BodyLinesScreen() {
           <Ionicons color={colors.cream} name="arrow-back" size={22} />
         </Pressable>
         <View style={s.headerText}>
-          <Text style={s.eyebrow}>18 HAREKET · TEK BEDEN HARİTASI</Text>
-          <Text style={s.title}>Beden Hatları</Text>
+          <Text style={s.eyebrow}>YAŞAYARAK ÖĞREN · BEDEN HATLARI</Text>
         </View>
       </View>
-      <Text style={s.intro}>
-        Hareketi ezberlemek yerine, bedeninde nereden geçtiğini hisset. Her
-        katmanı yavaşça aç.
-      </Text>
       <ScrollView
         contentContainerStyle={s.rail}
         horizontal
@@ -170,7 +171,7 @@ export function BodyLinesScreen() {
               {String(item.order).padStart(2, "0")}
             </Text>
             <Text numberOfLines={1} style={s.movementName}>
-              {item.appAliases[0]}
+              {item.sourceTitle}
             </Text>
           </Pressable>
         ))}
@@ -189,7 +190,7 @@ export function BodyLinesScreen() {
               HAREKET {String(order).padStart(2, "0")}
             </Text>
             <Text numberOfLines={1} style={s.stageTitle}>
-              {movement.appAliases[0]}
+              {movement.sourceTitle}
             </Text>
           </View>
           <Pressable
@@ -373,6 +374,25 @@ export function BodyLinesScreen() {
           <Text style={s.ritualAction}>{running ? "DUR" : "BAŞLA"}</Text>
         </Pressable>
       </View>
+      <View style={s.livingSteps}>
+        <Text style={s.livingStepsTitle}>ÜÇ ADIMDA DENE</Text>
+        {steps.map((step, index) => (
+          <View key={step} style={s.livingStep}>
+            <Text style={s.livingStepNumber}>{index + 1}</Text>
+            <Text style={s.livingStepText}>{step}</Text>
+          </View>
+        ))}
+        <View style={s.livingActions}>
+          <Pressable onPress={() => { motionPhase.stopAnimation(); motionPhase.setValue(0); setMotionEnabled(true); void Haptics.selectionAsync(); }} style={s.livingActionSecondary}>
+            <Text style={s.livingActionSecondaryText}>Hoca yapsın</Text>
+            <Ionicons color={colors.jade} name="refresh" size={18} />
+          </Pressable>
+          <Pressable onPress={() => router.push(`/practice-session?movementId=${movement.movementId}`)} style={s.livingActionPrimary}>
+            <Text style={s.livingActionPrimaryText}>Sen yap</Text>
+            <Ionicons color={colors.ink} name="arrow-forward" size={18} />
+          </Pressable>
+        </View>
+      </View>
       <Detail layer={layer} movement={movement} />
       <Pressable
         onPress={() =>
@@ -383,7 +403,7 @@ export function BodyLinesScreen() {
         }
         style={s.practiceButton}
       >
-        <Text style={s.practiceButtonText}>Hareketi pratiğe taşı</Text>
+        <Text style={s.practiceButtonText}>Hareket ayrıntılarını gör</Text>
         <Ionicons color={colors.ink} name="arrow-forward" size={19} />
       </Pressable>
       <View style={s.boundary}>

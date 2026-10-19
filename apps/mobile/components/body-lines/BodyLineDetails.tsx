@@ -15,7 +15,7 @@ export const layers: {
   id: BodyLayer;
   label: string;
   eyebrow: string;
-  title: string;
+  title?: string;
 }[] = [
   {
     id: "body",
@@ -26,8 +26,7 @@ export const layers: {
   {
     id: "lines",
     label: "Beden Hatları",
-    eyebrow: "KLASİK KANAL OKUMASI",
-    title: "Hareketin geçtiği yüzeyleri izle.",
+    eyebrow: "Bedenindeki İzleri",
   },
   {
     id: "deep",
@@ -73,7 +72,7 @@ export function Detail({
   return (
     <View style={s.detail}>
       <Text style={s.eyebrow}>{active.eyebrow}</Text>
-      <Text style={s.detailTitle}>{active.title}</Text>
+      {active.title ? <Text style={s.detailTitle}>{active.title}</Text> : null}
       <InnerWorld movement={movement} />
       {layer === "body" ? (
         <>

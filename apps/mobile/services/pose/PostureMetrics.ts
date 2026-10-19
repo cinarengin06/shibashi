@@ -136,6 +136,22 @@ export function createPostureCapture(view:PostureView,points:PoseLandmark[],conf
  };
 }
 
+export function toPostureNarrativeCapture(capture:PostureCapture){
+ const measured=(key:string)=>{
+  const value=capture.measurements?.[key];
+  return typeof value==='number'&&Number.isFinite(value)?value:undefined;
+ };
+ return{
+  view:capture.view,
+  axisScore:capture.axisScore,
+  shoulderScore:capture.shoulderScore,
+  hipScore:capture.hipScore,
+  shoulderTilt:measured(capture.view==='side'?'headForwardDegrees':'shoulderTiltDegrees'),
+  hipTilt:measured(capture.view==='side'?'legLeanDegrees':'hipTiltDegrees'),
+  spineShift:measured(capture.view==='side'?'torsoLeanDegrees':'axisTiltDegrees'),
+ };
+}
+
 export function aggregatePostureCaptures(view:PostureView,captures:PostureCapture[]):PostureCapture{
  if(!captures.length)throw new Error('Geçerli postür örneği bulunamadı.');
  const measurementKeys=[...new Set(captures.flatMap(item=>Object.keys(item.measurements??{})))];

@@ -90,14 +90,12 @@ export function PostureAutoCaptureScreen({
   onClose,
   onRestart,
   onVoiceToggle,
-  onZoomChange,
   poseStatus,
   scanGuidance,
   score,
   selectedShen,
   videoRef,
   voiceEnabled,
-  zoom,
 }: {
   activeView: PostureView;
   analysis: ReturnType<typeof analyzePosture>;
@@ -113,14 +111,12 @@ export function PostureAutoCaptureScreen({
   onClose: () => void;
   onRestart: () => void;
   onVoiceToggle: () => void;
-  onZoomChange: (direction: -1 | 1) => void;
   poseStatus: "bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata";
   scanGuidance: PostureScanGuidance;
   score: number;
   selectedShen: PostureShen;
   videoRef: RefObject<HTMLVideoElement | null>;
   voiceEnabled: boolean;
-  zoom?: { min: number; max: number; step: number; value: number } | null;
 }) {
   const viewLabel = activeView === "front" ? "Ön" : activeView === "side" ? "Yan" : "Arka";
   const expectedInstruction =
@@ -160,11 +156,6 @@ export function PostureAutoCaptureScreen({
             <button className="posture-live-icon-button posture-live-voice" onClick={onVoiceToggle} type="button" aria-label={voiceEnabled ? "Sesli yönlendirmeyi kapat" : "Sesli yönlendirmeyi aç"}>
               {voiceEnabled ? "◖))" : "◖×"}
             </button>
-          </div>
-          <div className="posture-camera-zoom" title={zoom ? "Kamera zoom seviyesi" : "Bu kamera donanımsal zoom desteklemiyor"}>
-            <button aria-label="Kamerayı uzaklaştır" disabled={!zoom || zoom.value <= zoom.min} onClick={() => onZoomChange(-1)} type="button">−</button>
-            <span>{zoom ? `${zoom.value.toFixed(1)}×` : "Zoom yok"}</span>
-            <button aria-label="Kamerayı yakınlaştır" disabled={!zoom || zoom.value >= zoom.max} onClick={() => onZoomChange(1)} type="button">+</button>
           </div>
           <video
             className={`camera-preview ${cameraStatus === "ready" ? "camera-preview-active" : ""}`}
@@ -515,6 +506,10 @@ export function PostureResultDashboard({
               selectedShen={selectedShen}
               view={activeView}
             />
+            <article className="posture-feedback-card posture-feedback-good">
+              <span className="posture-feedback-title">Önceki ölçümle karşılaştırma</span>
+              <p>{report.trendText}</p>
+            </article>
             <div className="posture-result-medical-note">
               Bu bir medikal teşhis değildir. Belirgin ağrı, uyuşma veya skolyoz şüphesi varsa fizyoterapist ya da hekim değerlendirmesi gerekir.
             </div>

@@ -18,9 +18,7 @@
   padding-right: clamp(24px, 4vw, 64px);
 }
 
-.device-mode-desktop .screen,
-.device-mode-desktop [class*="practice2-module__page"],
-.device-mode-desktop [class*="living-learning-module__page"] {
+.device-mode-desktop .screen {
   color: var(--ink);
   font-family: var(--font-sans), Inter, sans-serif;
 }

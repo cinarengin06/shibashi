@@ -89,7 +89,6 @@ const shenTodayCopy: Record<
 
 const homePortalImages = {
   posture: require("../../assets/posture/posture-back-translucent.png"),
-  practice2: require("../../assets/practice2/static/03-raise-and-open.png"),
   living: require("../../assets/living-learning/curtains-opening.png"),
   humanMap: require("../../assets/journey/neijing-map.jpg"),
 } satisfies Record<string, ImageSourcePropType>;
@@ -506,20 +505,11 @@ export default function Today() {
         />
         <FeaturePortal
           accent={personality.primary}
-          image={homePortalImages.practice2}
-          label="HASSAS ÇALIŞMA"
-          note="Hedef pozu kamerada eşleştir"
-          onPress={() => router.push("/(tabs)/pratik2")}
-          title="Pratik 2"
-          contain
-        />
-        <FeaturePortal
-          accent={personality.primary}
           image={homePortalImages.living}
-          label="HİKÂYELİ HAREKET"
-          note="Hareketi gündelik sahnede yaşa"
-          onPress={() => router.push("/living-learning")}
-          title="Yaşayarak Öğren"
+          label="18 HAREKET · Bedenindeki İzleri"
+          note="Hocayı izle, adımları dene, hareketin geçtiği yüzeyi gör"
+          onPress={() => router.push("/body-lines")}
+          title="Hareketi yaşa, beden hatlarını keşfet"
         />
         <FeaturePortal
           accent={personality.primary}

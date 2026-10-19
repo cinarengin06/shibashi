@@ -66,7 +66,7 @@ export async function ensureSystemNotifications(context: ReminderContext) {
     id: "discover-living-learning",
     kind: "journey",
     read: false,
-    route: "/living-learning",
+    route: "/body-lines",
     title: "Yaşayarak öğrenmeyi keşfet",
   });
 

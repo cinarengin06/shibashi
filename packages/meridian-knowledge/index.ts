@@ -79,6 +79,7 @@ const data = rawData as MeridianKnowledgeData;
 
 export const meridianKnowledgeSource = data.source;
 export const meridianMovements = data.movements;
+export { meridianLivingSteps } from "./livingSteps";
 export const acupoints = data.points;
 export const extraordinaryMeridians = data.extraordinaryMeridians;
 

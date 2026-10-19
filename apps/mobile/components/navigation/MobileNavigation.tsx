@@ -27,7 +27,7 @@ type Props = {
   };
 };
 
-const primaryTabs = ["index", "pratik2", "practice", "journey", "journal"];
+const primaryTabs = ["index", "practice", "journey", "journal"];
 
 const mainItems: Array<{
   icon: keyof typeof Ionicons.glyphMap;
@@ -36,15 +36,12 @@ const mainItems: Array<{
   tab?: string;
 }> = [
   { label: "Özel Odam", icon: "sunny-outline", route: "/(tabs)", tab: "index" },
-  { label: "Akışa Gir", icon: "analytics-outline", route: "/(tabs)/pratik2", tab: "pratik2" },
-  { label: "Yolculuk", icon: "play-circle-outline", route: "/(tabs)/practice", tab: "practice" },
-  { label: "Bedenini Gör", icon: "body-outline", route: "/posture" },
-  { label: "Yeni Postür", icon: "scan-outline", route: "/posture-session" },
-  { label: "Haritan", icon: "compass-outline", route: "/(tabs)/journey", tab: "journey" },
-  { label: "Beden Hatları", icon: "git-network-outline", route: "/body-lines" },
-  { label: "Yaşayarak Öğren", icon: "sparkles-outline", route: "/living-learning" },
-  { label: "Günlüğüm", icon: "book-outline", route: "/(tabs)/journal", tab: "journal" },
-  { label: "Gelişimim", icon: "person-outline", route: "/(tabs)/profile", tab: "profile" },
+  { label: "Pratikler", icon: "play-circle-outline", route: "/(tabs)/practice", tab: "practice" },
+  { label: "18 Hareketle Öğren", icon: "sparkles-outline", route: "/body-lines" },
+  { label: "Postür Analizi", icon: "body-outline", route: "/posture" },
+  { label: "Haritam", icon: "compass-outline", route: "/(tabs)/journey", tab: "journey" },
+  { label: "Günlük", icon: "book-outline", route: "/(tabs)/journal", tab: "journal" },
+  { label: "Ayarlar", icon: "settings-outline", route: "/(tabs)/profile", tab: "profile" },
 ];
 
 const extraItems: Array<{ icon: keyof typeof Ionicons.glyphMap; label: string; route: Href }> = [

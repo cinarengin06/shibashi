@@ -28,6 +28,86 @@ export type PostureReportAnalysisSource = {
   summary: string;
 };
 
+export type PostureNarrativeCapture = Pick<
+  PostureAnalysisSnapshot,
+  "axisScore" | "hipScore" | "shoulderScore"
+> & Pick<Partial<PostureAnalysisSnapshot>, "hipTilt" | "shoulderTilt" | "spineShift"> & { view: PostureView };
+
+export type PostureNarrativePrevious = {
+  score: number;
+  captures: PostureNarrativeCapture[];
+};
+
+const postureViewLabels: Record<PostureView, string> = {
+  front: "ön",
+  side: "yan",
+  back: "arka",
+};
+
+const postureRegionLabels = {
+  axisScore: "merkez ekseni",
+  shoulderScore: "omuz hattı",
+  hipScore: "kalça dengesi",
+} as const;
+
+export function buildPostureNarrative(
+  captures: PostureNarrativeCapture[],
+  score: number,
+  previous?: PostureNarrativePrevious,
+) {
+  const regions = (["shoulderScore", "hipScore", "axisScore"] as const).map((key) => {
+    const relevant = captures.filter((capture) => Number.isFinite(capture[key]));
+    const average = Math.round(relevant.reduce((total, capture) => total + capture[key], 0) / Math.max(1, relevant.length));
+    const lowest = relevant.reduce<PostureNarrativeCapture | undefined>(
+      (current, capture) => !current || capture[key] < current[key] ? capture : current,
+      undefined,
+    );
+    return { key, label: postureRegionLabels[key], average, lowest };
+  });
+  const weakest = [...regions].sort((first, second) => first.average - second.average)[0];
+  const weakestScore = weakest.lowest?.[weakest.key] ?? weakest.average;
+  const viewLabel = weakest.lowest ? postureViewLabels[weakest.lowest.view] : "üç açı";
+  const rawMeasurement = weakest.key === "shoulderScore"
+    ? weakest.lowest?.shoulderTilt
+    : weakest.key === "hipScore"
+      ? weakest.lowest?.hipTilt
+      : weakest.lowest?.spineShift;
+  const measurement = typeof rawMeasurement === "number" && Number.isFinite(rawMeasurement)
+    ? Math.abs(rawMeasurement)
+    : undefined;
+  const measurementLabel = weakest.key === "axisScore" ? "eksen sapması" : "eğim";
+  const measurementDetail = measurement === undefined ? "" : `, ${measurementLabel} ${measurement.toFixed(1)}°`;
+  const summary = `${weakest.label[0].toLocaleUpperCase("tr-TR")}${weakest.label.slice(1)}: üç açı ortalaması ${weakest.average}/100; en düşük değer ${viewLabel} görünümünde ${weakestScore}/100${measurementDetail}.`;
+  const recommendation = weakest.key === "shoulderScore"
+    ? `${viewLabel[0].toLocaleUpperCase("tr-TR")}${viewLabel.slice(1)} görünümünde omuz hattı ${weakestScore}/100${measurement === undefined ? "" : ` ve ölçülen eğim ${measurement.toFixed(1)}°`}. Sonraki pratikte omuzlarını zorlamadan gevşet; karşılaştırma için kamera mesafeni ve duruşunu benzer tut.`
+    : weakest.key === "hipScore"
+      ? `${viewLabel[0].toLocaleUpperCase("tr-TR")}${viewLabel.slice(1)} görünümünde kalça dengesi ${weakestScore}/100${measurement === undefined ? "" : `; ölçülen eğim ${measurement.toFixed(1)}°`}. Ayaklarını kalça genişliğinde tutup ağırlığını iki ayağa dağıt, sonra aynı açıdan yeniden ölç.`
+      : `${viewLabel[0].toLocaleUpperCase("tr-TR")}${viewLabel.slice(1)} görünümünde merkez ekseni ${weakestScore}/100${measurement === undefined ? "" : `; ölçülen sapma ${measurement.toFixed(1)}°`}. Başını, gövdeni ve kalçanı rahatça aynı hatta getir; sonraki ölçümde aynı kamera konumunu kullan.`;
+  const trendText = !previous?.captures?.length
+    ? "İlk kayıt başlangıç çizgin. Sonraki ölçümde aynı üç açı ve kamera mesafesiyle değişimi karşılaştırabiliriz."
+    : (() => {
+        const delta = score - previous.score;
+        const previousByView = new Map(previous.captures.map((capture) => [capture.view, capture]));
+        const changes = captures.flatMap((capture) => {
+          const before = previousByView.get(capture.view);
+          if (!before) return [];
+          return (["shoulderScore", "hipScore", "axisScore"] as const).map((key) => ({
+            key,
+            view: capture.view,
+            delta: capture[key] - before[key],
+          }));
+        });
+        const largestChange = changes.sort((first, second) => Math.abs(second.delta) - Math.abs(first.delta))[0];
+        const overall = delta > 0 ? `${delta} puan yükseldi` : delta < 0 ? `${Math.abs(delta)} puan düştü` : "aynı kaldı";
+        if (!largestChange || largestChange.delta === 0) return `Genel skor ${overall}; ölçülen üç bölgede belirgin fark yok.`;
+        const region = postureRegionLabels[largestChange.key];
+        const change = largestChange.delta > 0 ? `+${largestChange.delta}` : `${largestChange.delta}`;
+        return `Genel skor ${overall}. En belirgin değişim ${postureViewLabels[largestChange.view]} görünümündeki ${region}: ${change} puan.`;
+      })();
+
+  return { recommendation, summary, trendText, weakestRegion: weakest.key, weakestScore, weakestAverage: weakest.average };
+}
+
 export function getPostureReportCompositeAnalysis(report: PostureReportAnalysisSource): ReturnType<typeof analyzePosture> {
   const front = report.captures.front.analysis;
   const side = report.captures.side.analysis;
@@ -35,7 +115,7 @@ export function getPostureReportCompositeAnalysis(report: PostureReportAnalysisS
 
   return {
     ...front,
-    axisScore: report.score,
+    axisScore: Math.round((front.axisScore + side.axisScore + back.axisScore) / 3),
     breathScore: 0,
     confidence: Math.round(((front.confidence ?? 0) + (side.confidence ?? 0) + (back.confidence ?? 0)) / 3),
     feedback: report.summary,
@@ -107,43 +187,56 @@ export function getPostureCorrections(analysis: ReturnType<typeof analyzePosture
 }
 
 export function getPostureRecommendations(analysis: ReturnType<typeof analyzePosture>, view: PostureView) {
+  const tilt = (value: number) => `${Math.abs(value).toFixed(1)}° ölçüldü`;
   const recommendations = [
-    analysis.shoulderScore < 80
-      ? {
-          body: "Omuzlarını aşağı doğru gevşet ve nefesi göğüste tutma.",
+    {
+      score: analysis.shoulderScore,
+      recommendation: analysis.shoulderScore < 80
+        ? {
+          body: `Omuz hattı ${analysis.shoulderScore}/100; ${tilt(analysis.shoulderTilt)}. Omuzlarını zorlamadan gevşet ve sonraki ölçümde aynı açıdan karşılaştır.`,
           initial: "O",
           title: "Omuzları Rahatlat",
         }
-      : {
-          body: "Omuz hattı sakin. Bu yumuşaklığı forma taşımaya devam et.",
+        : {
+          body: `Omuz hattı ${analysis.shoulderScore}/100 ve eğim ${tilt(analysis.shoulderTilt)}. Bu rahatlığı koru; sonraki ölçümde omuz seviyelerini yeniden karşılaştır.`,
           initial: "O",
           title: "Omuz Çizgisini Koru",
         },
-    analysis.hipScore < 80
-      ? {
-          body: "Ağırlığını aceleyle öne alma; topuk ve ayak başparmağı kökünü hisset.",
+    },
+    {
+      score: analysis.hipScore,
+      recommendation: analysis.hipScore < 80
+        ? {
+          body: `Kalça dengesi ${analysis.hipScore}/100; eğim ${tilt(analysis.hipTilt)}. Ağırlığını iki ayağa dağıt ve kamera karşısında aynı ayak yerleşimiyle tekrar ölç.`,
           initial: "A",
           title: "Ağırlık Merkezini Düzenle",
         }
-      : {
-          body: "Kalça hattı dengeli. Dizleri kilitlemeden bu dengeyi sürdür.",
+        : {
+          body: `Kalça dengesi ${analysis.hipScore}/100; eğim ${tilt(analysis.hipTilt)}. Dizlerini kilitlemeden bu dengeyi sürdür ve sonraki ölçümle kıyasla.`,
           initial: "K",
           title: "Kalça Dengesini Koru",
         },
-    view === "side"
-      ? {
-          body: "Yan görünümde kulak, omuz, kalça ve ayak bileği tek hat gibi aksın.",
+    },
+    {
+      score: analysis.axisScore,
+      recommendation: view === "side"
+        ? {
+          body: `Yan görünümde merkez ekseni ${analysis.axisScore}/100; sapma ${tilt(analysis.spineShift)}. Kulak, omuz, kalça ve ayak bileğini aynı hatta getir.`,
           initial: "Y",
           title: "Yan Ekseni Kontrol Et",
         }
-      : {
-          body: "Gözlerin karşıda, çene rahat. Baş ve gövdeyi aynı merkeze çağır.",
+        : {
+          body: `Merkez ekseni ${analysis.axisScore}/100; ölçülen sapma ${tilt(analysis.spineShift)}. Çeneni rahat bırakıp baş ve gövde hizanı koru.`,
           initial: "E",
           title: "Ekseni Ortala",
         },
+    },
   ];
 
-  return recommendations.slice(0, 2);
+  return recommendations
+    .sort((first, second) => first.score - second.score)
+    .slice(0, 2)
+    .map(({ recommendation }) => recommendation);
 }
 
 export function analyzePosture(keypoints: PoseKeypoint[], _movementScore: number, _shenId: string, view: PostureView) {

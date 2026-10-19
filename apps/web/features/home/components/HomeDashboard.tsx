@@ -4,7 +4,6 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import type {
   HomeEnergySummary,
-  HomeFlowSummary,
   HomeLevelSummary,
   HomePracticePhoto,
   HomePostureSummary,
@@ -17,10 +16,7 @@ import styles from "./home-dashboard.module.css";
 
 type HomeDashboardProps = {
   energy: HomeEnergySummary;
-  flows: HomeFlowSummary[];
   level: HomeLevelSummary;
-  onFlows: () => void;
-  onFlowSelect: (flowId: string) => void;
   onHistory: () => void;
   onPractice: () => void;
   onPosture: (reportId?: string) => void;
@@ -29,7 +25,6 @@ type HomeDashboardProps = {
   postureCount: number;
   postureReports: HomePostureSummary[];
   practicePhotos: HomePracticePhoto[];
-  recommendedFlow: HomeFlowSummary;
   shen: HomeShenSummary;
   shenOptions: HomeShenSummary[];
   streak: HomeStreakSummary;
@@ -48,7 +43,6 @@ export function HomeDashboard(props: HomeDashboardProps) {
       <ShenSelector activeShen={props.shen} onSelect={props.onSelectShen} options={props.shenOptions} />
       <HomeStatsRow energy={props.energy} level={props.level} streak={props.streak} week={props.week} />
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
-        <TodayPracticeCard flow={props.recommendedFlow} onFlowSelect={props.onFlowSelect} />
         <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
         <PostureAnalysisCard onPosture={props.onPosture} reports={props.postureReports} />
       </section>
@@ -174,20 +168,6 @@ function MiniTrend({ values }: { values: number[] }) {
   return <div className={styles.miniTrend} aria-label="Son yedi günün enerji eğilimi">{safeValues.map((value, index) => <span key={index} style={{ height: `${Math.max(6, value)}%` }} />)}</div>;
 }
 
-function TodayPracticeCard({ flow, onFlowSelect }: { flow: HomeFlowSummary; onFlowSelect: (flowId: string) => void }) {
-  return (
-    <article className={styles.todayCard}>
-      <h2>Bugünkü Pratik Önerisi</h2>
-      <button onClick={() => onFlowSelect(flow.id)} type="button">
-        <Image alt={`${flow.title} pratiği`} fill sizes="(min-width: 1024px) 28vw, 100vw" src={flow.image} />
-        <span className={styles.cardShade} />
-        <div className={styles.todayCopy}><small>{flow.durationMinutes} dk · {flow.level}</small><h3>{flow.title}</h3><p>{flow.description}</p></div>
-        <span className={styles.playButton} aria-hidden="true">▶</span>
-      </button>
-    </article>
-  );
-}
-
 function RecentPracticePhotos({ onHistory, photos }: { onHistory: () => void; photos: HomePracticePhoto[] }) {
   return (
     <section className={styles.flowsPanel}>
@@ -210,7 +190,7 @@ function PostureAnalysisCard({ onPosture, reports }: { onPosture: (reportId?: st
             <em>İlgili analize git <i aria-hidden="true">→</i></em>
           </button>)}
         </div> : <p>Duruşunu analiz et, farkı gör,<br />gelişimini takip et.</p>}
-        <button className={styles.newPostureButton} onClick={() => onPosture()} type="button">Yeni analiz</button>
+        <button className={styles.postureAnalysisButton} onClick={() => onPosture()} type="button">Yeni analiz</button>
       </div>
       <div className={styles.postureModels} aria-hidden="true"><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /></div>
     </article>

@@ -31,11 +31,9 @@ import { InnerGatePracticeFrame, InnerJourneyStatus, MovementAnalysisWindow, Mov
 import type { MovementAnalysisWindowResult, MovementAnalysisWindowState } from "@/features/practice/types";
 import { getInnerJourneyScene, getMovementReferenceImage, movements, shibashiFullSetVideoId, warmupLessons, type Movement, type PracticeAdaptation, type PracticeLearningMode, type WarmupLesson, type WarmupLessonId } from "@/features/practice/data/movements";
 import { PostureSavedReportsGallery, evaluateWebPostureFrame } from "@/features/posture/components/PostureScreens";
-import type { NewPostureArchiveReport } from "@/features/new-posture/components/NewPostureScreen";
-import type { LivingPracticeResult } from "@/packages/living-learning";
 import { ShibashiAuthGate } from "@/components/shibashi-auth-gate";
 import { CoachMeridianCard, MeridianExplorer, MovementMeridianCard, PersonalMeridianSuggestion, PracticeMeridianSummaryCard } from "@/components/meridian/MeridianKnowledge";
-import {getBrowserSyncCode,setBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
+import {getBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
 import { useShibashiAuth } from "@/lib/supabase-auth";
 import { toWebPostureReport, toWebPracticeSnapshot } from "@/lib/sync-record-adapters";
 import {
@@ -82,7 +80,6 @@ import {
   type ShenActivity,
   type ShibashiSyncPayload,
   type SyncRecord,
-  type SyncStatus,
   type TraceMode,
 } from "@/packages/shen-domain";
 import {
@@ -98,18 +95,6 @@ import {
   type PostureView,
 } from "@/packages/posture-analysis";
 
-const LivingLearningScreen = dynamic(
-  () => import("@/components/living-learning/LivingLearningScreen").then((module) => module.LivingLearningScreen),
-  { ssr: false },
-);
-const Practice2Screen = dynamic(
-  () => import("@/features/practice2/components/Practice2Screen").then((module) => module.Practice2Screen),
-  { ssr: false },
-);
-const NewPostureScreen = dynamic(
-  () => import("@/features/new-posture/components/NewPostureScreen").then((module) => module.NewPostureScreen),
-  { ssr: false },
-);
 
 
 // Geçici arayüz anahtarları: altyapı ve bileşenler yeniden açılmak üzere korunur.
@@ -153,15 +138,12 @@ type CoachCueRequest = {
 
 const tabs: { id: TabId | "bodyLines"; label: string; icon: string }[] = [
   { id: "home", label: "Özel Odam", icon: "◉" },
-  { id: "practice2", label: "Akışa Gir", icon: "⌁" },
-  { id: "practice", label: "Yolculuk", icon: "◎" },
-  { id: "posture", label: "Bedenini Gör", icon: "↕" },
-  { id: "newPosture", label: "Yeni Postür", icon: "◫" },
-  { id: "journey", label: "Haritan", icon: "☯" },
-  { id: "bodyLines", label: "Beden Hatları", icon: "⌇" },
-  { id: "learning", label: "Yaşayarak Öğren", icon: "✦" },
-  { id: "journal", label: "Günlüğüm", icon: "◌" },
-  { id: "profile", label: "Gelişimim", icon: "☰" },
+  { id: "practice", label: "Pratikler", icon: "◎" },
+  { id: "bodyLines", label: "18 Hareketle Öğren", icon: "✦" },
+  { id: "posture", label: "Postür Analizi", icon: "↕" },
+  { id: "journey", label: "Haritam", icon: "☯" },
+  { id: "journal", label: "Günlük", icon: "◌" },
+  { id: "profile", label: "Ayarlar", icon: "☰" },
 ];
 
 export default function RitimKapisiOS() {
@@ -169,11 +151,10 @@ export default function RitimKapisiOS() {
   const [activeTab, setActiveTab] = useState<TabId>("home");
 
   useEffect(() => {
-    const requestedTab = new URLSearchParams(window.location.search).get("tab") as TabId | null;
-    if (requestedTab && tabs.some((tab) => tab.id === requestedTab)) setActiveTab(requestedTab);
+    const queryTab = new URLSearchParams(window.location.search).get("tab");
+    if (queryTab && tabs.some((tab) => tab.id === queryTab)) setActiveTab(queryTab as TabId);
   }, []);
   const [introVideoVisible, setIntroVideoVisible] = useState(WEB_INTRO_VIDEO_ENABLED);
-  const [selectedPractice2FlowId, setSelectedPractice2FlowId] = useState<string>();
   const [selectedHomePostureReportId, setSelectedHomePostureReportId] = useState<string>();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [experienceDay, setExperienceDay] = useState(1);
@@ -190,10 +171,7 @@ export default function RitimKapisiOS() {
   const [shenActivities, setShenActivities] = useState<ShenActivity[]>([]);
   const [shenReflections, setShenReflections] = useState<DomainReflectionEntry[]>([]);
   const [savedMasterSentences, setSavedMasterSentences] = useState<SavedMasterSentence[]>([]);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>("local");
   const [syncCode, setSyncCode] = useState("");
-  const [lastSyncedAt, setLastSyncedAt] = useState<string>();
-  const [syncMessage, setSyncMessage] = useState<string>();
   const [syncReady, setSyncReady] = useState(false);
   const [authSkipped, setAuthSkipped] = useState(false);
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -229,8 +207,7 @@ export default function RitimKapisiOS() {
       previewMode === "posture" ||
       previewMode === "posture-live" ||
       previewMode === "journey" ||
-      previewMode === "practice" ||
-      previewMode === "practice2";
+      previewMode === "practice";
     if (isPreview) {
       setIntroVideoVisible(false);
       setOnboardingComplete(true);
@@ -238,7 +215,6 @@ export default function RitimKapisiOS() {
       if (previewMode === "posture-live") setPosturePreviewLive(true);
       if (previewMode === "journey") setActiveTab("journey");
       if (previewMode === "practice") setActiveTab("practice");
-      if (previewMode === "practice2") setActiveTab("practice2");
     }
     if (!isPreview) {
       setOnboardingComplete(window.localStorage.getItem("ritim-kapisi-onboarding-complete") === "true");
@@ -370,21 +346,9 @@ export default function RitimKapisiOS() {
 
   async function syncWebNow(code=syncCode) {
     if(!syncReady||!code)return;
-    setSyncStatus("syncing");
     const result=await syncBrowserState(buildWebSyncPayload(),code);
-    setSyncStatus(result.status);
     setSyncCode(result.syncCode);
-    setSyncMessage(result.message);
-    if(result.syncedAt)setLastSyncedAt(result.syncedAt);
     if(result.payload)applyWebSyncPayload(result.payload);
-  }
-
-  function connectWebSyncCode(code:string) {
-    const normalized=setBrowserSyncCode(code);
-    if(!normalized)return false;
-    setSyncCode(normalized);
-    void syncWebNow(normalized);
-    return true;
   }
 
   useEffect(() => {
@@ -442,27 +406,6 @@ export default function RitimKapisiOS() {
       return nextGallery;
     });
   }
-
-  useEffect(() => {
-    const receiveLivingPractice = (event: Event) => {
-      const result = (event as CustomEvent<LivingPracticeResult>).detail;
-      if (!result?.id || result.sampleCount < 1) return;
-      const createdAt = new Date(result.completedAt);
-      savePracticeSnapshot({
-        id: result.id,
-        dateKey: formatSnapshotDate(createdAt),
-        timeLabel: formatSnapshotTime(createdAt),
-        createdAt: result.completedAt,
-        movementId: 5,
-        movementName: "Önden Arkaya İtme",
-        score: result.movementScore,
-        shenName: "Yaşayarak Öğrenme",
-        imageData: "/images/living-learning/yeni-gun.png",
-      });
-    };
-    window.addEventListener("shibashi:living-practice-saved", receiveLivingPractice);
-    return () => window.removeEventListener("shibashi:living-practice-saved", receiveLivingPractice);
-  }, [selectedShenId]);
 
   function savePostureReport(report: PostureReport) {
     void savePostureReportToIndexedDb(report);
@@ -542,7 +485,7 @@ export default function RitimKapisiOS() {
     else playSelectedShenMusic();
   }
 
-  function completeOnboarding(profile?: OnboardingProfile, destination: "home" | "practice2" = "home") {
+  function completeOnboarding(profile?: OnboardingProfile) {
     const recommendedShen = profile?.firstJourneyPlan?.recommendedShen;
     if (recommendedShen && fiveShen.some((shen) => shen.id === recommendedShen)) {
       setSelectedShenId(recommendedShen);
@@ -554,8 +497,7 @@ export default function RitimKapisiOS() {
     window.localStorage.setItem("ritim-kapisi-onboarding-complete", "true");
     setExperienceDay(1);
     setOnboardingComplete(true);
-    if (destination === "practice2") setSelectedPractice2FlowId(undefined);
-    setActiveTab(destination);
+    setActiveTab("home");
   }
 
   function restartOnboarding() {
@@ -760,10 +702,6 @@ export default function RitimKapisiOS() {
             homeCopy={shenTodayCopy}
             onJournal={() => setActiveTab("journal")}
             onPractice={() => setActiveTab("practice")}
-            onPractice2={(flowId) => {
-              setSelectedPractice2FlowId(flowId);
-              setActiveTab("practice2");
-            }}
             onPosture={(reportId) => {
               setSelectedHomePostureReportId(reportId);
               setActiveTab("posture");
@@ -815,7 +753,6 @@ export default function RitimKapisiOS() {
             latestPostureReport={postureReports[0]}
           />
         ) : null}
-        {onboardingComplete && activeTab === "practice2" ? <Practice2Screen embedded initialFlowId={selectedPractice2FlowId} onSnapshotCaptured={savePracticeSnapshot} selectedShenName={selectedShen.name} /> : null}
         {onboardingComplete && activeTab === "posture" ? (
           <PostureScreen
             onDeletePostureReport={deletePostureReport}
@@ -827,12 +764,6 @@ export default function RitimKapisiOS() {
             initialReportId={selectedHomePostureReportId}
             previewLive={posturePreviewLive}
             selectedShen={selectedShen}
-          />
-        ) : null}
-        {onboardingComplete && activeTab === "newPosture" ? (
-          <NewPostureScreen
-            onNavigateToPractice={() => setActiveTab("practice")}
-            onReportCaptured={(report: NewPostureArchiveReport) => savePostureReport(report as PostureReport)}
           />
         ) : null}
         {onboardingComplete && activeTab === "journey" ? (
@@ -851,7 +782,6 @@ export default function RitimKapisiOS() {
             userName={userName}
           />
         ) : null}
-        {onboardingComplete && activeTab === "learning" ? <LivingLearningScreen embedded /> : null}
         {onboardingComplete && activeTab === "journal" ? (
           <JournalScreen
             gallery={practiceGallery}
@@ -862,23 +792,17 @@ export default function RitimKapisiOS() {
         ) : null}
         {onboardingComplete && activeTab === "profile" ? (
           <ProfileScreen
-            lastSyncedAt={lastSyncedAt}
             authEmail={auth.user?.email}
             musicState={soundState}
-            onConnectSyncCode={connectWebSyncCode}
             onRestartOnboarding={restartOnboarding}
             onSelectShen={selectShen}
             onSelectVisualTheme={selectVisualTheme}
             onSignOut={auth.user ? () => void auth.signOut() : undefined}
             onToggleMusic={soundState === "açık" ? stopShenMusic : playSelectedShenMusic}
-            onSyncNow={()=>void syncWebNow()}
             postureReports={postureReports}
             selectedShen={selectedShen}
             selectedShenId={selectedShenId}
             visualThemeId={visualThemeId}
-            syncCode={syncCode}
-            syncMessage={syncMessage}
-            syncStatus={syncStatus}
             userName={userName}
             shens={fiveShen}
             googleAuthEnabled={WEB_GOOGLE_AUTH_UI_ENABLED}
@@ -1052,7 +976,6 @@ function PostureScreen({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const postureCameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const detectorRef = useRef<PoseDetector | null>(null);
   const rafRef = useRef<number | null>(null);
   const scoreTimerRef = useRef<number | null>(null);
@@ -1084,7 +1007,6 @@ function PostureScreen({
   const [captureFlash, setCaptureFlash] = useState(false);
   const [capturedView, setCapturedView] = useState<PostureView | null>(null);
   const [postureVoiceEnabled, setPostureVoiceEnabled] = useState(true);
-  const [postureZoom, setPostureZoom] = useState<{ min: number; max: number; step: number; value: number } | null>(null);
 
   useEffect(() => {
     if (!initialReportId) return;
@@ -1380,27 +1302,6 @@ function PostureScreen({
         },
       });
 
-      const cameraTrack = stream.getVideoTracks()[0];
-      const capabilities = cameraTrack?.getCapabilities() as MediaTrackCapabilities & {
-        zoom?: { min: number; max: number; step: number };
-      };
-      if (cameraTrack && capabilities?.zoom && Number.isFinite(capabilities.zoom.min)) {
-        const minimumZoom = capabilities.zoom.min;
-        postureCameraTrackRef.current = cameraTrack;
-        setPostureZoom({
-          min: minimumZoom,
-          max: capabilities.zoom.max,
-          step: Math.max(capabilities.zoom.step || 0.1, 0.1),
-          value: minimumZoom,
-        });
-        await cameraTrack.applyConstraints({
-          advanced: [{ zoom: minimumZoom }],
-        } as unknown as MediaTrackConstraints).catch(() => undefined);
-      } else {
-        postureCameraTrackRef.current = cameraTrack ?? null;
-        setPostureZoom(null);
-      }
-
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -1417,8 +1318,6 @@ function PostureScreen({
   function shutdownPostureCamera() {
     if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
-    postureCameraTrackRef.current = null;
-    setPostureZoom(null);
     streamRef.current = null;
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -1431,17 +1330,6 @@ function PostureScreen({
     targetScoreRef.current = 0;
     setMovementScore(0);
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-  }
-
-  async function changePostureZoom(direction: -1 | 1) {
-    const track = postureCameraTrackRef.current;
-    if (!track || !postureZoom) return;
-    const nextValue = Math.max(
-      postureZoom.min,
-      Math.min(postureZoom.max, postureZoom.value + postureZoom.step * direction),
-    );
-    await track.applyConstraints({ advanced: [{ zoom: nextValue }] } as unknown as MediaTrackConstraints).catch(() => undefined);
-    setPostureZoom((current) => current ? { ...current, value: nextValue } : current);
   }
 
   function togglePostureVoice() {
@@ -1601,8 +1489,6 @@ function PostureScreen({
       selectedShen={selectedShen}
       voiceEnabled={postureVoiceEnabled}
       onVoiceToggle={togglePostureVoice}
-      onZoomChange={(direction) => void changePostureZoom(direction)}
-      zoom={postureZoom}
       step={postureStep}
       videoRef={videoRef}
       view={postureView}

@@ -31,7 +31,7 @@ export default function Journey(){
  const[journeyView,setJourneyView]=useState<'overview'|'shen'|'bagua'|'map'|'lines'|'guides'>(params.view==='map'?'map':'overview');
  useEffect(()=>{if(params.view==='overview'||params.view==='shen'||params.view==='map'||params.view==='lines'||params.view==='guides'||params.view==='bagua')setJourneyView(params.view)},[params.view]);
  const activeDirection=baguaDirections[baguaIndex]??baguaDirections[0];
- const openDirection=()=>{if(activeDirection.target==='practice')router.push('/(tabs)/practice');else if(activeDirection.target==='posture')router.push('/posture');else if(activeDirection.target==='journal')router.push('/(tabs)/journal');else if(activeDirection.target==='learning')router.push('/living-learning');else router.push('/(tabs)')};
+ const openDirection=()=>{if(activeDirection.target==='practice')router.push('/(tabs)/practice');else if(activeDirection.target==='posture')router.push('/posture');else if(activeDirection.target==='journal')router.push('/(tabs)/journal');else if(activeDirection.target==='learning')router.push('/body-lines');else router.push('/(tabs)')};
  const choose=(id:typeof selected)=>{setSelected(id);saveProfile({selectedShenId:toLegacyShenId(id)})};
  return <Screen>
   <Eyebrow>KİŞİSEL PUSULAN</Eyebrow>

@@ -1,10 +1,9 @@
 "use client";
 
 import { calculateShenProgress, toDomainShenId, type ShenActivity } from "@/packages/shen-domain";
-import { getStaticPractice, shortFlowDefinitions } from "@/packages/practice2";
 import { HomeDashboard } from "./HomeDashboard";
 import { isCapturedPracticePhoto } from "../utils/practice-photo";
-import type { HomeFlowSummary, HomeShenId } from "../types/home";
+import type { HomeShenId } from "../types/home";
 
 type PracticeRecord = {
   createdAt: string;
@@ -47,7 +46,6 @@ type Props = {
   homeCopy: Record<HomeShenId, ShenCopy>;
   onJournal: () => void;
   onPractice: () => void;
-  onPractice2: (flowId?: string) => void;
   onPosture: (reportId?: string) => void;
   onReset: () => void;
   onSelectShen: (shenId: HomeShenId) => void;
@@ -127,7 +125,6 @@ export function DojoHomeScreen({
   homeCopy,
   onJournal,
   onPractice,
-  onPractice2,
   onPosture,
   onReset,
   onSelectShen,
@@ -154,19 +151,6 @@ export function DojoHomeScreen({
     const createdAt = new Date(item.createdAt).getTime();
     return item.type === "practice" && item.completed !== false && createdAt >= recentDays[0].getTime();
   });
-  const flowCards: HomeFlowSummary[] = shortFlowDefinitions.map((flow) => {
-    const reference = getStaticPractice(flow.steps[Math.min(1, flow.steps.length - 1)]?.practiceId ?? flow.steps[0]?.practiceId);
-    return {
-      description: flow.description,
-      durationMinutes: flow.durationMinutes,
-      focus: flow.focus,
-      id: flow.id,
-      image: reference.referenceImage,
-      level: flow.level,
-      title: flow.title,
-    };
-  });
-  const recommendedFlow = flowCards[selectedShen.mapStage % flowCards.length] ?? flowCards[0];
   const practicePhotos = practiceGallery
     .filter((snapshot) => isCapturedPracticePhoto(snapshot.imageData))
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
@@ -176,10 +160,7 @@ export function DojoHomeScreen({
 
   return <HomeDashboard
     energy={{ score: energyScores.shen, trend: dailyMinutes.map((value) => Math.min(100, value * 18)) }}
-    flows={flowCards}
     level={{ experience: experienceIntoLevel, level: progress.level, nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
-    onFlows={onPractice2}
-    onFlowSelect={onPractice2}
     onHistory={onJournal}
     onPractice={onPractice}
     onPosture={onPosture}
@@ -188,7 +169,6 @@ export function DojoHomeScreen({
     postureCount={postureCount}
     postureReports={postureReports.map((report) => ({ date: report.createdAt, id: report.id, score: report.score, summary: report.summary }))}
     practicePhotos={practicePhotos}
-    recommendedFlow={recommendedFlow}
     shen={toHomeShen(selectedShen, homeCopy[selectedShen.id], "Bugünün odağı")}
     shenOptions={shenOptions.map((shen) => toHomeShen(shen, homeCopy[shen.id], shen.dailyName))}
     streak={getPracticeStreak(practiceGallery, shenActivities)}

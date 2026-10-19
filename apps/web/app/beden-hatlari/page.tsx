@@ -3,8 +3,8 @@ import { WebHeader } from "@/components/web/WebHeader";
 import { BodyLinesScreen } from "@/features/body-lines/components/BodyLinesScreen";
 
 export const metadata: Metadata = {
-  title: "Beden Hatları · Shibashi EFE",
-  description: "Shibashi'nin 18 hareketini anatomi, beden hatları ve derin bağlantılarıyla keşfet.",
+  title: "Yaşayarak Öğren · Shibashi EFE",
+  description: "18 Shibashi hareketini hoca animasyonu, kamera pratiği ve klasik kanal okumasıyla deneyimle.",
 };
 
 export default function BodyLinesPage() {

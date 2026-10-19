@@ -77,7 +77,7 @@ export default function Onboarding() {
     }
     goTo(step + 1);
   };
-  const finish = (destination: "home" | "practice") => {
+  const finish = () => {
     const finalData = {
       ...data,
       name: data.name.trim(),
@@ -107,11 +107,7 @@ export default function Onboarding() {
       firstJourneyPlan: plan,
     });
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.replace(
-      destination === "practice"
-        ? "/(tabs)/pratik2"
-        : "/(tabs)",
-    );
+    router.replace("/(tabs)");
   };
   const canContinue = step !== 1 || data.name.trim().length >= 2;
 
@@ -238,16 +234,11 @@ export default function Onboarding() {
         {step === 7 ? (
           <View style={m.resultFooter}>
             <Pressable
-              onPress={() => finish("practice")}
+              onPress={finish}
               style={({ pressed }) => [m.primary, pressed && m.pressed]}
             >
-              <Ionicons color={colors.ink} name="play" size={17} />
-              <Text style={m.primaryText}>5 DAKİKALIK İLK PRATİĞİ BAŞLAT</Text>
-            </Pressable>
-            <Pressable onPress={() => finish("home")}>
-              <Text style={[m.secondary, { color: shen.color }]}>
-                Önce ana sayfayı gör
-              </Text>
+              <Text style={m.primaryText}>Hadi Başlayalım</Text>
+              <Ionicons color={colors.ink} name="arrow-forward" size={18} />
             </Pressable>
           </View>
         ) : null}

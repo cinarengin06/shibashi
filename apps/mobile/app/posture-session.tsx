@@ -7,14 +7,14 @@ import {ActivityIndicator,Pressable,ScrollView,StyleSheet,Text,View,type LayoutC
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Svg,{Circle,Line} from 'react-native-svg';
 import {PrimaryButton} from '../components/ui';
-import {CameraZoomControl} from '../components/CameraZoomControl';
 import {colors,radii} from '../constants/theme';
 import {getShen} from '../data/fiveShen';
 import {analyzeWithAppleVision3D,isAppleVision3DAvailable} from '../services/pose/AppleVisionPose3D';
 import {MediaPipePoseBridge,MediaPipePoseBridgeRef,PoseLandmark} from '../services/pose/MediaPipePoseBridge';
-import {aggregatePostureCaptures,createPostureCapture,evaluatePoseFrame,getLandmarkMovement,isLandmarkVisible} from '../services/pose/PostureMetrics';
+import {aggregatePostureCaptures,createPostureCapture,evaluatePoseFrame,getLandmarkMovement,isLandmarkVisible,toPostureNarrativeCapture} from '../services/pose/PostureMetrics';
 import {useApp} from '../store/AppStore';
 import {PostureCapture,PostureReport,PostureView} from '../types';
+import {buildPostureNarrative} from '../../../packages/posture-analysis';
 
 const views:PostureView[]=['front','side','back'];
 const viewCopy:Record<PostureView,{title:string;instruction:string;icon:keyof typeof Ionicons.glyphMap}>={
@@ -35,7 +35,7 @@ const scanCopy:Record<PostureView,{start:string;turn:string;waiting:string}>={
 
 export default function PostureSession(){
  const[permission,requestPermission]=useCameraPermissions();
- const{profile,addPostureReport}=useApp();
+ const{profile,addPostureReport,postureReports}=useApp();
  const shen=getShen(profile.selectedShenId);
  const[index,setIndex]=useState(0);
  const[captures,setCaptures]=useState<PostureCapture[]>([]);
@@ -53,7 +53,6 @@ export default function PostureSession(){
  const[analysisError,setAnalysisError]=useState('');
  const[vision3DActive,setVision3DActive]=useState(false);
  const[cameraError,setCameraError]=useState(false);
- const[cameraZoom,setCameraZoom]=useState(0);
  const[tipVisible,setTipVisible]=useState(false);
  const[saving,setSaving]=useState(false);
  const view=views[index]??'front';
@@ -165,7 +164,9 @@ export default function PostureSession(){
     setCameraReady(false);
     setLiveLandmarks([]);
     const average=Math.round(nextCaptures.reduce((sum,saved)=>sum+saved.score,0)/Math.max(1,nextCaptures.length));
-    setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,analysisSource:nextCaptures.some(saved=>saved.analysisSource==='vision-3d+mediapipe-33')?'vision-3d+mediapipe-33':'mediapipe-33',summary:average>=82?'Beden eksenin dengeli ve sakin.':average>=68?'Temel hat dengeli; küçük ayarlar gelişimi hızlandırır.':'Merkez ve omuz hattı için yumuşak tekrar öneriliyor.',asymmetrySignal:average>=80?'Sağ-sol farkı düşük':'Omuz ve kalça hattını yeniden dengele'});
+    const previous=postureReports[0];
+    const narrative=buildPostureNarrative(nextCaptures.map(toPostureNarrativeCapture),average,previous?.captures?.length?{score:previous.score,captures:previous.captures.map(toPostureNarrativeCapture)}:undefined);
+    setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,analysisSource:nextCaptures.some(saved=>saved.analysisSource==='vision-3d+mediapipe-33')?'vision-3d+mediapipe-33':'mediapipe-33',summary:narrative.summary,trendText:narrative.trendText,asymmetrySignal:narrative.weakestAverage<62?'yüksek':narrative.weakestAverage<78?'orta':'düşük'});
     speakOnce('complete','Bitti. Üç görünüm tamamlandı. Postür raporun hazırlanıyor.');
     setPhase('processing');
    }catch(error){
@@ -207,7 +208,7 @@ export default function PostureSession(){
 
  if(result)return <SafeAreaView style={styles.result}>
   <ScrollView contentContainerStyle={styles.resultContent}>
-   <View style={styles.resultTop}><Text style={[styles.resultLabel,{color:shen.color}]}>POSTÜR RAPORUN HAZIR</Text><Text style={styles.resultTitle}>Beden çizgin görünür oldu.</Text><Text style={styles.resultBody}>{result.summary}</Text></View>
+   <View style={styles.resultTop}><Text style={[styles.resultLabel,{color:shen.color}]}>POSTÜR RAPORUN HAZIR</Text><Text style={styles.resultTitle}>Beden çizgin görünür oldu.</Text><Text style={styles.resultBody}>{result.summary}</Text><Text style={styles.resultTrend}>{result.trendText}</Text></View>
    <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text><Text style={styles.overallConfidence}>Genel güven %{getReportConfidence(result)}</Text></View>
    <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}><View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View><View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
    <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişiselleştirilmiş Öneriler ve Notlar</Text><Text style={styles.insightBody}>{getReportRecommendation(result)}</Text></View></View>
@@ -224,8 +225,7 @@ export default function PostureSession(){
   </View>
   <View style={styles.sessionContent}>
    <View onLayout={(event:LayoutChangeEvent)=>{const{width,height}=event.nativeEvent.layout;setPreviewSize(current=>current.width===width&&current.height===height?current:{width,height})}} style={[styles.cameraStage,{borderColor:`${shen.color}55`}]}>
-    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active zoom={cameraZoom} onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
-    <CameraZoomControl onChange={setCameraZoom} zoom={cameraZoom}/>
+    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
     <View style={styles.cameraShade}/>
     <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>
     <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize} view={view}/>
@@ -361,16 +361,7 @@ function getReportConfidence(report:PostureReport){
 }
 
 function getReportRecommendation(report:PostureReport){
- const count=Math.max(1,report.captures.length);
- const averages={
-  axis:report.captures.reduce((total,capture)=>total+capture.axisScore,0)/count,
-  shoulder:report.captures.reduce((total,capture)=>total+capture.shoulderScore,0)/count,
-  hip:report.captures.reduce((total,capture)=>total+capture.hipScore,0)/count,
- };
- const weakest=(Object.entries(averages) as [keyof typeof averages,number][]).sort((a,b)=>a[1]-b[1])[0];
- if(weakest[0]==='shoulder')return `${report.asymmetrySignal}. Omuz hattın ölçümde en çok dikkat isteyen bölge. Nefes verirken iki omzu aşağı bırak; kolları kaldırmadan önce üç sakin tekrar yap.`;
- if(weakest[0]==='hip')return `${report.asymmetrySignal}. Kalça hattında sağ-sol yük dağılımını çalış. Ayaklarını kalça genişliğinde yerleştir, ağırlığı iki ayağa eşit ver ve dizleri kilitlemeden 30 saniye bekle.`;
- return `${report.asymmetrySignal}. Merkez eksenini uzatmaya odaklan. Başının tepesini yukarı, kuyruk sokumunu aşağı düşün ve çeneyi sıkmadan üç doğal nefes boyunca bu hattı koru.`;
+ return buildPostureNarrative(report.captures.map(toPostureNarrativeCapture),report.score).recommendation;
 }
 
 const styles=StyleSheet.create({
@@ -491,7 +482,7 @@ const styles=StyleSheet.create({
  resultTop:{gap:7},
  resultLabel:{fontSize:16,fontWeight:'900',letterSpacing:1.4},
  resultTitle:{color:colors.cream,fontSize:28,fontWeight:'800'},
- resultBody:{color:colors.muted,fontSize:16,lineHeight:26},
+ resultBody:{color:colors.muted,fontSize:16,lineHeight:26},resultTrend:{color:colors.gold,fontSize:15,lineHeight:23},
  overall:{width:150,height:150,borderRadius:75,borderWidth:5,alignSelf:'center',alignItems:'center',justifyContent:'center',backgroundColor:colors.surface},
  overallValue:{fontSize:46,fontWeight:'900'},
  overallLabel:{color:colors.muted,fontSize:16,fontWeight:'900',letterSpacing:1},

@@ -1,19 +1,16 @@
 import Link from "next/link";
 import styles from "./web-header.module.css";
 
-type WebHeaderTab = "home" | "practice" | "practice2" | "posture" | "newPosture" | "journey" | "bodyLines" | "learning" | "journal" | "profile";
+type WebHeaderTab = "home" | "practice" | "posture" | "journey" | "bodyLines" | "journal" | "profile";
 
 const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
   { id: "home", label: "Özel Odam", href: "/" },
-  { id: "practice2", label: "Akışa Gir", href: "/pratik2" },
-  { id: "practice", label: "Yolculuk", href: "/?tab=practice" },
-  { id: "posture", label: "Bedenini Gör", href: "/?tab=posture" },
-  { id: "newPosture", label: "New_posture", href: "/?tab=newPosture" },
-  { id: "journey", label: "Haritan", href: "/?tab=journey" },
-  { id: "bodyLines", label: "Beden Hatları", href: "/beden-hatlari" },
-  { id: "learning", label: "Yaşayarak Öğren", href: "/yasayarak-ogren" },
-  { id: "journal", label: "Günlüğüm", href: "/?tab=journal" },
-  { id: "profile", label: "Gelişimim", href: "/?tab=profile" },
+  { id: "practice", label: "Pratikler", href: "/?tab=practice" },
+  { id: "bodyLines", label: "18 Hareketle Öğren", href: "/beden-hatlari" },
+  { id: "posture", label: "Postür Analizi", href: "/?tab=posture" },
+  { id: "journey", label: "Haritam", href: "/?tab=journey" },
+  { id: "journal", label: "Günlük", href: "/?tab=journal" },
+  { id: "profile", label: "Ayarlar", href: "/?tab=profile" },
 ];
 
 export function WebHeader({ active }: { active: WebHeaderTab }) {
@@ -30,7 +27,7 @@ export function WebHeader({ active }: { active: WebHeaderTab }) {
           </Link>
         ))}
       </nav>
-      <Link className={styles.profile} href="/?tab=profile">Profil</Link>
+      <Link className={styles.profile} href="/?tab=profile">Ayarlar</Link>
     </header>
   );
 }

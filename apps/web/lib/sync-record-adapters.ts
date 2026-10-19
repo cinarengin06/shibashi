@@ -75,7 +75,7 @@ export function toWebPostureReport(record:SyncRecord):PostureReport|null {
   asymmetrySignal:score<62?"yüksek":score<78?"orta":"düşük",
   flags:[],
   summary:String(record.summary??"App postür ölçümü senkronize edildi."),
-  trendText:"App ile eşitlendi",
+  trendText:String(record.trendText??"App ile eşitlendi"),
  };
 }
 

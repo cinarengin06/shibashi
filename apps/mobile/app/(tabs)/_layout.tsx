@@ -23,11 +23,10 @@ export default function TabLayout() {
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="index" options={{ title: "Özel Odam" }} />
-      <Tabs.Screen name="pratik2" options={{ title: "Akışa Gir" }} />
-      <Tabs.Screen name="practice" options={{ title: "Yolculuk" }} />
-      <Tabs.Screen name="journey" options={{ title: "Haritan" }} />
-      <Tabs.Screen name="journal" options={{ title: "Günlüğüm" }} />
-      <Tabs.Screen name="profile" options={{ href: null, title: "Gelişimim" }} />
+      <Tabs.Screen name="practice" options={{ title: "Pratikler" }} />
+      <Tabs.Screen name="journey" options={{ title: "Haritam" }} />
+      <Tabs.Screen name="journal" options={{ title: "Günlük" }} />
+      <Tabs.Screen name="profile" options={{ href: null, title: "Ayarlar" }} />
     </Tabs>
   );
 }

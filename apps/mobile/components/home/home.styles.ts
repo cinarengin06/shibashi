@@ -339,8 +339,8 @@ export const s = StyleSheet.create({
   postureHistorySummary:{color:colors.muted,fontFamily:fonts.sansMedium,fontSize:11,marginTop:1},
   postureHistoryLink:{fontFamily:fonts.sansBold,fontSize:10,marginTop:2},
   postureEmpty:{color:colors.muted,fontFamily:fonts.sansMedium,fontSize:14,lineHeight:21,marginVertical:12},
-  newPostureButton:{alignItems:'center',alignSelf:'flex-start',borderRadius:15,borderWidth:1,flexDirection:'row',gap:7,marginTop:'auto',minHeight:43,paddingHorizontal:14},
-  newPostureButtonText:{fontFamily:fonts.sansBold,fontSize:13,letterSpacing:.4,textTransform:'uppercase'},
+  postureAnalysisButton:{alignItems:'center',alignSelf:'flex-start',borderRadius:15,borderWidth:1,flexDirection:'row',gap:7,marginTop:'auto',minHeight:43,paddingHorizontal:14},
+  postureAnalysisButtonText:{fontFamily:fonts.sansBold,fontSize:13,letterSpacing:.4,textTransform:'uppercase'},
   portal: {
     backgroundColor: colors.surface,
     borderRadius: 22,

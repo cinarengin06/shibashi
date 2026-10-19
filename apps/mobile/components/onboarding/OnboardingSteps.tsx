@@ -54,7 +54,7 @@ export function Welcome({ onStart }: { onStart: () => void }) {
   return (
     <ImageBackground
       imageStyle={m.welcomeImage}
-      source={require("../assets/living-learning/curtains-opening.png")}
+      source={require("../../assets/living-learning/curtains-opening.png")}
       style={m.welcome}
     >
       <LinearGradient
@@ -330,7 +330,7 @@ export function BodyStep({
         <View style={m.bodyCanvas}>
           <Image
             resizeMode="contain"
-            source={require("../assets/posture/posture-back-translucent.png")}
+            source={require("../../assets/posture/posture-back-translucent.png")}
             style={m.bodyImage}
           />
           {bodyFocusMarkers[value].map((marker, index) => {
@@ -482,7 +482,7 @@ export function PracticeSetup({
     <View style={m.setupCard}>
       <ImageBackground
         imageStyle={m.setupImage}
-        source={require("../assets/living-learning/curtains-opening.png")}
+        source={require("../../assets/living-learning/curtains-opening.png")}
         style={m.setupPreview}
       >
         <LinearGradient colors={["transparent", "rgba(4,9,6,.96)"]} style={m.setupShade}>

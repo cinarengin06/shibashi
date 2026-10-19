@@ -45,16 +45,6 @@ export type HomeEnergySummary = {
   trend: number[];
 };
 
-export type HomeFlowSummary = {
-  description: string;
-  durationMinutes: number;
-  focus: string;
-  id: string;
-  image: string;
-  level: string;
-  title: string;
-};
-
 export type HomePostureSummary = {
   date: string;
   id: string;

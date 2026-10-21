@@ -151,7 +151,7 @@ export default function RitimKapisiOS() {
 
   useEffect(() => {
     const queryTab = new URLSearchParams(window.location.search).get("tab");
-    if (queryTab && tabs.some((tab) => tab.id === queryTab)) setActiveTab(queryTab as TabId);
+    if (queryTab && queryTab !== "bodyLines" && tabs.some((tab) => tab.id === queryTab)) setActiveTab(queryTab as TabId);
   }, []);
   const [introVideoVisible, setIntroVideoVisible] = useState(WEB_INTRO_VIDEO_ENABLED);
   const [selectedHomePostureReportId, setSelectedHomePostureReportId] = useState<string>();

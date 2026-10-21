@@ -1229,6 +1229,7 @@
 .movementTeacherPanel,.movementUserPanel { position:relative; min-width:0; min-height:0; overflow:hidden; background:radial-gradient(ellipse at 50% 35%,#32362e,#141713 78%); }
 .movementTeacherPanel { isolation:isolate; }
 .movementTeacherPanel > img { z-index:-1; object-fit:contain; object-position:center; }
+.movementTeacherPanel > video { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
 .movementUserPanel { isolation:isolate; background:#111411; }
 .movementUserPanel .movementCameraVideo { z-index:0; }
 .movementPoseCanvas { position:absolute; z-index:1; inset:0; width:100%; height:100%; pointer-events:none; }
@@ -1241,15 +1242,20 @@
 .movementCompletedOverlay > span { display:grid; width:54px; height:54px; place-items:center; border:1px solid rgba(181,226,155,.7); border-radius:50%; background:rgba(153,207,125,.18); color:#b4e491; font-size:28px; }
 .movementCompletedOverlay strong { font-family:Georgia,serif; font-size:30px; font-weight:500; }
 .movementCompletedOverlay small { color:#c5d2bc; font-size:11px; }
-.movementPracticeHud { grid-column:1/-1; display:grid; grid-template-columns:auto minmax(80px,1fr) minmax(105px,1.1fr); align-items:center; gap:15px; min-height:72px; padding:12px 17px; background:linear-gradient(110deg,rgba(21,24,20,.96),rgba(27,30,24,.96)); }
+.movementPracticeHud { grid-column:1/-1; display:grid; grid-template-columns:minmax(118px,auto) minmax(150px,1fr) minmax(130px,1fr); align-items:center; gap:17px; min-height:90px; padding:12px 17px; background:linear-gradient(110deg,rgba(21,24,20,.96),rgba(27,30,24,.96)); }
 .movementScoreBlock { display:grid; gap:4px; }
 .movementScoreBlock span { color:#b2aa98; font-size:8px; font-weight:800; letter-spacing:.1em; }
-.movementScoreBlock strong { color:#f2eadb; font-size:20px; font-variant-numeric:tabular-nums; }
-.movementScoreTrack { position:relative; height:7px; overflow:visible; border-radius:10px; background:rgba(241,234,219,.12); }
-.movementScoreTrack i { position:absolute; inset:0 auto 0 0; display:block; max-width:100%; border-radius:10px; background:linear-gradient(90deg,#d5be81,#a7d78d); transition:width .2s ease; }
-.movementScoreTrack b { position:absolute; top:-3px; width:2px; height:13px; border-radius:2px; background:#fff0bd; box-shadow:0 0 7px rgba(255,240,189,.75); }
+.movementScoreBlock strong { color:var(--score-color); font-size:34px; line-height:1; font-variant-numeric:tabular-nums; transition:color .25s ease; }
+.movementScoreControls { display:grid; }
+.movementTargetControl { display:grid; gap:3px; color:#c9c4b9; cursor:pointer; }
+.movementTargetControl > span { display:flex; justify-content:space-between; gap:8px; font-size:8px; font-weight:800; letter-spacing:.08em; }
+.movementTargetControl strong { color:#e1f6dd; font-size:11px; }
+.movementTargetControl input { width:100%; height:10px; margin:7px 0; appearance:none; -webkit-appearance:none; border-radius:10px; background:linear-gradient(to right,var(--score-color) 0%,var(--score-color) var(--live-progress),rgba(241,234,219,.16) var(--live-progress),rgba(241,234,219,.16) 100%); cursor:pointer; }
+.movementTargetControl input::-webkit-slider-thumb { width:18px; height:18px; appearance:none; -webkit-appearance:none; border:3px solid #fff0bd; border-radius:50%; background:#343c30; box-shadow:0 0 0 2px rgba(15,20,14,.65),0 0 8px rgba(255,240,189,.55); }
+.movementTargetControl input::-moz-range-thumb { width:12px; height:12px; border:3px solid #fff0bd; border-radius:50%; background:#343c30; box-shadow:0 0 0 2px rgba(15,20,14,.65),0 0 8px rgba(255,240,189,.55); }
+.movementTargetControl input:focus-visible { outline:2px solid #fff0bd; outline-offset:5px; }
 .movementPracticeStatus { display:grid; gap:5px; justify-items:end; text-align:right; }
-.movementPracticeStatus span { max-width:180px; overflow:hidden; color:#c8bd9e; font-size:8px; font-weight:800; letter-spacing:.06em; text-overflow:ellipsis; white-space:nowrap; }
+.movementPracticeStatus span { max-width:220px; color:#c8bd9e; font-size:9px; font-weight:700; line-height:1.35; }
 .movementPracticeStatus strong { color:#f1eadb; font-size:12px; font-variant-numeric:tabular-nums; }
 @keyframes completionReveal { from { opacity:0; } to { opacity:1; } }
 @media (prefers-reduced-motion: reduce) { .movementDemoPoseStart,.movementDemoPoseEnd { animation:none; } .movementDemoPoseStart { opacity:0; } .movementDemoPoseEnd { opacity:1; } .teacherCaption i { animation:none; } }
@@ -1274,9 +1280,11 @@
   .movementExperienceGrid { gap:22px; }
   .movementVisual { min-height:370px; height:52svh; border-radius:18px; }
   .movementCameraSplit { grid-template-rows:minmax(0,1fr) auto; }
-  .movementPracticeHud { grid-template-columns:auto minmax(55px,1fr) minmax(80px,1fr); gap:8px; min-height:64px; padding:9px; }
+  .movementPracticeHud { grid-template-columns:auto minmax(110px,1fr); gap:8px; min-height:95px; padding:10px; }
+  .movementScoreControls { grid-column:1/-1; grid-row:2; }
+  .movementPracticeStatus { grid-column:2; grid-row:1; }
   .movementScoreBlock span,.movementPracticeStatus span { font-size:7px; }
-  .movementScoreBlock strong { font-size:17px; }
+  .movementScoreBlock strong { font-size:30px; }
   .movementPracticeStatus strong { font-size:10px; }
   .practicePanelBadge { top:8px; left:7px; padding:6px 7px; font-size:8px; }
   .practicePanelCaption { bottom:8px; font-size:10px; }

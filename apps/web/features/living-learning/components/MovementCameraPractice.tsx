@@ -1,16 +1,17 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { PoseLandmarker, PoseLandmarkerResult } from "@mediapipe/tasks-vision";
+import { canonicalMarkers, compareMarkerMotion, trackTeacherWhiteMarkers, virtualBodyMarkers, type CanonicalMarkers, type MarkerMap, type MovementPoint } from "../lib/teacher-marker-tracking";
 import styles from "./living-learning.module.css";
 
 const landmarkNames = ["nose", "left_eye_inner", "left_eye", "left_eye_outer", "right_eye_inner", "right_eye", "right_eye_outer", "left_ear", "right_ear", "mouth_left", "mouth_right", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist", "left_pinky", "right_pinky", "left_index", "right_index", "left_thumb", "right_thumb", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle", "left_heel", "right_heel", "left_foot_index", "right_foot_index"];
 const measuredJoints = ["nose", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"];
-const completionThreshold = 70;
+const defaultCompletionThreshold = 70;
 const practiceDurationMs = 15_000;
+const scoreStorageKey = "shibashi-learning-target-score";
 
-type MovementPoint = { name: string; x: number; y: number; score: number };
+type PoseComparison = { score: number | null; visible: boolean; fullBody: boolean; jointScores: Record<string, number> };
 
 export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete }: {
   active: boolean;
@@ -20,14 +21,25 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
   onComplete: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const teacherRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
+  const thresholdRef = useRef(defaultCompletionThreshold);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [cameraMessage, setCameraMessage] = useState("Kamera ve hareket modeli hazırlanıyor.");
   const [score, setScore] = useState<number | null>(null);
+  const [targetScore, setTargetScore] = useState(defaultCompletionThreshold);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    const saved = Number(window.localStorage.getItem(scoreStorageKey));
+    if (saved >= 0 && saved <= 100 && saved % 5 === 0) {
+      thresholdRef.current = saved;
+      setTargetScore(saved);
+    }
+  }, []);
 
   useEffect(() => () => {
     landmarkerRef.current?.close();
@@ -47,9 +59,22 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
     let startedAt = 0;
     let lastInferenceAt = 0;
     let lastUiUpdateAt = 0;
+    let lastDetectionTimestamp = 0;
+    const nextTimestamp = () => {
+      lastDetectionTimestamp = Math.max(performance.now(), lastDetectionTimestamp + 1);
+      return lastDetectionTimestamp;
+    };
     let matchedSince = 0;
     let completionStarted = false;
-    let targets: MovementPoint[][] = [];
+    let smoothedScore: number | null = null;
+    let lastValidScoreAt = 0;
+    let motionAnchor: { at: number; user: MovementPoint[]; teacher: MovementPoint[] } | null = null;
+    let movementScore: number | null = null;
+    let markerMotionScore: number | null = null;
+    let markerMotionAnchor: { at: number; teacher: CanonicalMarkers; user: CanonicalMarkers } | null = null;
+    let previousTeacherMarkers: MarkerMap = {};
+    let markerReadErrorShown = false;
+    let lastTeacherTime = 0;
 
     setCameraReady(false);
     setCameraError("");
@@ -68,7 +93,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
         }
 
         setCameraMessage("Kamera izni bekleniyor.");
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 960 }, aspectRatio: { ideal: .75 } }, audio: false });
         if (disposed) {
           stream.getTracks().forEach((track) => track.stop());
           return;
@@ -78,7 +103,13 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
         video.srcObject = stream;
         await video.play();
 
-        setCameraMessage("Öğretmen hareketinin pozları ölçüme hazırlanıyor.");
+        setCameraMessage("Hoca videosu ve beden analizi hazırlanıyor.");
+        const teacher = teacherRef.current;
+        if (!teacher) throw new Error("Hoca videosu bulunamadı.");
+        await waitForTeacherVideo(teacher);
+        const markerCanvas = document.createElement("canvas");
+        markerCanvas.width = 360;
+        markerCanvas.height = Math.round(360 * teacher.videoHeight / teacher.videoWidth);
         let landmarker = landmarkerRef.current;
         if (!landmarker) {
           const { createPoseLandmarker } = await import("@/lib/pose/createPoseLandmarker");
@@ -90,56 +121,111 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
         }
         landmarkerRef.current = landmarker;
 
-        const imagePaths = [
-          `/images/body-lines-motion/${movementOrder}.jpg`,
-          `/images/body-lines/${movementOrder}.jpg`,
-        ];
-        const referenceImages = await Promise.all(imagePaths.map(loadReferenceImage));
-        if (disposed) return;
-        const timestamp = performance.now();
-        targets = referenceImages.map((image, index) => toMovementPoints(landmarker.detectForVideo(image, timestamp + index + 1)));
-        if (!targets.some((pose) => measuredJoints.filter((name) => pose.find((point) => point.name === name && point.score >= .35)).length >= 9)) {
-          throw new Error("Öğretmen pozları ölçülemedi. Yeniden deneyebilirsin.");
-        }
-
         startedAt = performance.now();
         setCameraReady(true);
-        setCameraMessage("Tüm bedenini göster; öğretmenin hareketine eşlik et.");
+        setCameraMessage("Hoca ile aynı anda hareket et; skorun canlı olarak değişecek.");
 
         const detect = (now: number) => {
           if (disposed) return;
           animationFrame = requestAnimationFrame(detect);
-          if (now - lastInferenceAt < 120 || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+          if (now - lastInferenceAt < 160 || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
           lastInferenceAt = now;
 
-          const rawPose = landmarker.detectForVideo(video, now).landmarks[0];
-          if (!rawPose?.length) {
+          if (teacher.paused || teacher.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
             matchedSince = 0;
-            setScore(null);
-            setCameraMessage("Tam bedenin kamerada görünecek şekilde biraz geri çekil.");
+            setCameraMessage("Canlı uyum için hoca videosunu oynat.");
+            return;
+          }
+          let rawTeacherPose, rawPose;
+          try {
+            rawTeacherPose = landmarker.detectForVideo(teacher, nextTimestamp());
+            rawPose = landmarker.detectForVideo(video, nextTimestamp()).landmarks[0];
+          }
+          catch (error) {
+            cancelAnimationFrame(animationFrame);
+            stream?.getTracks().forEach((track) => track.stop());
+            video.srcObject = null;
+            setCameraError(error instanceof Error ? error.message : "Hareket analizi durdu. Yeniden deneyebilirsin.");
+            return;
+          }
+          const elapsed = now - startedAt;
+          const nextSecondsLeft = Math.max(0, Math.ceil((practiceDurationMs - elapsed) / 1000));
+          const passedTime = elapsed >= practiceDurationMs;
+          setSecondsLeft(nextSecondsLeft);
+          if (!rawPose?.length || !rawTeacherPose.landmarks[0]?.length) {
+            matchedSince = 0;
+            motionAnchor = null;
+            movementScore = null;
+            markerMotionAnchor = null;
+            markerMotionScore = null;
+            previousTeacherMarkers = {};
+            if (now - lastValidScoreAt > 1_500) {
+              smoothedScore = null;
+              setScore(null);
+            }
+            setCameraMessage(!rawPose?.length ? "Kamerada görünmüyorsun; biraz geri çekil." : "Hocanın bedeni videoda ölçülemedi.");
             drawMovementSkeleton(canvasRef.current, video, [], false);
             return;
           }
 
           const userPose = rawPose.map((point, index) => ({ name: landmarkNames[index] ?? `point-${index}`, x: point.x, y: point.y, score: point.visibility ?? 1 }));
-          const result = compareMovementPhotoPoses(userPose, targets);
-          const elapsed = now - startedAt;
-          const nextSecondsLeft = Math.max(0, Math.ceil((practiceDurationMs - elapsed) / 1000));
-          const passedTime = elapsed >= practiceDurationMs;
-
-          if (result.score !== null && result.score >= completionThreshold) {
-            if (!matchedSince) matchedSince = now;
-            setCameraMessage(passedTime ? "Uyum yakalandı; hareket tamamlanıyor." : "Uyum yakalandı; 15 saniyelik akışı tamamla.");
-          } else {
-            matchedSince = 0;
-            setCameraMessage(result.visible ? "Hareket pozunu öğretmeninkiyle eşleştirmeye devam et." : "Tam bedenin görünmüyor; kameradan biraz uzaklaş.");
+          const teacherPose = toMovementPoints(rawTeacherPose);
+          let teacherMarkers: MarkerMap = {};
+          try { teacherMarkers = trackTeacherWhiteMarkers(teacher, teacherPose, markerCanvas, previousTeacherMarkers); }
+          catch (error) {
+            if (!markerReadErrorShown) console.warn("Hoca videosundaki beyaz işaretler okunamadı:", error);
+            markerReadErrorShown = true;
+          }
+          const userMarkers = virtualBodyMarkers(userPose);
+          const teacherMarkerPositions = canonicalMarkers(teacherMarkers, teacherPose, teacher.videoWidth / teacher.videoHeight);
+          const userMarkerPositions = canonicalMarkers(userMarkers, userPose, video.videoWidth / video.videoHeight);
+          if (teacher.currentTime < lastTeacherTime) {
+            motionAnchor = null;
+            movementScore = null;
+            markerMotionAnchor = null;
+            markerMotionScore = null;
+            previousTeacherMarkers = {};
+          }
+          if (Object.keys(teacherMarkers).length) previousTeacherMarkers = teacherMarkers;
+          lastTeacherTime = teacher.currentTime;
+          if (!motionAnchor) motionAnchor = { at: now, user: userPose, teacher: teacherPose };
+          else if (now - motionAnchor.at >= 600) {
+            movementScore = comparePoseMotion(userPose, teacherPose, motionAnchor.user, motionAnchor.teacher, video.videoWidth / video.videoHeight, teacher.videoWidth / teacher.videoHeight);
+            motionAnchor = { at: now, user: userPose, teacher: teacherPose };
+          }
+          if (!markerMotionAnchor) markerMotionAnchor = { at: now, teacher: teacherMarkerPositions, user: userMarkerPositions };
+          else if (now - markerMotionAnchor.at >= 600) {
+            markerMotionScore = compareMarkerMotion(teacherMarkerPositions, markerMotionAnchor.teacher, userMarkerPositions, markerMotionAnchor.user);
+            markerMotionAnchor = { at: now, teacher: teacherMarkerPositions, user: userMarkerPositions };
+          }
+          const result = compareMovementPoses(userPose, teacherPose, video.videoWidth / video.videoHeight, teacher.videoWidth / teacher.videoHeight, movementScore, markerMotionScore);
+          if (!result.visible) {
+            motionAnchor = null;
+            movementScore = null;
+            markerMotionAnchor = null;
+            markerMotionScore = null;
           }
 
-          drawMovementSkeleton(canvasRef.current, video, userPose, result.score !== null && result.score >= completionThreshold);
+          if (result.fullBody && result.score !== null && result.score >= thresholdRef.current) {
+            if (!matchedSince) matchedSince = now;
+            setCameraMessage(passedTime ? "Hedef uyum yakalandı; hareket tamamlanıyor." : "Hedefe ulaştın; hareketi sürdür.");
+          } else {
+            matchedSince = 0;
+            setCameraMessage(result.fullBody ? "Hocanın o anki hareketine eşlik et." : result.visible ? "Canlı skor kısmi kadrajdan geliyor; tamamlamak için ayakların da görünsün." : "Bedenini kamerada göstermek için biraz geri çekil.");
+          }
+
+          drawMovementSkeleton(canvasRef.current, video, result.visible ? userPose : [], result.fullBody && result.score !== null && result.score >= thresholdRef.current, result.jointScores, thresholdRef.current);
+          if (result.visible) drawUserReferenceMarkers(canvasRef.current, video, userMarkers, teacherMarkers, result.jointScores, thresholdRef.current);
           if (now - lastUiUpdateAt > 180) {
             lastUiUpdateAt = now;
-            setScore(result.score);
-            setSecondsLeft(nextSecondsLeft);
+            if (result.score !== null) {
+              lastValidScoreAt = now;
+              smoothedScore = smoothedScore === null ? result.score : smoothedScore + Math.max(-5, Math.min(5, result.score - smoothedScore));
+              setScore(smoothedScore);
+            } else if (now - lastValidScoreAt > 1_500) {
+              smoothedScore = null;
+              setScore(null);
+            }
           }
 
           if (passedTime && matchedSince && now - matchedSince >= 850 && !completionStarted) {
@@ -176,11 +262,12 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
 
   if (!active) return null;
 
+  const scoreColor = score === null ? "#d8c9a6" : `hsl(${Math.round(12 + Math.min(1, score / Math.max(1, targetScore)) * 116)} 77% 62%)`;
+
   return (
     <div className={styles.movementCameraSplit}>
       <div className={styles.movementTeacherPanel}>
-        <Image alt={`${movementName} hareketini yapan hoca`} className={`${styles.movementDemoPose} ${styles.movementDemoPoseStart}`} fill sizes="(max-width: 820px) 50vw, 24vw" src={`/images/body-lines-motion/${movementOrder}.jpg`} />
-        <Image alt="" aria-hidden="true" className={`${styles.movementDemoPose} ${styles.movementDemoPoseEnd}`} fill sizes="(max-width: 820px) 50vw, 24vw" src={`/images/body-lines/${movementOrder}.jpg`} />
+        <video aria-label={`${movementName} hoca videosu`} autoPlay controls key={movementOrder} loop muted playsInline poster={`/images/shibashi-new/${Number(movementOrder)}.jpg`} ref={teacherRef} src={`/videos/shibashi/${Number(movementOrder)}.mp4`} />
         <span className={styles.practicePanelBadge}>HOCA</span>
         <span className={styles.practicePanelCaption}>Hareketi izle ve eşlik et</span>
       </div>
@@ -192,30 +279,40 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
         {!cameraReady && !cameraError ? <div className={styles.movementCameraMessage}><span>{cameraMessage}</span></div> : null}
         {completed ? <div className={styles.movementCompletedOverlay}><span>✓</span><strong>Tamamlandı</strong><small>%{score} hareket uyumu</small></div> : null}
       </div>
-      <div className={styles.movementPracticeHud}>
+      <div className={styles.movementPracticeHud} style={{ "--score-color": scoreColor, "--live-progress": `${score ?? 0}%` } as CSSProperties}>
         <div className={styles.movementScoreBlock}>
-          <span>HAREKET UYUMU · HEDEF %70</span>
+          <span>CANLI HAREKET UYUMU</span>
           <strong aria-live="polite">{score === null ? "—" : `%${score}`}</strong>
         </div>
-        <div className={styles.movementScoreTrack} aria-label={`Hareket uyumu yüzde ${score ?? 0}; tamamlanma eşiği yüzde 70`} aria-valuetext={`${score ?? 0}% hareket uyumu; tamamlanma eşiği %70`} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={score ?? 0}>
-          <i style={{ width: `${score ?? 0}%` }} />
-          <b style={{ left: `${completionThreshold}%` }} />
+        <div className={styles.movementScoreControls}>
+          <label className={styles.movementTargetControl}>
+            <span>HEDEF UYUM <strong>%{targetScore}</strong></span>
+            <input aria-label="Hedef uyum yüzdesi; dolu kısım canlı uyumu gösterir" max={100} min={0} onChange={(event) => { const value = Number(event.target.value); thresholdRef.current = value; setTargetScore(value); window.localStorage.setItem(scoreStorageKey, String(value)); }} step={5} type="range" value={targetScore} />
+          </label>
         </div>
         <div className={styles.movementPracticeStatus}>
           <span>{completed ? "TAMAMLANDI" : cameraError ? "KAMERA İZNİ GEREKLİ" : cameraReady ? cameraMessage : "ÖLÇÜM HAZIRLANIYOR"}</span>
-          <strong>{secondsLeft > 0 ? `00:${String(secondsLeft).padStart(2, "0")}` : score !== null && score >= completionThreshold ? "✓" : "%70 uyum bekleniyor"}</strong>
+          <strong>{secondsLeft > 0 ? `00:${String(secondsLeft).padStart(2, "0")}` : completed ? "✓" : `%${targetScore} hedefi bekleniyor`}</strong>
         </div>
       </div>
     </div>
   );
 }
 
-function loadReferenceImage(src: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new window.Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Öğretmen hareket görselleri yüklenemedi."));
-    image.src = src;
+function waitForTeacherVideo(video: HTMLVideoElement): Promise<void> {
+  if (video.error) return Promise.reject(new Error("Hoca videosu yüklenemedi."));
+  if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+      video.removeEventListener("loadeddata", ready);
+      video.removeEventListener("error", failed);
+    };
+    const ready = () => { cleanup(); resolve(); };
+    const failed = () => { cleanup(); reject(new Error("Hoca videosu yüklenemedi.")); };
+    const timeout = window.setTimeout(failed, 15_000);
+    video.addEventListener("loadeddata", ready, { once: true });
+    video.addEventListener("error", failed, { once: true });
   });
 }
 
@@ -225,43 +322,85 @@ function toMovementPoints(result: PoseLandmarkerResult): MovementPoint[] {
   return landmarks.map((point, index) => ({ name: landmarkNames[index] ?? `point-${index}`, x: point.x, y: point.y, score: point.visibility ?? 1 }));
 }
 
-function compareMovementPhotoPoses(user: MovementPoint[], references: MovementPoint[][]) {
-  const visibleCount = measuredJoints.filter((name) => user.find((point) => point.name === name && point.score >= .42)).length;
-  if (visibleCount < 9) return { score: null, visible: false };
-  const bestMatch = references.reduce((best, reference) => {
-    const score = scorePoseAgainstReference(user, reference);
-    return score === null || (best !== null && best >= score) ? best : score;
-  }, null as number | null);
-  return { score: bestMatch, visible: true };
+function normalizeMovementPose(points: MovementPoint[], aspectRatio: number) {
+  const byName = new Map(points.map((point) => [point.name, point]));
+  const left = byName.get("left_shoulder"), right = byName.get("right_shoulder");
+  if (!left || !right || left.score < .35 || right.score < .35) return null;
+  const centerX = (left.x + right.x) / 2;
+  const centerY = (left.y + right.y) / 2;
+  const scale = Math.max(.04, Math.hypot((left.x - right.x) * aspectRatio, left.y - right.y));
+  return new Map(points.map((point) => [point.name, { x: (point.x - centerX) * aspectRatio / scale, y: (point.y - centerY) / scale, score: point.score }]));
 }
 
-function scorePoseAgainstReference(user: MovementPoint[], reference: MovementPoint[]) {
-  const normalize = (points: MovementPoint[]) => {
-    const byName = new Map(points.map((point) => [point.name, point]));
-    const leftShoulder = byName.get("left_shoulder"), rightShoulder = byName.get("right_shoulder");
-    const leftHip = byName.get("left_hip"), rightHip = byName.get("right_hip");
-    if (!leftShoulder || !rightShoulder || !leftHip || !rightHip) return null;
-    const centerX = (leftShoulder.x + rightShoulder.x + leftHip.x + rightHip.x) / 4;
-    const centerY = (leftShoulder.y + rightShoulder.y + leftHip.y + rightHip.y) / 4;
-    const bodyScale = Math.max(.001, Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y));
-    return new Map(points.map((point) => [point.name, { x: (point.x - centerX) / bodyScale, y: (point.y - centerY) / bodyScale, score: point.score }]));
-  };
-  const current = normalize(user), target = normalize(reference);
-  if (!current || !target) return null;
-  const weights: Record<string, number> = { nose: .4, left_shoulder: .7, right_shoulder: .7, left_elbow: 1, right_elbow: 1, left_wrist: 1.25, right_wrist: 1.25, left_hip: .8, right_hip: .8, left_knee: .85, right_knee: .85, left_ankle: .65, right_ankle: .65 };
-  let weightedError = 0, totalWeight = 0;
+const jointWeights: Record<string, number> = { nose: .35, left_shoulder: .5, right_shoulder: .5, left_elbow: 1, right_elbow: 1, left_wrist: 1.3, right_wrist: 1.3, left_hip: .7, right_hip: .7, left_knee: .7, right_knee: .7, left_ankle: .6, right_ankle: .6 };
+
+function compareMovementPoses(user: MovementPoint[], teacher: MovementPoint[], userAspect: number, teacherAspect: number, motionScore: number | null, markerMotionScore: number | null): PoseComparison {
+  const current = normalizeMovementPose(user, userAspect), reference = normalizeMovementPose(teacher, teacherAspect);
+  const empty: PoseComparison = { score: null, visible: false, fullBody: false, jointScores: {} };
+  if (!current || !reference) return empty;
+  const userByName = new Map(user.map((point) => [point.name, point]));
+  const nose = userByName.get("nose");
+  const leftShoulder = userByName.get("left_shoulder"), rightShoulder = userByName.get("right_shoulder");
+  const leftHip = userByName.get("left_hip"), rightHip = userByName.get("right_hip");
+  const leftKnee = userByName.get("left_knee"), rightKnee = userByName.get("right_knee");
+  const leftAnkle = userByName.get("left_ankle"), rightAnkle = userByName.get("right_ankle");
+  const shoulderY = ((leftShoulder?.y ?? 0) + (rightShoulder?.y ?? 0)) / 2;
+  const hipY = ((leftHip?.y ?? 0) + (rightHip?.y ?? 0)) / 2;
+  const kneeY = ((leftKnee?.y ?? 0) + (rightKnee?.y ?? 0)) / 2;
+  const ankleY = ((leftAnkle?.y ?? 0) + (rightAnkle?.y ?? 0)) / 2;
+  const plausibleUpperBody = Boolean(nose && leftShoulder && rightShoulder && nose.score >= .4 &&
+    nose.y + .045 < shoulderY && Math.abs(leftShoulder.x - rightShoulder.x) >= .08 &&
+    (!leftHip || !rightHip || Math.min(leftHip.score, rightHip.score) < .4 || hipY > shoulderY + .07));
+  if (!plausibleUpperBody) return empty;
+  const fullBody = ["nose", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"].every((name) => {
+    const point = userByName.get(name);
+    return point && point.score >= .4 && point.x > .02 && point.x < .98 && point.y > .02 && point.y < .98;
+  }) && Boolean(nose && nose.y < .42 && ankleY > .7 && ankleY - nose.y > .48 &&
+    hipY > shoulderY + .09 && kneeY > hipY + .08 && ankleY > kneeY + .08);
+  let weightedError = 0;
+  let totalWeight = 0;
+  let visibleJoints = 0;
+  const jointScores: Record<string, number> = {};
   for (const name of measuredJoints) {
-    const actual = current.get(name), expected = target.get(name);
-    if (!actual || !expected || actual.score < .42 || expected.score < .35) continue;
-    const weight = weights[name] ?? 1;
-    weightedError += Math.hypot(actual.x - expected.x, actual.y - expected.y) * weight;
+    const actual = current.get(name), expected = reference.get(name);
+    if (!actual || !expected || actual.score < .35 || expected.score < .35) continue;
+    const weight = jointWeights[name] ?? 1;
+    const distance = Math.hypot(actual.x - expected.x, actual.y - expected.y);
+    weightedError += distance * weight;
     totalWeight += weight;
+    visibleJoints++;
+    jointScores[name] = Math.max(0, Math.min(100, Math.round(100 - distance * 105)));
   }
-  if (totalWeight < 7) return null;
-  return Math.max(0, Math.min(100, Math.round(100 - (weightedError / totalWeight) * 110)));
+  if (visibleJoints < 5 || totalWeight < 3) return { ...empty, jointScores };
+  const postureScore = Math.max(0, Math.min(100, 100 - weightedError / totalWeight * 105));
+  const poseWeight = motionScore === null ? 0 : .15;
+  const markerWeight = markerMotionScore === null ? 0 : .25;
+  const postureWeight = 1 - poseWeight - markerWeight;
+  const score = Math.round(postureScore * postureWeight + (motionScore ?? 0) * poseWeight + (markerMotionScore ?? 0) * markerWeight);
+  return { score, visible: true, fullBody, jointScores };
 }
 
-function drawMovementSkeleton(canvas: HTMLCanvasElement | null, video: HTMLVideoElement, pose: MovementPoint[], matched: boolean) {
+function comparePoseMotion(user: MovementPoint[], teacher: MovementPoint[], previousUser: MovementPoint[], previousTeacher: MovementPoint[], userAspect: number, teacherAspect: number): number | null {
+  const current = normalizeMovementPose(user, userAspect), reference = normalizeMovementPose(teacher, teacherAspect);
+  const oldUser = normalizeMovementPose(previousUser, userAspect), oldTeacher = normalizeMovementPose(previousTeacher, teacherAspect);
+  if (!current || !reference || !oldUser || !oldTeacher) return null;
+  let error = 0, teacherMotion = 0, weight = 0;
+  for (const name of measuredJoints) {
+    const userNow = current.get(name), teacherNow = reference.get(name), userBefore = oldUser.get(name), teacherBefore = oldTeacher.get(name);
+    if (!userNow || !teacherNow || !userBefore || !teacherBefore || Math.min(userNow.score, teacherNow.score, userBefore.score, teacherBefore.score) < .4) continue;
+    const dx = userNow.x - userBefore.x - (teacherNow.x - teacherBefore.x);
+    const dy = userNow.y - userBefore.y - (teacherNow.y - teacherBefore.y);
+    const targetDelta = Math.hypot(teacherNow.x - teacherBefore.x, teacherNow.y - teacherBefore.y);
+    const jointWeight = jointWeights[name] ?? 1;
+    error += Math.hypot(dx, dy) * jointWeight;
+    teacherMotion += targetDelta * jointWeight;
+    weight += jointWeight;
+  }
+  if (weight < 3 || teacherMotion / weight < .025) return null;
+  return Math.max(0, Math.min(100, Math.round(100 - error / weight * 140)));
+}
+
+function drawMovementSkeleton(canvas: HTMLCanvasElement | null, video: HTMLVideoElement, pose: MovementPoint[], matched: boolean, jointScores: Record<string, number> = {}, target = defaultCompletionThreshold) {
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
@@ -278,16 +417,21 @@ function drawMovementSkeleton(canvas: HTMLCanvasElement | null, video: HTMLVideo
   const offsetY = (rect.height - video.videoHeight * scale) / 2;
   const coordinates = new Map(pose.map((point) => [point.name, { x: rect.width - (point.x * video.videoWidth * scale + offsetX), y: point.y * video.videoHeight * scale + offsetY, score: point.score }]));
   const links = [["left_shoulder", "right_shoulder"], ["left_shoulder", "left_elbow"], ["left_elbow", "left_wrist"], ["right_shoulder", "right_elbow"], ["right_elbow", "right_wrist"], ["left_shoulder", "left_hip"], ["right_shoulder", "right_hip"], ["left_hip", "right_hip"], ["left_hip", "left_knee"], ["left_knee", "left_ankle"], ["right_hip", "right_knee"], ["right_knee", "right_ankle"]];
-  const color = matched ? "#9ef16f" : "#e3cd91";
-  context.strokeStyle = color;
-  context.fillStyle = color;
+  const colorFor = (name: string) => {
+    const score = jointScores[name];
+    if (score === undefined) return "#e3cd91";
+    if (matched || score >= target) return "#9ef16f";
+    return score >= target * .75 ? "#d8e97b" : "#f49678";
+  };
   context.lineWidth = 2.5;
   context.lineCap = "round";
-  context.shadowColor = color;
   context.shadowBlur = 10;
   for (const [from, to] of links) {
     const start = coordinates.get(from), end = coordinates.get(to);
     if (!start || !end || start.score < .35 || end.score < .35) continue;
+    const color = Math.min(jointScores[from] ?? 0, jointScores[to] ?? 0) >= target ? "#9ef16f" : colorFor(from);
+    context.strokeStyle = color;
+    context.shadowColor = color;
     context.beginPath();
     context.moveTo(start.x, start.y);
     context.lineTo(end.x, end.y);
@@ -296,9 +440,40 @@ function drawMovementSkeleton(canvas: HTMLCanvasElement | null, video: HTMLVideo
   for (const name of new Set(links.flat())) {
     const point = coordinates.get(name);
     if (!point || point.score < .35) continue;
+    const color = colorFor(name);
+    context.fillStyle = color;
+    context.shadowColor = color;
     context.beginPath();
     context.arc(point.x, point.y, 3, 0, Math.PI * 2);
     context.fill();
+  }
+  context.shadowBlur = 0;
+}
+
+function drawUserReferenceMarkers(canvas: HTMLCanvasElement | null, video: HTMLVideoElement, userMarkers: MarkerMap, teacherMarkers: MarkerMap, jointScores: Record<string, number>, target: number) {
+  if (!canvas || !video.videoWidth || !video.videoHeight) return;
+  const context = canvas.getContext("2d");
+  if (!context) return;
+  const rect = canvas.getBoundingClientRect();
+  const scale = Math.max(rect.width / video.videoWidth, rect.height / video.videoHeight);
+  const offsetX = (rect.width - video.videoWidth * scale) / 2;
+  const offsetY = (rect.height - video.videoHeight * scale) / 2;
+  for (const name of Object.keys(teacherMarkers)) {
+    const point = userMarkers[name];
+    if (!point || point.confidence < .35) continue;
+    const x = rect.width - (point.x * video.videoWidth * scale + offsetX);
+    const y = point.y * video.videoHeight * scale + offsetY;
+    const jointName = name.replace("_rib", "_hip").replace("_shin", "_knee");
+    const color = (jointScores[jointName] ?? 0) >= target ? "#9ef16f" : "#f4a785";
+    context.beginPath();
+    context.arc(x, y, 7, 0, Math.PI * 2);
+    context.strokeStyle = "#f8f8ef";
+    context.fillStyle = color;
+    context.lineWidth = 2;
+    context.shadowColor = color;
+    context.shadowBlur = 12;
+    context.fill();
+    context.stroke();
   }
   context.shadowBlur = 0;
 }

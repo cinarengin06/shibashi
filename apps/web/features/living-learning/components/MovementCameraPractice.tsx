@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { PoseLandmarker, PoseLandmarkerResult } from "@mediapipe/tasks-vision";
+import type { PracticeSnapshot } from "@/features/practice/types";
+import { formatSnapshotDate, formatSnapshotTime } from "@/lib/local-history-storage";
 import { canonicalMarkers, compareMarkerMotion, trackTeacherWhiteMarkers, virtualBodyMarkers, type CanonicalMarkers, type MarkerMap, type MovementPoint } from "../lib/teacher-marker-tracking";
 import styles from "./living-learning.module.css";
 
@@ -10,15 +12,18 @@ const measuredJoints = ["nose", "left_shoulder", "right_shoulder", "left_elbow",
 const defaultCompletionThreshold = 70;
 const practiceDurationMs = 15_000;
 const scoreStorageKey = "shibashi-learning-target-score";
+const photoIntervalMs = 3_000;
+const celebrations = [{ emoji: "✨", text: "Harika!" }, { emoji: "🌟", text: "Müthiş!" }, { emoji: "🎉", text: "Süpersin!" }];
 
 type PoseComparison = { score: number | null; visible: boolean; fullBody: boolean; jointScores: Record<string, number> };
 
-export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete }: {
+export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete, onPhotoCaptured }: {
   active: boolean;
   movementOrder: string;
   movementName: string;
   retryKey: number;
   onComplete: () => void;
+  onPhotoCaptured: (snapshot: PracticeSnapshot) => Promise<boolean>;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const teacherRef = useRef<HTMLVideoElement>(null);
@@ -32,6 +37,8 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
   const [targetScore, setTargetScore] = useState(defaultCompletionThreshold);
   const [secondsLeft, setSecondsLeft] = useState(15);
   const [completed, setCompleted] = useState(false);
+  const [capturedCount, setCapturedCount] = useState(0);
+  const [celebration, setCelebration] = useState<{ emoji: string; text: string; count: number } | null>(null);
 
   useEffect(() => {
     const saved = Number(window.localStorage.getItem(scoreStorageKey));
@@ -56,6 +63,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
     let stream: MediaStream | null = null;
     let animationFrame = 0;
     let completionTimer = 0;
+    let celebrationTimer = 0;
     let startedAt = 0;
     let lastInferenceAt = 0;
     let lastUiUpdateAt = 0;
@@ -75,6 +83,9 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
     let previousTeacherMarkers: MarkerMap = {};
     let markerReadErrorShown = false;
     let lastTeacherTime = 0;
+    let lastPhotoAt = -Infinity;
+    let photoCount = 0;
+    let photoPending = false;
 
     setCameraReady(false);
     setCameraError("");
@@ -82,6 +93,8 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
     setScore(null);
     setSecondsLeft(15);
     setCompleted(false);
+    setCapturedCount(0);
+    setCelebration(null);
 
     const start = async () => {
       try {
@@ -206,16 +219,6 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
             markerMotionScore = null;
           }
 
-          if (result.fullBody && result.score !== null && result.score >= thresholdRef.current) {
-            if (!matchedSince) matchedSince = now;
-            setCameraMessage(passedTime ? "Hedef uyum yakalandı; hareket tamamlanıyor." : "Hedefe ulaştın; hareketi sürdür.");
-          } else {
-            matchedSince = 0;
-            setCameraMessage(result.fullBody ? "Hocanın o anki hareketine eşlik et." : result.visible ? "Canlı skor kısmi kadrajdan geliyor; tamamlamak için ayakların da görünsün." : "Bedenini kamerada göstermek için biraz geri çekil.");
-          }
-
-          drawMovementSkeleton(canvasRef.current, video, result.visible ? userPose : [], result.fullBody && result.score !== null && result.score >= thresholdRef.current, result.jointScores, thresholdRef.current);
-          if (result.visible) drawUserReferenceMarkers(canvasRef.current, video, userMarkers, teacherMarkers, result.jointScores, thresholdRef.current);
           if (now - lastUiUpdateAt > 180) {
             lastUiUpdateAt = now;
             if (result.score !== null) {
@@ -228,12 +231,46 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
             }
           }
 
-          if (passedTime && matchedSince && now - matchedSince >= 850 && !completionStarted) {
+          const qualified = result.fullBody && result.score !== null && smoothedScore !== null && smoothedScore >= thresholdRef.current;
+          if (qualified) {
+            if (!matchedSince) matchedSince = now;
+            setCameraMessage(photoCount < 3 ? `Hedefe ulaştın; ${3 - photoCount} fotoğraf daha çekilecek.` : passedTime ? "Hedef uyum yakalandı; hareket tamamlanıyor." : "Hedefe ulaştın; hareketi sürdür.");
+          } else {
+            matchedSince = 0;
+            setCameraMessage(result.fullBody ? "Hocanın o anki hareketine eşlik et." : result.visible ? "Canlı skor kısmi kadrajdan geliyor; tamamlamak için ayakların da görünsün." : "Bedenini kamerada göstermek için biraz geri çekil.");
+          }
+
+          drawMovementSkeleton(canvasRef.current, video, result.visible ? userPose : [], qualified, result.jointScores, thresholdRef.current);
+          if (result.visible) drawUserReferenceMarkers(canvasRef.current, video, userMarkers, teacherMarkers, result.jointScores, thresholdRef.current);
+
+          if (qualified && photoCount < 3 && !photoPending && now - lastPhotoAt >= photoIntervalMs) {
+            const snapshot = createMovementPhoto(video, canvasRef.current, Number(movementOrder), movementName, Math.round(smoothedScore ?? 0));
+            if (snapshot) {
+              photoPending = true;
+              lastPhotoAt = now;
+              void onPhotoCaptured(snapshot).then((saved) => {
+                if (disposed) return;
+                if (!saved) {
+                  setCameraMessage("Fotoğraf saklanamadı. Tarayıcı depolamasını kontrol et.");
+                  return;
+                }
+                photoCount += 1;
+                setCapturedCount(photoCount);
+                setCelebration({ ...celebrations[photoCount - 1], count: photoCount });
+                window.clearTimeout(celebrationTimer);
+                celebrationTimer = window.setTimeout(() => { if (!disposed) setCelebration(null); }, 2_200);
+              }).catch(() => {
+                if (!disposed) setCameraMessage("Fotoğraf saklanamadı. Tarayıcı depolamasını kontrol et.");
+              }).finally(() => { photoPending = false; });
+            }
+          }
+
+          if (passedTime && photoCount === 3 && matchedSince && now - matchedSince >= 850 && !completionStarted) {
             completionStarted = true;
             setCompleted(true);
             completionTimer = window.setTimeout(() => {
               if (!disposed) onComplete();
-            }, 1100);
+            }, 2_400);
           }
         };
 
@@ -255,14 +292,20 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
       disposed = true;
       cancelAnimationFrame(animationFrame);
       window.clearTimeout(completionTimer);
+      window.clearTimeout(celebrationTimer);
       stream?.getTracks().forEach((track) => track.stop());
       if (videoRef.current) videoRef.current.srcObject = null;
     };
-  }, [active, movementOrder, onComplete, retryKey]);
+  }, [active, movementOrder, movementName, onComplete, onPhotoCaptured, retryKey]);
 
   if (!active) return null;
 
   const scoreColor = score === null ? "#d8c9a6" : `hsl(${Math.round(12 + Math.min(1, score / Math.max(1, targetScore)) * 116)} 77% 62%)`;
+  const showFramingWarning = cameraReady && !cameraError && !completed && (
+    cameraMessage.startsWith("Bedenini kamerada") ||
+    cameraMessage.startsWith("Kamerada görünmüyorsun") ||
+    cameraMessage.startsWith("Canlı skor kısmi kadrajdan")
+  );
 
   return (
     <div className={styles.movementCameraSplit}>
@@ -277,7 +320,9 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
         <span className={styles.practicePanelBadge}>SEN</span>
         {cameraError ? <div className={styles.movementCameraMessage} role="alert"><strong>Kamera açılamadı</strong><span>{cameraError}</span></div> : null}
         {!cameraReady && !cameraError ? <div className={styles.movementCameraMessage}><span>{cameraMessage}</span></div> : null}
-        {completed ? <div className={styles.movementCompletedOverlay}><span>✓</span><strong>Tamamlandı</strong><small>%{score} hareket uyumu</small></div> : null}
+        {showFramingWarning ? <div aria-live="polite" className={styles.movementFramingWarning} role="status"><span>↔</span><strong>Bedenini kamerada göstermek için biraz geri çekil.</strong><small>Başın ve ayakların kadrajda görünsün.</small></div> : null}
+        {celebration && !completed ? <div aria-live="polite" className={styles.movementCelebration}><span>{celebration.emoji}</span><strong>{celebration.text}</strong><small>Fotoğraf {celebration.count}/3 kaydedildi</small></div> : null}
+        {completed ? <div className={styles.movementCompletedOverlay}><span>🎉</span><strong>Süpersin, başardın!</strong><small>%{score} hareket uyumu · 3 fotoğraf kaydedildi</small></div> : null}
       </div>
       <div className={styles.movementPracticeHud} style={{ "--score-color": scoreColor, "--live-progress": `${score ?? 0}%` } as CSSProperties}>
         <div className={styles.movementScoreBlock}>
@@ -291,12 +336,62 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
           </label>
         </div>
         <div className={styles.movementPracticeStatus}>
-          <span>{completed ? "TAMAMLANDI" : cameraError ? "KAMERA İZNİ GEREKLİ" : cameraReady ? cameraMessage : "ÖLÇÜM HAZIRLANIYOR"}</span>
-          <strong>{secondsLeft > 0 ? `00:${String(secondsLeft).padStart(2, "0")}` : completed ? "✓" : `%${targetScore} hedefi bekleniyor`}</strong>
+          <span>{completed ? "TAMAMLANDI" : cameraError ? "KAMERA İZNİ GEREKLİ" : showFramingWarning ? "KADRAJINI DÜZELT" : cameraReady ? cameraMessage : "ÖLÇÜM HAZIRLANIYOR"}</span>
+          <strong>{completed ? "✓" : `${capturedCount}/3 fotoğraf · ${secondsLeft > 0 ? `00:${String(secondsLeft).padStart(2, "0")}` : `%${targetScore} hedefi bekleniyor`}`}</strong>
         </div>
       </div>
     </div>
   );
+}
+
+function createMovementPhoto(video: HTMLVideoElement, poseCanvas: HTMLCanvasElement | null, movementId: number, movementName: string, score: number): PracticeSnapshot | null {
+  if (!video.videoWidth || !video.videoHeight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return null;
+  const panel = video.getBoundingClientRect();
+  if (!panel.width || !panel.height) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = 540;
+  canvas.height = Math.round(540 * panel.height / panel.width);
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+  const scale = Math.max(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+  const videoWidth = video.videoWidth * scale;
+  const videoHeight = video.videoHeight * scale;
+  context.save();
+  context.translate(canvas.width, 0);
+  context.scale(-1, 1);
+  context.drawImage(video, (canvas.width - videoWidth) / 2, (canvas.height - videoHeight) / 2, videoWidth, videoHeight);
+  context.restore();
+  if (poseCanvas?.width && poseCanvas.height) context.drawImage(poseCanvas, 0, 0, canvas.width, canvas.height);
+
+  const now = new Date();
+  const footerHeight = Math.max(115, canvas.height * .16);
+  const gradient = context.createLinearGradient(0, canvas.height - footerHeight, 0, canvas.height);
+  gradient.addColorStop(0, "rgba(10, 25, 18, 0)");
+  gradient.addColorStop(1, "rgba(10, 25, 18, .9)");
+  context.fillStyle = gradient;
+  context.fillRect(0, canvas.height - footerHeight, canvas.width, footerHeight);
+  context.fillStyle = "#f5f1e6";
+  context.font = "700 24px system-ui, sans-serif";
+  context.fillText(movementName, 18, canvas.height - 52, canvas.width - 115);
+  context.font = "500 15px system-ui, sans-serif";
+  context.fillText(`${formatSnapshotDate(now)} · ${formatSnapshotTime(now)}`, 18, canvas.height - 23, canvas.width - 115);
+  context.fillStyle = "#a9efc3";
+  context.font = "800 31px system-ui, sans-serif";
+  context.textAlign = "right";
+  context.fillText(`%${score}`, canvas.width - 18, canvas.height - 29);
+
+  return {
+    id: `shibashi18-${movementId}-${now.getTime()}-${Math.round(performance.now())}`,
+    dateKey: formatSnapshotDate(now),
+    timeLabel: formatSnapshotTime(now),
+    createdAt: now.toISOString(),
+    movementId,
+    movementName,
+    score,
+    shenName: "Shibashi",
+    imageData: canvas.toDataURL("image/jpeg", .82),
+    trainerVisible: false,
+  };
 }
 
 function waitForTeacherVideo(video: HTMLVideoElement): Promise<void> {

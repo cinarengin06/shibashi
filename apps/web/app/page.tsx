@@ -240,8 +240,9 @@ export default function RitimKapisiOS() {
     if (savedGallery) {
       try {
         const parsedGallery = JSON.parse(savedGallery) as PracticeSnapshot[];
-        setPracticeGallery(parsedGallery);
-        persistPracticeSnapshotsToLocalStorage(parsedGallery);
+        const visibleGallery = mergePracticeSnapshots(parsedGallery);
+        setPracticeGallery(visibleGallery);
+        persistPracticeSnapshotsToLocalStorage(visibleGallery);
       } catch {
         window.localStorage.removeItem("ritim-kapisi-practice-gallery");
       }
@@ -390,7 +391,7 @@ export default function RitimKapisiOS() {
       return next;
     });
     setPracticeGallery((current) => {
-      const nextGallery = [snapshot, ...current].slice(0, 24);
+      const nextGallery = [snapshot, ...current].slice(0, 180);
       persistPracticeSnapshotsToLocalStorage(nextGallery);
       return nextGallery;
     });

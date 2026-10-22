@@ -11,7 +11,7 @@ export default function Journey() {
   const { profile } = useApp();
   const selectedShen = getShen(profile.selectedShenId);
   const accent = selectedShen.color;
-  const normalizedShenId = selectedShen.id === "xin" ? "shen" : selectedShen.id;
+  const normalizedShenId = selectedShen.id;
   const matchedGateIndex = humanMapStages.findIndex((item) => item.shenId === normalizedShenId);
   const currentGateIndex = matchedGateIndex >= 0 ? matchedGateIndex : 0;
   const [activeIndex, setActiveIndex] = useState(currentGateIndex);

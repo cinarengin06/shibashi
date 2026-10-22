@@ -29,6 +29,8 @@
   max-width: 1500px;
   min-height: 740px;
 }
+.workspace.workspacePractice { grid-template-columns:minmax(210px,.55fr) minmax(0,3fr); max-width:1640px; }
+.workspacePractice .cameraStage { height:clamp(680px,78vh,900px); }
 .rail,
 .stage,
 .detail {
@@ -53,8 +55,41 @@
 .practiceActions button:hover, .practiceActions .practiceActive { background: rgba(141,213,176,.12); border-color: rgba(141,213,176,.46); color: var(--line); }
 .practiceActions .practiceStart { background: linear-gradient(115deg, #8dd5b0, #83b5f5); border-color: #b5e7da; box-shadow: 0 8px 24px rgba(94, 171, 178, .2); color: #0b211d; font-weight: 850; }
 .practiceActions .practiceStart:hover, .practiceActions .practiceStart:focus-visible, .practiceActions .practiceStart.practiceActive { background: linear-gradient(115deg, #a7efc8, #9dc8ff); border-color: #dcfff1; box-shadow: 0 10px 28px rgba(103, 190, 193, .35); color: #09231f; }
+.practiceActions .photosButton { border-color:rgba(215,168,88,.35); color:#efd9aa; }
+.photosButton span { display:grid; min-width:25px; height:25px; place-items:center; border-radius:50%; background:rgba(215,168,88,.15); font-size:11px; }
 .cameraHint { color: rgba(243,238,229,.52); font-size: 10px; line-height: 1.5; margin-top: 10px; }
+.saveError { color:#f4a785; font-size:11px; line-height:1.4; }
 .cameraStage { background: #080d0b; border: 1px solid rgba(215,168,88,.16); border-radius: 18px; height: 680px; overflow: hidden; position: relative; }
+.galleryBackdrop { position:fixed; z-index:100; inset:0; display:grid; place-items:center; padding:20px; background:rgba(3,9,7,.82); backdrop-filter:blur(10px); }
+.galleryDialog { display:flex; flex-direction:column; width:min(960px,100%); max-height:min(86vh,850px); overflow:hidden; border:1px solid rgba(215,168,88,.35); border-radius:24px; background:#172019; box-shadow:0 30px 90px rgba(0,0,0,.55); }
+.galleryHeader { display:flex; justify-content:space-between; gap:20px; padding:25px 28px 19px; border-bottom:1px solid rgba(255,255,255,.09); }
+.galleryHeader h2 { margin:5px 0 3px; font-family:var(--font-display),Georgia,serif; font-size:38px; font-weight:500; }
+.galleryHeader p { margin:0; color:rgba(243,238,229,.62); font-size:12px; }
+.galleryHeader > button { flex:0 0 36px; height:36px; border:1px solid rgba(255,255,255,.2); border-radius:50%; background:rgba(255,255,255,.05); color:#fff; cursor:pointer; font-size:25px; }
+.galleryGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:14px; overflow-y:auto; padding:22px 28px 28px; }
+.galleryGrid button { overflow:hidden; padding:0; border:1px solid rgba(255,255,255,.12); border-radius:14px; background:#233027; color:#f3eee5; cursor:pointer; text-align:left; }
+.galleryGrid button:hover,.galleryGrid button:focus-visible { border-color:#8dd5b0; outline:none; }
+.galleryGrid img { display:block; width:100%; aspect-ratio:3/4; object-fit:cover; }
+.galleryGrid button > span { display:grid; gap:4px; padding:10px; }
+.galleryGrid strong { overflow:hidden; font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
+.galleryGrid small { color:#b9c6b8; font-size:10px; }
+.galleryEmpty { display:grid; justify-items:center; gap:8px; padding:70px 25px; text-align:center; }
+.galleryEmpty > span { font-size:35px; }
+.galleryEmpty strong { font-size:18px; }
+.galleryEmpty p { margin:0; color:#b9c6b8; font-size:12px; }
+.photoDetail { display:grid; justify-items:center; gap:13px; overflow-y:auto; padding:20px 28px 28px; }
+.photoDetail > button { justify-self:start; border:0; background:none; color:#a9efc3; cursor:pointer; font:inherit; font-size:13px; }
+.photoDetail img { display:block; max-width:100%; max-height:55vh; border-radius:12px; object-fit:contain; }
+.photoDetail > div { display:grid; gap:3px; text-align:center; }
+.photoDetail strong { font-size:16px; }
+.photoDetail span { color:#b9c6b8; font-size:12px; }
+.photoDetail .photoActions { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:9px; }
+.photoActions > span { flex-basis:100%; color:#f3eee5; font-size:13px; }
+.photoActions button { min-height:37px; padding:0 14px; border:1px solid rgba(255,255,255,.22); border-radius:10px; background:rgba(255,255,255,.05); color:#f3eee5; cursor:pointer; font:inherit; font-size:12px; }
+.photoActions button:disabled { opacity:.55; cursor:wait; }
+.photoActions .deletePhotoButton,.photoActions .confirmDeleteButton { border-color:rgba(244,167,133,.5); color:#ffc5ad; }
+.photoActions .confirmDeleteButton { background:rgba(156,54,38,.25); }
+.photoActions small { flex-basis:100%; color:#ffc5ad; font-size:11px; }
 .railHead {
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -384,6 +419,7 @@
     padding: 21px;
   }
   .cameraStage { height: min(125vw, 680px); min-height: 500px; }
+  .workspacePractice .cameraStage { height:max(500px,70svh); }
   .quickSteps { grid-template-columns: 1fr; }
   .selectorHeading { align-items: flex-start; flex-direction: column; }
   .selectorHeading button { margin-left: 0; }

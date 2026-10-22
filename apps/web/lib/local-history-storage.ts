@@ -5,6 +5,24 @@ import { isCapturedPracticePhoto } from "@/features/home/utils/practice-photo";
 const postureReportDatabaseName = "ritim-kapisi-posture-library";
 const postureReportStoreName = "reports";
 const practiceSnapshotStoreName = "practice-snapshots";
+const deletedPracticeSnapshotKey = "ritim-kapisi-deleted-practice-photos";
+
+function deletedPracticeSnapshotIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(deletedPracticeSnapshotKey) ?? "[]");
+    return new Set(Array.isArray(saved) ? saved.filter((id): id is string => typeof id === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
+
+export function rememberDeletedPracticeSnapshot(snapshotId: string) {
+  const ids = deletedPracticeSnapshotIds();
+  ids.add(snapshotId);
+  try { window.localStorage.setItem(deletedPracticeSnapshotKey, JSON.stringify([...ids])); }
+  catch { /* The IndexedDB record is still removed. */ }
+}
 
 export function openPostureReportDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -55,8 +73,27 @@ export async function savePracticeSnapshotToIndexedDb(snapshot: PracticeSnapshot
       transaction.onabort = () => reject(transaction.error);
     });
     database.close();
+    return true;
   } catch {
-    // Lightweight localStorage metadata remains available as a fallback.
+    // The caller must not report a saved photo when persistent storage fails.
+    return false;
+  }
+}
+
+export async function deletePracticeSnapshotFromIndexedDb(snapshotId: string) {
+  try {
+    const database = await openPostureReportDatabase();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(practiceSnapshotStoreName, "readwrite");
+      transaction.objectStore(practiceSnapshotStoreName).delete(snapshotId);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+    database.close();
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -110,7 +147,8 @@ export async function loadPracticeSnapshotsFromIndexedDb(): Promise<PracticeSnap
       request.onerror = () => reject(request.error);
     });
     database.close();
-    return snapshots.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+    const deletedIds = deletedPracticeSnapshotIds();
+    return snapshots.filter((snapshot) => !deletedIds.has(snapshot.id)).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
   } catch {
     return [];
   }
@@ -156,7 +194,9 @@ export function mergePostureReportCopies(first: PostureReport, second: PostureRe
 
 export function mergePracticeSnapshots(...collections: PracticeSnapshot[][]): PracticeSnapshot[] {
   const snapshots = new Map<string, PracticeSnapshot>();
+  const deletedIds = deletedPracticeSnapshotIds();
   collections.flat().forEach((snapshot) => {
+    if (deletedIds.has(snapshot.id)) return;
     const current = snapshots.get(snapshot.id);
     if (!current) {
       snapshots.set(snapshot.id, snapshot);
@@ -170,7 +210,7 @@ export function mergePracticeSnapshots(...collections: PracticeSnapshot[][]): Pr
   });
   return Array.from(snapshots.values())
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
-    .slice(0, 24);
+    .slice(0, 180);
 }
 
 export function persistPostureReportsToLocalStorage(reports: PostureReport[]) {
@@ -194,7 +234,8 @@ export function persistPostureReportsToLocalStorage(reports: PostureReport[]) {
 }
 
 export function persistPracticeSnapshotsToLocalStorage(snapshots: PracticeSnapshot[]) {
-  const lightweightSnapshots = snapshots.slice(0, 24).map((snapshot) => ({
+  const deletedIds = deletedPracticeSnapshotIds();
+  const lightweightSnapshots = snapshots.filter((snapshot) => !deletedIds.has(snapshot.id)).slice(0, 180).map((snapshot) => ({
     ...snapshot,
     imageData: portableHistoryImage(snapshot.imageData, ""),
   }));

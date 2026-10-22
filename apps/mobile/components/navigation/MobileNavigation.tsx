@@ -38,7 +38,7 @@ export function MobileNavigation({ accent, background, border, inactive, navigat
   return (
     <View style={[styles.bar, { backgroundColor: background, borderColor: border, paddingBottom: Math.max(insets.bottom, 8) }]}>
       {navigationItems.map((item) => {
-        const routeIndex = item.tab ? state.routes.findIndex((route) => route.name === item.tab) : -1;
+        const routeIndex = "tab" in item ? state.routes.findIndex((route) => route.name === item.tab) : -1;
         const route = routeIndex >= 0 ? state.routes[routeIndex] : undefined;
         const focused = route ? state.index === routeIndex : pathname.startsWith(item.route);
         return (

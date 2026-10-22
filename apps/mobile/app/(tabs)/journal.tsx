@@ -1,14 +1,20 @@
-import {useState} from 'react';
-import {Pressable,StyleSheet,Text,TextInput,View} from 'react-native';
+import {useCallback,useState} from 'react';
+import {Image,Pressable,ScrollView,StyleSheet,Text,TextInput,View} from 'react-native';
+import {router,useFocusEffect} from 'expo-router';
 import {Card,Eyebrow,PrimaryButton,Screen,Section,Title} from '../../components/ui';
 import {colors,radii} from '../../constants/theme';
+import {shenShape} from '../../constants/shenDesign';
 import {getShen} from '../../data/fiveShen';
+import {loadShibashiPhotos,type ShibashiPhoto} from '../../services/shibashiPhotos';
 import {useApp} from '../../store/AppStore';
 
 export default function Journal(){
- const{profile,entries,sessions,addEntry}=useApp();const[mood,setMood]=useState(3),[note,setNote]=useState('');const shen=getShen(profile.selectedShenId);
+ const{profile,entries,sessions,addEntry}=useApp();const[mood,setMood]=useState(3),[note,setNote]=useState('');const[photos,setPhotos]=useState<ShibashiPhoto[]>([]);const shen=getShen(profile.selectedShenId);
+ useFocusEffect(useCallback(()=>{void loadShibashiPhotos().then(setPhotos);},[]));
  const save=()=>{if(!note.trim())return;addEntry({id:Date.now().toString(),date:new Date().toISOString(),mood,energy:mood*20,note:note.trim(),shenId:shen.id});setNote('')};
  return <Screen>
+  <Eyebrow>GÜNLÜĞÜM</Eyebrow><Title>Yolculuğundan izler</Title>
+  <Section title="Fotoğraflarım">{photos.length?<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:10}}>{photos.slice(0,12).map(photo=><Pressable key={photo.id} accessibilityLabel={`${photo.name} fotoğrafı, yüzde ${photo.score} uyum`} onPress={()=>router.push({pathname:'/body-lines',params:{movementOrder:photo.order}})} style={[g.photoCard,shenShape(shen.id)]}><Image source={{uri:photo.uri}} style={g.photoImage}/><View style={g.photoInfo}><Text numberOfLines={1} style={g.photoName}>{photo.name}</Text><Text style={[g.photoScore,{color:shen.color}]}>%{photo.score} uyum</Text></View></Pressable>)}</ScrollView>:<Card><Text style={g.muted}>Hareket pratiğinde yakaladığın fotoğraflar burada görünecek.</Text><Pressable onPress={()=>router.push('/body-lines')}><Text style={[g.photoScore,{color:shen.color,marginTop:8}]}>18 harekete git →</Text></Pressable></Card>}</Section>
   <Eyebrow>GÜNÜN NOTU</Eyebrow><Title>Bugün içinde nasıl bir hava var?</Title>
   <Card style={[g.shenCue,{borderColor:`${shen.color}55`}]}><Text style={[g.symbol,{color:shen.color}]}>{shen.symbol}</Text><View style={{flex:1,gap:3}}><Text style={[g.shenName,{color:shen.color}]}>{shen.dailyName}</Text><Text style={g.muted}>{shen.task}</Text><Text style={g.term}>Geleneksel karşılığı: {shen.name} Shen</Text></View></Card>
   <Card style={{gap:15}}><Text style={g.label}>Şu anki ruh halin</Text><View style={g.moods}>{['●','◐','◉','◑','✦'].map((x,i)=><Pressable key={i} onPress={()=>setMood(i+1)} style={[g.mood,mood===i+1&&{backgroundColor:shen.color}]}><Text style={{color:mood===i+1?colors.ink:colors.muted,fontSize:20}}>{x}</Text></Pressable>)}</View><TextInput value={note} onChangeText={setNote} placeholder="Bedeninde veya zihninde bugün ne fark ettin?" placeholderTextColor={colors.muted} multiline style={g.input}/><PrimaryButton label="Günlüğe ekle" icon="add" onPress={save} disabled={!note.trim()}/></Card>
@@ -16,4 +22,4 @@ export default function Journal(){
   <Section title="Geçmiş notlar">{entries.length===0?<Card><Text style={g.muted}>İlk pratiğinden sonra hislerini burada göreceksin.</Text></Card>:entries.map(e=>{const entryShen=getShen(e.shenId);return <Card key={e.id} style={{gap:8}}><Text style={[g.date,{color:entryShen.color}]}>{new Date(e.date).toLocaleDateString('tr-TR',{day:'numeric',month:'long'})} · {entryShen.dailyName} · Canlılık {e.energy}%</Text><Text style={g.note}>{e.note}</Text></Card>})}</Section>
  </Screen>
 }
-const g=StyleSheet.create({shenCue:{flexDirection:'row',alignItems:'center',gap:13},symbol:{fontSize:31},shenName:{fontSize:16,fontWeight:'800'},term:{color:colors.gold,fontSize:16,marginTop:2},label:{color:colors.cream,fontWeight:'700'},moods:{flexDirection:'row',justifyContent:'space-between'},mood:{width:48,height:48,borderRadius:24,backgroundColor:colors.surface2,alignItems:'center',justifyContent:'center'},input:{minHeight:110,textAlignVertical:'top',borderRadius:radii.md,backgroundColor:colors.deep,color:colors.cream,padding:14,fontSize:17,lineHeight:27},stats:{flexDirection:'row',gap:8},stat:{flex:1,alignItems:'center',gap:3},value:{color:colors.gold,fontSize:25,fontWeight:'800'},muted:{color:colors.muted,fontSize:16,lineHeight:24},date:{color:colors.muted,fontSize:16,fontWeight:'700'},note:{color:colors.cream,fontSize:17,lineHeight:27}});
+const g=StyleSheet.create({shenCue:{flexDirection:'row',alignItems:'center',gap:13},symbol:{fontSize:31},shenName:{fontSize:16,fontWeight:'800'},term:{color:colors.gold,fontSize:16,marginTop:2},label:{color:colors.cream,fontWeight:'700'},moods:{flexDirection:'row',justifyContent:'space-between'},mood:{width:48,height:48,borderRadius:24,backgroundColor:colors.surface2,alignItems:'center',justifyContent:'center'},input:{minHeight:110,textAlignVertical:'top',borderRadius:radii.md,backgroundColor:colors.deep,color:colors.cream,padding:14,fontSize:17,lineHeight:27},stats:{flexDirection:'row',gap:8},stat:{flex:1,alignItems:'center',gap:3},value:{color:colors.gold,fontSize:25,fontWeight:'800'},muted:{color:colors.muted,fontSize:16,lineHeight:24},date:{color:colors.muted,fontSize:16,fontWeight:'700'},note:{color:colors.cream,fontSize:17,lineHeight:27},photoCard:{width:150,overflow:'hidden',backgroundColor:colors.surface2},photoImage:{width:'100%',height:118},photoInfo:{padding:10,gap:2},photoName:{color:colors.cream,fontSize:13,fontWeight:'700'},photoScore:{fontSize:14,fontWeight:'800'}});

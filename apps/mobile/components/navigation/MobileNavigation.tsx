@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, usePathname, type Href } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { shenThemes } from "../../../../packages/design-tokens";
 import { fonts } from "../../constants/theme";
+import { shenShape } from "../../constants/shenDesign";
+import { shenIcons } from "../../data/shenIcons";
+import { useShenExperience } from "../../store/ShenExperience";
+import type { ShenId } from "../../types";
 
 type Props = {
-  accent: string;
-  background: string;
-  border: string;
-  inactive: string;
   navigation: {
     emit: (event: { type: "tabPress"; target: string; canPreventDefault: true }) => { defaultPrevented?: boolean };
     navigate: (name: string, params?: object) => void;
@@ -19,54 +19,46 @@ type Props = {
   };
 };
 
-const navigationItems = [
-  { label: "Özel Odam", icon: "sunny-outline", tab: "index", route: "/(tabs)" },
-  { label: "Postür Analizi", icon: "body-outline", route: "/posture" },
-  { label: "18 Hareketle Öğren", icon: "sparkles-outline", route: "/body-lines" },
-  { label: "Haritam", icon: "compass-outline", tab: "journey", route: "/(tabs)/journey" },
-] as const satisfies ReadonlyArray<{
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  route: string;
-  tab?: string;
-}>;
+const items = [
+  { label: "Odam", tab: "index" },
+  { label: "Hareket", tab: "moves" },
+  { label: "Analiz", tab: "posture" },
+  { label: "Haritam", tab: "journey" },
+  { label: "Günlük", tab: "journal" },
+] as const;
 
-export function MobileNavigation({ accent, background, border, inactive, navigation, state }: Props) {
+const icons: Record<ShenId, Record<(typeof items)[number]["tab"], keyof typeof Ionicons.glyphMap>> = {
+  hun: { index: "leaf-outline", moves: "walk-outline", posture: "body-outline", journey: "navigate-outline", journal: "book-outline" },
+  shen: { index: "flame-outline", moves: "sparkles-outline", posture: "scan-outline", journey: "compass-outline", journal: "book-outline" },
+  yi: { index: "square-outline", moves: "fitness-outline", posture: "scan-outline", journey: "grid-outline", journal: "reader-outline" },
+  po: { index: "cloud-outline", moves: "body-outline", posture: "scan-outline", journey: "navigate-outline", journal: "book-outline" },
+  zhi: { index: "water-outline", moves: "walk-outline", posture: "scan-outline", journey: "map-outline", journal: "journal-outline" },
+};
+
+export function MobileNavigation({ navigation, state }: Props) {
+  const { shen } = useShenExperience();
+  const theme = shenThemes[shen.id];
   const insets = useSafeAreaInsets();
-  const pathname = usePathname();
-
-  return (
-    <View style={[styles.bar, { backgroundColor: background, borderColor: border, paddingBottom: Math.max(insets.bottom, 8) }]}>
-      {navigationItems.map((item) => {
-        const routeIndex = "tab" in item ? state.routes.findIndex((route) => route.name === item.tab) : -1;
-        const route = routeIndex >= 0 ? state.routes[routeIndex] : undefined;
-        const focused = route ? state.index === routeIndex : pathname.startsWith(item.route);
-        return (
-          <Pressable
-            accessibilityRole="tab"
-            accessibilityState={{ selected: focused }}
-            key={item.label}
-            onPress={() => {
-              if (route) {
-                const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-                if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
-                return;
-              }
-              router.push(item.route as Href);
-            }}
-            style={styles.barItem}
-          >
-            <Ionicons color={focused ? accent : inactive} name={item.icon} size={21} />
-            <Text numberOfLines={2} style={[styles.barLabel, { color: focused ? accent : inactive }]}>{item.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
+  return <View style={[styles.bar, { backgroundColor: theme.surface, borderColor: `${theme.primary}35`, paddingBottom: Math.max(insets.bottom, 9) }]}>
+    {items.map((item) => {
+      const routeIndex = state.routes.findIndex((route) => route.name === item.tab);
+      const route = state.routes[routeIndex];
+      const selected = routeIndex === state.index;
+      return <Pressable key={item.tab} accessibilityRole="tab" accessibilityState={{ selected }} accessibilityLabel={item.label} onPress={() => {
+        if (!route) return;
+        const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+        if (!selected && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+      }} style={[styles.item, selected && { backgroundColor: theme.surfaceRaised }, selected && shenShape(shen.id, "button")]}>
+        {item.tab === "index" ? <Image source={shenIcons[shen.id]} style={styles.shenIcon} /> : <Ionicons name={icons[shen.id][item.tab]} color={selected ? theme.button : theme.light} size={21} />}
+        <Text style={[styles.label, { color: selected ? theme.button : theme.light }]}>{item.label}</Text>
+      </Pressable>;
+    })}
+  </View>;
 }
 
 const styles = StyleSheet.create({
-  bar: { alignItems: "center", borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", justifyContent: "space-around", paddingHorizontal: 4, paddingTop: 8 },
-  barItem: { alignItems: "center", flex: 1, gap: 4, justifyContent: "center", minHeight: 54, paddingHorizontal: 3 },
-  barLabel: { fontFamily: fonts.sansStrong, fontSize: 10, maxWidth: "100%", textAlign: "center" },
+  bar: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: 2, paddingHorizontal: 7, paddingTop: 7 },
+  item: { alignItems: "center", flex: 1, gap: 4, justifyContent: "center", minHeight: 51, paddingHorizontal: 2 },
+  label: { fontFamily: fonts.sansMedium, fontSize: 10, textAlign: "center" },
+  shenIcon: { width: 22, height: 22, borderRadius: 11 },
 });

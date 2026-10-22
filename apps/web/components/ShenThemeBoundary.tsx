@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { shenThemes, visualThemes, type SharedShenId, type VisualThemeId } from "@/packages/design-tokens";
 
 const shenKey = "ritim-kapisi-selected-shen";
@@ -25,6 +25,14 @@ export function ShenThemeBoundary({ children }: { children: ReactNode }) {
       window.removeEventListener("shibashi-theme-change", update);
     };
   }, []);
+
+  useLayoutEffect(() => {
+    const savedShen = window.localStorage.getItem(shenKey);
+    const savedVisual = window.localStorage.getItem(visualKey);
+    if ((!savedShen || !(savedShen in shenThemes) || savedShen === shen) && (!savedVisual || !(savedVisual in visualThemes) || savedVisual === visual)) {
+      document.documentElement.classList.remove("theme-booting");
+    }
+  }, [shen, visual]);
 
   return <div className={`site-theme shen-theme-${shen}`} data-shen={shen} data-visual-theme={visual}>{children}</div>;
 }

@@ -1,5 +1,5 @@
-import { Redirect } from "expo-router";
+import { Redirect, type Href } from "expo-router";
 
 export default function LivingLearningAlias() {
-  return <Redirect href="/body-lines" />;
+  return <Redirect href={"/(tabs)/moves" as Href} />;
 }

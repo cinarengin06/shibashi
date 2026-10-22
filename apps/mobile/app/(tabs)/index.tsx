@@ -1,532 +1,179 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  type ImageSourcePropType,
-} from "react-native";
-import { getJourneyDay } from "../../../../packages/experience-design";
-import { Screen, ShenBackdrop } from "../../components/ui";
-import { DashboardMetric, FeaturePortal, HomePostureCard, formatToday } from "../../components/home/HomeWidgets";
-import { s } from "../../components/home/home.styles";
-import { colors, fonts } from "../../constants/theme";
+import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { shenThemes } from "../../../../packages/design-tokens";
+import { Screen } from "../../components/ui";
+import { fonts } from "../../constants/theme";
+import { shenMotifs, shenShape } from "../../constants/shenDesign";
 import { practices } from "../../data/content";
-import { getShen } from "../../data/fiveShen";
+import { fiveShen } from "../../data/fiveShen";
+import { shenBackgrounds } from "../../data/shenAssets";
+import { shenIcons } from "../../data/shenIcons";
+import { ensureSystemNotifications, unreadNotificationCount } from "../../services/notifications/NotificationInbox";
+import { loadShibashiPhotos, type ShibashiPhoto } from "../../services/shibashiPhotos";
 import { useApp } from "../../store/AppStore";
 import { useShenExperience } from "../../store/ShenExperience";
-import { fiveShen } from "../../data/fiveShen";
-import { shenIcons } from "../../data/shenIcons";
-import { shenThemes } from "../../../../packages/design-tokens";
-import {
-  fiveShenContent,
-  fiveShenTraditionNote,
-} from "../../../../packages/five-shen-content";
-import { PracticeSession, ShenId } from "../../types";
-import {
-  ensureSystemNotifications,
-  unreadNotificationCount,
-} from "../../services/notifications/NotificationInbox";
+import type { PracticeSession, ShenId } from "../../types";
 
-const shenTodayCopy: Record<
-  ShenId,
-  {
-    action: string;
-    body: string;
-    identity: string;
-    motto: string;
-    shortLabel: string;
-    title: string;
-  }
-> = {
-  hun: {
-    action: "Yönünü bul",
-    body: fiveShenContent.hun.dailyPrompt,
-    identity: fiveShenContent.hun.identity,
-    motto: "Rüzgâr yönü gösterir; adımı sen seçersin.",
-    shortLabel: fiveShenContent.hun.familiarName,
-    title: "Ufku genişlet.",
-  },
-  shen: {
-    action: "Berraklığı aç",
-    body: fiveShenContent.shen.dailyPrompt,
-    identity: fiveShenContent.shen.identity,
-    motto: "Kalp yumuşadığında parçalar birbirini duyar.",
-    shortLabel: fiveShenContent.shen.familiarName,
-    title: "Berrak ve ilgili kal.",
-  },
-  yi: {
-    action: "Odağını kur",
-    body: fiveShenContent.yi.dailyPrompt,
-    identity: fiveShenContent.yi.identity,
-    motto: "Bir anda tek şey; bir nefeste tek yön.",
-    shortLabel: fiveShenContent.yi.familiarName,
-    title: "Niyetini eyleme taşı.",
-  },
-  po: {
-    action: "Bedene dön",
-    body: fiveShenContent.po.dailyPrompt,
-    identity: fiveShenContent.po.identity,
-    motto: "Beden bıraktığında nefes yerini bulur.",
-    shortLabel: fiveShenContent.po.familiarName,
-    title: "Nefesi ve bedeni duy.",
-  },
-  zhi: {
-    action: "İradeni koru",
-    body: fiveShenContent.zhi.dailyPrompt,
-    identity: fiveShenContent.zhi.identity,
-    motto: "Derin su acele etmez; yine de yolunu bulur.",
-    shortLabel: fiveShenContent.zhi.familiarName,
-    title: "Sessizce devam et.",
-  },
+const copy: Record<ShenId, { title: string; cue: string; label: string }> = {
+  hun: { title: "Yönünü hisset.", cue: "Bugünün adımına alan aç.", label: "Yön ve Hayal" },
+  shen: { title: "Berrak ve ilgili kal.", cue: "Bakışını yumuşat, anda kal.", label: "Berrak Farkındalık" },
+  yi: { title: "Bir şeye odaklan.", cue: "Bugün küçük ve net bir niyet seç.", label: "Odaklı Niyet" },
+  po: { title: "Nefesine dön.", cue: "Bedenindeki duyumu sakince fark et.", label: "Nefes ve Duyum" },
+  zhi: { title: "Sessizce devam et.", cue: "Gücünü tüketmeden, küçük bir adımla ilerle.", label: "Sessiz İrade" },
 };
 
-const homePortalImages = {
-  posture: require("../../assets/posture/posture-back-translucent.png"),
-  living: require("../../assets/living-learning/curtains-opening.png"),
-  humanMap: require("../../assets/journey/neijing-map.jpg"),
-} satisfies Record<string, ImageSourcePropType>;
+function practiceStreak(sessions: PracticeSession[]) {
+  const days = new Set(sessions.map((item) => new Date(item.date).toDateString()));
+  const cursor = new Date();
+  if (!days.has(cursor.toDateString())) cursor.setDate(cursor.getDate() - 1);
+  let count = 0;
+  while (days.has(cursor.toDateString())) {
+    count += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return count;
+}
 
 export default function Today() {
   const { profile, saveProfile, sessions, postureReports } = useApp();
-  const { soundEnabled, toggleSound } = useShenExperience();
-  const shen = getShen(profile.selectedShenId);
-  const todayCopy = shenTodayCopy[shen.id];
-  const personality = shenThemes[shen.id];
-  const heroGradient =
-    shen.id === "hun"
-      ? ([
-          "rgba(18,40,22,.08)",
-          "rgba(18,36,22,.68)",
-          "rgba(9,20,12,.98)",
-        ] as const)
-      : shen.id === "shen"
-        ? ([
-            "rgba(67,39,18,.06)",
-            "rgba(57,34,18,.66)",
-            "rgba(25,16,9,.98)",
-          ] as const)
-        : shen.id === "yi"
-          ? ([
-              "rgba(55,52,44,.06)",
-              "rgba(43,42,37,.7)",
-              "rgba(18,19,17,.98)",
-            ] as const)
-          : shen.id === "po"
-            ? ([
-                "rgba(55,35,24,.08)",
-                "rgba(48,31,22,.7)",
-                "rgba(24,16,12,.98)",
-              ] as const)
-            : ([
-                "rgba(16,38,54,.08)",
-                "rgba(15,34,48,.7)",
-                "rgba(7,17,25,.98)",
-              ] as const);
-  const practice =
-    practices.find((item) => item.id === shen.practiceId) ?? practices[0];
-  const journeyDay = getJourneyDay(profile.onboardingCheckin?.createdAt);
-  const todayKey = new Date().toDateString();
-  const todaySessions = sessions.filter(
-    (item) => new Date(item.date).toDateString() === todayKey,
-  );
-  const completedMinutes = todaySessions.reduce(
-    (total, item) => total + item.duration,
-    0,
-  );
-  const hasPracticedToday = todaySessions.length > 0;
-  const earnedXp = sessions.reduce((total, item) => total + (item.xp ?? 0), 0);
-  const recentMovementPhotos = sessions
-    .filter((item): item is PracticeSession & { imageData: string } => typeof item.imageData === "string" && /^(?:data:image\/|file:|https?:\/\/)/i.test(item.imageData))
-    .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
-    .slice(0, 5);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const { shen, soundEnabled, toggleSound } = useShenExperience();
+  const theme = shenThemes[shen.id];
+  const daily = copy[shen.id];
+  const [unread, setUnread] = useState(0);
+  const [photos, setPhotos] = useState<ShibashiPhoto[]>([]);
+  const now = Date.now();
+  const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const weekSessions = sessions.filter((item) => new Date(item.date).getTime() >= sevenDaysAgo);
+  const weekMinutes = weekSessions.reduce((sum, item) => sum + item.duration, 0);
+  const xp = sessions.reduce((sum, item) => sum + (item.xp ?? 0), 0);
+  const level = Math.floor(xp / 240) + 1;
+  const levelProgress = xp % 240;
+  const energy = profile.onboardingCheckin?.energy ?? 50;
+  const streak = practiceStreak(sessions);
+  const lastReport = postureReports[0];
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    void loadShibashiPhotos().then((items) => { if (active) setPhotos(items.slice(0, 5)); });
+    void ensureSystemNotifications({
+      hasPostureReport: postureReports.length > 0,
+      hasSessionToday: sessions.some((item) => new Date(item.date).toDateString() === new Date().toDateString()),
+      remindersEnabled: profile.reminders,
+    }).then((items) => { if (active) setUnread(unreadNotificationCount(items)); });
+    return () => { active = false; };
+  }, [postureReports.length, profile.reminders, sessions]));
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      void ensureSystemNotifications({
-        hasPostureReport: postureReports.length > 0,
-        hasSessionToday: todaySessions.length > 0,
-        remindersEnabled: profile.reminders,
-      }).then((items) => {
-        if (active) setUnreadNotifications(unreadNotificationCount(items));
-      });
-      return () => { active = false; };
-    }, [postureReports.length, profile.reminders, todaySessions.length]),
-  );
-
-  const startPractice = () => {
+  const startDailyPractice = () => {
+    const practice = practices.find((item) => item.id === shen.practiceId) ?? practices[0];
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
     router.push(`/practice-session?practiceId=${practice.id}`);
   };
 
-  return (
-    <Screen style={[s.page, { backgroundColor: `${personality.surface}72` }]}>
-      <View style={s.header}>
-        <View style={s.brand}>
-          <View style={[s.brandRing, { borderColor: personality.primary }]} />
-          <View>
-            <Text style={[s.brandName, { color: personality.light }]}>
-              SHIBASHI
-            </Text>
-            <Text style={s.brandSub}>EFE</Text>
-          </View>
-        </View>
-        <View style={s.headerActions}>
-          <View style={s.streak}>
-            <Ionicons color="#F28A39" name="flame" size={17} />
-            <Text style={s.streakText}>{journeyDay}</Text>
-          </View>
-          <Pressable
-            accessibilityLabel={unreadNotifications ? `${unreadNotifications} okunmamış bildirim` : "Bildirimleri aç"}
-            accessibilityRole="button"
-            onPress={() => router.push("/notifications")}
-            style={s.roundAction}
-          >
-            <Ionicons color={personality.light} name="notifications-outline" size={19} />
-            {unreadNotifications ? (
-              <View style={[s.notificationBadge, { backgroundColor: personality.primary }]}>
-                <Text style={[s.notificationBadgeText, { color: personality.buttonInk }]}>{Math.min(9, unreadNotifications)}</Text>
-              </View>
-            ) : null}
-          </Pressable>
-          <Pressable
-            accessibilityLabel={soundEnabled ? "Müziği kapat" : "Müziği aç"}
-            accessibilityRole="button"
-            onPress={toggleSound}
-            style={s.roundAction}
-          >
-            <Ionicons
-              color={personality.light}
-              name={soundEnabled ? "volume-medium" : "volume-mute"}
-              size={19}
-            />
-          </Pressable>
-          <Pressable
-            accessibilityLabel="Profili aç"
-            accessibilityRole="button"
-            onPress={() => router.push("/(tabs)/profile")}
-            style={[s.avatar, { borderColor: `${personality.primary}88` }]}
-          >
-            <Text style={s.avatarText}>
-              {(profile.name || "S").slice(0, 1).toLocaleUpperCase("tr-TR")}
-            </Text>
-          </Pressable>
-        </View>
+  return <Screen style={s.page}>
+    <View style={s.header}>
+      <View style={s.brand}><Text style={[s.brandRing, { color: theme.button }]}>◯</Text><Text style={s.brandText}>SHIBASHI EFE</Text></View>
+      <View style={s.headerActions}>
+        <Pressable accessibilityLabel={soundEnabled ? "Shen müziğini kapat" : "Shen müziğini aç"} accessibilityRole="button" onPress={toggleSound} style={[s.headerButton, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id, "button")]}><Ionicons color={theme.button} name={soundEnabled ? "musical-notes" : "musical-notes-outline"} size={19} /></Pressable>
+        <Pressable accessibilityLabel={unread ? `${unread} okunmamış bildirim` : "Bildirimleri aç"} accessibilityRole="button" onPress={() => router.push("/notifications")} style={[s.headerButton, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id, "button")]}><Ionicons color={theme.light} name="notifications-outline" size={19} />{unread > 0 && <View style={[s.badge, { backgroundColor: theme.button }]} />}</Pressable>
+        <Pressable accessibilityLabel="Profilimi aç" accessibilityRole="button" onPress={() => router.push("/(tabs)/profile")} style={[s.avatar, { borderColor: theme.primary }]}><Text style={s.avatarText}>{(profile.name || "S").slice(0, 1).toLocaleUpperCase("tr-TR")}</Text></Pressable>
       </View>
+    </View>
 
-      <View
-        style={[
-          s.hero,
-          {
-            borderColor: `${shen.color}A8`,
-            borderRadius:
-              personality.controlRadius === 999
-                ? 34
-                : Math.max(14, personality.controlRadius),
-            shadowColor: personality.primary,
-          },
-        ]}
-      >
-        <ShenBackdrop
-          borderRadius={
-            personality.controlRadius === 999
-              ? 34
-              : Math.max(14, personality.controlRadius)
-          }
-        />
-        <LinearGradient
-          colors={heroGradient}
-          locations={[0, 0.44, 1]}
-          style={s.heroShade}
-        >
-          <View style={s.welcomeBlock}>
-            <Text style={s.greeting}>Hoş geldin, {profile.name} 👋</Text>
-            <Text style={s.welcomeCopy}>
-              Bedenini uyandır, nefesinle dengeyi bul.
-            </Text>
-            <Text style={s.date}>{formatToday()}</Text>
-          </View>
-          <View style={s.heroSpace} />
-          <View
-            style={[
-              s.todayShen,
-              {
-                borderColor: `${shen.color}66`,
-                backgroundColor: `${personality.dark}D8`,
-              },
-            ]}
-          >
-            <View style={[s.todayShenIcon, { borderColor: shen.color }]}>
-              <Text style={[s.todayShenSymbol, { color: shen.color }]}>
-                {shen.symbol}
-              </Text>
-            </View>
-            <View style={s.todayShenCopy}>
-              <Text style={s.todayShenLabel}>BUGÜNKÜ SHEN'İN</Text>
-              <Text style={[s.todayShenName, { color: personality.light }]}>
-                {shen.name} · {todayCopy.shortLabel}
-              </Text>
-            </View>
-            <Ionicons
-              color={personality.light}
-              name="chevron-forward"
-              size={18}
-            />
-          </View>
-          <Text
-            style={[
-              s.title,
-              {
-                color: personality.light,
-                fontFamily:
-                  personality.headingWeight === "600"
-                    ? fonts.displayStrong
-                    : personality.headingWeight === "500"
-                      ? fonts.displayMedium
-                      : fonts.displayRegular,
-              },
-            ]}
-          >
-            {todayCopy.title}
-          </Text>
-          <Text style={s.body}>{todayCopy.body}</Text>
-          <View style={[s.quoteCard, { borderColor: `${shen.color}50` }]}>
-            <Text style={[s.quoteMark, { color: shen.color }]}>“</Text>
-            <Text style={s.motto}>{todayCopy.motto}</Text>
-          </View>
-          <Pressable
-            onPress={startPractice}
-            style={[
-              s.primary,
-              {
-                borderColor: personality.light,
-                borderRadius: personality.controlRadius,
-              },
-            ]}
-          >
-            <LinearGradient
-              colors={[personality.light, personality.button]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[
-                s.primaryInner,
-                { borderRadius: personality.controlRadius },
-              ]}
-            >
-              <Ionicons name="play" color={personality.buttonInk} size={18} />
-              <Text style={[s.primaryText, { color: personality.buttonInk }]}>
-                {hasPracticedToday
-                  ? "GÜNLÜK PRATİĞE YENİDEN DÖN"
-                  : "GÜNLÜK PRATİĞE BAŞLA"}
-              </Text>
-            </LinearGradient>
-          </Pressable>
-          <Text style={s.practiceMeta}>
-            {practice.duration} dakika · {shen.dailyName}
-          </Text>
-        </LinearGradient>
-      </View>
+    <View style={s.intro}><Text style={[s.eyebrow, { color: theme.button }]}>BUGÜNKÜ YOLCULUĞUN</Text><Text style={s.greeting}>İyi ki buradasın, {profile.name || "Gezgin"}.</Text><Text style={s.lead}>Bir nefes al. Bugün bedenin hangi ritimde?</Text></View>
 
-      <View
-        style={[s.shenChooser, { borderColor: `${personality.primary}38` }]}
-      >
-        <Text style={[s.shenChooserLabel, { color: personality.light }]}>
-          BEŞ SHEN · BUGÜN HANGİ YÖN SANA EŞLİK ETSİN?
-        </Text>
-        <Text style={s.shenChooserIntro}>{fiveShenTraditionNote}</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={s.worldPicker}
-        >
-          {fiveShen.map((item) => {
-            const itemPersonality = shenThemes[item.id];
-            const active = item.id === shen.id;
-            const copy = shenTodayCopy[item.id];
-            return (
-              <Pressable
-                accessibilityLabel={`${item.name}, ${copy.shortLabel}`}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                key={item.id}
-                onPress={() => {
-                  void Haptics.selectionAsync();
-                  saveProfile({ selectedShenId: item.id });
-                }}
-                style={[
-                  s.worldChoice,
-                  {
-                    borderRadius: Math.min(18, itemPersonality.controlRadius),
-                    opacity: active ? 1 : 0.62,
-                  },
-                  active && {
-                    backgroundColor: itemPersonality.surfaceRaised,
-                    borderColor: itemPersonality.primary,
-                    shadowColor: itemPersonality.primary,
-                    shadowOpacity: 0.42,
-                    shadowRadius: 16,
-                    transform: [{ translateY: -3 }],
-                  },
-                ]}
-              >
-                <View style={s.worldChoiceTop}>
-                  <Image source={shenIcons[item.id]} style={s.worldIcon} />
-                  <Text
-                    style={[
-                      s.worldName,
-                      active && {
-                        color: itemPersonality.light,
-                        fontFamily:
-                          itemPersonality.headingWeight === "600"
-                            ? fonts.displayStrong
-                            : itemPersonality.headingWeight === "500"
-                              ? fonts.displayMedium
-                              : fonts.displayRegular,
-                      },
-                    ]}
-                  >
-                    {copy.shortLabel}
-                  </Text>
-                </View>
-                <Text
-                  style={[
-                    s.worldMeaning,
-                    active && { color: itemPersonality.light },
-                  ]}
-                >
-                  {item.name} · {item.element}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-        <View
-          style={[
-            s.shenIdentity,
-            {
-              borderColor: `${shen.color}70`,
-              backgroundColor: `${personality.surfaceRaised}EE`,
-              borderRadius: Math.min(24, personality.controlRadius + 8),
-            },
-          ]}
-        >
-          <View
-            style={[
-              s.shenIdentitySymbol,
-              { borderColor: shen.color, backgroundColor: `${shen.color}16` },
-            ]}
-          >
-            <Image source={shenIcons[shen.id]} style={s.shenIdentityImage} />
-          </View>
-          <View style={s.shenIdentityCopy}>
-            <Text style={s.shenIdentityTitle}>
-              <Text style={{ color: shen.color }}>{shen.name}</Text> ·{" "}
-              {todayCopy.identity}
-            </Text>
-            <Text style={s.shenIdentityMeta}>{shen.element}</Text>
-          </View>
-        </View>
-      </View>
+    <ImageBackground source={shenBackgrounds[shen.id]} resizeMode="cover" style={[s.hero, shenShape(shen.id)]}>
+      <LinearGradient colors={["rgba(5,10,12,.04)", "rgba(5,10,12,.38)", "rgba(5,10,12,.94)"]} style={s.heroShade}>
+        <Text style={[s.heroEyebrow, { color: theme.button }]}>{daily.label.toLocaleUpperCase("tr-TR")} · {shen.name.toLocaleUpperCase("tr-TR")}</Text>
+        <Text style={s.heroTitle}>{daily.title}</Text><Text style={s.heroCue}>{daily.cue}</Text>
+        <Pressable accessibilityRole="button" onPress={startDailyPractice} style={[s.heroAction, { backgroundColor: theme.button }, shenShape(shen.id, "button")]}><Ionicons name="play" color={theme.buttonInk} size={15} /><Text style={[s.heroActionText, { color: theme.buttonInk }]}>BUGÜNKÜ PRATİĞE BAŞLA</Text></Pressable>
+      </LinearGradient>
+    </ImageBackground>
 
-      <View style={s.realProgress}>
-        <DashboardMetric
-          accent="#F28A39"
-          icon="flame"
-          label="Seri"
-          value={`${journeyDay} gün`}
-        />
-        <DashboardMetric
-          accent={personality.primary}
-          icon="medal-outline"
-          label="Seviye"
-          value={`${Math.max(1, Math.floor(earnedXp / 100) + 1)}`}
-        />
-        <DashboardMetric
-          accent={personality.light}
-          icon="calendar-outline"
-          label="Bu hafta"
-          value={`${sessions.length} pratik`}
-        />
-        <DashboardMetric
-          accent={shen.color}
-          icon="pulse-outline"
-          label="Bugün"
-          value={`${completedMinutes || 0} dk`}
-        />
-      </View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.shenPicker} style={s.shenPickerOuter}>
+      {fiveShen.map((item) => { const selected = item.id === shen.id; const itemTheme = shenThemes[item.id]; return <Pressable key={item.id} accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={`${copy[item.id].label}, ${item.name}`} onPress={() => { void Haptics.selectionAsync(); saveProfile({ selectedShenId: item.id }); }} style={[s.shenChoice, { backgroundColor: selected ? theme.button : theme.surfaceRaised, borderColor: selected ? theme.button : `${theme.primary}30` }, shenShape(shen.id, "button")]}><Image source={shenIcons[item.id]} style={s.shenIcon} /><Text style={[s.shenChoiceText, { color: selected ? theme.buttonInk : itemTheme.light }]}>{item.name}</Text></Pressable>; })}
+    </ScrollView>
 
-      <View style={s.recentPhotosHead}>
-        <View>
-          <Text style={[s.kicker, { color: personality.light }]}>HAREKET ARŞİVİN</Text>
-          <Text style={s.sectionTitle}>Son hareketlerin</Text>
-        </View>
-        <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/journal")}>
-          <Text style={[s.recentPhotosLink, { color: personality.primary }]}>Galeriyi aç →</Text>
-        </Pressable>
-      </View>
-      {recentMovementPhotos.length ? (
-        <ScrollView contentContainerStyle={s.recentPhotos} horizontal showsHorizontalScrollIndicator={false}>
-          {recentMovementPhotos.map((item) => (
-            <Pressable accessibilityLabel={`${item.movementName ?? "Hareket"} fotoğrafını aç`} accessibilityRole="button" key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.recentPhotoCard, { borderColor: `${personality.primary}58` }]}>
-              <Image source={{ uri: item.imageData }} style={s.recentPhotoImage} />
-              <LinearGradient colors={["transparent", "rgba(4,9,7,.96)"]} style={s.recentPhotoShade}>
-                <Text numberOfLines={2} style={s.recentPhotoTitle}>{item.movementName ?? "Hareket"}</Text>
-                <Text style={[s.recentPhotoScore, { color: personality.primary }]}>%{Math.round(item.postureScore ?? item.flowScore ?? 0)}</Text>
-              </LinearGradient>
-            </Pressable>
-          ))}
-        </ScrollView>
-      ) : (
-        <View style={[s.recentPhotosEmpty, { borderColor: `${personality.primary}42` }]}>
-          <Ionicons color={personality.primary} name="camera-outline" size={25} />
-          <View style={{ flex: 1 }}><Text style={s.recentPhotosEmptyTitle}>Henüz hareket fotoğrafın yok</Text><Text style={s.recentPhotosEmptyText}>Kamerayla tamamladığın hareketler burada birikir.</Text></View>
-        </View>
-      )}
+    <View style={s.stats}>
+      <StatTile label="♨  Seri" value={String(streak)} unit="gün" detail="Pratik günlerin" shenId={shen.id} />
+      <StatTile label="Seviye" value={String(level)} unit="Yolcu" detail={`${levelProgress} / 240 XP`} progress={levelProgress / 240} shenId={shen.id} />
+      <StatTile label="Son 7 gün" value={String(weekSessions.length)} unit="pratik" detail={`Toplam ${weekMinutes} dakika`} shenId={shen.id} />
+      <ImageBackground source={shenBackgrounds[shen.id]} style={[s.stat, s.energyStat, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><View style={s.energyShade} /><Text style={s.statLabel}>Enerjin ({shen.name})</Text><Text style={[s.statValue, { color: theme.button }]}>{energy}<Text style={s.statUnit}> / 100</Text></Text><Text style={s.statDetail}>{energy >= 70 ? "Canlı bir başlangıç" : "Bugün kendini dinle"}</Text><Text style={s.energyMotif}>{shenMotifs[shen.id]}</Text></ImageBackground>
+    </View>
 
-      <View style={s.portalsHead}>
-        <Text style={[s.kicker, { color: personality.light }]}>
-          KEŞİF ALANLARI
-        </Text>
-        <Text style={s.sectionTitle}>Bugün nereye bakmak istersin?</Text>
-      </View>
-      <View style={s.portalGrid}>
-        <HomePostureCard
-          accent={personality.primary}
-          image={homePortalImages.posture}
-          reports={postureReports}
-        />
-        <FeaturePortal
-          accent={personality.primary}
-          image={homePortalImages.living}
-          label="18 HAREKET · Bedenindeki İzleri"
-          note="Hocayı izle, adımları dene, hareketin geçtiği yüzeyi gör"
-          onPress={() => router.push("/body-lines")}
-          title="Hareketi yaşa, beden hatlarını keşfet"
-        />
-        <FeaturePortal
-          accent={personality.primary}
-          image={homePortalImages.humanMap}
-          label="İÇ HARİTA"
-          note="Bedenindeki sekiz kapıyı keşfet"
-          onPress={() =>
-            router.push({
-              pathname: "/(tabs)/journey",
-              params: { view: "map" },
-            })
-          }
-          title="İnsan Haritası"
-        />
-      </View>
+    <View style={s.sectionHeader}><Text style={s.sectionTitle}>Bugün senin için</Text><Text style={[s.sectionHint, { color: theme.button }]}>Devam et →</Text></View>
+    <View style={s.quickActions}>
+      <Pressable accessibilityRole="button" onPress={() => router.push("/body-lines")} style={[s.quick, { backgroundColor: theme.button }, shenShape(shen.id)]}><Ionicons name="arrow-forward" color={theme.buttonInk} size={25} /><View><Text style={[s.quickTitle, { color: theme.buttonInk }]}>18 hareket</Text><Text style={[s.quickSubtitle, { color: theme.buttonInk }]}>Hoca videosuyla öğren</Text></View></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.quick, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><Ionicons name="body-outline" color={theme.button} size={27} /><View><Text style={s.quickTitle}>Postür analizi</Text><Text style={s.quickSubtitle}>Bedenini tanı</Text></View></Pressable>
+    </View>
 
-      <Text style={s.closing}>“Yol, tek bir sakin adımla görünür olur.”</Text>
-    </Screen>
-  );
+    <View style={s.sectionHeader}><Text style={s.sectionTitle}>Son hareketlerin</Text><Pressable onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint, { color: theme.button }]}>Fotoğraflarım →</Text></Pressable></View>
+    {photos.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photos}>{photos.map((item) => <Pressable key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.photoCard, shenShape(shen.id)]}><Image source={{ uri: item.uri }} style={s.photo} /><LinearGradient colors={["transparent", "rgba(5,9,10,.9)"]} style={s.photoShade}><Text numberOfLines={1} style={s.photoTitle}>{item.name}</Text><Text style={[s.photoScore, { color: theme.button }]}>%{item.score}</Text></LinearGradient></Pressable>)}</ScrollView> : <View style={[s.emptyCard, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><Ionicons name="images-outline" color={theme.button} size={24} /><Text style={s.emptyText}>İlk hareket fotoğrafın burada görünecek.</Text></View>}
+
+    <Pressable onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.postureSummary, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><View><Text style={s.statLabel}>POSTÜR ANALİZİ</Text><Text style={s.postureTitle}>{lastReport ? "Son analizine dön" : "Beden çizgini keşfet"}</Text><Text style={s.quickSubtitle}>{lastReport ? `Son ölçüm: ${lastReport.score} puan` : "Ön, yan ve arka görünüm"}</Text></View><Ionicons name="arrow-forward" color={theme.button} size={22} /></Pressable>
+  </Screen>;
 }
+
+function StatTile({ label, value, unit, detail, progress, shenId }: { label: string; value: string; unit: string; detail: string; progress?: number; shenId: ShenId }) {
+  const theme = shenThemes[shenId];
+  return <View style={[s.stat, { backgroundColor: theme.surfaceRaised }, shenShape(shenId)]}><Text style={s.statLabel}>{label}</Text><Text style={[s.statValue, { color: theme.button }]}>{value}<Text style={s.statUnit}> {unit}</Text></Text>{progress === undefined ? <Text style={s.statDetail}>{detail}</Text> : <><View style={s.track}><View style={[s.fill, { width: `${Math.max(0, Math.min(1, progress)) * 100}%`, backgroundColor: theme.button }]} /></View><Text style={s.statDetail}>{detail}</Text></>}</View>;
+}
+
+const s = StyleSheet.create({
+  page: { gap: 0, paddingHorizontal: 18, paddingBottom: 34 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 5, marginBottom: 25 },
+  brand: { flexDirection: "row", alignItems: "center", gap: 7 },
+  brandRing: { fontSize: 29, lineHeight: 30 },
+  brandText: { color: "#F6F3EC", fontFamily: fonts.sansStrong, fontSize: 12, letterSpacing: 2.4 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 7 },
+  headerButton: { width: 35, height: 35, alignItems: "center", justifyContent: "center" },
+  avatar: { width: 35, height: 35, borderWidth: 1, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+  avatarText: { color: "#F6F3EC", fontFamily: fonts.sansStrong, fontSize: 14 },
+  badge: { width: 7, height: 7, borderRadius: 4, position: "absolute", top: 4, right: 4 },
+  intro: { marginBottom: 15 },
+  eyebrow: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 1.8, marginBottom: 8 },
+  greeting: { color: "#F6F3EC", fontFamily: fonts.displayMedium, fontSize: 30, lineHeight: 34, marginBottom: 6 },
+  lead: { color: "#AEBCC3", fontFamily: fonts.sans, fontSize: 14, lineHeight: 20 },
+  hero: { height: 250, overflow: "hidden", justifyContent: "flex-end", marginBottom: 13 },
+  heroShade: { flex: 1, justifyContent: "flex-end", padding: 17 },
+  heroEyebrow: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 1.5, marginBottom: 5 },
+  heroTitle: { color: "#F6F3EC", fontFamily: fonts.displayMedium, fontSize: 26, lineHeight: 30, marginBottom: 5 },
+  heroCue: { color: "#E7E6E2", fontFamily: fonts.sans, fontSize: 13, lineHeight: 18 },
+  heroAction: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, minHeight: 34, paddingHorizontal: 13, marginTop: 11 },
+  heroActionText: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: .4 },
+  shenPickerOuter: { flexGrow: 0, marginBottom: 16 },
+  shenPicker: { flexDirection: "row", gap: 7, paddingRight: 5 },
+  shenChoice: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 62, height: 43, paddingHorizontal: 9, borderWidth: 1 },
+  shenIcon: { width: 23, height: 23, borderRadius: 12 },
+  shenChoiceText: { fontFamily: fonts.sansStrong, fontSize: 11 },
+  stats: { flexDirection: "row", flexWrap: "wrap", gap: 9, marginBottom: 7 },
+  stat: { width: "48%", minHeight: 93, padding: 13, overflow: "hidden" },
+  statLabel: { color: "#BFC9CB", fontFamily: fonts.sansMedium, fontSize: 11, marginBottom: 7 },
+  statValue: { fontFamily: fonts.displayMedium, fontSize: 25, lineHeight: 27 },
+  statUnit: { color: "#F6F3EC", fontFamily: fonts.sans, fontSize: 11 },
+  statDetail: { color: "#ADB8BA", fontFamily: fonts.sans, fontSize: 10, marginTop: 5 },
+  track: { height: 4, borderRadius: 3, backgroundColor: "rgba(255,255,255,.14)", overflow: "hidden", marginTop: 7 },
+  fill: { height: "100%" },
+  energyStat: { position: "relative" },
+  energyShade: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(6,12,15,.76)" },
+  energyMotif: { position: "absolute", right: 10, top: 6, fontSize: 25 },
+  sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 20, marginBottom: 10 },
+  sectionTitle: { color: "#F6F3EC", fontFamily: fonts.displayMedium, fontSize: 20 },
+  sectionHint: { fontFamily: fonts.sansMedium, fontSize: 11 },
+  quickActions: { flexDirection: "row", gap: 9 },
+  quick: { flex: 1, minHeight: 115, padding: 15, justifyContent: "space-between" },
+  quickTitle: { color: "#F6F3EC", fontFamily: fonts.sansStrong, fontSize: 15, marginBottom: 3 },
+  quickSubtitle: { color: "#BFC9CB", fontFamily: fonts.sans, fontSize: 11 },
+  photos: { gap: 9, paddingRight: 5 },
+  photoCard: { width: 133, height: 172, overflow: "hidden" },
+  photo: { width: "100%", height: "100%" },
+  photoShade: { position: "absolute", left: 0, right: 0, bottom: 0, padding: 10, paddingTop: 30 },
+  photoTitle: { color: "#F6F3EC", fontFamily: fonts.sansMedium, fontSize: 11 },
+  photoScore: { fontFamily: fonts.sansStrong, fontSize: 12, marginTop: 3 },
+  emptyCard: { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, padding: 15 },
+  emptyText: { color: "#BFC9CB", fontFamily: fonts.sans, fontSize: 12 },
+  postureSummary: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, marginTop: 21 },
+  postureTitle: { color: "#F6F3EC", fontFamily: fonts.sansMedium, fontSize: 17, marginBottom: 4 },
+});

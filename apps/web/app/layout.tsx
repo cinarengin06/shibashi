@@ -5,6 +5,7 @@ import "./globals.css";
 import "./intro.css";
 import "./design-system.css";
 import "./shen-coherence.css";
+import "./responsive.css";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -35,7 +36,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="tr">
+    <html lang="tr" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: `try{var s=localStorage.getItem('ritim-kapisi-selected-shen');var v=localStorage.getItem('shibashi-visual-theme');if(['hun','yi','po','zhi','shen'].includes(s)||['ink-night','jade-garden','moon-water'].includes(v)){document.documentElement.classList.add('theme-booting');document.documentElement.style.setProperty('--boot-bg',({hun:'#172019',yi:'#202120',po:'#221d19',zhi:'#121c23',shen:'#211c15'})[s]||'#211c15')}}catch(e){}` }} /></head>
       <body className={`${inter.variable} ${manrope.variable}`}><ShenThemeBoundary>{children}</ShenThemeBoundary></body>
     </html>
   );

@@ -1,3 +1,12 @@
+.theme-booting,
+.theme-booting body {
+  background: var(--boot-bg, #211c15) !important;
+}
+
+.theme-booting .site-theme {
+  visibility: hidden;
+}
+
 .site-theme {
   --site-bg: color-mix(in srgb, var(--shen-surface, #211c15) 32%, var(--visual-bg, #090c0d));
   --site-surface: color-mix(in srgb, var(--shen-surface, #211c15) 70%, var(--visual-surface, #1b2125));

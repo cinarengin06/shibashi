@@ -22,6 +22,7 @@ import {
   type OnboardingProfile,
 } from "../../../packages/onboarding";
 import { colors, fonts } from "../constants/theme";
+import { shenThemes } from "../../../packages/design-tokens";
 import { BodyStep, Header, IntentionStep, MoodCheckin, NameStep, PracticeSetup, Preferences, QuestionCopy, Result, Welcome } from "../components/onboarding/OnboardingSteps";
 import { m } from "../components/onboarding/onboarding.styles";
 import { useApp } from "../store/AppStore";
@@ -30,6 +31,7 @@ import { useShenExperience } from "../store/ShenExperience";
 export default function Onboarding() {
   const { profile, saveProfile } = useApp();
   const { background, playing, startSound, toggleSound, shen } = useShenExperience();
+  const surface = shenThemes[profile.selectedShenId].surface;
   const savedIndex = onboardingStages.findIndex(
     (item) => item.id === (profile.onboardingStage ?? "welcome"),
   );
@@ -117,7 +119,7 @@ export default function Onboarding() {
       style={m.root}
     >
       <LinearGradient
-        colors={["#060B08", "#09110D", "#040805"]}
+        colors={[surface, shenThemes[profile.selectedShenId].surfaceRaised, surface]}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView edges={["top", "bottom"]} style={m.safe}>
@@ -135,7 +137,7 @@ export default function Onboarding() {
           {step === 0 ? <Welcome onStart={next} /> : null}
           {step === 1 ? (
             <QuestionCopy
-              kicker="1 / 5"
+              kicker="1 / 6"
               title="Sana nasıl hitap edelim?"
               body="Adını yalnızca deneyimini kişiselleştirmek için kullanacağız."
             />
@@ -148,7 +150,7 @@ export default function Onboarding() {
           ) : null}
           {step === 2 ? (
             <QuestionCopy
-              kicker="2 / 5"
+              kicker="2 / 6"
               title="Bugün nasıl hissediyorsun?"
               body="Üç çizgiyi sana en yakın noktaya getir; burada doğru ya da yanlış yok."
             />
@@ -156,7 +158,7 @@ export default function Onboarding() {
           {step === 2 ? <MoodCheckin data={data} patch={patch} /> : null}
           {step === 3 ? (
             <QuestionCopy
-              kicker="3 / 5"
+              kicker="3 / 6"
               title="Bugün neye ihtiyacın var?"
               body="Şu anda sana en yakın gelen seçeneği işaretle."
             />
@@ -169,7 +171,7 @@ export default function Onboarding() {
           ) : null}
           {step === 4 ? (
             <QuestionCopy
-              kicker="4 / 5"
+              kicker="4 / 6"
               title="Bedeninde en çok nereyle ilgilenmek istersin?"
               body="Bu bir teşhis değil; ilk pratiğin odağını nazikçe belirler."
             />
@@ -182,7 +184,7 @@ export default function Onboarding() {
           ) : null}
           {step === 5 ? (
             <QuestionCopy
-              kicker="5 / 5"
+              kicker="5 / 6"
               title="Sana uygun başlangıç hangisi?"
               body="Deneyimine ve ayırabileceğin zamana uygun bir plan hazırlayacağız."
             />

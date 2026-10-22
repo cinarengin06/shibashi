@@ -1,0 +1,159 @@
+/* Real device widths use the desktop shell. Keep its pages fluid on phones and tablets. */
+.device-mode-desktop,
+.device-mode-desktop .mobile-frame,
+.device-mode-desktop .screen {
+  min-width: 0;
+}
+
+@media (max-width: 1199px) {
+  .device-mode-desktop .posture-analysis-grid,
+  .device-mode-desktop .posture-result-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .device-mode-desktop .posture-analysis-stage-card,
+  .device-mode-desktop .posture-result-stage-card {
+    grid-row: 1;
+  }
+
+  .device-mode-desktop .posture-score-column,
+  .device-mode-desktop .posture-result-score-column {
+    grid-row: 2;
+  }
+
+  .device-mode-desktop .posture-feedback-column,
+  .device-mode-desktop .posture-result-feedback-stack {
+    grid-row: 3;
+  }
+}
+
+@media (max-width: 899px) {
+  .device-mode-desktop .mobile-frame {
+    box-sizing: border-box;
+    padding: 16px max(12px, env(safe-area-inset-left)) calc(104px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
+    width: 100%;
+  }
+
+  .device-mode-desktop .screen,
+  .device-mode-desktop .posture-analysis-shell,
+  .device-mode-desktop .posture-flow-shell,
+  .device-mode-desktop .posture-capture-shell,
+  .device-mode-desktop .posture-live-shell {
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .device-mode-desktop .screen > *,
+  .device-mode-desktop .posture-analysis-grid > *,
+  .device-mode-desktop .posture-result-grid > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .device-mode-desktop .posture-analysis-screen,
+  .device-mode-desktop .posture-flow-screen,
+  .device-mode-desktop .posture-capture-screen {
+    padding: 0 0 20px;
+  }
+
+  .device-mode-desktop .posture-analysis-shell,
+  .device-mode-desktop .posture-flow-shell,
+  .device-mode-desktop .posture-capture-shell {
+    min-height: 0;
+    padding: clamp(10px, 3vw, 16px);
+  }
+
+  .device-mode-desktop .posture-landing-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .device-mode-desktop .posture-landing-content {
+    margin-left: 0;
+    padding-top: 52px;
+  }
+
+  .device-mode-desktop .posture-analysis-topbar {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .device-mode-desktop .posture-save-button {
+    grid-column: 1 / -1;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .device-mode-desktop .posture-stage-tabs {
+    display: flex;
+    justify-self: stretch;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .device-mode-desktop .posture-stage-tabs button {
+    flex: 1 0 auto;
+    white-space: nowrap;
+  }
+
+  .device-mode-desktop .posture-analysis-stage,
+  .device-mode-desktop .posture-result-capture-stage {
+    height: clamp(400px, 68dvh, 650px);
+    min-height: 0;
+  }
+
+  .device-mode-desktop .posture-stage-controls,
+  .device-mode-desktop .posture-flow-topbar,
+  .device-mode-desktop .posture-capture-topbar {
+    min-width: 0;
+  }
+
+  .device-mode-desktop .posture-live-screen {
+    padding: 10px 10px 24px;
+  }
+
+  .device-mode-desktop .posture-live-camera {
+    height: clamp(480px, 78dvh, 780px);
+    min-height: 0;
+    width: 100%;
+  }
+
+  .device-mode-desktop .posture-live-guide {
+    bottom: 86px;
+    left: 14px;
+    right: 14px;
+    transform: none;
+    width: auto;
+  }
+
+  .device-mode-desktop .posture-live-score-overlay {
+    max-width: calc(100% - 24px);
+    white-space: normal;
+  }
+
+  .device-mode-desktop .posture-live-score-overlay > span {
+    white-space: normal;
+  }
+
+  .device-mode-desktop .bottom-nav {
+    overflow-x: auto;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(58px, 1fr);
+    grid-template-columns: none;
+    scrollbar-width: none;
+  }
+
+  .device-mode-desktop .bottom-nav::-webkit-scrollbar { display: none; }
+}
+
+@media (max-width: 520px) {
+  .device-mode-desktop .posture-analysis-topbar h1 { font-size: 1.3rem; }
+  .device-mode-desktop .posture-analysis-topbar p { font-size: .76rem; }
+  .device-mode-desktop .posture-analysis-stage-card { padding: 9px; }
+  .device-mode-desktop .posture-stage-tabs button { padding-inline: 9px; font-size: .7rem; }
+  .device-mode-desktop .posture-result-capture-strip { overflow-x: auto; }
+  .device-mode-desktop .posture-live-angle-steps { gap: 8px; padding-inline: 8px; }
+  .device-mode-desktop .posture-live-angle-steps span b { font-size: .65rem; }
+  .device-mode-desktop .posture-live-guide { padding: 10px; }
+}

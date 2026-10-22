@@ -9,11 +9,11 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { Text, TextInput } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { colors, fonts, type } from "../constants/theme";
+import { fonts, type } from "../constants/theme";
 import { AppProvider } from "../store/AppStore";
 import { ShenExperienceProvider } from "../store/ShenExperience";
 import { useApp } from "../store/AppStore";
-import { visualThemes } from "../../../packages/design-tokens";
+import { shenThemes } from "../../../packages/design-tokens";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -60,7 +60,7 @@ export default function RootLayout() {
 
 function BootContent() {
   const { ready, profile } = useApp();
-  const visualTheme = visualThemes[profile.visualThemeId ?? "ink-night"];
+  const visualTheme = shenThemes[profile.selectedShenId];
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
@@ -71,7 +71,7 @@ function BootContent() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: visualTheme.background },
+          contentStyle: { backgroundColor: visualTheme.surface },
           animation: "fade",
         }}
       />

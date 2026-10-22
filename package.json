@@ -11,6 +11,10 @@
     "ios": "npm --prefix apps/mobile run ios",
     "android": "npm --prefix apps/mobile run android",
     "typecheck:web": "npm --prefix apps/web run typecheck",
-    "typecheck:mobile": "npm --prefix apps/mobile run typecheck"
+    "typecheck:mobile": "npm --prefix apps/mobile run typecheck",
+    "build:android:preview": "cd apps/mobile && eas build --platform android --profile preview",
+    "build:ios:preview": "cd apps/mobile && eas build --platform ios --profile preview",
+    "build:android:production": "cd apps/mobile && eas build --platform android --profile production",
+    "build:ios:production": "cd apps/mobile && eas build --platform ios --profile production"
   }
 }

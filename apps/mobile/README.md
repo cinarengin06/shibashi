@@ -45,12 +45,20 @@ aynı girildiğinde geçmiş, seri, postür raporları ve yolculuk kayıtları b
 
 ## Android APK
 
+Depo kökünden `apps/mobile` klasörüne geçip EAS komutlarını çalıştırın. `eas.json` ve
+`app.json` burada bulunur; depo kökünden veya `/` dizininden doğrudan
+`eas build` çalıştırmayın.
+
 ```bash
+cd apps/mobile
 npm install -g eas-cli
 eas login
-eas build:configure
 eas build --platform android --profile preview
 ```
+
+`eas build:configure` gerekli değildir; `eas.json` zaten projede vardır.
+Depo kökünden çalışmak isterseniz `npm run build:android:preview` komutunu
+kullanın. iOS önizleme derlemesi için `npm run build:ios:preview` kullanılabilir.
 
 `preview` profili APK, `production` profili Google Play için AAB üretir.
 

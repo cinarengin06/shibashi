@@ -1,9 +1,9 @@
 .header {
   align-items: center;
   backdrop-filter: blur(18px);
-  background: rgba(5, 11, 8, 0.96);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f2eee7;
+  background: color-mix(in srgb, var(--site-bg) 96%, transparent);
+  border-bottom: 1px solid var(--site-line);
+  color: var(--site-text);
   display: grid;
   grid-template-columns: minmax(190px, 1fr) auto minmax(70px, 1fr);
   height: 80px;
@@ -17,7 +17,7 @@
 
 .brand {
   align-items: center;
-  color: #c6a56a;
+  color: var(--shen-gold);
   display: flex;
   font-size: 16px;
   font-weight: 600;
@@ -37,16 +37,16 @@
 }
 
 .header nav { align-items: stretch; display: flex; gap: clamp(18px, 2.5vw, 38px); height: 100%; }
-.header nav a { align-items: center; color: rgba(242, 238, 231, 0.78); display: flex; font-size: 13px; font-weight: 600; position: relative; text-decoration: none; }
-.header nav a::after { background: #c6a56a; bottom: 0; content: ""; height: 2px; left: 0; opacity: 0; position: absolute; right: 0; transform: scaleX(0.3); transition: opacity 180ms ease, transform 180ms ease; }
+.header nav a { align-items: center; color: var(--site-muted); display: flex; font-size: 13px; font-weight: 600; position: relative; text-decoration: none; }
+.header nav a::after { background: var(--site-accent); bottom: 0; content: ""; height: 2px; left: 0; opacity: 0; position: absolute; right: 0; transform: scaleX(0.3); transition: opacity 180ms ease, transform 180ms ease; }
 .header nav a:hover,
-.header nav a.active { color: #c6a56a; }
+.header nav a.active { color: var(--site-accent); }
 .header nav a.active::after { opacity: 1; transform: scaleX(1); }
 
 .profile {
-  border: 1px solid rgba(198, 165, 106, 0.42);
+  border: 1px solid var(--site-line);
   border-radius: 999px;
-  color: #f2eee7;
+  color: var(--site-text);
   font-size: 13px;
   font-weight: 600;
   justify-self: end;

@@ -17,10 +17,10 @@ export function Screen({children,scroll=true,style}:{children:React.ReactNode;sc
  const personality=shenThemes[shen.id];
  const visual=visualThemes[profile.visualThemeId??'ink-night'];
  const body=<View style={[s.content,style]}>{children}</View>;
- return <View style={[s.safe,{width,backgroundColor:visual.background}]}>
+ return <View style={[s.safe,{width,backgroundColor:personality.surface}]}>
   <ShenBackdrop opacity={.34}/>
-  <View style={[s.themeWash,{backgroundColor:visual.backgroundSecondary}]}/>
-  <View style={[s.scrim,{backgroundColor:visual.background,opacity:.86}]}/>
+  <View style={[s.themeWash,{backgroundColor:personality.surfaceRaised}]}/>
+  <View style={[s.scrim,{backgroundColor:visual.background,opacity:.68}]}/>
   <SafeAreaView style={s.safeClear} edges={['top']}>
    {scroll?<ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>{body}</ScrollView>:body}
   </SafeAreaView>
@@ -52,7 +52,7 @@ export function ShenBackdrop({opacity=1,borderRadius=0}:{opacity?:number;borderR
  </View>;
 }
 
-export function Eyebrow({children}:PropsWithChildren){return <Text style={s.eyebrow}>{children}</Text>}
+export function Eyebrow({children}:PropsWithChildren){const{shen}=useShenExperience();return <Text style={[s.eyebrow,{color:shen.color}]}>{children}</Text>}
 export function Title({children}:PropsWithChildren){const{shen}=useShenExperience();const personality=shenThemes[shen.id];return <Text style={[s.title,{fontFamily:personality.headingWeight==='600'?fonts.displayStrong:personality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular,letterSpacing:shen.id==='zhi'?.4:shen.id==='yi'?-.35:shen.id==='shen'?.6:0}]}>{children}</Text>}
 export function Section({title,action,children}:{title:string;action?:string;children:React.ReactNode}){
  return <View style={s.section}><View style={s.sectionHead}><Text style={s.sectionTitle}>{title}</Text>{action&&<Text style={s.action}>{action}</Text>}</View>{children}</View>;
@@ -60,7 +60,7 @@ export function Section({title,action,children}:{title:string;action?:string;chi
 export function Card({children,style}:{children:React.ReactNode;style?:StyleProp<ViewStyle>}){
  const{shen}=useShenExperience();const personality=shenThemes[shen.id];
  const{profile}=useApp();const visual=visualThemes[profile.visualThemeId??'ink-night'];
- return <View style={[s.card,{backgroundColor:visual.surface,borderColor:`${personality.primary}42`,borderRadius:Math.min(28,personality.controlRadius+8),shadowColor:visual.navigation},style]}>{children}</View>;
+ return <View style={[s.card,{backgroundColor:personality.surface,borderColor:`${personality.primary}42`,borderRadius:Math.min(28,personality.controlRadius+8),shadowColor:visual.navigation},style]}>{children}</View>;
 }
 export function PrimaryButton({label,onPress,icon='arrow-forward',disabled=false}:{label:string;onPress:()=>void;icon?:keyof typeof Ionicons.glyphMap;disabled?:boolean}){
  const{shen}=useShenExperience();
@@ -71,11 +71,13 @@ export function PrimaryButton({label,onPress,icon='arrow-forward',disabled=false
   </View>
  </Pressable>;
 }
-export function Metric({label,value,color=colors.jade}:{label:string;value:string|number;color?:string}){
- return <Card style={s.metric}><Text style={[s.metricValue,{color}]}>{value}</Text><Text style={s.muted}>{label}</Text></Card>;
+export function Metric({label,value,color}:{label:string;value:string|number;color?:string}){
+ const{shen}=useShenExperience();
+ return <Card style={s.metric}><Text style={[s.metricValue,{color:color??shen.color}]}>{value}</Text><Text style={s.muted}>{label}</Text></Card>;
 }
-export function ProgressBar({value,color=colors.gold}:{value:number;color?:string}){
- return <View style={s.track}><View style={[s.fill,{width:`${Math.max(2,Math.min(100,value))}%`,backgroundColor:color}]}/></View>;
+export function ProgressBar({value,color}:{value:number;color?:string}){
+ const{shen}=useShenExperience();
+ return <View style={s.track}><View style={[s.fill,{width:`${Math.max(2,Math.min(100,value))}%`,backgroundColor:color??shen.color}]}/></View>;
 }
 export function BreathOrb({small=false}:{small?:boolean}){
  const a=useRef(new Animated.Value(.85)).current;

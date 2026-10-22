@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
+import { ShenThemeBoundary } from "@/components/ShenThemeBoundary";
 import "./globals.css";
 import "./intro.css";
 import "./design-system.css";
+import "./shen-coherence.css";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -34,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr">
-      <body className={`${inter.variable} ${manrope.variable}`}>{children}</body>
+      <body className={`${inter.variable} ${manrope.variable}`}><ShenThemeBoundary>{children}</ShenThemeBoundary></body>
     </html>
   );
 }

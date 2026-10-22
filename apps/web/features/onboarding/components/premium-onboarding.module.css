@@ -1,13 +1,13 @@
 .root {
-  --accent: var(--onboarding-accent, #c6a56a);
+  --accent: var(--onboarding-accent, var(--site-accent));
   background:
     radial-gradient(
       circle at 80% 8%,
       color-mix(in srgb, var(--accent) 12%, transparent),
       transparent 30%
     ),
-    #080d0a;
-  color: #f2eee7;
+    var(--site-bg);
+  color: var(--site-text);
   font-family: Inter, system-ui, sans-serif;
   min-height: 100dvh;
   overflow: hidden;

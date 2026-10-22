@@ -103,7 +103,6 @@ export function BodyLinesScreen() {
   const [miniCameraOpen, setMiniCameraOpen] = useState(false);
   const [targetScore, setTargetScore] = useState(70);
   const demoVideoRef = useRef<HTMLVideoElement>(null);
-  const [demoKey, setDemoKey] = useState(0);
   const [photos, setPhotos] = useState<PracticeSnapshot[]>([]);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<PracticeSnapshot | null>(null);
@@ -186,7 +185,6 @@ export function BodyLinesScreen() {
             {movementSteps.map((step, index) => <li key={step}><i>{index + 1}</i><span>{step}</span></li>)}
           </ol>
           <div className={styles.practiceActions}>
-            <button onClick={() => { setVideoUnavailable(false); setDemoKey((key) => key + 1); }} type="button">Hoca yapsın <span>↻</span></button>
             <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) demoVideoRef.current?.play().catch(() => {}); setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Küçük kamerayı kapat" : "📷 Kameramla uyumumu gör"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
           </div>
@@ -223,7 +221,7 @@ export function BodyLinesScreen() {
                   aria-label={`${movement.sourceTitle} hoca videosu`}
                   autoPlay
                   controls
-                  key={`${movement.order}-${demoKey}`}
+                  key={movement.order}
                   loop
                   muted
                   onError={() => setVideoUnavailable(true)}
@@ -236,7 +234,7 @@ export function BodyLinesScreen() {
                 )}
               </div>
             {videoUnavailable ? <span className={styles.videoUnavailable}>Video şu anda açılamıyor. Hareketi yeniden seçerek tekrar deneyebilirsin.</span> : null}
-            {miniCameraOpen ? <MovementCameraPractice active compact movementOrder={String(movement.order).padStart(2, "0")} movementName={movement.sourceTitle} retryKey={demoKey} onClose={() => setMiniCameraOpen(false)} onComplete={keepCurrentMovement} onPhotoCaptured={savePhoto} teacherVideoRef={demoVideoRef} targetScoreOverride={targetScore} /> : null}
+            {miniCameraOpen ? <MovementCameraPractice active compact movementOrder={String(movement.order).padStart(2, "0")} movementName={movement.sourceTitle} retryKey={0} onClose={() => setMiniCameraOpen(false)} onComplete={keepCurrentMovement} onPhotoCaptured={savePhoto} teacherVideoRef={demoVideoRef} targetScoreOverride={targetScore} /> : null}
           </div>
         </section>
         <MovementDetail movement={movement} />

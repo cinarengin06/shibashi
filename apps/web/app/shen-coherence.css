@@ -1,0 +1,54 @@
+.site-theme {
+  --site-bg: color-mix(in srgb, var(--shen-surface, #211c15) 32%, var(--visual-bg, #090c0d));
+  --site-surface: color-mix(in srgb, var(--shen-surface, #211c15) 70%, var(--visual-surface, #1b2125));
+  --site-surface-raised: color-mix(in srgb, var(--shen-surface-raised, #30271b) 70%, var(--visual-surface-raised, #252c31));
+  --site-text: var(--visual-text, #f2eee7);
+  --site-muted: var(--visual-muted, #a7ada6);
+  --site-line: color-mix(in srgb, var(--shen-accent) 22%, transparent);
+  --site-accent: var(--shen-button-primary, #e4be70);
+  --site-accent-ink: var(--shen-button-ink, #191208);
+  --gold: var(--shen-gold);
+  --jade: var(--shen-accent);
+  --ink: var(--site-text);
+  min-height: 100vh;
+  background: var(--site-bg);
+  color: var(--site-text);
+  transition: background-color 420ms ease, color 320ms ease;
+}
+
+.site-theme[data-visual-theme="ink-night"] {
+  --visual-bg: #090c0d;
+  --visual-surface: #1b2125;
+  --visual-surface-raised: #252c31;
+  --visual-text: #f2eee7;
+  --visual-muted: #a7ada6;
+}
+.site-theme[data-visual-theme="jade-garden"] {
+  --visual-bg: #06100d;
+  --visual-surface: #12241c;
+  --visual-surface-raised: #1a3127;
+  --visual-text: #f0f1e9;
+  --visual-muted: #a5b8ac;
+}
+.site-theme[data-visual-theme="moon-water"] {
+  --visual-bg: #070b14;
+  --visual-surface: #121e2d;
+  --visual-surface-raised: #1a2a3d;
+  --visual-text: #eef2f5;
+  --visual-muted: #a4b0bf;
+}
+
+.site-theme .app-shell[data-visual-theme] {
+  --theme-bg: var(--site-bg);
+  --theme-bg-secondary: var(--site-bg);
+  --theme-surface: var(--site-surface);
+  --theme-surface-raised: var(--site-surface-raised);
+  --theme-nav: var(--site-bg);
+  --theme-text: var(--site-text);
+  --theme-muted: var(--site-muted);
+}
+
+.site-theme .device-mode-desktop {
+  --web-bg: var(--site-bg);
+  --web-surface: var(--site-surface);
+}

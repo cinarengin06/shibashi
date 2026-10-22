@@ -448,6 +448,7 @@ export default function RitimKapisiOS() {
     setSelectedShenId(shenId);
     if ("vibrate" in navigator) navigator.vibrate(12);
     window.localStorage.setItem("ritim-kapisi-selected-shen", shenId);
+    window.dispatchEvent(new Event("shibashi-theme-change"));
     const nextShen = fiveShen.find((shen) => shen.id === shenId);
     const musicExplicitlyMuted = window.sessionStorage.getItem(SHEN_MUSIC_SESSION_KEY) === "off";
     if ((soundState === "açık" || !musicExplicitlyMuted) && nextShen) {
@@ -458,6 +459,7 @@ export default function RitimKapisiOS() {
   function selectVisualTheme(themeId: VisualThemeId) {
     setVisualThemeId(themeId);
     window.localStorage.setItem("shibashi-visual-theme", themeId);
+    window.dispatchEvent(new Event("shibashi-theme-change"));
   }
 
   function selectCoach(coachId: AiCoach["id"]) {

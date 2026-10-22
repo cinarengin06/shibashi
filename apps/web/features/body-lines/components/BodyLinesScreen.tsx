@@ -14,6 +14,8 @@ import { MovementCameraPractice } from "@/features/living-learning/components/Mo
 import type { PracticeSnapshot } from "@/features/practice/types";
 import { deletePracticeSnapshotFromIndexedDb, loadPracticeSnapshotsFromIndexedDb, mergePracticeSnapshots, persistPracticeSnapshotsToLocalStorage, rememberDeletedPracticeSnapshot, savePracticeSnapshotToIndexedDb } from "@/lib/local-history-storage";
 import { isCapturedPracticePhoto } from "@/features/home/utils/practice-photo";
+import { markMovementCompleted } from "@/lib/movement-completion";
+import { useShibashiAuth } from "@/lib/supabase-auth";
 import styles from "./body-lines.module.css";
 
 function MovementDetail({ movement }: { movement: MeridianMovementKnowledge }) {
@@ -98,7 +100,12 @@ function InfoBlock({
 }
 
 export function BodyLinesScreen() {
+  const { user } = useShibashiAuth();
   const [movementOrder, setMovementOrder] = useState(1);
+  useEffect(() => {
+    const requested = Number(new URLSearchParams(window.location.search).get("movementOrder"));
+    if (Number.isInteger(requested) && requested >= 1 && requested <= 18) setMovementOrder(requested);
+  }, []);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [miniCameraOpen, setMiniCameraOpen] = useState(false);
   const [targetScore, setTargetScore] = useState(70);
@@ -133,6 +140,7 @@ export function BodyLinesScreen() {
   const savePhoto = useCallback(async (snapshot: PracticeSnapshot) => {
     const saved = await savePracticeSnapshotToIndexedDb(snapshot);
     if (!saved) { setPhotoSaveError(true); return false; }
+    try { markMovementCompleted(snapshot.movementId, user?.id); } catch { /* The photo was saved; keep the camera flow running if progress storage is unavailable. */ }
     setPhotoSaveError(false);
     setPhotos((current) => {
       const next = mergePracticeSnapshots([snapshot], current).filter((item) => isCapturedPracticePhoto(item.imageData));
@@ -140,7 +148,7 @@ export function BodyLinesScreen() {
       return next;
     });
     return true;
-  }, []);
+  }, [user?.id]);
   const deletePhoto = useCallback(async (photo: PracticeSnapshot) => {
     setPhotoDeleteBusy(true);
     setPhotoDeleteError(false);

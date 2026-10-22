@@ -34,7 +34,6 @@ type ShenOption = {
 };
 
 type ShenCopy = {
-  action: string;
   body: string;
   motto: string;
   shortLabel: string;
@@ -45,7 +44,6 @@ type Props = {
   energyScores: { shen: number | null };
   homeCopy: Record<HomeShenId, ShenCopy>;
   onJournal: () => void;
-  onPractice: () => void;
   onPosture: (reportId?: string) => void;
   onReset: () => void;
   onSelectShen: (shenId: HomeShenId) => void;
@@ -102,7 +100,6 @@ export function getPracticeStreak(practiceGallery: Array<Pick<PracticeRecord, "c
 
 function toHomeShen(shen: ShenOption, copy: ShenCopy, period: string) {
   return {
-    actionLabel: copy.action,
     color: shen.color,
     description: shen.dailyPrompt,
     element: shen.element.split("•")[0]?.trim() ?? "",
@@ -124,7 +121,6 @@ export function DojoHomeScreen({
   energyScores,
   homeCopy,
   onJournal,
-  onPractice,
   onPosture,
   onReset,
   onSelectShen,
@@ -162,7 +158,6 @@ export function DojoHomeScreen({
     energy={{ score: energyScores.shen, trend: dailyMinutes.map((value) => Math.min(100, value * 18)) }}
     level={{ experience: experienceIntoLevel, level: progress.level, nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
     onHistory={onJournal}
-    onPractice={onPractice}
     onPosture={onPosture}
     onReset={onReset}
     onSelectShen={onSelectShen}

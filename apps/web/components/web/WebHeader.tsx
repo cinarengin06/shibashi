@@ -1,10 +1,11 @@
 import Link from "next/link";
 import styles from "./web-header.module.css";
 
-type WebHeaderTab = "home" | "practice" | "posture" | "journey" | "bodyLines" | "journal" | "profile";
+type WebHeaderTab = "home" | "mainMap" | "practice" | "posture" | "journey" | "bodyLines" | "journal" | "profile";
 
 const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
   { id: "home", label: "Özel Odam", href: "/" },
+  { id: "mainMap", label: "Ana Haritam", href: "/ana-haritam" },
   { id: "bodyLines", label: "18 Hareketle Öğren", href: "/beden-hatlari" },
   { id: "posture", label: "Postür Analizi", href: "/?tab=posture" },
   { id: "journey", label: "Haritam", href: "/?tab=journey" },

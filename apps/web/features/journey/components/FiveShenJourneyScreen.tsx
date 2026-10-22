@@ -336,7 +336,7 @@ export function FiveShenJourneyWeb({
         </div>
         <article className="journey-today-synthesis">
           <div><span className="eyebrow">Bugünkü birleşimin</span><h2>{profile.name} iç dünyan · {activeDirection.title} yönün · {journeyCoach.name} rehberin</h2></div>
-          <button className="primary-action" onClick={() => onNavigate("practice")} type="button">Bu birleşimle pratiğe başla →</button>
+          <button className="primary-action" onClick={() => onNavigate("lessons")} type="button">Bu birleşimle pratiğe başla →</button>
         </article>
         <p className="journey-framework-note">Bu üç gelenek tarihsel olarak bire bir eşleştirilmiş tek bir sistem değildir. Shibashi EFE onları iç durum, yön ve rehberlik katmanları olarak birlikte kullanır.</p>
       </section>
@@ -398,7 +398,7 @@ export function FiveShenJourneyWeb({
           <article className="shen-detail-primary" style={{ "--shen-detail-accent": profile.primaryColor } as CSSProperties}>
             <span className="eyebrow">Bugünkü pratik</span><h2>{practice.title}</h2><p>{practice.description}</p>
             <div className="shen-detail-tags">{practice.movementQualityIds.map((item) => <span key={item}>{item}</span>)}</div>
-            <button className="primary-action" onClick={() => onNavigate("practice")} type="button">Pratiği başlat →</button>
+            <button className="primary-action" onClick={() => onNavigate("lessons")} type="button">Pratiği başlat →</button>
           </article>
           <div className="shen-detail-grid">
             <Info title="Nefes ritmi" body={breathing?.instruction ?? ""} />
@@ -434,7 +434,7 @@ export function FiveShenJourneyWeb({
           <button className="secondary-action" onClick={() => setView("detail")} type="button">Alanı ayrıntılı aç</button>
         </article>
         <div className="shen-journey-stack">
-          <article className="shen-practice-card"><span className="eyebrow">Önerilen pratik</span><h3>{practice.title}</h3><p>{practice.durationMinutes} dk · {practice.movementQualityIds.join(" · ")}</p><button onClick={() => onNavigate("practice")} type="button">Bugünkü pratiği başlat →</button></article>
+          <article className="shen-practice-card"><span className="eyebrow">Önerilen pratik</span><h3>{practice.title}</h3><p>{practice.durationMinutes} dk · {practice.movementQualityIds.join(" · ")}</p><button onClick={() => onNavigate("lessons")} type="button">Bugünkü pratiği başlat →</button></article>
           <article className="master-sentence-card"><span className="eyebrow">Ustadan bir cümle</span><blockquote>“{sentence.text}”</blockquote><button onClick={saveSentence} type="button">{savedSentences.some((item) => item.masterSentenceId === sentence.id) ? "Defterinde ✓" : "Defterime ekle"}</button></article>
         </div>
       </div>
@@ -451,12 +451,12 @@ function Info({ body, title }: { body: string; title: string }) {
 }
 
 const baguaDirections = [
-  { id: "qian", trigram: "☰", name: "Qian", title: "Gök", module: "AI Koç", tab: "practice" as TabId, cue: "Vizyonunu netleştir; rehberinle bugünün pratiğini seç.", accent: "#f3cf8b", image: "/images/shen-universe.jpg" },
+  { id: "qian", trigram: "☰", name: "Qian", title: "Gök", module: "AI Koç", tab: "lessons" as TabId, cue: "Vizyonunu netleştir; rehberinle bugünün pratiğini seç.", accent: "#f3cf8b", image: "/images/shen-universe.jpg" },
   { id: "dui", trigram: "☱", name: "Dui", title: "Göl", module: "Paylaşım", tab: "journal" as TabId, cue: "Deneyimini adlandır; bugünün yansımasını kaydet.", accent: "#d9bd80", image: "/images/shen-river-yi.jpg" },
-  { id: "li", trigram: "☲", name: "Li", title: "Ateş", module: "Pratik", tab: "practice" as TabId, cue: "Canlılığı harekete geçir; kısa bir Shibashi akışı başlat.", accent: "#ff7a18", image: "/images/shen-mode-hun.jpg" },
+  { id: "li", trigram: "☲", name: "Li", title: "Ateş", module: "Pratik", tab: "lessons" as TabId, cue: "Canlılığı harekete geçir; kısa bir Shibashi akışı başlat.", accent: "#ff7a18", image: "/images/shen-mode-hun.jpg" },
   { id: "zhen", trigram: "☳", name: "Zhen", title: "Gök Gürültüsü", module: "Postür", tab: "posture" as TabId, cue: "Uyan ve hizalan; beden eksenini yeniden kontrol et.", accent: "#f4a340", image: "/images/shen-river-hun.jpg" },
   { id: "xun", trigram: "☴", name: "Xun", title: "Rüzgâr", module: "Günlük", tab: "journal" as TabId, cue: "İçgörünün sessizce yayılmasına izin ver; bir reflection yaz.", accent: "#79d6ad", image: "/images/shen-mode-yi.jpg" },
-  { id: "kan", trigram: "☵", name: "Kan", title: "Su", module: "Nefes", tab: "practice" as TabId, cue: "Akışı zorlamadan sürdür; nefes ritmine dön.", accent: "#5eb7d8", image: "/images/shen-river-zhi.jpg" },
+  { id: "kan", trigram: "☵", name: "Kan", title: "Su", module: "Nefes", tab: "lessons" as TabId, cue: "Akışı zorlamadan sürdür; nefes ritmine dön.", accent: "#5eb7d8", image: "/images/shen-river-zhi.jpg" },
   { id: "gen", trigram: "☶", name: "Gen", title: "Dağ", module: "Denge", tab: "posture" as TabId, cue: "Dur, köklen ve merkezini dinle; postür taraması yap.", accent: "#b6a982", image: "/images/shen-mode-po.jpg" },
   { id: "kun", trigram: "☷", name: "Kun", title: "Toprak", module: "Toparlanma", tab: "home" as TabId, cue: "Temele dön; bugünkü enerjini ve ritmini gözden geçir.", accent: "#c89962", image: "/images/inner-gate-path.png" },
 ] as const;

@@ -23,16 +23,16 @@ const items = [
   { label: "Odam", tab: "index" },
   { label: "Hareket", tab: "moves" },
   { label: "Analiz", tab: "posture" },
-  { label: "Haritam", tab: "journey" },
+  { label: "Haritam", tab: "main-map" },
   { label: "Günlük", tab: "journal" },
 ] as const;
 
 const icons: Record<ShenId, Record<(typeof items)[number]["tab"], keyof typeof Ionicons.glyphMap>> = {
-  hun: { index: "leaf-outline", moves: "walk-outline", posture: "body-outline", journey: "navigate-outline", journal: "book-outline" },
-  shen: { index: "flame-outline", moves: "sparkles-outline", posture: "scan-outline", journey: "compass-outline", journal: "book-outline" },
-  yi: { index: "square-outline", moves: "fitness-outline", posture: "scan-outline", journey: "grid-outline", journal: "reader-outline" },
-  po: { index: "cloud-outline", moves: "body-outline", posture: "scan-outline", journey: "navigate-outline", journal: "book-outline" },
-  zhi: { index: "water-outline", moves: "walk-outline", posture: "scan-outline", journey: "map-outline", journal: "journal-outline" },
+  hun: { index: "leaf-outline", moves: "walk-outline", posture: "body-outline", "main-map": "navigate-outline", journal: "book-outline" },
+  shen: { index: "flame-outline", moves: "sparkles-outline", posture: "scan-outline", "main-map": "compass-outline", journal: "book-outline" },
+  yi: { index: "square-outline", moves: "fitness-outline", posture: "scan-outline", "main-map": "grid-outline", journal: "reader-outline" },
+  po: { index: "cloud-outline", moves: "body-outline", posture: "scan-outline", "main-map": "navigate-outline", journal: "book-outline" },
+  zhi: { index: "water-outline", moves: "walk-outline", posture: "scan-outline", "main-map": "map-outline", journal: "journal-outline" },
 };
 
 export function MobileNavigation({ navigation, state }: Props) {

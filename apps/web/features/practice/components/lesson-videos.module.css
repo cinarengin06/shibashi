@@ -1,0 +1,24 @@
+.page { display: block; width: 100%; padding-block: 30px 120px; }
+.header { max-width: 780px; margin-bottom: 28px; }
+.eyebrow { color: var(--shen-accent); font-size: .78rem; font-weight: 800; letter-spacing: .16em; }
+.header h1 { color: var(--ink); font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.05; margin: 12px 0; }
+.header p { color: var(--ink-soft); font-size: 1rem; margin: 0; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); gap: clamp(18px, 3vw, 36px); align-items: start; }
+.playerPanel, .playlist { min-width: 0; border: 1px solid rgba(255,255,255,.1); background: rgba(17,23,19,.9); border-radius: 22px; overflow: hidden; }
+.player { aspect-ratio: 16 / 9; background: #050908; }
+.player iframe { border: 0; display: block; height: 100%; width: 100%; }
+.description { padding: clamp(18px, 3vw, 28px); }
+.description > span { color: var(--shen-accent); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.description h2 { color: var(--ink); font-size: clamp(1.35rem, 2.2vw, 2rem); margin: 8px 0; }
+.description p { color: var(--ink-soft); line-height: 1.6; margin: 0; }
+.playlist { display: grid; gap: 8px; padding: 18px; }
+.playlist h2 { color: var(--ink); font-size: 1.1rem; margin: 0 0 8px; }
+.lesson { align-items: center; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 13px; color: var(--ink); cursor: pointer; display: flex; gap: 12px; padding: 13px; text-align: left; width: 100%; }
+.lesson:hover, .active { background: color-mix(in srgb, var(--shen-accent) 12%, rgba(255,255,255,.04)); border-color: var(--shen-accent); }
+.number { color: var(--shen-accent); font-size: .9rem; font-weight: 800; }
+.lessonText { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.lessonText strong { font-size: .86rem; }
+.lessonText small { color: var(--ink-soft); font-size: .73rem; }
+.next { align-items: center; background: var(--shen-accent); border-radius: 13px; color: #0b130e; display: flex; font-weight: 800; justify-content: space-between; margin-top: 10px; min-height: 48px; padding: 0 17px; text-decoration: none; }
+@media (max-width: 850px) { .layout { grid-template-columns: minmax(0, 1fr); } .playlist { order: 2; } }
+@media (max-width: 520px) { .page { padding-block: 10px 110px; } .playerPanel, .playlist { border-radius: 16px; } .description { padding: 16px; } }

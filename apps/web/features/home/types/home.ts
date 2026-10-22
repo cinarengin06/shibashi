@@ -1,7 +1,6 @@
 export type HomeShenId = "hun" | "shen" | "yi" | "po" | "zhi";
 
 export type HomeShenSummary = {
-  actionLabel: string;
   color: string;
   description: string;
   element: string;

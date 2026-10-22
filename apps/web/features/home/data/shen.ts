@@ -204,7 +204,6 @@ export const fiveShen = [
 }>;
 
 export const shenTodayCopy: Record<ShenId, {
-  action: string;
   body: string;
   identity: string;
   motto: string;
@@ -213,7 +212,6 @@ export const shenTodayCopy: Record<ShenId, {
   title: string;
 }> = {
   hun: {
-    action: "Yönünü bul",
     body: fiveShenContent.hun.dailyPrompt,
     identity: fiveShenContent.hun.identity,
     motto: "Rüzgâr yönü gösterir; adımı sen seçersin.",
@@ -222,7 +220,6 @@ export const shenTodayCopy: Record<ShenId, {
     title: "Ufku genişlet.",
   },
   shen: {
-    action: "Berraklığı aç",
     body: fiveShenContent.shen.dailyPrompt,
     identity: fiveShenContent.shen.identity,
     motto: "Kalp yumuşadığında parçalar birbirini duyar.",
@@ -231,7 +228,6 @@ export const shenTodayCopy: Record<ShenId, {
     title: "Berrak ve ilgili kal.",
   },
   yi: {
-    action: "Odağını kur",
     body: fiveShenContent.yi.dailyPrompt,
     identity: fiveShenContent.yi.identity,
     motto: "Bir anda tek şey; bir nefeste tek yön.",
@@ -240,7 +236,6 @@ export const shenTodayCopy: Record<ShenId, {
     title: "Niyetini eyleme taşı.",
   },
   po: {
-    action: "Bedene dön",
     body: fiveShenContent.po.dailyPrompt,
     identity: fiveShenContent.po.identity,
     motto: "Beden bıraktığında nefes yerini bulur.",
@@ -249,7 +244,6 @@ export const shenTodayCopy: Record<ShenId, {
     title: "Nefesi ve bedeni duy.",
   },
   zhi: {
-    action: "İradeni koru",
     body: fiveShenContent.zhi.dailyPrompt,
     identity: fiveShenContent.zhi.identity,
     motto: "Derin su acele etmez; yine de yolunu bulur.",

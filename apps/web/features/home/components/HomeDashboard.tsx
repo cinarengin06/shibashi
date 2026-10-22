@@ -18,7 +18,6 @@ type HomeDashboardProps = {
   energy: HomeEnergySummary;
   level: HomeLevelSummary;
   onHistory: () => void;
-  onPractice: () => void;
   onPosture: (reportId?: string) => void;
   onReset: () => void;
   onSelectShen: (shenId: HomeShenId) => void;
@@ -56,7 +55,7 @@ export function HomeDashboard(props: HomeDashboardProps) {
   );
 }
 
-function HomeHero({ onPractice, shen, shenOptions, userName }: HomeDashboardProps) {
+function HomeHero({ shen, shenOptions, userName }: HomeDashboardProps) {
   return (
     <article className={styles.hero}>
       <div aria-hidden="true" className={styles.heroWallpapers}>
@@ -77,9 +76,6 @@ function HomeHero({ onPractice, shen, shenOptions, userName }: HomeDashboardProp
         <p className={styles.eyebrow}><span>Hoş geldin,</span> <strong>{userName || "Çınar"}</strong></p>
         <h1>{shen.heroTitle}</h1>
         <p className={styles.lead}>{shen.heroBody}</p>
-        <div className={styles.heroActions}>
-          <button className={styles.primaryAction} onClick={onPractice} type="button"><span aria-hidden="true">▶</span> {shen.actionLabel}</button>
-        </div>
       </div>
     </article>
   );

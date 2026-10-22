@@ -15,6 +15,7 @@ import { shibashiPosters, shibashiVideos } from '../data/shibashiMedia';
 import { compareShibashiPose, referenceAt, type ReferenceMovement } from '../services/pose/shibashiComparison';
 import { MediaPipePoseBridge, type MediaPipePoseBridgeRef, type PoseLandmark } from '../services/pose/MediaPipePoseBridge';
 import { deleteShibashiPhoto, loadShibashiPhotos, saveShibashiPhoto, type ShibashiPhoto } from '../services/shibashiPhotos';
+import { markMovementCompleted } from '../services/movementCompletion';
 import referenceData from '../data/teacherPoseSamples.json';
 import { shenThemes } from '../../../packages/design-tokens';
 import { useApp } from '../store/AppStore';
@@ -153,6 +154,7 @@ function MovementStage({ order, onNext, onPhoto }: { order: number; onNext: () =
             photoPending.current=true;
             const session = captureSession.current;
             void saveShibashiPhoto(capture.uri,order,movement.sourceTitle,comparison.score).then(photo => {
+              void markMovementCompleted(order, profile.authUserId).catch(() => {});
               onPhoto(photo);
               if (session !== captureSession.current) return;
               photoCountRef.current++;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import type { PoseLandmarker, PoseLandmarkerResult } from "@mediapipe/tasks-vision";
 import type { PracticeSnapshot } from "@/features/practice/types";
 import { formatSnapshotDate, formatSnapshotTime } from "@/lib/local-history-storage";
@@ -16,19 +16,29 @@ const photoIntervalMs = 3_000;
 const celebrations = [{ emoji: "✨", text: "Harika!" }, { emoji: "🌟", text: "Müthiş!" }, { emoji: "🎉", text: "Süpersin!" }];
 
 type PoseComparison = { score: number | null; visible: boolean; fullBody: boolean; jointScores: Record<string, number> };
+type MiniGeometry = { left: number; top: number; width: number; height: number };
+type MiniGesture = { pointerId: number; mode: "move" | "nw" | "ne" | "sw" | "se"; startX: number; startY: number; start: MiniGeometry };
+const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
-export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete, onPhotoCaptured }: {
+export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete, onPhotoCaptured, compact = false, teacherVideoRef, onClose, targetScoreOverride }: {
   active: boolean;
   movementOrder: string;
   movementName: string;
   retryKey: number;
   onComplete: () => void;
   onPhotoCaptured: (snapshot: PracticeSnapshot) => Promise<boolean>;
+  compact?: boolean;
+  teacherVideoRef?: RefObject<HTMLVideoElement | null>;
+  onClose?: () => void;
+  targetScoreOverride?: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const teacherRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
+  const miniRef = useRef<HTMLDivElement>(null);
+  const miniGestureRef = useRef<MiniGesture | null>(null);
+  const [miniGeometry, setMiniGeometry] = useState<MiniGeometry | null>(null);
   const thresholdRef = useRef(defaultCompletionThreshold);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState("");
@@ -40,13 +50,74 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
   const [capturedCount, setCapturedCount] = useState(0);
   const [celebration, setCelebration] = useState<{ emoji: string; text: string; count: number } | null>(null);
 
+  useLayoutEffect(() => {
+    if (!compact) return;
+    const parent = miniRef.current?.parentElement;
+    if (!parent) return;
+    const fit = () => {
+      const { width: areaWidth, height: areaHeight } = parent.getBoundingClientRect();
+      setMiniGeometry((current) => {
+        const width = Math.min(current?.width ?? 220, areaWidth - 12, (areaHeight - 12) * .75);
+        const height = width * 4 / 3;
+        return { width, height, left: current ? clamp(current.left, 0, areaWidth - width) : areaWidth - width - 12, top: current ? clamp(current.top, 0, areaHeight - height) : areaHeight - height - 12 };
+      });
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(parent);
+    return () => observer.disconnect();
+  }, [compact]);
+
+  const beginMiniGesture = (event: ReactPointerEvent<HTMLElement>, mode: MiniGesture["mode"]) => {
+    if (!miniGeometry) return;
+    event.preventDefault();
+    event.stopPropagation();
+    miniRef.current?.setPointerCapture(event.pointerId);
+    miniGestureRef.current = { pointerId: event.pointerId, mode, startX: event.clientX, startY: event.clientY, start: miniGeometry };
+  };
+  const moveMiniGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const gesture = miniGestureRef.current;
+    const parent = miniRef.current?.parentElement;
+    if (!gesture || gesture.pointerId !== event.pointerId || !parent) return;
+    const area = parent.getBoundingClientRect();
+    const dx = event.clientX - gesture.startX;
+    const dy = event.clientY - gesture.startY;
+    const start = gesture.start;
+    if (gesture.mode === "move") {
+      setMiniGeometry({ ...start, left: clamp(start.left + dx, 0, area.width - start.width), top: clamp(start.top + dy, 0, area.height - start.height) });
+      return;
+    }
+    const west = gesture.mode.includes("w"), north = gesture.mode.includes("n");
+    const horizontalChange = west ? -dx : dx;
+    const verticalChange = north ? -dy : dy;
+    const change = Math.abs(horizontalChange) >= Math.abs(verticalChange) * .75 ? horizontalChange : verticalChange * .75;
+    const anchorX = west ? start.left + start.width : start.left;
+    const anchorY = north ? start.top + start.height : start.top;
+    const maxWidth = Math.min(west ? anchorX : area.width - anchorX, (north ? anchorY : area.height - anchorY) * .75);
+    const width = clamp(start.width + change, Math.min(120, maxWidth), maxWidth);
+    const height = width * 4 / 3;
+    setMiniGeometry({ width, height, left: west ? anchorX - width : anchorX, top: north ? anchorY - height : anchorY });
+  };
+  const endMiniGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (miniGestureRef.current?.pointerId !== event.pointerId) return;
+    miniGestureRef.current = null;
+    if (miniRef.current?.hasPointerCapture(event.pointerId)) miniRef.current.releasePointerCapture(event.pointerId);
+  };
+
   useEffect(() => {
-    const saved = Number(window.localStorage.getItem(scoreStorageKey));
-    if (saved >= 0 && saved <= 100 && saved % 5 === 0) {
+    const stored = window.localStorage.getItem(scoreStorageKey);
+    const saved = Number(stored);
+    if (stored !== null && saved >= 0 && saved <= 100 && saved % 5 === 0) {
       thresholdRef.current = saved;
       setTargetScore(saved);
     }
   }, []);
+
+  useEffect(() => {
+    if (targetScoreOverride === undefined) return;
+    thresholdRef.current = targetScoreOverride;
+    setTargetScore(targetScoreOverride);
+  }, [targetScoreOverride]);
 
   useEffect(() => () => {
     landmarkerRef.current?.close();
@@ -117,7 +188,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
         await video.play();
 
         setCameraMessage("Hoca videosu ve beden analizi hazırlanıyor.");
-        const teacher = teacherRef.current;
+        const teacher = compact ? teacherVideoRef?.current : teacherRef.current;
         if (!teacher) throw new Error("Hoca videosu bulunamadı.");
         await waitForTeacherVideo(teacher);
         const markerCanvas = document.createElement("canvas");
@@ -221,11 +292,11 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
 
           if (now - lastUiUpdateAt > 180) {
             lastUiUpdateAt = now;
-            if (result.score !== null) {
+            if (result.score !== null && result.fullBody) {
               lastValidScoreAt = now;
               smoothedScore = smoothedScore === null ? result.score : smoothedScore + Math.max(-5, Math.min(5, result.score - smoothedScore));
               setScore(smoothedScore);
-            } else if (now - lastValidScoreAt > 1_500) {
+            } else if (compact || now - lastValidScoreAt > 1_500) {
               smoothedScore = null;
               setScore(null);
             }
@@ -240,8 +311,10 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
             setCameraMessage(result.fullBody ? "Hocanın o anki hareketine eşlik et." : result.visible ? "Canlı skor kısmi kadrajdan geliyor; tamamlamak için ayakların da görünsün." : "Bedenini kamerada göstermek için biraz geri çekil.");
           }
 
-          drawMovementSkeleton(canvasRef.current, video, result.visible ? userPose : [], qualified, result.jointScores, thresholdRef.current);
-          if (result.visible) drawUserReferenceMarkers(canvasRef.current, video, userMarkers, teacherMarkers, result.jointScores, thresholdRef.current);
+          if (!compact) {
+            drawMovementSkeleton(canvasRef.current, video, result.visible ? userPose : [], qualified, result.jointScores, thresholdRef.current);
+            if (result.visible) drawUserReferenceMarkers(canvasRef.current, video, userMarkers, teacherMarkers, result.jointScores, thresholdRef.current);
+          }
 
           if (qualified && photoCount < 3 && !photoPending && now - lastPhotoAt >= photoIntervalMs) {
             const snapshot = createMovementPhoto(video, canvasRef.current, Number(movementOrder), movementName, Math.round(smoothedScore ?? 0));
@@ -265,7 +338,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
             }
           }
 
-          if (passedTime && photoCount === 3 && matchedSince && now - matchedSince >= 850 && !completionStarted) {
+          if (!compact && passedTime && photoCount === 3 && matchedSince && now - matchedSince >= 850 && !completionStarted) {
             completionStarted = true;
             setCompleted(true);
             completionTimer = window.setTimeout(() => {
@@ -296,7 +369,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
       stream?.getTracks().forEach((track) => track.stop());
       if (videoRef.current) videoRef.current.srcObject = null;
     };
-  }, [active, movementOrder, movementName, onComplete, onPhotoCaptured, retryKey]);
+  }, [active, compact, movementOrder, movementName, onComplete, onPhotoCaptured, retryKey, teacherVideoRef]);
 
   if (!active) return null;
 
@@ -305,6 +378,23 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
     cameraMessage.startsWith("Bedenini kamerada") ||
     cameraMessage.startsWith("Kamerada görünmüyorsun") ||
     cameraMessage.startsWith("Canlı skor kısmi kadrajdan")
+  );
+
+  if (compact) return (
+    <div className={styles.miniCamera} onPointerCancel={endMiniGesture} onPointerMove={moveMiniGesture} onPointerUp={endMiniGesture} ref={miniRef} style={miniGeometry ? { left: miniGeometry.left, top: miniGeometry.top, width: miniGeometry.width, height: miniGeometry.height } : undefined}>
+      <video aria-label="Kamera görüntün" autoPlay className={styles.movementCameraVideo} muted playsInline ref={videoRef} />
+      <canvas aria-hidden="true" className={styles.movementPoseCanvas} ref={canvasRef} />
+      <div aria-label="Kamera penceresini taşı" className={styles.miniDragHandle} onPointerDown={(event) => beginMiniGesture(event, "move")} role="button" tabIndex={0}><span>⋮⋮</span> Sürükle</div>
+      <button aria-label="Küçük kamerayı kapat" className={styles.miniCameraClose} onClick={onClose} type="button">×</button>
+      {cameraError ? <div className={styles.miniCameraNotice} role="alert">{cameraError}</div> : null}
+      {!cameraReady && !cameraError ? <div className={styles.miniCameraNotice}>Kamera hazırlanıyor…</div> : null}
+      {showFramingWarning ? <div className={styles.miniCameraNotice}>Tam bedenin görünsün; biraz geri çekil.</div> : null}
+      {celebration ? <div className={styles.miniCameraSaved} aria-live="polite">{celebration.emoji} Fotoğraf kaydedildi</div> : null}
+      <div className={styles.miniCameraScore} style={{ "--score-color": scoreColor } as CSSProperties}>
+        <span>CANLI UYUM</span><strong aria-live="polite">{score === null ? "—" : `%${score}`}</strong>
+      </div>
+      {(["nw", "ne", "sw", "se"] as const).map((corner) => <button aria-label={`Kamera penceresini ${corner} köşesinden boyutlandır`} className={`${styles.miniResizeHandle} ${styles[`miniResize${corner.toUpperCase()}`]}`} key={corner} onPointerDown={(event) => beginMiniGesture(event, corner)} type="button" />)}
+    </div>
   );
 
   return (

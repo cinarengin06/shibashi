@@ -1212,6 +1212,21 @@
 .teacherCaption { position:absolute; z-index:2; right:20px; bottom:19px; left:20px; display:flex; align-items:center; justify-content:center; gap:10px; margin:0; color:#f3eadb; font-family:Georgia,serif; font-size:17px; text-shadow:0 2px 12px #111; }
 .teacherCaption i { width:8px; height:8px; border-radius:50%; background:#d9c181; box-shadow:0 0 14px rgba(217,193,129,.7); animation:breathPulse 2.6s ease-in-out infinite; }
 .movementCameraVideo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); background:#111; }
+.miniCamera { position:absolute; z-index:8; right:14px; bottom:14px; width:clamp(150px,29%,230px); aspect-ratio:3/4; overflow:hidden; border:2px solid rgba(141,213,176,.85); border-radius:18px; background:#101713; box-shadow:0 20px 55px rgba(0,0,0,.65); isolation:isolate; }
+.miniDragHandle { position:absolute; z-index:4; left:0; right:38px; top:0; height:34px; display:flex; align-items:center; justify-content:center; gap:5px; border-radius:16px 0 8px 0; background:rgba(6,18,12,.82); color:#e6fff0; cursor:grab; font-size:10px; font-weight:850; touch-action:none; user-select:none; }
+.miniDragHandle:active { cursor:grabbing; }
+.miniDragHandle span { font-size:16px; line-height:0; }
+.miniResizeHandle { position:absolute; z-index:6; width:20px; height:20px; padding:0; border:0; background:rgba(141,213,176,.85); box-shadow:0 0 0 2px rgba(3,15,9,.8); touch-action:none; }
+.miniResizeNW { top:0; left:0; border-radius:0 0 11px 0; cursor:nwse-resize; }
+.miniResizeNE { top:0; right:0; border-radius:0 0 0 11px; cursor:nesw-resize; }
+.miniResizeSW { bottom:0; left:0; border-radius:0 11px 0 0; cursor:nesw-resize; }
+.miniResizeSE { bottom:0; right:0; border-radius:11px 0 0 0; cursor:nwse-resize; }
+.miniCameraClose { position:absolute; z-index:5; right:7px; top:35px; width:29px; height:29px; border:1px solid rgba(255,255,255,.5); border-radius:50%; background:rgba(8,16,12,.82); color:white; cursor:pointer; font-size:22px; line-height:1; }
+.miniCameraScore { position:absolute; z-index:4; left:0; right:0; bottom:0; display:flex; align-items:end; justify-content:space-between; gap:5px; padding:22px 10px 9px; background:linear-gradient(transparent,rgba(5,12,8,.94)); }
+.miniCameraScore span { color:#f3eee5; font-size:10px; font-weight:900; letter-spacing:.08em; }
+.miniCameraScore strong { color:var(--score-color,#f3eee5); font-size:30px; line-height:1; }
+.miniCameraNotice { position:absolute; z-index:3; inset:34% 7px auto; padding:9px; border-radius:9px; background:rgba(4,11,9,.88); color:white; font-size:11px; font-weight:750; line-height:1.4; text-align:center; }
+.miniCameraSaved { position:absolute; z-index:4; top:8px; left:8px; right:41px; padding:5px 7px; border-radius:8px; background:rgba(8,44,25,.9); color:#b7ffcc; font-size:10px; font-weight:900; }
 .cameraFrame { position:absolute; inset:9% 16%; border:1px solid rgba(248,240,219,.55); border-radius:40% 40% 25% 25%; pointer-events:none; }
 .cameraFrame span { position:absolute; width:22px; height:22px; border-color:#e3cd91; border-style:solid; }
 .cameraFrame span:nth-child(1) { top:-1px; left:-1px; border-width:2px 0 0 2px; border-radius:9px 0 0; }

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getMovementOrganVisuals,
   meridianClinicalBoundary,
@@ -100,7 +100,9 @@ function InfoBlock({
 export function BodyLinesScreen() {
   const [movementOrder, setMovementOrder] = useState(1);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
-  const [mode, setMode] = useState<"demo" | "camera">("demo");
+  const [miniCameraOpen, setMiniCameraOpen] = useState(false);
+  const [targetScore, setTargetScore] = useState(70);
+  const demoVideoRef = useRef<HTMLVideoElement>(null);
   const [demoKey, setDemoKey] = useState(0);
   const [photos, setPhotos] = useState<PracticeSnapshot[]>([]);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -109,6 +111,11 @@ export function BodyLinesScreen() {
   const [confirmPhotoDelete, setConfirmPhotoDelete] = useState(false);
   const [photoDeleteBusy, setPhotoDeleteBusy] = useState(false);
   const [photoDeleteError, setPhotoDeleteError] = useState(false);
+  useEffect(() => {
+    const stored = window.localStorage.getItem("shibashi-learning-target-score");
+    const saved = Number(stored);
+    if (stored !== null && saved >= 0 && saved <= 100 && saved % 5 === 0) setTargetScore(saved);
+  }, []);
   useEffect(() => {
     let cancelled = false;
     void loadPracticeSnapshotsFromIndexedDb().then((saved) => {
@@ -159,17 +166,17 @@ export function BodyLinesScreen() {
   const chooseMovement = useCallback((order: number) => {
     setMovementOrder(order);
     setVideoUnavailable(false);
-    setMode("demo");
+    setMiniCameraOpen(false);
   }, []);
   const stepMovement = useCallback((step: number) => {
     chooseMovement(((movementOrder - 1 + step + 18) % 18) + 1);
   }, [chooseMovement, movementOrder]);
-  const completeMovement = useCallback(() => stepMovement(1), [stepMovement]);
+  const keepCurrentMovement = useCallback(() => {}, []);
   const movementSteps = meridianLivingSteps[movementOrder - 1];
 
   return (
     <main className={styles.page}>
-      <div className={`${styles.workspace} ${mode === "camera" ? styles.workspacePractice : ""}`}>
+      <div className={styles.workspace}>
         <aside className={styles.rail} aria-label="Hareket adımları">
           <div className={styles.railHead}>
             <span>HAREKET {String(movementOrder).padStart(2, "0")}</span>
@@ -179,11 +186,11 @@ export function BodyLinesScreen() {
             {movementSteps.map((step, index) => <li key={step}><i>{index + 1}</i><span>{step}</span></li>)}
           </ol>
           <div className={styles.practiceActions}>
-            <button className={mode === "demo" ? styles.practiceActive : undefined} onClick={() => { setMode("demo"); setVideoUnavailable(false); setDemoKey((key) => key + 1); }} type="button">Hoca yapsın <span>↻</span></button>
-            <button className={`${styles.practiceStart} ${mode === "camera" ? styles.practiceActive : ""}`} onClick={() => setMode("camera")} type="button">Pratik yaparak öğren <span>→</span></button>
+            <button onClick={() => { setVideoUnavailable(false); setDemoKey((key) => key + 1); }} type="button">Hoca yapsın <span>↻</span></button>
+            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) demoVideoRef.current?.play().catch(() => {}); setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Küçük kamerayı kapat" : "📷 Kameramla uyumumu gör"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
           </div>
-          {mode === "camera" ? <small className={styles.cameraHint}>Canlı uyumunu izle ve hedefi ayarla. Hedefe ulaştığın üç an fotoğraflanıp Fotoğraflarım'a kaydedilir.</small> : null}
+          {miniCameraOpen ? <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={0} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score",String(value)); }} /><small>Bu değere ulaştığında üç fotoğraf kaydedilir.</small></label> : null}
           {photoSaveError ? <small className={styles.saveError} role="alert">Fotoğraf saklanamadı. Tarayıcı depolamasını kontrol et.</small> : null}
         </aside>
         <section className={styles.stage}>
@@ -207,9 +214,7 @@ export function BodyLinesScreen() {
               →
             </button>
           </div>
-          {mode === "camera" ? (
-            <div className={styles.cameraStage}><MovementCameraPractice active movementOrder={String(movement.order).padStart(2, "0")} movementName={movement.sourceTitle} retryKey={0} onComplete={completeMovement} onPhotoCaptured={savePhoto} /></div>
-          ) : <div className={styles.visual}>
+          <div className={styles.visual}>
               <div className={`${styles.figureFrame} ${styles.videoFrame}`}>
                 {videoUnavailable ? (
                   <Image alt={`${movement.sourceTitle} hoca videosunun kapak görseli`} fill sizes="(max-width: 900px) 100vw, 44vw" src={`/images/shibashi-new/${movement.order}.jpg`} />
@@ -225,14 +230,16 @@ export function BodyLinesScreen() {
                   playsInline
                   poster={`/images/shibashi-new/${movement.order}.jpg`}
                   preload="metadata"
+                  ref={demoVideoRef}
                   src={`/videos/shibashi/${movement.order}.mp4`}
                 />
                 )}
               </div>
             {videoUnavailable ? <span className={styles.videoUnavailable}>Video şu anda açılamıyor. Hareketi yeniden seçerek tekrar deneyebilirsin.</span> : null}
-          </div>}
+            {miniCameraOpen ? <MovementCameraPractice active compact movementOrder={String(movement.order).padStart(2, "0")} movementName={movement.sourceTitle} retryKey={demoKey} onClose={() => setMiniCameraOpen(false)} onComplete={keepCurrentMovement} onPhotoCaptured={savePhoto} teacherVideoRef={demoVideoRef} targetScoreOverride={targetScore} /> : null}
+          </div>
         </section>
-        {mode === "demo" ? <MovementDetail movement={movement} /> : null}
+        <MovementDetail movement={movement} />
       </div>
       <section className={styles.movementSelector} aria-label="18 hareket">
         <div className={styles.selectorHeading}><span className={styles.eyebrow}>HAREKET ŞERİDİ</span><strong>Şu an 18 hareketin {movementOrder}. hareketindesin.</strong><button onClick={() => stepMovement(1)} type="button">Sonraki harekete geç →</button></div>
@@ -256,7 +263,7 @@ export function BodyLinesScreen() {
             </div>
           </div> : photos.length ? <div className={styles.galleryGrid}>
             {photos.map((photo) => <button aria-label={`${photo.movementName} fotoğrafını aç, yüzde ${photo.score} uyum`} key={photo.id} onClick={() => { setSelectedPhoto(photo); setConfirmPhotoDelete(false); setPhotoDeleteError(false); }} type="button"><img alt="" loading="lazy" src={photo.imageData} /><span><strong>{photo.movementName}</strong><small>{photo.dateKey} · %{photo.score}</small></span></button>)}
-          </div> : <div className={styles.galleryEmpty}><span>📷</span><strong>Henüz fotoğrafın yok</strong><p>Pratikte hedef uyuma ulaştığında üç fotoğraf burada görünecek.</p></div>}
+          </div> : <div className={styles.galleryEmpty}><span>📷</span><strong>Henüz fotoğrafın yok</strong><p>Kameranla hedef uyuma ulaştığında üç fotoğraf burada görünecek.</p></div>}
         </section>
       </div> : null}
       <footer className={styles.note}>

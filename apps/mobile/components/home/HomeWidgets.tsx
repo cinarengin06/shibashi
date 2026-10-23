@@ -15,7 +15,7 @@ export function HomePostureCard({ accent, image, reports }: { accent: string; im
       <LinearGradient colors={["rgba(8,14,11,.98)", "rgba(8,14,11,.88)", "rgba(8,14,11,.18)"]} locations={[0, .62, 1]} style={StyleSheet.absoluteFill} />
       <View style={s.postureCardContent}>
         <Text style={[s.portalLabel, { color: accent }]}>BEDEN AYNASI</Text>
-        <Text style={s.postureCardTitle}>Postür Analizi</Text>
+        <Text style={s.postureCardTitle}>Postür</Text>
         {recentReports.length ? <View style={s.postureHistory}>
           {recentReports.map((report) => <Pressable accessibilityLabel={`${report.score} puanlı postür analizini aç`} key={report.id} onPress={() => openReport(report.id)} style={s.postureHistoryRow}>
             <View style={[s.postureHistoryScore, { borderColor: `${accent}88` }]}><Text style={[s.postureHistoryScoreText, { color: accent }]}>{report.score}</Text></View>

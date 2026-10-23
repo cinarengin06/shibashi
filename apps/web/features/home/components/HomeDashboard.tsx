@@ -178,7 +178,7 @@ function PostureAnalysisCard({ onPosture, reports }: { onPosture: (reportId?: st
   return (
     <article className={styles.postureCard}>
       <div className={styles.postureContent}>
-        <h2>Postür Analizi</h2>
+        <h2>Postür</h2>
         {recentReports.length ? <div className={styles.postureHistory}>
           {recentReports.map((report) => <button aria-label={`${report.score} puanlı postür analizini aç`} key={report.id} onClick={() => onPosture(report.id)} type="button">
             <strong>{report.score}</strong>

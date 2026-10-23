@@ -12,13 +12,13 @@ import styles from "./web-header.module.css";
 type WebHeaderTab = "home" | "mainMap" | "lessons" | "practice" | "posture" | "journey" | "bodyLines" | "journal" | "profile";
 
 const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
-  { id: "home", label: "Özel Odam", href: "/" },
-  { id: "mainMap", label: "Ana Haritam", href: "/ana-haritam" },
-  { id: "lessons", label: "Ders Videoları", href: "/?tab=lessons" },
-  { id: "bodyLines", label: "18 Hareketle Öğren", href: "/beden-hatlari" },
-  { id: "posture", label: "Postür Analizi", href: "/?tab=posture" },
-  { id: "journey", label: "Haritam", href: "/?tab=journey" },
-  { id: "journal", label: "Günlük", href: "/?tab=journal" },
+  { id: "home", label: "Odam", href: "/" },
+  { id: "mainMap", label: "Gelişim Haritam", href: "/ana-haritam" },
+  { id: "lessons", label: "Isınma Dersleri", href: "/?tab=lessons" },
+  { id: "bodyLines", label: "18 Form", href: "/beden-hatlari" },
+  { id: "posture", label: "Postür", href: "/?tab=posture" },
+  { id: "journey", label: "Beden Haritam", href: "/?tab=journey" },
+  { id: "journal", label: "Kayıtlarım", href: "/?tab=journal" },
   { id: "profile", label: "Ayarlar", href: "/?tab=profile" },
 ];
 

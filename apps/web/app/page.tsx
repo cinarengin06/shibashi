@@ -137,13 +137,13 @@ type CoachCueRequest = {
 };
 
 const tabs: { id: TabId | "bodyLines" | "mainMap"; label: string; icon: string }[] = [
-  { id: "home", label: "Özel Odam", icon: "◉" },
-  { id: "mainMap", label: "Ana Haritam", icon: "◌" },
-  { id: "lessons", label: "Ders Videoları", icon: "▶" },
-  { id: "bodyLines", label: "18 Hareketle Öğren", icon: "✦" },
-  { id: "posture", label: "Postür Analizi", icon: "↕" },
-  { id: "journey", label: "Haritam", icon: "☯" },
-  { id: "journal", label: "Günlük", icon: "◌" },
+  { id: "home", label: "Odam", icon: "◉" },
+  { id: "mainMap", label: "Gelişim Haritam", icon: "◌" },
+  { id: "lessons", label: "Isınma Dersleri", icon: "▶" },
+  { id: "bodyLines", label: "18 Form", icon: "✦" },
+  { id: "posture", label: "Postür", icon: "↕" },
+  { id: "journey", label: "Beden Haritam", icon: "☯" },
+  { id: "journal", label: "Kayıtlarım", icon: "◌" },
   { id: "profile", label: "Ayarlar", icon: "☰" },
 ];
 

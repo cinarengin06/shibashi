@@ -9,7 +9,7 @@ export const baguaDirections:BaguaDirection[]=[
  {id:'dui',trigram:'☱',name:'Dui',element:'Göl',module:'Yansıma',cue:'Deneyimini adlandır ve bugünün yansımasını kaydet.',color:'#D9BD80',target:'journal'},
  {id:'li',trigram:'☲',name:'Li',element:'Ateş',module:'Pratik',cue:'Canlılığı harekete geçir; kısa bir Shibashi akışı başlat.',color:'#FF7A3D',target:'practice'},
  {id:'zhen',trigram:'☳',name:'Zhen',element:'Gök Gürültüsü',module:'Postür',cue:'Uyan ve hizalan; beden eksenini yeniden kontrol et.',color:'#F4A340',target:'posture'},
- {id:'xun',trigram:'☴',name:'Xun',element:'Rüzgâr',module:'Günlük',cue:'İçgörünün sessizce yayılmasına izin ver.',color:'#79D6AD',target:'journal'},
+ {id:'xun',trigram:'☴',name:'Xun',element:'Rüzgâr',module:'Kayıtlarım',cue:'İçgörünün sessizce yayılmasına izin ver.',color:'#79D6AD',target:'journal'},
  {id:'kan',trigram:'☵',name:'Kan',element:'Su',module:'Nefes',cue:'Akışı zorlamadan sürdür; nefes ritmine geri dön.',color:'#5EB7D8',target:'practice'},
  {id:'gen',trigram:'☶',name:'Gen',element:'Dağ',module:'Denge',cue:'Dur, köklen ve merkezini dinle; postür taraması yap.',color:'#B6A982',target:'posture'},
  {id:'kun',trigram:'☷',name:'Kun',element:'Toprak',module:'Toparlanma',cue:'Temele dön; bugünkü enerjini ve ritmini gözden geçir.',color:'#C89962',target:'today'},

@@ -214,7 +214,7 @@ function PostureHistoryCard({ reports }: { reports: ProfilePostureReport[] }) {
         </>
       ) : (
         <div className="empty-gallery">
-          Pratik ekranından Postür Analizi başlatınca ön, yan ve arka kayıtlar burada tarihsel gelişim olarak saklanacak.
+          Pratik ekranından Postür ölçümünü başlatınca ön, yan ve arka kayıtlar burada tarihsel gelişim olarak saklanacak.
         </div>
       )}
     </div>

@@ -33,12 +33,12 @@ export function PostureAssessmentLanding({
           <p>Ön, yan ve arka görünümünü üç saniyelik sakin duruşlarla ölçelim; zaman içindeki değişimi birlikte görelim.</p>
           <div className="posture-landing-actions">
             <button className="posture-landing-primary" onClick={onStart} type="button">
-              <span>Postür Analizini Başlat</span>
+              <span>Postürü Başlat</span>
               <i aria-hidden="true">→</i>
             </button>
             {onShowHistory ? (
               <button className="posture-landing-secondary" onClick={onShowHistory} type="button">
-                <span>Geçmiş Postür Analizlerim</span>
+                <span>Geçmiş Postür Kayıtlarım</span>
                 <small>{hasReports ? "Kayıtlarını karşılaştır" : "Henüz kayıt yok"}</small>
               </button>
             ) : null}
@@ -361,7 +361,7 @@ export function PostureHistoryScreen({
           <button className="posture-back-button" onClick={onBack} type="button" aria-label="Postür girişine dön">‹</button>
           <div>
             <span className="eyebrow">Zaman Çizgin</span>
-            <h1>Geçmiş Postür Analizlerim</h1>
+            <h1>Geçmiş Postür Kayıtlarım</h1>
           </div>
           <button className="posture-result-retake-button" onClick={onStart} type="button">Yeni Analiz</button>
         </header>
@@ -443,7 +443,7 @@ export function PostureResultDashboard({
             ‹
           </button>
           <div>
-            <h1>Postür Analizi</h1>
+            <h1>Postür</h1>
             <p>Gerçek postür ölçüm kaydı • {report.dateKey} {report.timeLabel}</p>
           </div>
           <div className="posture-result-top-actions">

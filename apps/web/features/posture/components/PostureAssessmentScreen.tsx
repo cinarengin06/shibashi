@@ -198,7 +198,7 @@ export function PostureAssessmentScreen({
             ‹
           </button>
           <div>
-            <h1>Postür Analizi</h1>
+            <h1>Postür</h1>
             <p>Tai Chi 24 Form - Hareket 3</p>
           </div>
           <button className="posture-save-button" disabled={autoCaptureProgress !== undefined || !canCapture} onClick={onCapture} type="button">

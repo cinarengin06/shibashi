@@ -105,8 +105,8 @@ export default function Today() {
 
     <View style={s.sectionHeader}><Text style={s.sectionTitle}>Bugün senin için</Text><Text style={[s.sectionHint, { color: theme.button }]}>Devam et →</Text></View>
     <View style={s.quickActions}>
-      <Pressable accessibilityRole="button" onPress={() => router.push("/body-lines")} style={[s.quick, { backgroundColor: theme.button }, shenShape(shen.id)]}><Ionicons name="arrow-forward" color={theme.buttonInk} size={25} /><View><Text style={[s.quickTitle, { color: theme.buttonInk }]}>18 hareket</Text><Text style={[s.quickSubtitle, { color: theme.buttonInk }]}>Hoca videosuyla öğren</Text></View></Pressable>
-      <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.quick, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><Ionicons name="body-outline" color={theme.button} size={27} /><View><Text style={s.quickTitle}>Postür analizi</Text><Text style={s.quickSubtitle}>Bedenini tanı</Text></View></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => router.push("/body-lines")} style={[s.quick, { backgroundColor: theme.button }, shenShape(shen.id)]}><Ionicons name="arrow-forward" color={theme.buttonInk} size={25} /><View><Text style={[s.quickTitle, { color: theme.buttonInk }]}>18 Form</Text><Text style={[s.quickSubtitle, { color: theme.buttonInk }]}>Hoca videosuyla öğren</Text></View></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.quick, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><Ionicons name="body-outline" color={theme.button} size={27} /><View><Text style={s.quickTitle}>Postür</Text><Text style={s.quickSubtitle}>Bedenini tanı</Text></View></Pressable>
     </View>
 
     <View style={s.sectionHeader}><Text style={s.sectionTitle}>Son hareketlerin</Text><Pressable onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint, { color: theme.button }]}>Fotoğraflarım →</Text></Pressable></View>

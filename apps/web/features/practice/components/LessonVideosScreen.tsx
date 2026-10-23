@@ -11,8 +11,8 @@ export function LessonVideosScreen() {
   return <section className={`screen ${styles.page}`} aria-labelledby="lesson-videos-title">
     <header className={styles.header}>
       <span className={styles.eyebrow}>SHIBASHI ÖNCESİ</span>
-      <h1 id="lesson-videos-title">Ders Videoları</h1>
-      <p>Üç temel dersi sırayla izle. Hazır hissettiğinde 18 harekete geç.</p>
+      <h1 id="lesson-videos-title">Isınma Dersleri</h1>
+      <p>Üç temel dersi sırayla izle. Hazır hissettiğinde 18 Form&apos;a geç.</p>
     </header>
 
     <div className={styles.layout}>
@@ -47,7 +47,7 @@ export function LessonVideosScreen() {
           <span className={styles.lessonText}><strong>{lesson.title}</strong><small>{lesson.focus}</small></span>
           <span aria-hidden="true">▶</span>
         </button>)}
-        <a className={styles.next} href="/beden-hatlari">18 Harekete Git <span aria-hidden="true">→</span></a>
+        <a className={styles.next} href="/beden-hatlari">18 Form&apos;a Git <span aria-hidden="true">→</span></a>
       </aside>
     </div>
   </section>;

@@ -21,10 +21,10 @@ type Props = {
 
 const items = [
   { label: "Odam", tab: "index" },
-  { label: "Hareket", tab: "moves" },
-  { label: "Analiz", tab: "posture" },
-  { label: "Haritam", tab: "main-map" },
-  { label: "Günlük", tab: "journal" },
+  { label: "18 Form", tab: "moves" },
+  { label: "Postür", tab: "posture" },
+  { label: "Gelişim Haritam", tab: "main-map" },
+  { label: "Kayıtlarım", tab: "journal" },
 ] as const;
 
 const icons: Record<ShenId, Record<(typeof items)[number]["tab"], keyof typeof Ionicons.glyphMap>> = {
@@ -58,7 +58,7 @@ export function MobileNavigation({ navigation, state }: Props) {
 
 const styles = StyleSheet.create({
   bar: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: 2, paddingHorizontal: 7, paddingTop: 7 },
-  item: { alignItems: "center", flex: 1, gap: 4, justifyContent: "center", minHeight: 51, paddingHorizontal: 2 },
-  label: { fontFamily: fonts.sansMedium, fontSize: 10, textAlign: "center" },
+  item: { alignItems: "center", flex: 1, gap: 4, justifyContent: "center", minHeight: 58, paddingHorizontal: 2 },
+  label: { fontFamily: fonts.sansMedium, fontSize: 10, lineHeight: 12, textAlign: "center" },
   shenIcon: { width: 22, height: 22, borderRadius: 11 },
 });

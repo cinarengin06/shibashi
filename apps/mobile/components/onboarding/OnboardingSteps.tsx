@@ -50,7 +50,7 @@ const bodyFocusMarkers: Record<BodyFocus, Array<{ height?: number; width?: numbe
   "whole-body": [{ height: 88, width: 54, x: 50, y: 49 }],
 };
 
-export function Welcome({ onStart }: { onStart: () => void }) {
+export function Welcome({ onSkip, onStart }: { onSkip: () => void; onStart: () => void }) {
   return (
     <ImageBackground
       imageStyle={m.welcomeImage}
@@ -76,13 +76,23 @@ export function Welcome({ onStart }: { onStart: () => void }) {
         <Text style={m.welcomeBody}>
           Deneyim ve ekipman gerektirmez. Altı kısa adımda ilk 5 dakikalık pratiğini hazırlayacağız.
         </Text>
-        <Pressable
-          onPress={onStart}
-          style={({ pressed }) => [m.primary, pressed && m.pressed]}
-        >
-          <Text style={m.primaryText}>BAŞLAYALIM</Text>
-          <Ionicons color={colors.ink} name="arrow-forward" size={18} />
-        </Pressable>
+        <View style={m.welcomeActions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onStart}
+            style={({ pressed }) => [m.primary, m.welcomePrimary, pressed && m.pressed]}
+          >
+            <Text style={m.primaryText}>BAŞLA</Text>
+            <Ionicons color={colors.ink} name="arrow-forward" size={18} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onSkip}
+            style={({ pressed }) => [m.welcomeSkip, pressed && m.pressed]}
+          >
+            <Text style={m.welcomeSkipText}>Zaten bilgilerimi girdim</Text>
+          </Pressable>
+        </View>
         <View style={m.minute}>
           <Ionicons color={colors.gold} name="time-outline" size={15} />
           <Text style={m.minuteText}>Yaklaşık 2 dakika · Kamera isteğe bağlı</Text>

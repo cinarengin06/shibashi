@@ -14,6 +14,7 @@ import {
  type TraceMode,
 }from'../../../packages/shen-domain';
 import {getSyncCode,isValidSyncCode,replaceSyncCode,syncShibashiState} from '../services/sync/ShibashiSync';
+import {migratePostureReportPhotos} from '../services/posturePhotos';
 import {JournalEntry,PostureReport,PracticeSession,UserProfile} from '../types';
 
 type PracticePreferences={ghostMode:GhostMode;traceMode:TraceMode;ghostOpacity:number;voiceEnabled:boolean};
@@ -40,7 +41,7 @@ type State=PersistedState&{
  addSession:(s:PracticeSession)=>void;
  setSessionTrainerVisibility:(sessionId:string,trainerVisible:boolean)=>void;
  addEntry:(e:JournalEntry)=>void;
- addPostureReport:(r:PostureReport)=>void;
+ addPostureReport:(r:PostureReport)=>Promise<void>;
  completeStory:(id:string)=>void;
  addShenActivity:(activity:ShenActivity)=>void;
  addReflection:(entry:ReflectionEntry)=>void;
@@ -75,7 +76,7 @@ function toSyncPayload(data:PersistedState):ShibashiSyncPayload{
   schemaVersion:SHIBASHI_SYNC_SCHEMA_VERSION,
   updatedAt:new Date().toISOString(),
   profile:{...data.profile},
-  history:{sessions:data.sessions.map(session=>session.imageData&&!session.trainerVisible?{...session,imageData:undefined}:session) as unknown as SyncRecord[],entries:data.entries as unknown as SyncRecord[],postureReports:data.postureReports as unknown as SyncRecord[]},
+  history:{sessions:data.sessions.map(session=>session.imageData&&!session.trainerVisible?{...session,imageData:undefined}:session) as unknown as SyncRecord[],entries:data.entries as unknown as SyncRecord[],postureReports:data.postureReports.map(report=>({...report,captures:report.captures.map(({imageData,...capture})=>capture)})) as unknown as SyncRecord[]},
   journey:{completedStories:data.completedStories,shenActivities:data.shenActivities as unknown as SyncRecord[],reflections:data.reflections as unknown as SyncRecord[],savedMasterSentences:data.savedMasterSentences as unknown as SyncRecord[]},
   preferences:{...data.practicePreferences},
  };
@@ -83,11 +84,12 @@ function toSyncPayload(data:PersistedState):ShibashiSyncPayload{
 
 function fromSyncPayload(payload:ShibashiSyncPayload,current?:PersistedState):PersistedState{
  const localSessions=new Map(current?.sessions.map(session=>[session.id,session])??[]);
+ const localReports=new Map(current?.postureReports.map(report=>[report.id,report])??[]);
  return migratePersistedState({
   profile:{...(payload.profile as unknown as UserProfile),visualThemeId:current?.profile.visualThemeId??(payload.profile.visualThemeId as UserProfile['visualThemeId']|undefined)??'ink-night'},
   sessions:payload.history.sessions.map(toAppPracticeSession).filter((value):value is PracticeSession=>Boolean(value)).map(session=>session.imageData?session:{...session,imageData:localSessions.get(session.id)?.imageData}),
   entries:payload.history.entries as unknown as JournalEntry[],
-  postureReports:payload.history.postureReports.map(toAppPostureReport).filter((value):value is PostureReport=>Boolean(value)),
+  postureReports:payload.history.postureReports.map(toAppPostureReport).filter((value):value is PostureReport=>Boolean(value)).map(report=>({...report,captures:report.captures.map(capture=>({...capture,imageData:localReports.get(report.id)?.captures.find(local=>local.view===capture.view)?.imageData}))})),
   completedStories:payload.journey.completedStories,
   shenActivities:payload.journey.shenActivities as unknown as ShenActivity[],
   reflections:payload.journey.reflections as unknown as ReflectionEntry[],
@@ -132,10 +134,17 @@ export function AppProvider({children}:PropsWithChildren){
  dataRef.current=data;
 
  useEffect(()=>{
-  Promise.all([AsyncStorage.getItem('shibashi-state'),getSyncCode()]).then(([raw,code])=>{
+  Promise.all([AsyncStorage.getItem('shibashi-state'),getSyncCode()]).then(async([raw,code])=>{
    if(raw){
-    try{setData(migratePersistedState(JSON.parse(raw) as PersistedState))}
-    catch{void AsyncStorage.removeItem('shibashi-state')}
+    try{
+     const restored=migratePersistedState(JSON.parse(raw) as PersistedState);
+     try{
+      const photos=await migratePostureReportPhotos(restored.postureReports);
+      const next=photos===restored.postureReports?restored:{...restored,postureReports:photos};
+      if(next!==restored)await persist(next);
+      setData(next);
+     }catch{setData(restored)}
+    }catch{void AsyncStorage.removeItem('shibashi-state')}
    }
    setSyncCodeState(code);
   }).finally(()=>setReady(true));
@@ -186,7 +195,12 @@ export function AppProvider({children}:PropsWithChildren){
  const addSession=(value:PracticeSession)=>update(current=>({...current,sessions:[value,...current.sessions]}));
  const setSessionTrainerVisibility=(sessionId:string,trainerVisible:boolean)=>update(current=>({...current,sessions:current.sessions.map(session=>session.id===sessionId?{...session,trainerVisible}:session)}));
  const addEntry=(value:JournalEntry)=>update(current=>({...current,entries:[value,...current.entries]}));
- const addPostureReport=(value:PostureReport)=>update(current=>({...current,postureReports:[value,...current.postureReports]}));
+ const addPostureReport=async(value:PostureReport)=>{
+  const next={...dataRef.current,postureReports:[value,...dataRef.current.postureReports]};
+  await persist(next);
+  dataRef.current=next;
+  setData(next);
+ };
  const completeStory=(id:string)=>update(current=>current.completedStories.includes(id)?current:{...current,completedStories:[...current.completedStories,id]});
  const addShenActivity=(value:ShenActivity)=>update(current=>({...current,shenActivities:[value,...current.shenActivities]}));
  const addReflection=(value:ReflectionEntry)=>update(current=>({...current,reflections:[value,...current.reflections],shenActivities:[{id:`activity-${value.id}`,shenId:value.shenId,type:'reflection',createdAt:value.createdAt,practiceId:value.practiceId},...current.shenActivities]}));

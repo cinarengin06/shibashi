@@ -3,7 +3,7 @@ import {CameraView,useCameraPermissions} from 'expo-camera';
 import {router,useLocalSearchParams} from 'expo-router';
 import * as Speech from 'expo-speech';
 import {useEffect,useMemo,useRef,useState} from 'react';
-import {Animated,Image,Pressable,StyleSheet,Text,View} from 'react-native';
+import {Animated,Image,Platform,Pressable,StyleSheet,Text,View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {compareMovement,getGhostSequence,getInterpolatedGhostFrame,getMasterSentence,getPracticeForShen,toDomainShenId,type PoseKeypoint,type ReferencePoseFrame} from '../../../packages/shen-domain';
 import {PrimaryButton} from '../components/ui';
@@ -80,7 +80,7 @@ export default function PracticeSession(){
     const visibleCount=fullBodyLandmarks.filter(name=>(pose.find(point=>point.name===name)?.score??0)>=.38).length;
     if(visibleCount<fullBodyLandmarks.length){
      setFeedback('Biraz geri çekil. Omuzların, kalçan, dizlerin ve ayakların kadrajda olsun.');
-     if(!cancelled)timer=setTimeout(()=>void run(),720);
+     if(!cancelled)timer=setTimeout(()=>void run(),Platform.OS==='android'?1500:720);
      return;
     }
     const liveReference=getInterpolatedGhostFrame(sequence,secondsRef.current*1000);
@@ -94,7 +94,7 @@ export default function PracticeSession(){
      setPostureScore(nextPosture);setBalanceScore(nextBalance);setScore(nextFlow);setValidSamples(samples.count);setFeedback(result.feedback[0]||'Akışını sakin biçimde sürdür.');
     }
    }catch(error){if(!cancelled)setModelState(error instanceof Error&&error.message.includes('hazır')?'loading':'error')}
-   if(!cancelled)timer=setTimeout(()=>void run(),720);
+   if(!cancelled)timer=setTimeout(()=>void run(),Platform.OS==='android'?1500:720);
   };
   timer=setTimeout(()=>void run(),400);
   return()=>{cancelled=true;if(timer)clearTimeout(timer)};
@@ -113,7 +113,7 @@ export default function PracticeSession(){
  if(!permission.granted)return <SafeAreaView style={c.permission}><View style={c.permissionIcon}><Ionicons name="camera-outline" size={42} color={colors.gold}/></View><Text style={c.permissionTitle}>Kamera rehberini aç</Text><Text style={c.permissionBody}>Görüntün kaydedilmez veya sunucuya gönderilmez. Poz ölçümü cihazdaki akışta işlenir.</Text><PrimaryButton label="Kameraya izin ver" icon="camera" onPress={requestPermission}/><Pressable onPress={leavePractice}><Text style={c.cancel}>Şimdi değil</Text></Pressable></SafeAreaView>;
 
  return <View style={c.root}>
-  <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active={!paused} mirror zoom={cameraZoom}/>
+  <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} active={!paused} mirror zoom={cameraZoom}/>
   <CameraZoomControl onChange={setCameraZoom} zoom={cameraZoom}/>
   <View style={c.shade}/>
   <GhostCanvas frame={referenceFrame} ready={fullBodyReady} opacity={practicePreferences.ghostOpacity}/>

@@ -34,8 +34,8 @@ export type HomeLevelSummary = {
 export type HomeWeekSummary = {
   dayDescriptions: string[];
   dayLabels: string[];
-  dailyMinutes: number[];
-  minutes: number;
+  dailyPractices: number[];
+  activeDays: number;
   practiceCount: number;
 };
 

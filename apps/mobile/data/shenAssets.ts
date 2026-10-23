@@ -2,11 +2,11 @@ import {ImageSourcePropType} from 'react-native';
 import {ShenId} from '../types';
 
 export const shenBackgrounds:Record<ShenId,ImageSourcePropType>={
- hun:require('../assets/shen/river/hun.jpg'),
- shen:require('../assets/shen/river/shen.jpg'),
- yi:require('../assets/shen/river/yi.jpg'),
- po:require('../assets/shen/river/po.jpg'),
- zhi:require('../assets/shen/river/zhi.jpg'),
+ hun:require('../assets/shen/home-web/hun.webp'),
+ shen:require('../assets/shen/home-web/shen.webp'),
+ yi:require('../assets/shen/home-web/yi.webp'),
+ po:require('../assets/shen/home-web/po.webp'),
+ zhi:require('../assets/shen/home-web/zhi.webp'),
 };
 export const shenMusic:Record<ShenId,number>={
  hun:require('../assets/shen/music/shen-music-hun.mp4'),

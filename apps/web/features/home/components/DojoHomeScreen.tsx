@@ -1,17 +1,13 @@
 "use client";
 
-import { calculateShenProgress, toDomainShenId, type ShenActivity } from "@/packages/shen-domain";
+import type { ShenActivity } from "@/packages/shen-domain";
+import type { PracticeSnapshot } from "@/features/practice/types";
 import { HomeDashboard } from "./HomeDashboard";
 import { isCapturedPracticePhoto } from "../utils/practice-photo";
+import { localDayKey, recentDates, recordedPractices } from "../lib/practice-stats";
 import type { HomeShenId } from "../types/home";
 
-type PracticeRecord = {
-  createdAt: string;
-  id: string;
-  imageData: string;
-  movementName: string;
-  score: number;
-};
+type PracticeRecord = PracticeSnapshot;
 
 type PostureRecord = {
   createdAt: string;
@@ -41,7 +37,6 @@ type ShenCopy = {
 };
 
 type Props = {
-  energyScores: { shen: number | null };
   homeCopy: Record<HomeShenId, ShenCopy>;
   onJournal: () => void;
   onPosture: (reportId?: string) => void;
@@ -118,7 +113,6 @@ function toHomeShen(shen: ShenOption, copy: ShenCopy, period: string) {
 }
 
 export function DojoHomeScreen({
-  energyScores,
   homeCopy,
   onJournal,
   onPosture,
@@ -132,31 +126,27 @@ export function DojoHomeScreen({
   shenOptions,
   userName,
 }: Props) {
-  const progress = calculateShenProgress(shenActivities, toDomainShenId(selectedShen.id));
-  const now = new Date();
-  const recentDays = Array.from({ length: 7 }, (_, index) => {
-    const day = new Date(now);
-    day.setHours(0, 0, 0, 0);
-    day.setDate(now.getDate() - (6 - index));
-    return day;
-  });
-  const dailyMinutes = recentDays.map((day) => shenActivities
-    .filter((item) => item.type === "practice" && new Date(item.createdAt).toDateString() === day.toDateString())
-    .reduce((total, item) => total + (item.minutes ?? 0), 0));
-  const recentPractices = shenActivities.filter((item) => {
-    const createdAt = new Date(item.createdAt).getTime();
-    return item.type === "practice" && item.completed !== false && createdAt >= recentDays[0].getTime();
+  const sessions = recordedPractices(practiceGallery, shenActivities);
+  const recentDays = recentDates();
+  const practiceDays = sessions.map((session) => localDayKey(session.createdAt));
+  const postureDays = postureReports.map((report) => localDayKey(report.createdAt));
+  const dailyPractices = recentDays.map((day) => practiceDays.filter((key) => key === localDayKey(day)).length);
+  const activeDays = recentDays.map((day) => {
+    const key = localDayKey(day);
+    return practiceDays.includes(key) || postureDays.includes(key);
   });
   const practicePhotos = practiceGallery
     .filter((snapshot) => isCapturedPracticePhoto(snapshot.imageData))
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
     .slice(0, 5)
     .map((snapshot) => ({ date: snapshot.createdAt, id: snapshot.id, image: snapshot.imageData, movementName: snapshot.movementName, score: snapshot.score }));
-  const experienceIntoLevel = progress.experience % 240;
+  const experience = sessions.length * 35 + shenActivities.filter((item) => item.type === "reflection").length * 15;
+  const experienceIntoLevel = experience % 240;
+  const hasRecordedActivity = sessions.length > 0 || postureDays.some(Boolean);
 
   return <HomeDashboard
-    energy={{ score: energyScores.shen, trend: dailyMinutes.map((value) => Math.min(100, value * 18)) }}
-    level={{ experience: experienceIntoLevel, level: progress.level, nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
+    energy={{ score: hasRecordedActivity ? Math.round((activeDays.filter(Boolean).length / 7) * 100) : null, trend: activeDays.map((active) => active ? 100 : 0) }}
+    level={{ experience: experienceIntoLevel, level: 1 + Math.floor(experience / 240), nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
     onHistory={onJournal}
     onPosture={onPosture}
     onReset={onReset}
@@ -169,11 +159,11 @@ export function DojoHomeScreen({
     streak={getPracticeStreak(practiceGallery, shenActivities)}
     userName={userName}
     week={{
-      dailyMinutes,
+      dailyPractices,
       dayDescriptions: recentDays.map((day, index) => `${new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", weekday: "long" }).format(day)}${index === recentDays.length - 1 ? " · Bugün" : ""}`),
       dayLabels: recentDays.map((day) => new Intl.DateTimeFormat("tr-TR", { weekday: "narrow" }).format(day)),
-      minutes: recentPractices.reduce((total, item) => total + (item.minutes ?? 0), 0),
-      practiceCount: recentPractices.length,
+      activeDays: dailyPractices.filter((count) => count > 0).length,
+      practiceCount: dailyPractices.reduce((total, count) => total + count, 0),
     }}
   />;
 }

@@ -3,7 +3,7 @@ import {CameraView,useCameraPermissions} from 'expo-camera';
 import * as Speech from 'expo-speech';
 import {router} from 'expo-router';
 import {useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,Pressable,ScrollView,StyleSheet,Text,View,type LayoutChangeEvent} from 'react-native';
+import {ActivityIndicator,Image,Platform,Pressable,ScrollView,StyleSheet,Text,View,type LayoutChangeEvent} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Svg,{Circle,Line} from 'react-native-svg';
 import {PrimaryButton} from '../components/ui';
@@ -15,6 +15,7 @@ import {aggregatePostureCaptures,createPostureCapture,evaluatePoseFrame,getLandm
 import {useApp} from '../store/AppStore';
 import {PostureCapture,PostureReport,PostureView} from '../types';
 import {buildPostureNarrative} from '../../../packages/posture-analysis';
+import {deletePostureCapturePhoto,savePostureCapturePhoto} from '../services/posturePhotos';
 
 const views:PostureView[]=['front','side','back'];
 const viewCopy:Record<PostureView,{title:string;instruction:string;icon:keyof typeof Ionicons.glyphMap}>={
@@ -55,6 +56,7 @@ export default function PostureSession(){
  const[cameraError,setCameraError]=useState(false);
  const[tipVisible,setTipVisible]=useState(false);
  const[saving,setSaving]=useState(false);
+ const[saveError,setSaveError]=useState('');
  const view=views[index]??'front';
  const copy=viewCopy[view];
  const cameraRef=useRef<CameraView|null>(null);
@@ -65,6 +67,7 @@ export default function PostureSession(){
  const stableCapturesRef=useRef<PostureCapture[]>([]);
  const capturesRef=useRef<PostureCapture[]>([]);
  const speakingRef=useRef('');
+ const draftPhotosRef=useRef<string[]>([]);
 
  useEffect(()=>setVision3DActive(isAppleVision3DAvailable()),[]);
 
@@ -84,6 +87,7 @@ export default function PostureSession(){
  useEffect(()=>()=>{
   Speech.stop();
   scanSessionRef.current+=1;
+  draftPhotosRef.current.forEach(deletePostureCapturePhoto);
  },[]);
 
  useEffect(()=>{
@@ -100,7 +104,7 @@ export default function PostureSession(){
   setScanState('model-loading');
   let timer:ReturnType<typeof setTimeout>|undefined;
 
-  const schedule=(delay=650)=>{timer=setTimeout(()=>void inspectFrame(),delay)};
+  const schedule=(delay=Platform.OS==='android'?1400:650)=>{timer=setTimeout(()=>void inspectFrame(),delay)};
   const inspectFrame=async()=>{
    if(scanSessionRef.current!==session||!cameraRef.current)return;
    try{
@@ -142,13 +146,16 @@ export default function PostureSession(){
 
     setScanState('capturing');
     const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
+    if(scanSessionRef.current!==session)return;
+    if(!photo.uri)throw new Error('Fotoğraf dosyası alınamadı');
+    const imageUri=await savePostureCapturePhoto(photo.uri,view);
+    draftPhotosRef.current.push(imageUri);
     const source=vision3D?'vision-3d+mediapipe-33' as const:'mediapipe-33' as const;
     const item={
      ...aggregatePostureCaptures(view,stableCapturesRef.current),
      analysisSource:source,
      bodyHeightMeters:vision3D?.bodyHeightMeters,
-     // Son sabit kareyi rapora ekle: geçmişteki model doğrudan kişinin kendi görüntüsünün üzerine oturur.
-     imageData:`data:image/jpeg;base64,${photo.base64}`,
+     imageData:imageUri,
      landmarks:analysis.landmarks.map(point=>({x:point.x,y:point.y,z:point.z,visibility:point.visibility})),
     };
     const nextCaptures=[...capturesRef.current.filter(saved=>saved.view!==view),item];
@@ -187,13 +194,20 @@ export default function PostureSession(){
   return()=>clearTimeout(timer);
  },[phase,result]);
 
- const save=()=>{
+ const save=async()=>{
   if(!result||saving)return;
   setSaving(true);
-  addPostureReport(result);
-  requestAnimationFrame(()=>router.dismissTo('/posture'));
+  setSaveError('');
+  try{
+   await addPostureReport(result);
+   draftPhotosRef.current=[];
+   router.dismissTo('/posture');
+  }catch{
+   setSaveError('Analiz kaydedilemedi. Cihazındaki boş alanı kontrol edip yeniden dene.');
+   setSaving(false);
+  }
  };
- const restart=()=>{capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
+ const restart=()=>{draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
 
  if(!permission)return <View style={styles.permission}/>;
  if(!permission.granted)return <SafeAreaView style={styles.permission}>
@@ -210,9 +224,10 @@ export default function PostureSession(){
   <ScrollView contentContainerStyle={styles.resultContent}>
    <View style={styles.resultTop}><Text style={[styles.resultLabel,{color:shen.color}]}>POSTÜR RAPORUN HAZIR</Text><Text style={styles.resultTitle}>Beden çizgin görünür oldu.</Text><Text style={styles.resultBody}>{result.summary}</Text><Text style={styles.resultTrend}>{result.trendText}</Text></View>
    <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text><Text style={styles.overallConfidence}>Genel güven %{getReportConfidence(result)}</Text></View>
-   <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}><View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View><View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
+   <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}>{item.imageData?<Image source={{uri:item.imageData}} style={styles.captureThumbnail}/>:<View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View>}<View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
    <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişiselleştirilmiş Öneriler ve Notlar</Text><Text style={styles.insightBody}>{getReportRecommendation(result)}</Text></View></View>
    <PrimaryButton label={saving?'Kaydediliyor…':'Analizi kaydet'} icon="checkmark" onPress={save}/>
+   {saveError?<Text style={styles.saveError}>{saveError}</Text>:null}
    <Pressable onPress={restart} style={styles.retake}><Text style={styles.retakeText}>Yeniden çek</Text></Pressable>
   </ScrollView>
  </SafeAreaView>;
@@ -225,7 +240,7 @@ export default function PostureSession(){
   </View>
   <View style={styles.sessionContent}>
    <View onLayout={(event:LayoutChangeEvent)=>{const{width,height}=event.nativeEvent.layout;setPreviewSize(current=>current.width===width&&current.height===height?current:{width,height})}} style={[styles.cameraStage,{borderColor:`${shen.color}55`}]}>
-    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" active onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
+    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} active onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
     <View style={styles.cameraShade}/>
     <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>
     <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize} view={view}/>
@@ -490,6 +505,7 @@ const styles=StyleSheet.create({
  captureList:{gap:8},
  captureRow:{minHeight:66,borderRadius:radii.md,backgroundColor:colors.surface,padding:10,flexDirection:'row',alignItems:'center',gap:10},
  captureIcon:{width:43,height:43,borderRadius:22,alignItems:'center',justifyContent:'center'},
+ captureThumbnail:{width:48,height:64,borderRadius:9,backgroundColor:colors.ink},
  captureTitle:{color:colors.cream,fontSize:16,fontWeight:'800'},
  captureFeedback:{color:colors.muted,fontSize:16,marginTop:3},
  captureScore:{fontSize:20,fontWeight:'900'},
@@ -498,4 +514,5 @@ const styles=StyleSheet.create({
  insightBody:{color:colors.muted,fontSize:17,lineHeight:28,marginTop:3},
  retake:{height:44,alignItems:'center',justifyContent:'center'},
  retakeText:{color:colors.muted,fontWeight:'700'},
+ saveError:{color:colors.danger,fontSize:15,lineHeight:22,textAlign:'center'},
 });

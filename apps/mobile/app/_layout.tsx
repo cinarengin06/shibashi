@@ -6,7 +6,7 @@ import { useFonts } from "@expo-google-fonts/inter/useFonts";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { fonts, type } from "../constants/theme";
@@ -60,11 +60,17 @@ export default function RootLayout() {
 
 function BootContent() {
   const { ready, profile } = useApp();
+  const [splashFinished, setSplashFinished] = useState(false);
   const visualTheme = shenThemes[profile.selectedShenId];
   useEffect(() => {
-    if (ready) void SplashScreen.hideAsync();
+    if (!ready) return;
+    const timer = setTimeout(() => setSplashFinished(true), 3000);
+    return () => clearTimeout(timer);
   }, [ready]);
-  if (!ready) return null;
+  useEffect(() => {
+    if (ready && splashFinished) void SplashScreen.hideAsync();
+  }, [ready, splashFinished]);
+  if (!ready || !splashFinished) return null;
   return (
     <ShenExperienceProvider>
       <StatusBar style="light" />

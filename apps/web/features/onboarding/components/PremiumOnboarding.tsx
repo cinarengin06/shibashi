@@ -101,10 +101,6 @@ export function PremiumOnboarding({
       if (raw) {
         const saved = JSON.parse(raw) as OnboardingProgress;
         if (saved.version === 9 && saved.stage !== "completed") {
-          const index = onboardingStages.findIndex(
-            (item) => item.id === saved.stage,
-          );
-          if (index >= 0) setStep(index);
           setProfile({ ...emptyOnboardingProfile, ...saved.profile });
         }
       }

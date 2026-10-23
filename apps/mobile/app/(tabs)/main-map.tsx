@@ -5,13 +5,13 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { shenThemes } from '../../../../packages/design-tokens';
-import { gateProgress, gates, type GateId } from '../../../../packages/eight-gates';
+import { BODY_GATE_ORDER, gateProgress, gates, type GateId } from '../../../../packages/eight-gates';
 import { meridianMovements } from '../../../../packages/meridian-knowledge';
 import { shibashiPosters } from '../../data/shibashiMedia';
 import { loadCompletedMovements } from '../../services/movementCompletion';
 import { useApp } from '../../store/AppStore';
 
-const order: GateId[] = ['peng','lu','kao','ji','zhou','an','lie','cai'];
+const order = BODY_GATE_ORDER;
 const positions = [
   { left: '41%', top: '1%' }, { left: '73%', top: '17%' },
   { left: '8%', top: '17%' }, { left: '78%', top: '42%' },

@@ -10,6 +10,7 @@ export type MovementAnalysisWindowResult = {
 
 export type PracticeSnapshot = {
   id: string;
+  sessionId?: string;
   dateKey: string;
   timeLabel: string;
   createdAt: string;

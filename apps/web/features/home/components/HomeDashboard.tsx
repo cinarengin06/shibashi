@@ -129,16 +129,16 @@ function HomeStatsRow({ energy, level, streak, week }: Pick<HomeDashboardProps, 
       </article>
 
       <article className={styles.statCard}>
-        <header><h2>Seviye</h2><StatInfo id="level-help" label="Seviye nasıl artar?">Tamamladığın pratikler deneyim puanı kazandırır. Her 240 XP seni bir sonraki seviyeye taşır.</StatInfo></header>
+        <header><h2>Seviye</h2><StatInfo id="level-help" label="Seviye nasıl artar?">Kaydedilen her pratik oturumu 35 XP, her yansıma 15 XP kazandırır. Aynı oturumdaki üç fotoğraf bir kez sayılır. Her 240 XP yeni seviyedir.</StatInfo></header>
         <div className={styles.levelRow}><div><strong>{level.level}</strong><span>Yolcu</span></div><span className={styles.levelSeal} aria-hidden="true">⌁</span></div>
         <div className={styles.progress}><i style={{ width: `${level.progress}%` }} /></div>
         <p>{level.experience} / {level.nextLevelExperience} XP</p>
       </article>
 
       <article className={styles.statCard}>
-        <header><h2>Son 7 Gün</h2><StatInfo id="week-help" label="Son yedi gün neyi gösterir?">Son yedi günde tamamladığın pratik sayısını ve toplam süreyi gösterir. Çubukların yüksekliği her gün yaptığın pratik dakikasına göre değişir.</StatInfo></header>
-        <div className={styles.weekRow}><div><strong>{week.practiceCount}</strong><span>pratik</span></div><MiniBars labels={week.dayLabels} values={week.dailyMinutes} /></div>
-        <p>Toplam {week.minutes} dakika</p>
+        <header><h2>Son 7 Gün</h2><StatInfo id="week-help" label="Son yedi gün neyi gösterir?">Son yedi günde kaydedilen pratik oturumlarını gösterir. Aynı oturumdaki fotoğraflar bir kez sayılır; çubuklar günlük oturum sayısıdır.</StatInfo></header>
+        <div className={styles.weekRow}><div><strong>{week.practiceCount}</strong><span>pratik</span></div><MiniBars labels={week.dayLabels} values={week.dailyPractices} /></div>
+        <p>{week.activeDays} aktif gün</p>
       </article>
 
       <article className={styles.statCard}>
@@ -156,7 +156,7 @@ function StatInfo({ children, id, label }: { children: string; id: string; label
 
 function MiniBars({ labels, values }: { labels: string[]; values: number[] }) {
   const max = Math.max(1, ...values);
-  return <div className={styles.miniBars} aria-label="Son yedi günün pratik dakikaları">{values.map((value, index) => <span key={index}><i style={{ height: `${Math.max(value ? 20 : 6, (value / max) * 100)}%` }} /><small>{labels[index]}</small></span>)}</div>;
+  return <div className={styles.miniBars} aria-label="Son yedi günün pratik sayıları">{values.map((value, index) => <span key={index}><i style={{ height: `${Math.max(value ? 20 : 6, (value / max) * 100)}%` }} /><small>{labels[index]}</small></span>)}</div>;
 }
 
 function MiniTrend({ values }: { values: number[] }) {

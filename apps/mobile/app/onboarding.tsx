@@ -32,10 +32,7 @@ export default function Onboarding() {
   const { profile, saveProfile } = useApp();
   const { background, playing, startSound, toggleSound, shen } = useShenExperience();
   const surface = shenThemes[profile.selectedShenId].surface;
-  const savedIndex = onboardingStages.findIndex(
-    (item) => item.id === (profile.onboardingStage ?? "welcome"),
-  );
-  const [step, setStep] = useState(Math.max(0, Math.min(7, savedIndex)));
+  const [step, setStep] = useState(0);
   const [data, setData] = useState<OnboardingProfile>({
     ...emptyOnboardingProfile,
     ...profile.onboardingProfile,
@@ -111,6 +108,7 @@ export default function Onboarding() {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace("/(tabs)");
   };
+  const skipCompletedGuide = () => router.replace("/(tabs)");
   const canContinue = step !== 1 || data.name.trim().length >= 2;
 
   return (
@@ -134,7 +132,7 @@ export default function Onboarding() {
           showsVerticalScrollIndicator={false}
           style={m.scroll}
         >
-          {step === 0 ? <Welcome onStart={next} /> : null}
+          {step === 0 ? <Welcome onSkip={skipCompletedGuide} onStart={next} /> : null}
           {step === 1 ? (
             <QuestionCopy
               kicker="1 / 6"

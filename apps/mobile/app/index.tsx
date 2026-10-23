@@ -11,7 +11,7 @@ export default function Index() {
         <ActivityIndicator color={colors.gold} />
       </View>
     );
-  return <Redirect href={profile.onboardingDone ? "/(tabs)" : "/welcome"} />;
+  return <Redirect href={profile.onboardingDone || profile.onboardingStage ? "/onboarding" : "/welcome"} />;
 }
 
 const s = StyleSheet.create({

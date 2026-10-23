@@ -29,6 +29,8 @@ import type { CoachCueName } from "@/features/practice/lib/coach-audio";
 import { getInnerJourneyScene, getMovementReferenceImage, movements, shibashiFullSetVideoId, warmupLessons, type Movement, type PracticeAdaptation, type PracticeLearningMode, type WarmupLesson, type WarmupLessonId } from "@/features/practice/data/movements";
 import { PostureSavedReportsGallery, evaluateWebPostureFrame } from "@/features/posture/components/PostureScreens";
 import { ShibashiAuthGate } from "@/components/shibashi-auth-gate";
+import { ShibashiBrandMark } from "@/components/web/ShibashiBrandMark";
+import { WebNotificationBell } from "@/components/web/WebNotificationBell";
 import { CoachMeridianCard, MeridianExplorer, MovementMeridianCard, PersonalMeridianSuggestion, PracticeMeridianSummaryCard } from "@/components/meridian/MeridianKnowledge";
 import {getBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
 import { useShibashiAuth } from "@/lib/supabase-auth";
@@ -36,8 +38,6 @@ import { toWebPostureReport, toWebPracticeSnapshot } from "@/lib/sync-record-ada
 import {
   clearLocalShibashiDatabase,
   deletePostureReportFromIndexedDb,
-  formatSnapshotDate,
-  formatSnapshotTime,
   loadPostureReportsFromIndexedDb,
   loadPracticeSnapshotsFromIndexedDb,
   mergePostureReports,
@@ -99,6 +99,16 @@ const WEB_GOOGLE_AUTH_UI_ENABLED = false;
 const WEB_INTRO_VIDEO_ENABLED = false;
 const SHEN_MUSIC_SESSION_KEY = "shibashi-session-music";
 
+function hasCompletedWebOnboarding() {
+  if (window.localStorage.getItem("ritim-kapisi-onboarding-complete") !== "true") return false;
+  try {
+    const result = JSON.parse(window.localStorage.getItem("shibashi-onboarding-result-v9") ?? "null") as Partial<OnboardingProfile> | null;
+    return Boolean(result && result.name?.trim() && result.firstJourneyPlan);
+  } catch {
+    return false;
+  }
+}
+
 declare global {
   interface Window {
     webkitAudioContext?: typeof AudioContext;
@@ -118,13 +128,6 @@ type AvatarPose = {
   points: Map<string, AvatarPosePoint>;
   visibleCount: number;
 };
-
-type EnergyScores = {
-  jing: number | null;
-  qi: number | null;
-  shen: number | null;
-};
-
 
 type CoachCueRequest = {
   coach: AiCoach;
@@ -183,19 +186,9 @@ export default function RitimKapisiOS() {
   const movement = movements[selectedMovement];
   const selectedShen = fiveShen.find((shen) => shen.id === selectedShenId) ?? fiveShen[1];
   const selectedCoach = aiCoaches.find((coach) => coach.id === selectedCoachId) ?? aiCoaches[0];
-  const completion = useMemo(() => Math.round(((selectedMovement + 1) / 18) * 100), [selectedMovement]);
   const journalUnlocked = true;
   const journeyUnlocked = true;
   const visibleTabs = tabs;
-  const energyScores = useMemo(
-    () => getEnergyScores({
-      completion,
-      practiceGallery,
-      postureReports,
-      selectedShen,
-    }),
-    [completion, practiceGallery, postureReports, selectedShen],
-  );
 
   useEffect(() => {
     window.speechSynthesis?.getVoices();
@@ -215,7 +208,7 @@ export default function RitimKapisiOS() {
       if (previewMode === "practice") setActiveTab("lessons");
     }
     if (!isPreview) {
-      setOnboardingComplete(window.localStorage.getItem("ritim-kapisi-onboarding-complete") === "true");
+      setOnboardingComplete(hasCompletedWebOnboarding());
     }
     try {
       const firstCheckin = JSON.parse(window.localStorage.getItem("ritim-kapisi-first-checkin") ?? "null") as { createdAt?: string } | null;
@@ -371,30 +364,6 @@ export default function RitimKapisiOS() {
   useEffect(() => {
     mobileFrameRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [activeTab, onboardingComplete]);
-
-  function savePracticeSnapshot(snapshot: PracticeSnapshot) {
-    void savePracticeSnapshotToIndexedDb(snapshot);
-    setShenActivities((current) => {
-      const next = [{
-        id: `activity-${snapshot.id}`,
-        shenId: toDomainShenId(selectedShenId),
-        type: "practice" as const,
-        createdAt: snapshot.createdAt,
-        minutes: 3,
-        completed: true,
-        movementQuality: snapshot.score,
-        breathingAwareness: Math.max(54, Math.min(96, snapshot.score + 3)),
-        practiceId: `movement-${snapshot.movementId}`,
-      }, ...current].slice(0, 240);
-      window.localStorage.setItem("shibashi-shen-activities", JSON.stringify(next));
-      return next;
-    });
-    setPracticeGallery((current) => {
-      const nextGallery = [snapshot, ...current].slice(0, 180);
-      persistPracticeSnapshotsToLocalStorage(nextGallery);
-      return nextGallery;
-    });
-  }
 
   function setPracticeSnapshotTrainerVisibility(snapshotId: string, trainerVisible: boolean) {
     setPracticeGallery((current) => {
@@ -699,7 +668,6 @@ export default function RitimKapisiOS() {
         ) : null}
         {onboardingComplete && activeTab === "home" ? (
           <DojoHomeScreen
-            energyScores={energyScores}
             homeCopy={shenTodayCopy}
             onJournal={() => setActiveTab("journal")}
                         onPosture={(reportId) => {
@@ -733,6 +701,7 @@ export default function RitimKapisiOS() {
         ) : null}
         {onboardingComplete && activeTab === "journey" ? (
           <FiveShenJourneyWeb
+            userId={auth.user?.id}
             activities={shenActivities}
             onNavigate={setActiveTab}
             onSelectCoach={setSelectedCoachId}
@@ -779,24 +748,26 @@ export default function RitimKapisiOS() {
         {onboardingComplete ? (
           <nav className="bottom-nav" aria-label="Ana gezinme" style={{ "--nav-count": visibleTabs.length } as CSSProperties}>
             <button className="web-nav-brand" aria-label="Shibashi EFE ana sayfasını aç" onClick={() => setActiveTab("home")} type="button">
-              <i aria-hidden="true" />
+              <ShibashiBrandMark />
               <span>SHIBASHI EFE</span>
             </button>
-            {visibleTabs.map((tab) => (
-              <button
-                className={`nav-button nav-tab-${tab.id} ${activeTab === tab.id ? "nav-button-active" : ""}`}
-                key={tab.id}
-                onClick={() => tab.id === "bodyLines" ? window.location.assign("/beden-hatlari") : tab.id === "mainMap" ? window.location.assign("/ana-haritam") : setActiveTab(tab.id)}
-                type="button"
-              >
-                <strong>{tab.icon}</strong>
-                {tab.label}
-              </button>
-            ))}
+            <div className="web-nav-links">
+              {visibleTabs.map((tab) => (
+                <button
+                  className={`nav-button nav-tab-${tab.id} ${activeTab === tab.id ? "nav-button-active" : ""}`}
+                  key={tab.id}
+                  onClick={() => tab.id === "bodyLines" ? window.location.assign("/beden-hatlari") : tab.id === "mainMap" ? window.location.assign("/ana-haritam") : setActiveTab(tab.id)}
+                  type="button"
+                >
+                  <strong>{tab.icon}</strong>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
             <div className="web-nav-account" aria-label="Kullanıcı özeti">
               <span className="web-nav-streak" title="Güncel seri">♨ {getPracticeStreak(practiceGallery, shenActivities).current}</span>
               <button aria-label={`Müziği ${soundState === "açık" ? "kapat" : "aç"}`} aria-pressed={soundState === "açık"} className={`web-nav-music ${soundState === "açık" ? "is-playing" : ""}`} onClick={toggleShenMusic} title={`Shen müziği ${soundState}`} type="button"><span aria-hidden="true">{soundState === "açık" ? "♪" : "♪̸"}</span></button>
-              <button aria-label="Bildirimler" className="web-nav-bell" type="button">♢</button>
+              <WebNotificationBell className="web-nav-bell" />
               <button className="web-nav-profile" onClick={() => setActiveTab("profile")} type="button"><i>{(userName || "Ç").slice(0, 1).toLocaleUpperCase("tr-TR")}</i><span>{userName || "Çınar"}</span><b>⌄</b></button>
             </div>
           </nav>
@@ -1459,34 +1430,6 @@ function PostureScreen({
       view={postureView}
     />
   );
-}
-
-function getEnergyScores({
-  practiceGallery,
-  postureReports,
-}: {
-  completion: number;
-  practiceGallery: PracticeSnapshot[];
-  postureReports: PostureReport[];
-  selectedShen: (typeof fiveShen)[number];
-}): EnergyScores {
-  const recentPractice = practiceGallery.slice(0, 5);
-  const measuredDays = new Set([...practiceGallery.map((item) => item.dateKey), ...postureReports.map((item) => item.dateKey)]);
-  const recentDayCount = [...Array(7)].filter((_, offset) => {
-    const date = new Date();
-    date.setDate(date.getDate() - offset);
-    return measuredDays.has(formatSnapshotDate(date));
-  }).length;
-
-  return {
-    jing: postureReports[0]?.score ?? null,
-    qi: recentPractice.length ? clampScore(recentPractice.reduce((sum, snapshot) => sum + snapshot.score, 0) / recentPractice.length) : null,
-    shen: measuredDays.size ? clampScore((recentDayCount / 7) * 100) : null,
-  };
-}
-
-function clampScore(value: number) {
-  return Math.max(0, Math.min(100, Math.round(value)));
 }
 
 type ShenSoundLayer = {

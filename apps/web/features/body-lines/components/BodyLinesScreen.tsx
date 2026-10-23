@@ -16,7 +16,31 @@ import { deletePracticeSnapshotFromIndexedDb, loadPracticeSnapshotsFromIndexedDb
 import { isCapturedPracticePhoto } from "@/features/home/utils/practice-photo";
 import { markMovementCompleted } from "@/lib/movement-completion";
 import { useShibashiAuth } from "@/lib/supabase-auth";
+import { toDomainShenId, type ShenActivity } from "@/packages/shen-domain";
 import styles from "./body-lines.module.css";
+
+function rememberPracticeSession(snapshot: PracticeSnapshot) {
+  if (!snapshot.sessionId) return;
+  try {
+    const stored: unknown = JSON.parse(window.localStorage.getItem("shibashi-shen-activities") ?? "[]");
+    const activities = Array.isArray(stored)
+      ? stored.filter((value): value is ShenActivity => Boolean(value) && typeof value.id === "string")
+      : [];
+    if (activities.some((activity) => activity.id === snapshot.sessionId)) return;
+    const activity: ShenActivity = {
+      id: snapshot.sessionId,
+      shenId: toDomainShenId(window.localStorage.getItem("ritim-kapisi-selected-shen") ?? "shen"),
+      type: "practice",
+      createdAt: snapshot.createdAt,
+      completed: true,
+      movementQuality: snapshot.score,
+      practiceId: `movement-${snapshot.movementId}`,
+    };
+    window.localStorage.setItem("shibashi-shen-activities", JSON.stringify([activity, ...activities].slice(0, 240)));
+  } catch {
+    // The saved photo still provides the session for home statistics.
+  }
+}
 
 function MovementDetail({ movement }: { movement: MeridianMovementKnowledge }) {
   return (
@@ -141,6 +165,7 @@ export function BodyLinesScreen() {
     const saved = await savePracticeSnapshotToIndexedDb(snapshot);
     if (!saved) { setPhotoSaveError(true); return false; }
     try { markMovementCompleted(snapshot.movementId, user?.id); } catch { /* The photo was saved; keep the camera flow running if progress storage is unavailable. */ }
+    rememberPracticeSession(snapshot);
     setPhotoSaveError(false);
     setPhotos((current) => {
       const next = mergePracticeSnapshots([snapshot], current).filter((item) => isCapturedPracticePhoto(item.imageData));

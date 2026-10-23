@@ -157,6 +157,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
     let lastPhotoAt = -Infinity;
     let photoCount = 0;
     let photoPending = false;
+    const sessionId = `shibashi-session-${movementOrder}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
     setCameraReady(false);
     setCameraError("");
@@ -317,7 +318,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
           }
 
           if (qualified && photoCount < 3 && !photoPending && now - lastPhotoAt >= photoIntervalMs) {
-            const snapshot = createMovementPhoto(video, canvasRef.current, Number(movementOrder), movementName, Math.round(smoothedScore ?? 0));
+            const snapshot = createMovementPhoto(video, canvasRef.current, Number(movementOrder), movementName, Math.round(smoothedScore ?? 0), sessionId);
             if (snapshot) {
               photoPending = true;
               lastPhotoAt = now;
@@ -434,7 +435,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
   );
 }
 
-function createMovementPhoto(video: HTMLVideoElement, poseCanvas: HTMLCanvasElement | null, movementId: number, movementName: string, score: number): PracticeSnapshot | null {
+function createMovementPhoto(video: HTMLVideoElement, poseCanvas: HTMLCanvasElement | null, movementId: number, movementName: string, score: number, sessionId: string): PracticeSnapshot | null {
   if (!video.videoWidth || !video.videoHeight || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return null;
   const panel = video.getBoundingClientRect();
   if (!panel.width || !panel.height) return null;
@@ -472,6 +473,7 @@ function createMovementPhoto(video: HTMLVideoElement, poseCanvas: HTMLCanvasElem
 
   return {
     id: `shibashi18-${movementId}-${now.getTime()}-${Math.round(performance.now())}`,
+    sessionId,
     dateKey: formatSnapshotDate(now),
     timeLabel: formatSnapshotTime(now),
     createdAt: now.toISOString(),

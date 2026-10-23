@@ -1,32 +1,68 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, Eyebrow, Screen, Title } from "../../components/ui";
 import { colors, fonts, radii } from "../../constants/theme";
 import { humanMapStages } from "../../data/journey";
+import { BODY_GATE_ORDER, gateGuidance, gateProgress, gates, uniqueMovementOrders } from "../../../../packages/eight-gates";
 import { getShen } from "../../data/fiveShen";
+import { loadCompletedMovements } from "../../services/movementCompletion";
 import { useApp } from "../../store/AppStore";
 
 export default function Journey() {
-  const { profile } = useApp();
+  const { profile, sessions, shenActivities } = useApp();
   const selectedShen = getShen(profile.selectedShenId);
   const accent = selectedShen.color;
-  const normalizedShenId = selectedShen.id;
-  const matchedGateIndex = humanMapStages.findIndex((item) => item.shenId === normalizedShenId);
-  const currentGateIndex = matchedGateIndex >= 0 ? matchedGateIndex : 0;
-  const [activeIndex, setActiveIndex] = useState(currentGateIndex);
-
-  useEffect(() => setActiveIndex(currentGateIndex), [currentGateIndex]);
-
-  const stage = humanMapStages[activeIndex] ?? humanMapStages[0];
-  const currentGate = humanMapStages[currentGateIndex] ?? humanMapStages[0];
+  const [completedOrders, setCompletedOrders] = useState<number[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [selectedManually, setSelectedManually] = useState(false);
+  const allCompletedOrders = useMemo(() => uniqueMovementOrders([
+    ...completedOrders,
+    ...sessions.filter((session) => session.postureScore >= 70).map((session) => Number(session.practiceId.match(/^movement-(\d+)$/)?.[1])),
+    ...shenActivities.filter((activity) => activity.type === "practice" && activity.completed !== false).map((activity) => Number(activity.practiceId?.match(/^movement-(\d+)$/)?.[1])),
+  ]), [completedOrders, sessions, shenActivities]);
+  const progress = useMemo(() => gateProgress(allCompletedOrders), [allCompletedOrders]);
+  const currentGateIndex = BODY_GATE_ORDER.reduce((best, id, index) => {
+    const candidate = progress.find((gate) => gate.id === id)!;
+    const current = progress.find((gate) => gate.id === BODY_GATE_ORDER[best])!;
+    return candidate.percent > current.percent || (candidate.percent === current.percent && candidate.completedCount > current.completedCount) ? index : best;
+  }, 0);
+  const activeGateId = BODY_GATE_ORDER[activeIndex];
+  const gate = progress.find((item) => item.id === activeGateId)!;
+  const guidance = gateGuidance[activeGateId];
+  const currentGate = progress.find((item) => item.id === BODY_GATE_ORDER[currentGateIndex])!;
   const isCurrentGate = activeIndex === currentGateIndex;
+
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    void loadCompletedMovements(profile.authUserId).then((orders) => {
+      if (!active) return;
+      setCompletedOrders(orders);
+      if (!selectedManually) {
+        const nextProgress = gateProgress(uniqueMovementOrders([
+          ...orders,
+          ...sessions.filter((session) => session.postureScore >= 70).map((session) => Number(session.practiceId.match(/^movement-(\d+)$/)?.[1])),
+          ...shenActivities.filter((activity) => activity.type === "practice" && activity.completed !== false).map((activity) => Number(activity.practiceId?.match(/^movement-(\d+)$/)?.[1])),
+        ]));
+        const best = BODY_GATE_ORDER.reduce((bestIndex, id, index) => {
+          const candidate = nextProgress.find((item) => item.id === id)!;
+          const current = nextProgress.find((item) => item.id === BODY_GATE_ORDER[bestIndex])!;
+          return candidate.percent > current.percent || (candidate.percent === current.percent && candidate.completedCount > current.completedCount) ? index : bestIndex;
+        }, 0);
+        setActiveIndex(best);
+      }
+    });
+    return () => { active = false; };
+  }, [profile.authUserId, selectedManually, sessions, shenActivities]));
+
+  const selectGate = (index: number) => { setSelectedManually(true); setActiveIndex(index); };
 
   return (
     <Screen>
       <Eyebrow>HARİTAN · SEKİZ BEDEN KAPISI</Eyebrow>
       <Title>Bedenindeki kapıları gör.</Title>
-      <Text style={styles.lead}>Kapılara dokun; beden bölgesini, günlük karşılığını ve mini pratiğini aç. Altın halka şu an bulunduğun kapıyı gösterir.</Text>
+      <Text style={styles.lead}>Kapılara dokun; beden bölgesini, günlük karşılığını ve mini pratiğini aç. Altın halka en çok ilerlediğin kapıyı gösterir.</Text>
 
       <Card style={[styles.mapCard, { borderColor: `${accent}66` }]}>
         <View style={styles.mapStage}>
@@ -38,20 +74,20 @@ export default function Journey() {
           />
           <View style={styles.mapShade} />
           <View style={styles.currentGateBadge}>
-            <Text style={styles.currentGateLabel}>ŞU ANKİ KAPIN</Text>
-            <Text style={styles.currentGateTitle}>{currentGate.title}</Text>
+            <Text style={styles.currentGateLabel}>{allCompletedOrders.length ? "EN ÇOK İLERLEDİĞİN KAPI" : "BAŞLANGIÇ KAPISI"}</Text>
+            <Text style={styles.currentGateTitle}>{currentGate.name}</Text>
           </View>
-          {humanMapStages.map((item, index) => {
+          {BODY_GATE_ORDER.map((id, index) => {
             const current = index === currentGateIndex;
             const active = index === activeIndex;
             return (
               <Pressable
-                accessibilityLabel={`${item.title} kapısını aç`}
+                accessibilityLabel={`${index + 1}. ${gates[id].name} kapısını aç`}
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
-                key={item.id}
-                onPress={() => setActiveIndex(index)}
-                style={[styles.mapHotspot, { left: `${item.x}%`, top: `${item.y}%` }, current && styles.mapHotspotCurrent, active && { borderColor: accent, backgroundColor: `${accent}dd`, shadowColor: accent }]}
+                key={id}
+                onPress={() => selectGate(index)}
+                style={[styles.mapHotspot, { left: `${humanMapStages[index].x}%`, top: `${humanMapStages[index].y}%` }, current && styles.mapHotspotCurrent, active && { borderColor: accent, backgroundColor: `${accent}dd`, shadowColor: accent }]}
               >
                 <Text style={[styles.mapHotspotText, active && { color: colors.ink }]}>{index + 1}</Text>
               </Pressable>
@@ -61,22 +97,22 @@ export default function Journey() {
         </View>
 
         <View style={styles.mapProgress}>
-          <Text style={styles.progressText}>İncelenen kapı {activeIndex + 1} / {humanMapStages.length}</Text>
-          <Text style={[styles.progressCurrent, { color: accent }]}>Mevcut kapı {currentGateIndex + 1}</Text>
+          <Text style={styles.progressText}>İncelenen kapı {activeIndex + 1} / {BODY_GATE_ORDER.length}</Text>
+          <Text style={[styles.progressCurrent, { color: accent }]}>Önde: {currentGate.name}</Text>
         </View>
       </Card>
 
       <Card style={[styles.mapInfo, { borderColor: `${accent}55` }]}>
         <View style={styles.mapInfoTop}>
           <View style={styles.flex}>
-            <Text style={[styles.kicker, { color: accent }]}>{isCurrentGate ? "ŞU AN BULUNDUĞUN KAPI" : "İNCELEDİĞİN KAPI"}</Text>
-            <Text style={styles.mapTitle}>{stage.title}</Text>
+            <Text style={[styles.kicker, { color: accent }]}>{isCurrentGate ? (allCompletedOrders.length ? "EN ÇOK İLERLEDİĞİN KAPI" : "BAŞLANGIÇ KAPISI") : "İNCELEDİĞİN KAPI"}</Text>
+            <Text style={styles.mapTitle}>{gate.name}</Text>
           </View>
-          <Text style={[styles.mapReward, { color: accent }]}>{stage.reward}</Text>
+          <Text style={[styles.mapReward, { color: accent }]}>{guidance.focus} odağı</Text>
         </View>
-        <Text style={styles.body}>{stage.text}</Text>
+        <Text style={styles.body}>%{gate.percent} ({gate.completedCount}/{gate.mappedCount} hareket) · {guidance.outcome}</Text>
         <View style={styles.benefitGrid}>
-          {stage.benefits.map((benefit) => (
+          {guidance.benefits.map((benefit) => (
             <View key={benefit} style={styles.benefit}>
               <Ionicons name="checkmark" color={accent} size={16} />
               <Text style={styles.benefitText}>{benefit}</Text>
@@ -85,17 +121,17 @@ export default function Journey() {
         </View>
         <View style={styles.dailyNote}>
           <Text style={[styles.kicker, { color: accent }]}>GÜNLÜK HAYATTA</Text>
-          <Text style={styles.body}>{stage.dailyUse}</Text>
+          <Text style={styles.body}>{guidance.dailyUse}</Text>
         </View>
         <View style={styles.dailyNote}>
           <Text style={[styles.kicker, { color: accent }]}>MİNİ PRATİK</Text>
-          <Text style={styles.body}>{stage.microPractice}</Text>
+          <Text style={styles.body}>{guidance.microPractice}</Text>
         </View>
         <View style={styles.mapActions}>
-          <Pressable disabled={activeIndex === 0} onPress={() => setActiveIndex((value) => Math.max(0, value - 1))} style={[styles.mapAction, activeIndex === 0 && styles.disabled]}>
+          <Pressable disabled={activeIndex === 0} onPress={() => selectGate(Math.max(0, activeIndex - 1))} style={[styles.mapAction, activeIndex === 0 && styles.disabled]}>
             <Text style={styles.mapActionText}>Önceki</Text>
           </Pressable>
-          <Pressable onPress={() => setActiveIndex((value) => (value + 1) % humanMapStages.length)} style={[styles.mapActionPrimary, { backgroundColor: accent }]}>
+          <Pressable onPress={() => selectGate((activeIndex + 1) % BODY_GATE_ORDER.length)} style={[styles.mapActionPrimary, { backgroundColor: accent }]}>
             <Text style={styles.mapActionPrimaryText}>Sonraki kapı</Text>
             <Ionicons name="arrow-forward" color={colors.ink} size={16} />
           </Pressable>

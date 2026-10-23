@@ -1,8 +1,8 @@
 "use client";
 
 import NextImage from "next/image";
-import type { CSSProperties, Dispatch, ReactNode, SetStateAction } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties, Dispatch, SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   breathingPatterns,
   calculateShenProgress,
@@ -22,44 +22,65 @@ import {
   type ShenActivity,
 } from "@/packages/shen-domain";
 import { fiveShen, type ShenId } from "@/features/home/data/shen";
-import { neijingStages, type NeijingStage } from "@/features/journey/data/scenes";
+import { neijingStages } from "@/features/journey/data/scenes";
 import { aiCoaches, coachDialogues, inferCoachIntent, type AiCoach, type CoachIntent } from "@/features/practice/data/coaches";
 import { CoachMeridianCard } from "@/components/meridian/MeridianKnowledge";
 import type { TabId } from "@/types/navigation";
 import { speakCoach } from "@/features/practice/lib/coach-audio";
+import { meridianMovements } from "@/packages/meridian-knowledge";
+import { loadCompletedMovements, movementCompletionEvent } from "@/lib/movement-completion";
+import { BODY_GATE_ORDER, gateGuidance, gateProgress, gates, movementGateWeights } from "@/packages/eight-gates";
 
 type DomainShenId = (typeof shenProfiles)[number]["id"];
+function mostCompletedGate(progress: ReturnType<typeof gateProgress>) {
+  return BODY_GATE_ORDER.reduce((best, id, index) => {
+    const candidate = progress.find((gate) => gate.id === id)!;
+    const current = progress.find((gate) => gate.id === BODY_GATE_ORDER[best])!;
+    return candidate.percent > current.percent || (candidate.percent === current.percent && candidate.completedCount > current.completedCount) ? index : best;
+  }, 0);
+}
 
 function HumanMap({
-  selectedShen,
-  sidePanel,
+  userId,
 }: {
-  selectedShen: (typeof fiveShen)[number];
-  sidePanel?: ReactNode;
+  userId?: string;
 }) {
-  const [activeStageIndex, setActiveStageIndex] = useState<number>(selectedShen.mapStage);
+  const [activeStageIndex, setActiveStageIndex] = useState(0);
   const [gateInfoOpen, setGateInfoOpen] = useState(false);
-  const activeStage = neijingStages[activeStageIndex] ?? neijingStages[selectedShen.mapStage];
-  const currentGateIndex = selectedShen.mapStage;
-  const mapProgress = Math.round(((currentGateIndex + 1) / neijingStages.length) * 100);
-  const personalFeedback = getPersonalMapFeedback(activeStage, selectedShen, activeStageIndex, true);
-  const activeGateTone = activeStage.shenId ? getShenById(activeStage.shenId) : selectedShen;
+  const [completedOrders, setCompletedOrders] = useState<number[]>([]);
+  const [playingOrder, setPlayingOrder] = useState<number | null>(null);
+  const selectedManually = useRef(false);
+  const completed = useMemo(() => new Set(completedOrders), [completedOrders]);
+  const progress = useMemo(() => gateProgress(completedOrders), [completedOrders]);
+  const activeGateId = BODY_GATE_ORDER[activeStageIndex];
+  const activeGate = progress.find((gate) => gate.id === activeGateId)!;
+  const activeGuidance = gateGuidance[activeGateId];
+  const selectedMovements = meridianMovements.filter((movement) => (movementGateWeights[movement.order]?.[activeGateId] ?? 0) > 0);
+  const currentGateIndex = mostCompletedGate(progress);
+  const currentGate = progress.find((gate) => gate.id === BODY_GATE_ORDER[currentGateIndex])!;
+  const mapProgress = currentGate.percent;
 
   useEffect(() => {
-    setActiveStageIndex(selectedShen.mapStage);
-    setGateInfoOpen(false);
-  }, [selectedShen.mapStage]);
+    const refresh = () => {
+      const orders = loadCompletedMovements(userId);
+      setCompletedOrders(orders);
+      if (!selectedManually.current) setActiveStageIndex(mostCompletedGate(gateProgress(orders)));
+    };
+    refresh();
+    window.addEventListener(movementCompletionEvent, refresh);
+    window.addEventListener("storage", refresh);
+    return () => { window.removeEventListener(movementCompletionEvent, refresh); window.removeEventListener("storage", refresh); };
+  }, [userId]);
 
-  function selectStage(index: number, openInfo = true) {
+  function selectStage(index: number) {
+    selectedManually.current = true;
     setActiveStageIndex(index);
-    if (openInfo) {
-      setGateInfoOpen(true);
-    }
+    setPlayingOrder(null);
+    setGateInfoOpen(true);
   }
 
   function moveGate(direction: 1 | -1) {
-    const nextIndex = (activeStageIndex + direction + neijingStages.length) % neijingStages.length;
-    selectStage(nextIndex);
+    selectStage((activeStageIndex + direction + BODY_GATE_ORDER.length) % BODY_GATE_ORDER.length);
   }
 
   return (
@@ -67,12 +88,12 @@ function HumanMap({
     <div className="glass-card human-map-card neijing-card cut-safe-card">
       <div className="section-heading cut-safe-heading" style={{ margin: "0 0 12px" }}>
         <h2>8 Kapılı Beden Haritan</h2>
-        <span>Şu anki kapın · {selectedShen.mapTitle}</span>
+        <span>Seçili kapı · {activeGate.name}</span>
       </div>
       <div className="neijing-map-shell neijing-map-shell-with-panel">
         <div
           className="neijing-map"
-          aria-label={`Sekiz kapılı beden haritası. Şu anki kapın ${selectedShen.mapTitle}`}
+          aria-label={`Sekiz kapılı beden haritası. ${completedOrders.length ? "En çok ilerlediğin" : "Başlangıç"} kapısı ${currentGate.name}`}
           style={
             {
               "--journey-progress": `${mapProgress}%`,
@@ -88,115 +109,66 @@ function HumanMap({
             src="/images/neijing-map.jpg"
           />
           <div className="neijing-current-gate-badge" aria-live="polite">
-            <span>ŞU ANKİ KAPIN</span>
-            <strong>{selectedShen.mapTitle}</strong>
-            <small>{selectedShen.dailyName}</small>
+            <span>{completedOrders.length ? "EN ÇOK İLERLEDİĞİN KAPI" : "BAŞLANGIÇ KAPISI"}</span>
+            <strong>{currentGate.name}</strong>
+            <small>{currentGate.cue}</small>
           </div>
-          {neijingStages.map((stage, index) => (
-            <div key={stage.title}>
+          {BODY_GATE_ORDER.map((id, index) => (
+            <div key={id}>
               <button
-                aria-label={`${stage.title} bölgesini seç`}
+                aria-label={`${index + 1}. ${gates[id].name} kapısını seç`}
                 aria-current={currentGateIndex === index ? "step" : undefined}
+                aria-pressed={activeStageIndex === index}
                 className={`neijing-hotspot ${activeStageIndex === index ? "neijing-hotspot-active" : ""} ${currentGateIndex === index ? "neijing-hotspot-current" : ""}`}
                 onClick={() => selectStage(index)}
-                style={{ left: `${stage.x}%`, top: `${stage.y}%` }}
+                style={{ left: `${neijingStages[index].x}%`, top: `${neijingStages[index].y}%` }}
                 type="button"
               >
                 {index + 1}
               </button>
             </div>
           ))}
-          <div className="neijing-map-hint">Bir kapıya dokun · açıklamasını aç</div>
+          <div className="neijing-map-hint">Bir kapıya dokun · bilgi ve videoları gör</div>
           {gateInfoOpen ? (
-            <div className="gate-info-card" role="dialog" aria-label={`${activeStage.title} bilgileri`}>
+            <div className="gate-info-card" role="dialog" aria-label={`${activeGate.name} kapısı bilgileri`}>
               <div className="gate-info-topline">
                 <span className="eyebrow">Kapı {activeStageIndex + 1}</span>
-                <button className="gate-info-close" onClick={() => setGateInfoOpen(false)} type="button" aria-label="Kapı bilgisini kapat">
-                  ×
-                </button>
+                <button className="gate-info-close" onClick={() => setGateInfoOpen(false)} type="button" aria-label="Kapı bilgisini kapat">×</button>
               </div>
               <div className="gate-info-title-row">
-                <div>
-                  <h3>{activeStage.title}</h3>
-                  <p>{activeGateTone.dailyName} · {activeGateTone.name}</p>
-                </div>
-                <strong>{activeStage.reward}</strong>
+                <div><h3>{activeGate.name}</h3></div>
+                <strong>{activeGuidance.focus} odağı</strong>
               </div>
-              <p className="gate-info-text">{activeStage.text}</p>
-              <div className="gate-benefit-grid">
-                {activeStage.benefits.map((benefit) => (
-                  <span key={benefit}>{benefit}</span>
-                ))}
-              </div>
-              <div className="gate-life-note">
-                <span>Günlük hayatta</span>
-                <p>{activeStage.dailyUse}</p>
-              </div>
-              <div className="gate-life-note gate-practice-note">
-                <span>Mini pratik</span>
-                <p>{activeStage.microPractice}</p>
-              </div>
+              <div className="gate-benefit-grid">{activeGuidance.benefits.map((benefit) => <span key={benefit}>{benefit}</span>)}</div>
+              <div className="gate-life-note"><span>Günlük hayatta</span><p>{activeGuidance.dailyUse}</p></div>
+              <div className="gate-life-note gate-practice-note"><span>Mini pratik</span><p>{activeGuidance.microPractice}</p></div>
               <div className="gate-info-actions">
-                <button className="secondary-action compact-action" onClick={() => moveGate(-1)} type="button">
-                  Önceki
-                </button>
-                <button className="primary-action compact-action" onClick={() => moveGate(1)} type="button">
-                  Sonraki Kapı
-                </button>
+                <button className="secondary-action compact-action" onClick={() => moveGate(-1)} type="button">Önceki</button>
+                <button className="primary-action compact-action" onClick={() => moveGate(1)} type="button">Sonraki Kapı</button>
               </div>
             </div>
           ) : null}
         </div>
-        <div className="neijing-side-stack">
-          {sidePanel}
-          <div className="human-map-copy neijing-copy">
-            <div className="neijing-detail-head">
-              <span className="eyebrow">{activeStageIndex === currentGateIndex ? "Şu an bulunduğun kapı" : "İncelediğin kapı"}</span>
-              <span className="neijing-reward">{activeStage.reward}</span>
-            </div>
-            <div className="item-title">{activeStage.title}</div>
-            <div className="map-journey-strip">
-              <span>Şu an</span>
-              <strong>{currentGateIndex + 1}</strong>
-              <span>incelediğin</span>
-              <strong>{activeStageIndex + 1}</strong>
-            </div>
-            <div className="item-subtitle">{personalFeedback}</div>
-            <div className={`map-reveal-note ${activeStageIndex === currentGateIndex ? "map-reveal-note-open" : ""}`}>
-              {activeStageIndex === currentGateIndex
-                ? `Bugün ${selectedShen.dailyName} seni bu kapıya getiriyor. Altın halkalı işaret haritadaki mevcut konumun.`
-                : `Şu anki kapın ${selectedShen.mapTitle}. Bu alanı bilgi edinmek için inceliyorsun; altın halkalı işaret mevcut konumunu gösterir.`}
-            </div>
-            <div className="map-progress-meta">
-              <span>İncelenen kapı {activeStageIndex + 1} / {neijingStages.length}</span>
-              <strong>Mevcut kapı {currentGateIndex + 1}</strong>
-            </div>
-            <div className="progress-track">
-              <div className="progress-fill" style={{ width: `${mapProgress}%` }} />
-            </div>
-            <button className="secondary-action map-action" onClick={() => selectStage((activeStageIndex + 1) % neijingStages.length)} type="button">
-              Sonraki Kapı
-            </button>
+        <div className="journey-gate-panel">
+          <div className="journey-gate-panel-heading">
+            <span className="eyebrow">KAPI {activeStageIndex + 1} · {activeGate.name}</span>
+            <h3 aria-live="polite" className="journey-gate-completion-line">%{activeGate.percent} <small>({activeGate.completedCount}/{activeGate.mappedCount} hareket)</small></h3>
+            <div className="journey-gate-progress" role="progressbar" aria-label={`${activeGate.name} hareket tamamlama oranı`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={activeGate.percent}><span style={{ width: `${activeGate.percent}%` }} /></div>
+            <div className="journey-gate-outcome"><span>BEDENİNDE NEYE BAKMALI?</span><p>{activeGuidance.outcome}</p></div>
           </div>
+          <div className="journey-gate-panel-title"><div><span className="eyebrow">BU KAPIYLA İLGİLİ</span><h4>Hareket videoları</h4></div><span>{selectedMovements.length} video</span></div>
+          <div className="journey-gate-video-grid">{selectedMovements.map((movement) => <article className="journey-gate-video-card" key={movement.order}>
+            <div className="journey-gate-video-media">
+              {playingOrder === movement.order ? <video autoPlay controls playsInline poster={`/images/shibashi-new/${movement.order}.jpg`} src={`/videos/shibashi/${movement.order}.mp4`} /> : <button aria-label={`${movement.sourceTitle} videosunu oynat`} onClick={() => setPlayingOrder(movement.order)} type="button"><NextImage alt="" fill sizes="(max-width: 700px) 100vw, 30vw" src={`/images/shibashi-new/${movement.order}.jpg`} /><span aria-hidden="true">▶</span></button>}
+              {completed.has(movement.order) ? <span className="journey-gate-completed" aria-label="Tamamlandı">✓ Tamamlandı</span> : null}
+            </div>
+            <div className="journey-gate-video-copy"><small>HAREKET {String(movement.order).padStart(2, "0")}</small><strong>{movement.sourceTitle}</strong></div>
+          </article>)}</div>
         </div>
       </div>
     </div>
     </>
   );
-}
-
-function getPersonalMapFeedback(stage: NeijingStage, selectedShen: (typeof fiveShen)[number], stageIndex: number, bodyRevealed: boolean) {
-  const tone = stage.shenId ? getShenById(stage.shenId) : selectedShen;
-  const nextStep = stageIndex < neijingStages.length - 1 ? neijingStages[stageIndex + 1]?.title : "üst kapı";
-  const gateCue = stageIndex <= selectedShen.mapStage
-    ? "Bu kapıda gereken temel beceriyi kazanmış görünüyorsun."
-    : "Bu kapı henüz hazırlık istiyor; önce nefes, ritim ve dikkat hattını sakinleştir.";
-
-  if (!bodyRevealed) {
-    return `${gateCue} Bugünkü ${selectedShen.dailyName} içinde ${tone.label.toLocaleLowerCase("tr-TR")} becerisi üzerinden ilerliyorsun. Geleneksel karşılığı: ${selectedShen.name}. Bir sonraki geçiş: ${nextStep}.`;
-  }
-
-  return `${gateCue} ${stage.text} Artık bu kapının bedenindeki karşılığını da görüyorsun. Bugünkü ${selectedShen.dailyName}, 5 Shen içinde ${selectedShen.name} hattına denk geliyor. Bir sonraki geçiş: ${nextStep}.`;
 }
 
 
@@ -213,6 +185,7 @@ export function FiveShenJourneyWeb({
   setReflections,
   setSavedSentences,
   userName,
+  userId,
 }: {
   activities: ShenActivity[];
   onNavigate: (tab: TabId) => void;
@@ -226,6 +199,7 @@ export function FiveShenJourneyWeb({
   setReflections: Dispatch<SetStateAction<DomainReflectionEntry[]>>;
   setSavedSentences: Dispatch<SetStateAction<SavedMasterSentence[]>>;
   userName: string;
+  userId?: string;
 }) {
   const [selected, setSelected] = useState<DomainShenId>(selectedShenId);
   const [view, setView] = useState<"overview" | "map" | "journey" | "directions" | "guides" | "detail" | "notebook">("map");
@@ -235,7 +209,6 @@ export function FiveShenJourneyWeb({
   const [sentenceFilter, setSentenceFilter] = useState<"all" | DomainShenId>("all");
   const progresses = useMemo(() => shenProfiles.map((profile) => calculateShenProgress(activities, profile.id)), [activities]);
   const profile = getShenProfile(selected);
-  const selectedMapShen = getShenById(selected === "xin" ? "shen" : selected);
   const progress = progresses.find((item) => item.shenId === selected) ?? progresses[0];
   const practices = getPracticeForShen(selected);
   const practice = practices[0];
@@ -293,10 +266,10 @@ export function FiveShenJourneyWeb({
     return (
       <section className="screen shen-journey-screen journey-framework-screen">
         <header className="shen-journey-header">
-          <div><span className="eyebrow">Haritan · Sekiz beden kapısı</span><h1>Bedenindeki kapıları gör.</h1><p>Kapılara dokun; beden bölgesini, günlük karşılığını ve mini pratiğini aç. Altın halka şu an bulunduğun kapıyı gösterir.</p></div>
+          <div><span className="eyebrow">Haritan · Sekiz beden kapısı</span><h1>Bedenindeki kapıları gör.</h1><p>Kapılara dokun; kapı bilgisini, ilgili videoları ve tamamlanma oranını gör. Altın halka en çok ilerlediğin kapıyı gösterir.</p></div>
           <button className="secondary-action" onClick={() => setView("overview")} type="button">Kişisel pusulaya geç</button>
         </header>
-        <HumanMap selectedShen={selectedMapShen} />
+        <HumanMap userId={userId} />
       </section>
     );
   }
@@ -313,7 +286,7 @@ export function FiveShenJourneyWeb({
           <button className="journey-framework-card journey-framework-card-map" onClick={() => setView("map")} style={{ "--journey-accent": profile.primaryColor } as CSSProperties} type="button">
             <span className="journey-framework-number">00</span><span className="journey-framework-symbol">身</span>
             <small>BEDEN HARİTAN</small><h2>8 Kapı</h2><p>Bedenimde şu an hangi kapı açık?</p>
-            <strong>{selectedMapShen.mapTitle}</strong><em>Haritayı aç →</em>
+            <strong>Peng · Lü · Kao · Ji · Zhou · An · Lie · Cai</strong><em>Haritayı aç →</em>
           </button>
           <span className="journey-framework-connector" aria-hidden="true">→</span>
           <button className="journey-framework-card journey-framework-card-shen" onClick={() => setView("journey")} style={{ "--journey-accent": profile.primaryColor } as CSSProperties} type="button">

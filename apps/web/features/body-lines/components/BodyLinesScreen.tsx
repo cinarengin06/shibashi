@@ -15,7 +15,7 @@ import { MilestoneCelebration } from "@/features/home/components/MilestoneCelebr
 import type { PracticeSnapshot } from "@/features/practice/types";
 import { deletePracticeSnapshotFromIndexedDb, loadPracticeSnapshotsFromIndexedDb, mergePracticeSnapshots, persistPracticeSnapshotsToLocalStorage, rememberDeletedPracticeSnapshot, savePracticeSnapshotToIndexedDb } from "@/lib/local-history-storage";
 import { isCapturedPracticePhoto } from "@/features/home/utils/practice-photo";
-import { markMovementCompleted } from "@/lib/movement-completion";
+import { loadCompletedMovements, markMovementCompleted } from "@/lib/movement-completion";
 import { loadFormSteps, markFormStep } from "@/lib/form-steps";
 import type { FormSteps } from "@/packages/gamification";
 import { useShibashiAuth } from "@/lib/supabase-auth";
@@ -35,7 +35,7 @@ function rememberPracticeSession(snapshot: PracticeSnapshot) {
       shenId: toDomainShenId(window.localStorage.getItem("ritim-kapisi-selected-shen") ?? "shen"),
       type: "practice",
       createdAt: snapshot.createdAt,
-      completed: true,
+      completed: false,
       movementQuality: snapshot.score,
       practiceId: `movement-${snapshot.movementId}`,
     };
@@ -130,7 +130,9 @@ export function BodyLinesScreen() {
   const { ready: authReady, user } = useShibashiAuth();
   const [movementOrder, setMovementOrder] = useState(1);
   const [formSteps, setFormSteps] = useState<FormSteps>({});
+  const [completedOrders, setCompletedOrders] = useState<number[]>([]);
   useEffect(() => { setFormSteps(loadFormSteps(user?.id)); }, [user?.id]);
+  useEffect(() => { setCompletedOrders(loadCompletedMovements(user?.id)); }, [user?.id]);
   useEffect(() => {
     const requested = Number(new URLSearchParams(window.location.search).get("movementOrder"));
     if (Number.isInteger(requested) && requested >= 1 && requested <= 18) setMovementOrder(requested);
@@ -171,7 +173,6 @@ export function BodyLinesScreen() {
   const savePhoto = useCallback(async (snapshot: PracticeSnapshot) => {
     const saved = await savePracticeSnapshotToIndexedDb(snapshot);
     if (!saved) { setPhotoSaveError(true); return false; }
-    try { markMovementCompleted(snapshot.movementId, user?.id); } catch { /* The photo was saved; keep the camera flow running if progress storage is unavailable. */ }
     rememberPracticeSession(snapshot);
     setPhotoSaveError(false);
     setPhotos((current) => {
@@ -230,11 +231,19 @@ export function BodyLinesScreen() {
   const keepCurrentMovement = useCallback(() => {}, []);
   const movementSteps = meridianLivingSteps[movementOrder - 1];
   const currentFormSteps = formSteps[movementOrder] ?? {};
-  const completedHere = photos.some((photo) => photo.movementId === movementOrder);
+  const completedHere = completedOrders.includes(movementOrder);
+  const completeCurrentForm = () => {
+    if (completedHere) return;
+    try {
+      const next = markMovementCompleted(movementOrder, user?.id);
+      setCompletedOrders(next);
+      setFormSteps(markFormStep(movementOrder, "completed", user?.id));
+    } catch { /* Keep the action available if local storage cannot be written. */ }
+  };
 
   return (
     <main className={styles.page}>
-      {authReady && !miniCameraOpen ? <MilestoneCelebration records={photos.map((item) => ({ order: item.movementId, date: item.createdAt }))} postureCount={0} userId={user?.id} /> : null}
+      {authReady && !miniCameraOpen ? <MilestoneCelebration records={completedOrders.map((order) => ({ order, date: photos.find((item) => item.movementId === order)?.createdAt ?? new Date().toISOString() }))} postureCount={0} userId={user?.id} /> : null}
       <div className={styles.workspace}>
         <aside className={styles.rail} aria-label="Hareket adımları">
           <div className={styles.railHead}>
@@ -247,8 +256,8 @@ export function BodyLinesScreen() {
           <div className={styles.formJourney} aria-label={`${movementOrder}. form yolculuğu`}>
             <strong>FORM YOLCULUĞUN</strong>
             <button aria-pressed={Boolean(currentFormSteps.watched)} onClick={() => setFormSteps(markFormStep(movementOrder, "watched", user?.id))} type="button"><span>{currentFormSteps.watched ? "✓" : "○"}</span> Hocayı izledim</button>
-            <span>{currentFormSteps.attempted ? "✓" : "○"} Kamerayla denedim</span>
-            <span>{completedHere ? "✓" : "○"} Formu tamamladım</span>
+            <button aria-pressed={Boolean(currentFormSteps.attempted)} onClick={() => setFormSteps(markFormStep(movementOrder, "attempted", user?.id))} type="button"><span>{currentFormSteps.attempted ? "✓" : "○"}</span> Kamerayla denedim</button>
+            <button aria-pressed={completedHere} onClick={completeCurrentForm} type="button"><span>{completedHere ? "✓" : "○"}</span> Formu tamamladım</button>
           </div>
           <div className={styles.practiceActions}>
             <button disabled={videoUnavailable} onClick={() => playNarratedVideo(true)} type="button">▶ Sesli videoyu oynat <span>↗</span></button>
@@ -323,7 +332,7 @@ export function BodyLinesScreen() {
       <section className={styles.movementSelector} aria-label="18 hareket">
         <div className={styles.selectorHeading}><span className={styles.eyebrow}>HAREKET ŞERİDİ</span><strong>Şu an 18 hareketin {movementOrder}. hareketindesin.</strong><button onClick={() => stepMovement(1)} type="button">Sonraki harekete geç →</button></div>
         <div className={styles.movementTiles}>
-          {meridianMovements.map((item) => <button aria-current={item.order === movementOrder ? "step" : undefined} aria-label={`${item.order}. form: ${item.sourceTitle}, ${photos.some((photo) => photo.movementId === item.order) ? "tamamlandı" : formSteps[item.order]?.attempted ? "denendi" : formSteps[item.order]?.watched ? "izlendi" : "başlanmadı"}`} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/shibashi-new/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><b className={styles.tileProgress}>{photos.some((photo) => photo.movementId === item.order) ? "✓ Tamamlandı" : formSteps[item.order]?.attempted ? "◉ Denendi" : formSteps[item.order]?.watched ? "◌ İzlendi" : ""}</b><strong>{item.sourceTitle}</strong></button>)}
+          {meridianMovements.map((item) => <button aria-current={item.order === movementOrder ? "step" : undefined} aria-label={`${item.order}. form: ${item.sourceTitle}, ${completedOrders.includes(item.order) ? "tamamlandı" : formSteps[item.order]?.attempted ? "denendi" : formSteps[item.order]?.watched ? "izlendi" : "başlanmadı"}`} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/shibashi-new/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><b className={styles.tileProgress}>{completedOrders.includes(item.order) ? "✓ Tamamlandı" : formSteps[item.order]?.attempted ? "◉ Denendi" : formSteps[item.order]?.watched ? "◌ İzlendi" : ""}</b><strong>{item.sourceTitle}</strong></button>)}
         </div>
       </section>
       {galleryOpen ? <div className={styles.galleryBackdrop} onClick={() => { setGalleryOpen(false); setSelectedPhoto(null); }} role="presentation">

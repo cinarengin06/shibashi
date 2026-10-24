@@ -1,4 +1,4 @@
-export type FormStep = "watched" | "attempted";
+export type FormStep = "watched" | "attempted" | "completed";
 export type FormSteps = Record<number, Partial<Record<FormStep, boolean>>>;
 export type FormRecord = { order: number; date: string };
 export type EarnedMilestone = { id: string; earnedAt: string };

@@ -17,7 +17,7 @@ import { safeMediaAction } from '../services/safeMediaAction';
 import { compareShibashiPose, referenceAt, type ReferenceMovement } from '../services/pose/shibashiComparison';
 import { MediaPipePoseBridge, type MediaPipePoseBridgeRef, type PoseLandmark } from '../services/pose/MediaPipePoseBridge';
 import { deleteShibashiPhoto, loadShibashiPhotos, saveShibashiPhoto, type ShibashiPhoto } from '../services/shibashiPhotos';
-import { markMovementCompleted } from '../services/movementCompletion';
+import { loadCompletedMovements, markMovementCompleted } from '../services/movementCompletion';
 import { loadFormSteps, markFormStep } from '../services/formSteps';
 import type { FormSteps } from '../../../packages/gamification';
 import referenceData from '../data/teacherPoseSamples.json';
@@ -25,7 +25,8 @@ import { shenThemes } from '../../../packages/design-tokens';
 import { useApp } from '../store/AppStore';
 import { KeepAwakeWhileCamera } from './navigation/KeepAwakeWhileCamera';
 
-const targetKey = 'shibashi-learning-target-score';
+const targetKey = 'shibashi-learning-target-score-v2';
+const minimumTarget = 50;
 const references = referenceData as unknown as Record<string, ReferenceMovement>;
 const links: [number, number][] = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
 const dots = [0,11,12,13,14,15,16,23,24,25,26,27,28];
@@ -43,8 +44,10 @@ export function BodyLinesScreen() {
   const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const [photos, setPhotos] = useState<ShibashiPhoto[]>([]);
+  const [completedOrders, setCompletedOrders] = useState<number[]>([]);
   const [selected, setSelected] = useState<ShibashiPhoto | null>(null);
   useEffect(() => { void loadShibashiPhotos().then(setPhotos); }, []);
+  useEffect(() => { void loadCompletedMovements(profile.authUserId).then(setCompletedOrders); }, [profile.authUserId]);
   const choose = (next: number) => {
     if (next === order || next < 1 || next > 18) return;
     if (switchTimer.current) clearTimeout(switchTimer.current);
@@ -63,15 +66,15 @@ export function BodyLinesScreen() {
   ]);
   return <SafeAreaView style={[s.root,{backgroundColor:theme.surface}]} edges={[]}><ScrollView ref={scrollRef} contentContainerStyle={s.page} showsVerticalScrollIndicator={false}>
     <View style={s.top}><Pressable accessibilityLabel="Odam'a dön" onPress={() => router.replace('/(tabs)')} style={s.icon}><Ionicons name="arrow-back" size={23} color={colors.cream}/></Pressable><Text style={s.topTitle}>18 Form</Text><Pressable accessibilityLabel="Fotoğraflarım" onPress={() => { void loadShibashiPhotos().then(setPhotos); }} style={s.icon}><Ionicons name="images-outline" size={22} color={colors.cream}/></Pressable></View>
-    {!switching&&<MovementStage key={order} order={order} completed={photos.some(photo => photo.order === order)} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>}
+    {!switching&&<MovementStage key={order} order={order} completed={completedOrders.includes(order)} onComplete={completed => setCompletedOrders(items => [...new Set([...items, completed])])} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>}
     <Text style={s.sectionTitle}>18 Form</Text>
-    <View style={s.grid}>{meridianMovements.map(item => <Pressable key={item.order} onPress={() => choose(item.order)} style={[s.tile, item.order === order && s.tileActive]} accessibilityLabel={`${item.order}. form: ${item.sourceTitle}, ${photos.some(photo => photo.order === item.order)?'tamamlandı':'başlanmadı'}`} accessibilityState={{ selected: item.order === order }}><Image source={shibashiPosters[item.order]} style={s.tileImage}/><View style={s.tileShade}/><Text style={s.tileNumber}>{String(item.order).padStart(2,'0')}</Text>{photos.some(photo => photo.order === item.order) && <Text style={{ position:'absolute',right:6,top:6,color:'#A8DCB3',backgroundColor:'rgba(3,15,10,.85)',paddingHorizontal:5,paddingVertical:3,borderRadius:5,fontSize:10,fontWeight:'800' }}>✓ Tamamlandı</Text>}<Text numberOfLines={2} style={s.tileTitle}>{item.sourceTitle}</Text></Pressable>)}</View>
+    <View style={s.grid}>{meridianMovements.map(item => <Pressable key={item.order} onPress={() => choose(item.order)} style={[s.tile, item.order === order && s.tileActive]} accessibilityLabel={`${item.order}. form: ${item.sourceTitle}, ${completedOrders.includes(item.order)?'tamamlandı':'başlanmadı'}`} accessibilityState={{ selected: item.order === order }}><Image source={shibashiPosters[item.order]} style={s.tileImage}/><View style={s.tileShade}/><Text style={s.tileNumber}>{String(item.order).padStart(2,'0')}</Text>{completedOrders.includes(item.order) && <Text style={{ position:'absolute',right:6,top:6,color:'#A8DCB3',backgroundColor:'rgba(3,15,10,.85)',paddingHorizontal:5,paddingVertical:3,borderRadius:5,fontSize:10,fontWeight:'800' }}>✓ Tamamlandı</Text>}<Text numberOfLines={2} style={s.tileTitle}>{item.sourceTitle}</Text></Pressable>)}</View>
     <View style={s.galleryHead}><Text style={s.sectionTitle}>Fotoğraflarım</Text><Text style={s.muted}>{photos.length} fotoğraf</Text></View>
     {photos.length ? <View style={s.photoGrid}>{photos.map(photo => <Pressable key={photo.id} onPress={() => setSelected(photo)} style={s.photoTile}><Image source={{uri:photo.uri}} style={s.photoImage}/><Text style={s.photoScore}>%{photo.score}</Text></Pressable>)}</View> : <Text style={s.muted}>Hareket sırasında hedef uyuma ulaştığında fotoğrafların burada görünür.</Text>}
   </ScrollView><Modal visible={!!selected} transparent animationType="fade" onRequestClose={() => setSelected(null)}><View style={s.modal}><Pressable onPress={() => setSelected(null)} style={s.modalClose}><Ionicons name="close" size={26} color="white"/></Pressable>{selected && <><Image source={{uri:selected.uri}} style={s.modalImage} resizeMode="contain"/><Text style={s.modalTitle}>{selected.name} · %{selected.score}</Text><Text style={s.muted}>{new Date(selected.savedAt).toLocaleString('tr-TR')}</Text><Pressable onPress={() => removePhoto(selected)} style={s.delete}><Ionicons name="trash-outline" size={18} color="white"/><Text style={s.deleteText}>Fotoğrafı sil</Text></Pressable></>}</View></Modal></SafeAreaView>;
 }
 
-function MovementStage({ order, completed, onNext, onPhoto }: { order: number; completed: boolean; onNext: () => void; onPhoto: (photo: ShibashiPhoto) => void }) {
+function MovementStage({ order, completed, onComplete, onNext, onPhoto }: { order: number; completed: boolean; onComplete: (order:number) => void; onNext: () => void; onPhoto: (photo: ShibashiPhoto) => void }) {
   const {profile} = useApp();
   const theme = shenThemes[profile.selectedShenId];
   const movement = meridianMovements.find(item => item.order === order) ?? meridianMovements[0];
@@ -89,14 +92,15 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const scoreRef = useRef<number | null>(null);
-  const [target, setTarget] = useState(70);
-  const targetRef = useRef(70);
+  const [target, setTarget] = useState(minimumTarget);
+  const targetRef = useRef(minimumTarget);
+  const targetSaveTimer = useRef<ReturnType<typeof setTimeout>|null>(null);
   const [message, setMessage] = useState('Hoca videosunu izle, ardından kameranla uyumunu gör.');
   const [pose, setPose] = useState<PoseLandmark[]>([]);
+  const [poseImageSize, setPoseImageSize] = useState({width:1,height:1});
   const [jointScores, setJointScores] = useState<Record<number,number>>({});
   const [cameraSize, setCameraSize] = useState({width:1,height:1});
   const [miniBounds, setMiniBounds] = useState({width:0,height:0});
-  const [progressWidth, setProgressWidth] = useState(1);
   const [celebration, setCelebration] = useState<{emoji:string;text:string}|null>(null);
   const [photoCount, setPhotoCount] = useState(0);
   const [succeeded, setSucceeded] = useState(false);
@@ -112,10 +116,12 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
   const bestScore = useRef(0);
   const lastPose = useRef<{user:PoseLandmark[];teacher:NonNullable<ReturnType<typeof referenceAt>>}|null>(null);
   const completeRef = useRef(false);
-  useEffect(() => { void AsyncStorage.getItem(targetKey).then(value => { const saved = Number(value); if (value && saved >= 0 && saved <= 100) { const safe = Math.max(70, saved); setTarget(safe); targetRef.current = safe; } }); }, []);
+  useEffect(() => { void AsyncStorage.getItem(targetKey).then(value => { const saved = Number(value); if (value !== null && Number.isFinite(saved) && saved >= minimumTarget && saved <= 100) { setTarget(saved); targetRef.current = saved; } }); }, []);
+  useEffect(() => () => { if (targetSaveTimer.current) clearTimeout(targetSaveTimer.current); }, []);
   useEffect(() => () => { phaseRef.current='watch'; void Speech.stop(); if (celebrationTimer.current) clearTimeout(celebrationTimer.current); }, [player]);
   useEffect(() => { const listener = player.addListener('playingChange', ({isPlaying}) => setVideoPlaying(isPlaying)); return () => listener.remove(); }, [player]);
-  const updateTarget = (next:number) => { const value = Math.max(70,Math.min(100,Math.round(next/5)*5)); setTarget(value); targetRef.current = value; void AsyncStorage.setItem(targetKey,String(value)); };
+  const updateTarget = (next:number) => { const value = Math.max(minimumTarget,Math.min(100,Math.round(next/5)*5)); setTarget(value); targetRef.current = value; if (targetSaveTimer.current) clearTimeout(targetSaveTimer.current); targetSaveTimer.current=setTimeout(() => { void AsyncStorage.setItem(targetKey,String(targetRef.current)); },180); };
+  const completeForm = () => { if (completed) return; void markMovementCompleted(order, profile.authUserId).then(() => { onComplete(order); void markFormStep(order,'completed',profile.authUserId).then(setFormSteps); void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); }).catch(() => setMessage('Tamamlama kaydedilemedi. Yeniden dene.')); };
   const speak = (text:string, done?:()=>void) => { void Speech.stop(); Speech.speak(text,{language:'tr-TR',rate:.86,onDone:done,onError:done}); };
   const begin = async () => {
     if (!permission?.granted) { const response = await requestPermission(); if (!response.granted) { Alert.alert('Kamera izni gerekli','Kamerayı açmak için izin vermelisin.'); return; } }
@@ -149,11 +155,13 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
         const analysis = await bridgeRef.current.analyze(capture.base64);
         if (cancelled) return;
         setPose(analysis.landmarks);
+        setPoseImageSize({width:analysis.imageWidth,height:analysis.imageHeight});
         const videoSeconds = player.currentTime;
         const teacher = referenceAt(reference,videoSeconds);
         if (!teacher) throw new Error('Bu video için referans poz bulunamadı.');
         const previous = lastPose.current;
         const comparison = compareShibashiPose(analysis.landmarks,teacher,analysis.imageWidth/analysis.imageHeight,reference.aspect,previous ?? undefined);
+        setJointScores(comparison.joints);
         if (!comparison.fullBody) {
           setMessage('Bedenini kamerada göstermek için biraz geri çekil.');
           if (phaseRef.current === 'playing' || phaseRef.current === 'mini') { setScore(null); scoreRef.current=null; lastPose.current=null; }
@@ -167,7 +175,6 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
         } else if ((phaseRef.current === 'playing' || phaseRef.current === 'mini') && comparison.score !== null) {
           sampleCount.current++;
           lastPose.current={user:analysis.landmarks,teacher};
-          setJointScores(comparison.joints);
           bestScore.current=Math.max(bestScore.current,comparison.score);
           const previousScore=scoreRef.current;
           const smoothed=previousScore===null?Math.min(35,comparison.score):previousScore+Math.max(-6,Math.min(6,comparison.score-previousScore));
@@ -178,7 +185,6 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
             photoPending.current=true;
             const session = captureSession.current;
             void saveShibashiPhoto(capture.uri,order,movement.sourceTitle,comparison.score).then(photo => {
-              void markMovementCompleted(order, profile.authUserId).catch(() => {});
               onPhoto(photo);
               if (session !== captureSession.current) return;
               photoCountRef.current++;
@@ -202,19 +208,19 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
   return <View style={[s.stage,{backgroundColor:theme.surface,borderColor:`${theme.primary}55`}]}>
     {phase!=='watch' && phase!=='result' && <KeepAwakeWhileCamera />}
     <Text style={[s.number,{color:theme.primary}]}>HAREKET {String(order).padStart(2,'0')} / 18</Text><Text style={s.title}>{movement.sourceTitle}</Text>
-    <View style={{ backgroundColor:theme.surfaceRaised, borderColor:`${theme.primary}55`, borderWidth:1, borderRadius:14, padding:13, gap:9, marginBottom:12 }}><Text style={{ color:theme.button, fontSize:11, fontWeight:'800', letterSpacing:1 }}>FORM YOLCULUĞUN</Text><Pressable accessibilityRole="button" accessibilityState={{ selected:Boolean(formSteps[order]?.watched) }} onPress={() => { void markFormStep(order,'watched',profile.authUserId).then(setFormSteps); }}><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.watched?'✓':'○'}  Hocayı izledim</Text></Pressable><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.attempted?'✓':'○'}  Kamerayla denedim</Text><Text style={{ color:colors.cream, fontSize:14 }}>{completed?'✓':'○'}  Formu tamamladım</Text></View>
+    <View style={{ backgroundColor:theme.surfaceRaised, borderColor:`${theme.primary}55`, borderWidth:1, borderRadius:14, padding:13, gap:9, marginBottom:12 }}><Text style={{ color:theme.button, fontSize:11, fontWeight:'800', letterSpacing:1 }}>FORM YOLCULUĞUN</Text><Pressable accessibilityRole="button" accessibilityState={{ selected:Boolean(formSteps[order]?.watched) }} onPress={() => { void markFormStep(order,'watched',profile.authUserId).then(setFormSteps); }}><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.watched?'✓':'○'}  Hocayı izledim</Text></Pressable><Pressable accessibilityRole="button" accessibilityState={{ selected:Boolean(formSteps[order]?.attempted) }} onPress={() => { void markFormStep(order,'attempted',profile.authUserId).then(setFormSteps); }}><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.attempted?'✓':'○'}  Kamerayla denedim</Text></Pressable><Pressable accessibilityRole="button" accessibilityState={{ selected:completed }} onPress={completeForm}><Text style={{ color:completed?colors.jade:colors.cream, fontSize:14, fontWeight:'800' }}>{completed?'✓':'○'}  Formu tamamladım</Text></Pressable></View>
     {phase==='watch' && <View style={s.steps}>{(steps.length ? steps : ['Önce hocayı izle, sonra kameranla kendi ritmini takip et.']).map((step,index)=><Text key={`${order}-${index}`} style={s.step}>{index+1}. {step}</Text>)}</View>}
     <View style={[s.mediaRow,(phase === 'watch' || phase === 'mini') && s.mediaOnly]}>
       <View style={s.media} onLayout={event => { const {width,height}=event.nativeEvent.layout; setMiniBounds(current => current.width===width && current.height===height ? current : {width,height}); }}>
         <VideoView player={player} style={s.video} contentFit="contain" nativeControls={phase==='watch'||phase==='mini'} surfaceType="textureView"/>
         <Text style={s.mediaLabel}>HOCA</Text>
         {(phase==='watch'||phase==='mini') && !videoPlaying && <Pressable onPress={() => safeMediaAction(() => player.play())} style={s.playOverlay}><Ionicons name="play" size={35} color={colors.ink}/></Pressable>}
-        {phase==='mini' && <MovableMiniCamera bounds={miniBounds} cameraRef={cameraRef} onClose={closeMini} score={score} target={target}/>}
+        {phase==='mini' && <MovableMiniCamera bounds={miniBounds} cameraRef={cameraRef} onClose={closeMini} score={score} target={target} pose={pose} jointScores={jointScores} imageSize={poseImageSize}/>}
       </View>
-      {phase!=='watch' && phase!=='mini' && <View style={s.media}><CameraView ref={cameraRef} facing="front" flash="off" enableTorch={false} mirror active={phase!=='result'} style={s.camera}/><View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={event => setCameraSize(event.nativeEvent.layout)}><PoseOverlay pose={pose} scores={jointScores} target={target} width={cameraSize.width} height={cameraSize.height}/></View><Text style={s.mediaLabel}>SEN</Text>{phase==='framing' && <View pointerEvents="none" style={s.warning}><Text style={s.warningText}>Bedenini kamerada göstermek için biraz geri çekil.</Text></View>}</View>}
+      {phase!=='watch' && phase!=='mini' && <View style={s.media}><CameraView ref={cameraRef} facing="front" flash="off" enableTorch={false} mirror active={phase!=='result'} style={s.camera}/><View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={event => setCameraSize(event.nativeEvent.layout)}><PoseOverlay pose={pose} scores={jointScores} target={target} width={cameraSize.width} height={cameraSize.height} imageSize={poseImageSize}/></View><Text style={s.mediaLabel}>SEN</Text>{phase==='framing' && <View pointerEvents="none" style={s.warning}><Text style={s.warningText}>Bedenini kamerada göstermek için biraz geri çekil.</Text></View>}</View>}
     </View>
-    {(phase==='watch'||phase==='mini') && <><Pressable onPress={() => safeMediaAction(() => videoPlaying?player.pause():player.play())} style={s.secondary}><Ionicons name={videoPlaying?'pause':'play'} size={20} color={colors.cream}/><Text style={s.secondaryText}>{videoPlaying?'Videoyu duraklat':'Hoca videosunu sesli oynat'}</Text></Pressable><Pressable onPress={() => { if (phase==='mini') closeMini(); else void openMini(); }} style={[s.primary,{backgroundColor:theme.button}]}><Ionicons name={phase==='mini'?'close':'camera-outline'} size={20} color={theme.buttonInk}/><Text style={[s.primaryText,{color:theme.buttonInk}]}>{phase==='mini'?'Küçük kamerayı kapat':'Kameramla uyumumu gör'}</Text></Pressable>{phase==='mini' && <View style={[s.targetSetting,{borderColor:`${theme.primary}55`,backgroundColor:theme.surfaceRaised}]}><View style={s.targetRow}><Text style={s.muted}>Hedef uyum: %{target}</Text><View style={s.targetButtons}><Pressable accessibilityLabel="Hedefi azalt" onPress={() => updateTarget(target-5)} style={s.targetButton}><Ionicons name="remove" size={20} color={colors.cream}/></Pressable><Pressable accessibilityLabel="Hedefi artır" onPress={() => updateTarget(target+5)} style={s.targetButton}><Ionicons name="add" size={20} color={colors.cream}/></Pressable></View></View><View style={s.progress} accessibilityRole="adjustable" accessibilityLabel="Hedef uyum" accessibilityValue={{min:70,max:100,now:target}} onAccessibilityAction={event => updateTarget(target+(event.nativeEvent.actionName==='increment'?5:-5))} accessibilityActions={[{name:'increment'},{name:'decrement'}]} onLayout={event => setProgressWidth(event.nativeEvent.layout.width)} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={event => updateTarget(event.nativeEvent.locationX/progressWidth*100)} onResponderMove={event => updateTarget(event.nativeEvent.locationX/progressWidth*100)} onResponderRelease={event => updateTarget(event.nativeEvent.locationX/progressWidth*100)}><View style={[s.progressFill,{width:`${score??0}%`,backgroundColor:score!==null&&score>=target?theme.primary:theme.button}]}/><View style={[s.targetMark,{left:`${target}%`}]}/></View><Text style={s.muted}>Hedefe ulaştığında üç fotoğraf kaydedilir.</Text></View>}</>}
-    {phase!=='watch' && phase!=='mini' && <><View style={s.scoreRow}><View><Text style={s.scoreLabel}>CANLI UYUM</Text><Text style={[s.score,{color:score!==null && score>=target?colors.jade:colors.cream}]}>{score===null?'—':`%${score}`}</Text></View><Text style={s.photoCounter}>{photoCount}/3 fotoğraf</Text></View><View style={s.progress} accessibilityRole="adjustable" accessibilityLabel="Hedef uyum" accessibilityValue={{min:70,max:100,now:target}} onAccessibilityAction={event => updateTarget(target + (event.nativeEvent.actionName==='increment'?5:-5))} accessibilityActions={[{name:'increment'},{name:'decrement'}]} onLayout={event => setProgressWidth(event.nativeEvent.layout.width)} onStartShouldSetResponder={() => true} onMoveShouldSetResponder={() => true} onResponderGrant={event => updateTarget(event.nativeEvent.locationX/progressWidth*100)} onResponderMove={event => { const next=Math.max(70,Math.min(100,Math.round(event.nativeEvent.locationX/progressWidth*20)*5)); setTarget(next); targetRef.current=next; }} onResponderRelease={event => updateTarget(event.nativeEvent.locationX/progressWidth*100)}><View style={[s.progressFill,{width:`${score??0}%`,backgroundColor:score!==null&&score>=target?colors.jade:colors.gold}]}/><View style={[s.targetMark,{left:`${target}%`}]}/></View><View style={s.targetRow}><Text style={s.muted}>Hedef uyum: %{target}</Text><View style={s.targetButtons}><Pressable accessibilityLabel="Hedefi azalt" onPress={() => updateTarget(target-5)} style={s.targetButton}><Ionicons name="remove" size={20} color={colors.cream}/></Pressable><Pressable accessibilityLabel="Hedefi artır" onPress={() => updateTarget(target+5)} style={s.targetButton}><Ionicons name="add" size={20} color={colors.cream}/></Pressable></View></View><Text style={s.message}>{message}</Text>{celebration && <Text style={s.celebration}>{celebration.emoji} {celebration.text}</Text>}</>}
+    {(phase==='watch'||phase==='mini') && <><Pressable onPress={() => safeMediaAction(() => videoPlaying?player.pause():player.play())} style={s.secondary}><Ionicons name={videoPlaying?'pause':'play'} size={20} color={colors.cream}/><Text style={s.secondaryText}>{videoPlaying?'Videoyu duraklat':'Hoca videosunu sesli oynat'}</Text></Pressable><Pressable onPress={() => { if (phase==='mini') closeMini(); else void openMini(); }} style={[s.primary,{backgroundColor:theme.button}]}><Ionicons name={phase==='mini'?'close':'camera-outline'} size={20} color={theme.buttonInk}/><Text style={[s.primaryText,{color:theme.buttonInk}]}>{phase==='mini'?'Küçük kamerayı kapat':'Kameramla uyumumu gör'}</Text></Pressable>{phase==='mini' && <View style={[s.targetSetting,{borderColor:`${theme.primary}55`,backgroundColor:theme.surfaceRaised}]}><View style={s.targetRow}><Text style={s.muted}>Hedef uyum: %{target}</Text><View style={s.targetButtons}><Pressable accessibilityLabel="Hedefi azalt" onPress={() => updateTarget(target-5)} style={s.targetButton}><Ionicons name="remove" size={20} color={colors.cream}/></Pressable><Pressable accessibilityLabel="Hedefi artır" onPress={() => updateTarget(target+5)} style={s.targetButton}><Ionicons name="add" size={20} color={colors.cream}/></Pressable></View></View><TargetScoreControl target={target} score={score} onChange={updateTarget} /><Text style={s.muted}>Hedefe ulaştığında üç fotoğraf kaydedilir.</Text></View>}</>}
+    {phase!=='watch' && phase!=='mini' && <><View style={s.scoreRow}><View><Text style={s.scoreLabel}>CANLI UYUM</Text><Text style={[s.score,{color:score!==null && score>=target?colors.jade:colors.cream}]}>{score===null?'—':`%${score}`}</Text></View><Text style={s.photoCounter}>{photoCount}/3 fotoğraf</Text></View><TargetScoreControl target={target} score={score} onChange={updateTarget} /><View style={s.targetRow}><Text style={s.muted}>Hedef uyum: %{target}</Text><View style={s.targetButtons}><Pressable accessibilityLabel="Hedefi azalt" onPress={() => updateTarget(target-5)} style={s.targetButton}><Ionicons name="remove" size={20} color={colors.cream}/></Pressable><Pressable accessibilityLabel="Hedefi artır" onPress={() => updateTarget(target+5)} style={s.targetButton}><Ionicons name="add" size={20} color={colors.cream}/></Pressable></View></View><Text style={s.message}>{message}</Text>{celebration && <Text style={s.celebration}>{celebration.emoji} {celebration.text}</Text>}</>}
     {phase==='result' && <View style={s.result}><Text style={s.resultTitle}>{succeeded?'Başardın!':'Yeniden deneyelim'}</Text><Text style={s.resultScore}>En yüksek uyum: %{bestScore.current}</Text><Pressable onPress={() => {void begin();}} style={s.secondary}><Ionicons name="refresh" size={20} color={colors.cream}/><Text style={s.secondaryText}>Tekrar dene</Text></Pressable>{succeeded && <Pressable onPress={onNext} style={s.primary}><Text style={s.primaryText}>Sıradaki hareket</Text><Ionicons name="arrow-forward" size={20} color={colors.ink}/></Pressable>}</View>}
     {phase==='framing' && <Pressable onPress={() => {setPhase('watch');safeMediaAction(() => player.pause());}} style={s.secondary}><Text style={s.secondaryText}>Videoya dön</Text></Pressable>}
     {(phase==='mini'||phase==='framing'||phase==='cue'||phase==='playing') && <MediaPipePoseBridge ref={bridgeRef}/>}
@@ -225,8 +231,9 @@ type MiniFrame = { x:number; y:number; width:number; height:number };
 type MiniCorner = 'move' | 'nw' | 'ne' | 'sw' | 'se';
 const fit = (value:number, low:number, high:number) => Math.max(low,Math.min(high,value));
 
-function MovableMiniCamera({bounds,cameraRef,onClose,score,target}:{bounds:{width:number;height:number};cameraRef:RefObject<CameraView|null>;onClose:()=>void;score:number|null;target:number}) {
+function MovableMiniCamera({bounds,cameraRef,onClose,score,target,pose,jointScores,imageSize}:{bounds:{width:number;height:number};cameraRef:RefObject<CameraView|null>;onClose:()=>void;score:number|null;target:number;pose:PoseLandmark[];jointScores:Record<number,number>;imageSize:{width:number;height:number}}) {
   const [frame,setFrame] = useState<MiniFrame>({x:0,y:0,width:145,height:193});
+  const [overlaySize,setOverlaySize] = useState({width:145,height:193});
   const frameRef = useRef(frame);
   const boundsRef = useRef(bounds);
   const startRef = useRef(frame);
@@ -269,6 +276,7 @@ function MovableMiniCamera({bounds,cameraRef,onClose,score,target}:{bounds:{widt
   },[]);
   return <View style={[s.miniCamera,bounds.width?{left:frame.x,top:frame.y,width:frame.width,height:frame.height}:{right:9,bottom:10,width:145,height:193}]}>
     <CameraView ref={cameraRef} facing="front" flash="off" enableTorch={false} mirror style={s.camera}/>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={event => { const {width,height}=event.nativeEvent.layout; setOverlaySize(current => current.width===width&&current.height===height?current:{width,height}); }}><PoseOverlay pose={pose} scores={jointScores} target={target} width={overlaySize.width} height={overlaySize.height} imageSize={imageSize} compact/></View>
     <View accessibilityLabel="Kamera penceresini taşı" accessibilityRole="adjustable" style={s.miniDragHandle} {...responders.move.panHandlers}><Text style={s.miniDragText}>⋮⋮  Taşı</Text></View>
     <Pressable accessibilityLabel="Küçük kamerayı kapat" onPress={onClose} style={s.miniClose}><Ionicons name="close" size={17} color="white"/></Pressable>
     <View pointerEvents="none" style={s.miniScore}><Text style={s.miniScoreLabel}>CANLI UYUM</Text><Text style={[s.miniScoreValue,{color:score!==null&&score>=target?colors.jade:colors.cream}]}>{score===null?'—':`%${score}`}</Text></View>
@@ -277,12 +285,40 @@ function MovableMiniCamera({bounds,cameraRef,onClose,score,target}:{bounds:{widt
   </View>;
 }
 
-function PoseOverlay({pose,scores,target,width,height}:{pose:PoseLandmark[];scores:Record<number,number>;target:number;width:number;height:number}) {
+function TargetScoreControl({target,score,onChange}:{target:number;score:number|null;onChange:(value:number)=>void}) {
+  const [width,setWidth] = useState(1);
+  const setFromTouch = (x:number) => onChange(x / width * 100);
+  return <View
+    accessibilityRole="adjustable"
+    accessibilityLabel="Hedef uyum"
+    accessibilityHint="Çubuğu sürükle veya artır ve azalt hareketlerini kullan"
+    accessibilityValue={{min:minimumTarget,max:100,now:target}}
+    accessibilityActions={[{name:'increment'},{name:'decrement'}]}
+    onAccessibilityAction={event => onChange(target+(event.nativeEvent.actionName==='increment'?5:-5))}
+    onLayout={event => setWidth(Math.max(1,event.nativeEvent.layout.width))}
+    onStartShouldSetResponder={() => true}
+    onMoveShouldSetResponder={() => true}
+    onResponderTerminationRequest={() => false}
+    onResponderGrant={event => setFromTouch(event.nativeEvent.locationX)}
+    onResponderMove={event => setFromTouch(event.nativeEvent.locationX)}
+    style={{height:44,justifyContent:'center'}}
+  >
+    <View pointerEvents="none" style={s.progress}>
+      <View style={[s.progressFill,{width:`${score??0}%`,backgroundColor:score!==null&&score>=target?colors.jade:colors.gold}]}/>
+      <View style={[s.targetMark,{left:`${target}%`,width:5}]}/>
+    </View>
+  </View>;
+}
+
+function PoseOverlay({pose,scores,target,width,height,imageSize,compact=false}:{pose:PoseLandmark[];scores:Record<number,number>;target:number;width:number;height:number;imageSize:{width:number;height:number};compact?:boolean}) {
   if (!pose.length) return null;
-  const x=(i:number)=> (1-pose[i].x)*width;
-  const y=(i:number)=> pose[i].y*height;
+  const scale=Math.max(width/Math.max(1,imageSize.width),height/Math.max(1,imageSize.height));
+  const drawnWidth=imageSize.width*scale, drawnHeight=imageSize.height*scale;
+  const offsetX=(width-drawnWidth)/2, offsetY=(height-drawnHeight)/2;
+  const x=(i:number)=> width-(pose[i].x*drawnWidth+offsetX);
+  const y=(i:number)=> pose[i].y*drawnHeight+offsetY;
   const color=(i:number)=>scores[i]===undefined?'#f0d88b':scores[i]>=target?'#80f5a2':'#ff7474';
-  return <Svg width={width} height={height}>{links.map(([a,b])=>pose[a]?.visibility>=.4&&pose[b]?.visibility>=.4?<Line key={`${a}-${b}`} x1={x(a)} y1={y(a)} x2={x(b)} y2={y(b)} stroke={Math.min(scores[a]??0,scores[b]??0)>=target?'#80f5a2':'#ff7474'} strokeWidth={3}/>:null)}{dots.map(i=>pose[i]?.visibility>=.4?<Circle key={i} cx={x(i)} cy={y(i)} r={4} fill={color(i)}/>:null)}</Svg>;
+  return <Svg width={width} height={height}>{links.map(([a,b])=>pose[a]?.visibility>=.4&&pose[b]?.visibility>=.4?<Line key={`${a}-${b}`} x1={x(a)} y1={y(a)} x2={x(b)} y2={y(b)} stroke={scores[a]===undefined||scores[b]===undefined?'#f0d88b':Math.min(scores[a],scores[b])>=target?'#80f5a2':'#ff7474'} strokeWidth={compact?3.5:3}/>:null)}{dots.map(i=>pose[i]?.visibility>=.4?<Circle key={i} cx={x(i)} cy={y(i)} r={compact?4.5:4} fill={color(i)}/>:null)}</Svg>;
 }
 
 const s=StyleSheet.create({

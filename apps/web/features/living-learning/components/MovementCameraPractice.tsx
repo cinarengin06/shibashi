@@ -219,6 +219,11 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
           if (teacher.paused || teacher.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
             matchedSince = 0;
             setCameraMessage("Canlı uyum için hoca videosunu oynat.");
+            try {
+              const visiblePose = landmarker.detectForVideo(video, nextTimestamp()).landmarks[0];
+              const cameraPoints = visiblePose?.map((point, index) => ({ name: landmarkNames[index] ?? `point-${index}`, x: point.x, y: point.y, score: point.visibility ?? 1 })) ?? [];
+              drawMovementSkeleton(canvasRef.current, video, cameraPoints);
+            } catch { drawMovementSkeleton(canvasRef.current, video, []); }
             return;
           }
           let rawTeacherPose, rawPose;
@@ -249,7 +254,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
               setScore(null);
             }
             setCameraMessage(!rawPose?.length ? "Kamerada görünmüyorsun; biraz geri çekil." : "Hocanın bedeni videoda ölçülemedi.");
-            drawMovementSkeleton(canvasRef.current, video, [], false);
+            drawMovementSkeleton(canvasRef.current, video, []);
             return;
           }
 
@@ -312,10 +317,8 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
             setCameraMessage(result.fullBody ? "Hocanın o anki hareketine eşlik et." : result.visible ? "Canlı skor kısmi kadrajdan geliyor; tamamlamak için ayakların da görünsün." : "Bedenini kamerada göstermek için biraz geri çekil.");
           }
 
-          if (!compact) {
-            drawMovementSkeleton(canvasRef.current, video, result.visible ? userPose : [], qualified, result.jointScores, thresholdRef.current);
-            if (result.visible) drawUserReferenceMarkers(canvasRef.current, video, userMarkers, teacherMarkers, result.jointScores, thresholdRef.current);
-          }
+          drawMovementSkeleton(canvasRef.current, video, result.visible ? userPose : [], result.fullBody ? result.jointScores : {}, thresholdRef.current);
+          if (!compact && result.visible) drawUserReferenceMarkers(canvasRef.current, video, userMarkers, teacherMarkers, result.jointScores, thresholdRef.current);
 
           if (qualified && photoCount < 3 && !photoPending && now - lastPhotoAt >= photoIntervalMs) {
             const snapshot = createMovementPhoto(video, canvasRef.current, Number(movementOrder), movementName, Math.round(smoothedScore ?? 0), sessionId);
@@ -587,7 +590,7 @@ function comparePoseMotion(user: MovementPoint[], teacher: MovementPoint[], prev
   return Math.max(0, Math.min(100, Math.round(100 - error / weight * 140)));
 }
 
-function drawMovementSkeleton(canvas: HTMLCanvasElement | null, video: HTMLVideoElement, pose: MovementPoint[], matched: boolean, jointScores: Record<string, number> = {}, target = defaultCompletionThreshold) {
+function drawMovementSkeleton(canvas: HTMLCanvasElement | null, video: HTMLVideoElement, pose: MovementPoint[], jointScores: Record<string, number> = {}, target = defaultCompletionThreshold) {
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
@@ -607,8 +610,7 @@ function drawMovementSkeleton(canvas: HTMLCanvasElement | null, video: HTMLVideo
   const colorFor = (name: string) => {
     const score = jointScores[name];
     if (score === undefined) return "#e3cd91";
-    if (matched || score >= target) return "#9ef16f";
-    return score >= target * .75 ? "#d8e97b" : "#f49678";
+    return score >= target ? "#9ef16f" : "#f49678";
   };
   context.lineWidth = 2.5;
   context.lineCap = "round";
@@ -616,7 +618,7 @@ function drawMovementSkeleton(canvas: HTMLCanvasElement | null, video: HTMLVideo
   for (const [from, to] of links) {
     const start = coordinates.get(from), end = coordinates.get(to);
     if (!start || !end || start.score < .35 || end.score < .35) continue;
-    const color = Math.min(jointScores[from] ?? 0, jointScores[to] ?? 0) >= target ? "#9ef16f" : colorFor(from);
+    const color = jointScores[from] === undefined || jointScores[to] === undefined ? "#e3cd91" : Math.min(jointScores[from], jointScores[to]) >= target ? "#9ef16f" : "#f49678";
     context.strokeStyle = color;
     context.shadowColor = color;
     context.beginPath();

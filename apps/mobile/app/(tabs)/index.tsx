@@ -73,15 +73,14 @@ export default function Today() {
   const energy = energyRecord?.value;
   const streak = practiceStreak(sessions);
   const lastReport = postureReports[0];
-  const formRecords = photos.map(photo => ({ order:photo.order, date:photo.savedAt }));
+  const formRecords = completedMovementOrders.map(order => ({ order, date:photos.find(photo => photo.order === order)?.savedAt ?? new Date().toISOString() }));
   const completedFormOrders = new Set([
     ...completedMovementOrders,
-    ...photos.filter(photo => photo.score >= 70).map(photo => photo.order),
     ...sessions.filter(session => session.postureScore >= 70).map(session => Number(session.practiceId.match(/^movement-(\d+)$/)?.[1])),
     ...shenActivities.filter(activity => activity.type === "practice" && activity.completed !== false).map(activity => Number(activity.practiceId?.match(/^movement-(\d+)$/)?.[1])),
   ].filter(order => Number.isInteger(order) && order >= 1 && order <= 18));
   const completedForms = completedFormOrders.size;
-  const dailyFormDone = formRecords.some(record => localDateKey(record.date) === localDateKey(new Date()));
+  const dailyFormDone = photos.some(photo => localDateKey(photo.savedAt) === localDateKey(new Date()));
   useFocusEffect(useCallback(() => {
     let active = true;
     void loadShibashiPhotos().then((items) => { if (active) setPhotos(items); });

@@ -11,10 +11,12 @@ import { shibashiPosters } from "../../data/shibashiMedia";
 import { getShen } from "../../data/fiveShen";
 import { loadCompletedMovements } from "../../services/movementCompletion";
 import { useApp } from "../../store/AppStore";
+import { visualThemes } from "../../../../packages/design-tokens";
 
 export default function Journey() {
   const { profile, sessions, shenActivities } = useApp();
   const selectedShen = getShen(profile.selectedShenId);
+  const visual = visualThemes[profile.visualThemeId] ?? visualThemes["ink-night"];
   const accent = selectedShen.color;
   const [completedOrders, setCompletedOrders] = useState<number[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -65,7 +67,7 @@ export default function Journey() {
     <Screen>
       <Eyebrow>HARİTAN · SEKİZ BEDEN KAPISI</Eyebrow>
       <Title>Bedenindeki kapıları gör.</Title>
-      <Text style={styles.lead}>Kapılara dokun; beden bölgesini, günlük karşılığını ve mini pratiğini aç. Altın halka en çok ilerlediğin kapıyı gösterir.</Text>
+      <Text style={[styles.lead,{color:visual.textSecondary}]}>Kapılara dokun; beden bölgesini, günlük karşılığını ve mini pratiğini aç. Altın halka en çok ilerlediğin kapıyı gösterir.</Text>
 
       <Card style={[styles.mapCard, { borderColor: `${accent}66` }]}>
         <View style={styles.mapStage}>
@@ -100,7 +102,7 @@ export default function Journey() {
         </View>
 
         <View style={styles.mapProgress}>
-          <Text style={styles.progressText}>İncelenen kapı {activeIndex + 1} / {BODY_GATE_ORDER.length}</Text>
+          <Text style={[styles.progressText,{color:visual.textSecondary}]}>İncelenen kapı {activeIndex + 1} / {BODY_GATE_ORDER.length}</Text>
           <Text style={[styles.progressCurrent, { color: accent }]}>Önde: {currentGate.name}</Text>
         </View>
       </Card>
@@ -109,30 +111,30 @@ export default function Journey() {
         <View style={styles.mapInfoTop}>
           <View style={styles.flex}>
             <Text style={[styles.kicker, { color: accent }]}>{isCurrentGate ? (allCompletedOrders.length ? "EN ÇOK İLERLEDİĞİN KAPI" : "BAŞLANGIÇ KAPISI") : "İNCELEDİĞİN KAPI"}</Text>
-            <Text style={styles.mapTitle}>{gate.name}</Text>
+            <Text style={[styles.mapTitle,{color:visual.text}]}>{gate.name}</Text>
           </View>
           <Text style={[styles.mapReward, { color: accent }]}>{guidance.focus} odağı</Text>
         </View>
-        <Text style={styles.body}>%{gate.percent} ({gate.completedCount}/{gate.mappedCount} hareket) · {guidance.outcome}</Text>
+        <Text style={[styles.body,{color:visual.textSecondary}]}>%{gate.percent} ({gate.completedCount}/{gate.mappedCount} hareket) · {guidance.outcome}</Text>
         <View style={styles.benefitGrid}>
           {guidance.benefits.map((benefit) => (
             <View key={benefit} style={styles.benefit}>
               <Ionicons name="checkmark" color={accent} size={16} />
-              <Text style={styles.benefitText}>{benefit}</Text>
+              <Text style={[styles.benefitText,{color:visual.text}]}>{benefit}</Text>
             </View>
           ))}
         </View>
         <View style={styles.dailyNote}>
           <Text style={[styles.kicker, { color: accent }]}>GÜNLÜK HAYATTA</Text>
-          <Text style={styles.body}>{guidance.dailyUse}</Text>
+          <Text style={[styles.body,{color:visual.textSecondary}]}>{guidance.dailyUse}</Text>
         </View>
         <View style={styles.dailyNote}>
           <Text style={[styles.kicker, { color: accent }]}>MİNİ PRATİK</Text>
-          <Text style={styles.body}>{guidance.microPractice}</Text>
+          <Text style={[styles.body,{color:visual.textSecondary}]}>{guidance.microPractice}</Text>
         </View>
         <View style={styles.mapActions}>
           <Pressable disabled={activeIndex === 0} onPress={() => selectGate(Math.max(0, activeIndex - 1))} style={[styles.mapAction, activeIndex === 0 && styles.disabled]}>
-            <Text style={styles.mapActionText}>Önceki</Text>
+            <Text style={[styles.mapActionText,{color:visual.textSecondary}]}>Önceki</Text>
           </Pressable>
           <Pressable onPress={() => selectGate((activeIndex + 1) % BODY_GATE_ORDER.length)} style={[styles.mapActionPrimary, { backgroundColor: accent }]}>
             <Text style={styles.mapActionPrimaryText}>Sonraki kapı</Text>
@@ -141,10 +143,10 @@ export default function Journey() {
         </View>
       </Card>
 
-      <Text style={[styles.mapTitle, { marginTop: 14 }]}>İlgili videolar aşağıda</Text>
+      <Text style={[styles.mapTitle, { marginTop: 14, color:visual.text }]}>İlgili videolar aşağıda</Text>
       {relatedMovements.map(item => {
         const done = allCompletedOrders.includes(item.order);
-        return <Pressable key={item.order} accessibilityRole="button" accessibilityLabel={`${item.order}. form ${item.sourceTitle}${done ? ', tamamlandı' : ''}`} onPress={() => router.push(`/body-lines?movementOrder=${item.order}`)} style={[styles.relatedVideo, { borderColor: `${accent}55` }]}><Image source={shibashiPosters[item.order]} style={styles.relatedPoster}/><View style={styles.flex}><Text style={[styles.kicker, { color: accent }]}>FORM {String(item.order).padStart(2, '0')}</Text><Text numberOfLines={2} style={styles.relatedTitle}>{item.sourceTitle}</Text><Text style={[styles.relatedStatus, { color: done ? '#A8DCB3' : colors.muted }]}>{done ? '✓ Tamamlandı' : '18 Form’da izle'}</Text></View><Ionicons name="play-circle-outline" color={accent} size={25}/></Pressable>;
+        return <Pressable key={item.order} accessibilityRole="button" accessibilityLabel={`${item.order}. form ${item.sourceTitle}${done ? ', tamamlandı' : ''}`} onPress={() => router.push(`/body-lines?movementOrder=${item.order}`)} style={[styles.relatedVideo, { borderColor: visual.border, backgroundColor:visual.surface }]}><Image source={shibashiPosters[item.order]} style={styles.relatedPoster}/><View style={styles.flex}><Text style={[styles.kicker, { color: accent }]}>FORM {String(item.order).padStart(2, '0')}</Text><Text numberOfLines={2} style={[styles.relatedTitle,{color:visual.text}]}>{item.sourceTitle}</Text><Text style={[styles.relatedStatus, { color: done ? '#A8DCB3' : colors.muted }]}>{done ? '✓ Tamamlandı' : '18 Form’da izle'}</Text></View><Ionicons name="play-circle-outline" color={accent} size={25}/></Pressable>;
       })}
     </Screen>
   );

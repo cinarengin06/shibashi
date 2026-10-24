@@ -97,7 +97,7 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
   const lastPose = useRef<{user:PoseLandmark[];teacher:NonNullable<ReturnType<typeof referenceAt>>}|null>(null);
   const completeRef = useRef(false);
   useEffect(() => { void AsyncStorage.getItem(targetKey).then(value => { const saved = Number(value); if (value && saved >= 0 && saved <= 100) { const safe = Math.max(70, saved); setTarget(safe); targetRef.current = safe; } }); }, []);
-  useEffect(() => () => { phaseRef.current='watch'; void Speech.stop(); player.pause(); if (celebrationTimer.current) clearTimeout(celebrationTimer.current); }, [player]);
+  useEffect(() => () => { phaseRef.current='watch'; void Speech.stop(); try { player.pause(); } catch {} if (celebrationTimer.current) clearTimeout(celebrationTimer.current); }, [player]);
   useEffect(() => { const listener = player.addListener('playingChange', ({isPlaying}) => setVideoPlaying(isPlaying)); return () => listener.remove(); }, [player]);
   const updateTarget = (next:number) => { const value = Math.max(70,Math.min(100,Math.round(next/5)*5)); setTarget(value); targetRef.current = value; void AsyncStorage.setItem(targetKey,String(value)); };
   const speak = (text:string, done?:()=>void) => { void Speech.stop(); Speech.speak(text,{language:'tr-TR',rate:.86,onDone:done,onError:done}); };
@@ -186,7 +186,7 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
   return <View style={[s.stage,{backgroundColor:theme.surface,borderColor:`${theme.primary}55`}]}>
     <Text style={[s.number,{color:theme.primary}]}>HAREKET {String(order).padStart(2,'0')} / 18</Text><Text style={s.title}>{movement.sourceTitle}</Text>
     <View style={{ backgroundColor:theme.surfaceRaised, borderColor:`${theme.primary}55`, borderWidth:1, borderRadius:14, padding:13, gap:9, marginBottom:12 }}><Text style={{ color:theme.button, fontSize:11, fontWeight:'800', letterSpacing:1 }}>FORM YOLCULUĞUN</Text><Pressable accessibilityRole="button" accessibilityState={{ selected:Boolean(formSteps[order]?.watched) }} onPress={() => { void markFormStep(order,'watched',profile.authUserId).then(setFormSteps); }}><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.watched?'✓':'○'}  Hocayı izledim</Text></Pressable><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.attempted?'✓':'○'}  Kamerayla denedim</Text><Text style={{ color:colors.cream, fontSize:14 }}>{completed?'✓':'○'}  Formu tamamladım</Text></View>
-    <Text style={s.description}>{steps[0] || 'Önce hocayı izle, sonra kameranla kendi ritmini takip et.'}</Text>{phase==='watch' && steps.length>1 && <View style={s.steps}>{steps.slice(1).map((step,index)=><Text key={step} style={s.step}>{index+2}. {step}</Text>)}</View>}
+    {phase==='watch' && <View style={s.steps}>{(steps.length ? steps : ['Önce hocayı izle, sonra kameranla kendi ritmini takip et.']).map((step,index)=><Text key={`${order}-${index}`} style={s.step}>{index+1}. {step}</Text>)}</View>}
     <View style={[s.mediaRow,(phase === 'watch' || phase === 'mini') && s.mediaOnly]}>
       <View style={s.media} onLayout={event => { const {width,height}=event.nativeEvent.layout; setMiniBounds(current => current.width===width && current.height===height ? current : {width,height}); }}>
         <VideoView player={player} style={s.video} contentFit="contain" nativeControls={phase==='watch'||phase==='mini'} surfaceType="textureView"/>

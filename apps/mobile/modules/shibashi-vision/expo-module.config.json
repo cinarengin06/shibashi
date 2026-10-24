@@ -1,6 +1,9 @@
 {
-  "platforms": ["apple"],
+  "platforms": ["apple", "android"],
   "apple": {
     "modules": ["ShibashiVisionModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.shibashivision.ShibashiPreviewModule"]
   }
 }

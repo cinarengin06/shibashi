@@ -3,7 +3,7 @@ import {setAudioModeAsync,useAudioPlayer} from 'expo-audio';
 import {CameraView,useCameraPermissions} from 'expo-camera';
 import {router} from 'expo-router';
 import {useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,Image,Platform,Pressable,ScrollView,StyleSheet,Text,View,type LayoutChangeEvent} from 'react-native';
+import {ActivityIndicator,BackHandler,Image,Platform,Pressable,ScrollView,StyleSheet,Text,View,type LayoutChangeEvent} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Svg,{Circle,Line} from 'react-native-svg';
 import {PrimaryButton} from '../components/ui';
@@ -16,6 +16,7 @@ import {useApp} from '../store/AppStore';
 import {PostureCapture,PostureReport,PostureView} from '../types';
 import {buildPostureNarrative} from '../../../packages/posture-analysis';
 import {deletePostureCapturePhoto,savePostureCapturePhoto} from '../services/posturePhotos';
+import {capturePreviewFrame,isPreviewFrameAvailable} from '../modules/shibashi-vision/src/preview';
 
 const views:PostureView[]=['front','side','back'];
 const viewCopy:Record<PostureView,{title:string;instruction:string;icon:keyof typeof Ionicons.glyphMap}>={
@@ -75,6 +76,10 @@ export default function PostureSession(){
  const capturesRef=useRef<PostureCapture[]>([]);
  const speakingRef=useRef('');
  const draftPhotosRef=useRef<string[]>([]);
+ const captureInFlightRef=useRef<Promise<unknown>|null>(null);
+ const closingRef=useRef(false);
+ const voiceSessionRef=useRef(0);
+ const[closing,setClosing]=useState(false);
  const frontVoice=useAudioPlayer(postureVoice.front);
  const sideVoice=useAudioPlayer(postureVoice.side);
  const backVoice=useAudioPlayer(postureVoice.back);
@@ -87,11 +92,29 @@ export default function PostureSession(){
  const playVoiceOnce=(key:'front'|'side'|'back'|'complete')=>{
   if(speakingRef.current===key)return;
   speakingRef.current=key;
-  Object.values(voicePlayers).forEach(player=>player.pause());
+  const session=++voiceSessionRef.current;
+  Object.values(voicePlayers).forEach(player=>{try{player.pause()}catch{}});
   const player=voicePlayers[key];
-  void player.seekTo(0);
-  player.play();
+  void player.seekTo(0).then(()=>{if(voiceSessionRef.current===session)player.play()}).catch(()=>{});
  };
+
+ const closeCamera=async()=>{
+  if(closingRef.current)return;
+  closingRef.current=true;
+  scanSessionRef.current+=1;
+  voiceSessionRef.current+=1;
+  try{await captureInFlightRef.current}catch{}
+  Object.values(voicePlayers).forEach(player=>{try{player.pause()}catch{}});
+  setClosing(true);
+  setCameraReady(false);
+  setTimeout(()=>router.back(),120);
+ };
+
+ useEffect(()=>{
+  if(Platform.OS!=='android'||phase!=='scan')return;
+  const listener=BackHandler.addEventListener('hardwareBackPress',()=>{void closeCamera();return true});
+  return()=>listener.remove();
+ },[phase]);
 
  useEffect(()=>{
   if(!permission?.granted||!cameraReady||phase!=='scan')return;
@@ -99,13 +122,14 @@ export default function PostureSession(){
  },[view,cameraReady,phase,permission?.granted]);
 
  useEffect(()=>()=>{
-  Object.values(voicePlayers).forEach(player=>player.pause());
+  voiceSessionRef.current+=1;
+  Object.values(voicePlayers).forEach(player=>{try{player.pause()}catch{}});
   scanSessionRef.current+=1;
   draftPhotosRef.current.forEach(deletePostureCapturePhoto);
  },[]);
 
  useEffect(()=>{
-  if(!cameraReady||cameraError||phase!=='scan')return;
+  if(!cameraReady||cameraError||closing||phase!=='scan')return;
   const session=scanSessionRef.current+1;
   scanSessionRef.current=session;
   holdStartedAtRef.current=null;
@@ -122,7 +146,13 @@ export default function PostureSession(){
   const inspectFrame=async()=>{
    if(scanSessionRef.current!==session||!cameraRef.current)return;
    try{
-    const photo=await cameraRef.current.takePictureAsync({base64:true,quality:.38,skipProcessing:false,shutterSound:false});
+    const capture=Platform.OS==='android'&&isPreviewFrameAvailable()
+     ?capturePreviewFrame()
+     :cameraRef.current.takePictureAsync({base64:true,quality:.38,skipProcessing:false,shutterSound:false});
+    captureInFlightRef.current=capture;
+    const photo=await capture;
+    captureInFlightRef.current=null;
+    if(scanSessionRef.current!==session)return;
     if(!photo?.base64)throw new Error('Kamera karesi alınamadı');
     const analysis=await poseBridgeRef.current?.analyze(photo.base64);
     if(!analysis)throw new Error('MediaPipe modeli hazırlanıyor');
@@ -161,8 +191,11 @@ export default function PostureSession(){
     setScanState('capturing');
     const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
     if(scanSessionRef.current!==session)return;
-    if(!photo.uri)throw new Error('Fotoğraf dosyası alınamadı');
-    const imageUri=await savePostureCapturePhoto(photo.uri,view);
+    const savedFrame=Platform.OS==='android'&&isPreviewFrameAvailable()?await capturePreviewFrame(true):photo;
+    if(scanSessionRef.current!==session)return;
+    if(!savedFrame.uri)throw new Error('Fotoğraf dosyası alınamadı');
+    const imageUri=await savePostureCapturePhoto(savedFrame.uri,view);
+    if(scanSessionRef.current!==session){deletePostureCapturePhoto(imageUri);return}
     draftPhotosRef.current.push(imageUri);
     const source=vision3D?'vision-3d+mediapipe-33' as const:'mediapipe-33' as const;
     const item={
@@ -191,6 +224,7 @@ export default function PostureSession(){
     playVoiceOnce('complete');
     setPhase('processing');
    }catch(error){
+    captureInFlightRef.current=null;
     if(scanSessionRef.current!==session)return;
     const message=error instanceof Error?error.message:'Analiz tamamlanamadı';
     if(message.includes('hazır'))setScanState('model-loading');
@@ -200,7 +234,7 @@ export default function PostureSession(){
   };
   schedule(350);
   return()=>{scanSessionRef.current+=1;if(timer)clearTimeout(timer)};
- },[cameraReady,cameraError,index,phase,view]);
+ },[cameraReady,cameraError,closing,index,phase,view]);
 
  useEffect(()=>{
   if(phase!=='processing'||!result)return;
@@ -248,13 +282,13 @@ export default function PostureSession(){
 
  return <SafeAreaView style={styles.root}>
   <View style={styles.topbar}>
-    <Pressable onPress={()=>router.back()} style={styles.topButton}><Ionicons name="close" color={colors.cream} size={23}/></Pressable>
+    <Pressable onPress={()=>{void closeCamera()}} disabled={closing} style={styles.topButton}><Ionicons name="close" color={colors.cream} size={23}/></Pressable>
     <View style={styles.progressPill}><Text style={styles.progressNumber}>{index+1} / 3</Text><View style={styles.progressDotActive}/><Text style={styles.progressLabel}>{copy.title.replace(' görünüm','')}</Text><Text style={styles.progressChevron}>⌄</Text></View>
     <Pressable onPress={()=>setTipVisible(value=>!value)} style={styles.topButton}><Ionicons name="help-circle-outline" color={colors.gold} size={25}/></Pressable>
   </View>
   <View style={styles.sessionContent}>
    <View onLayout={(event:LayoutChangeEvent)=>{const{width,height}=event.nativeEvent.layout;setPreviewSize(current=>current.width===width&&current.height===height?current:{width,height})}} style={[styles.cameraStage,{borderColor:`${shen.color}55`}]}>
-    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} active onCameraReady={()=>{setCameraReady(true);setCameraError(false)}} onMountError={()=>{setCameraError(true);setCameraReady(false)}} mirror/>
+    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} active={!closing} onCameraReady={()=>{if(!closingRef.current){setCameraReady(true);setCameraError(false)}}} onMountError={()=>{if(!closingRef.current){setCameraError(true);setCameraReady(false)}}} mirror/>
     <View style={styles.cameraShade}/>
     <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>
     <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize} view={view}/>

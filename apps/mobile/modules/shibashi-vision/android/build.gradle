@@ -1,0 +1,15 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'expo.modules.shibashivision'
+version = '1.0.0'
+
+android {
+  namespace 'expo.modules.shibashivision'
+}
+
+dependencies {
+  implementation 'androidx.camera:camera-view:1.6.0'
+}

@@ -15,6 +15,7 @@ import { isCapturedPracticePhoto } from "@/features/home/utils/practice-photo";
 import { fiveShen, shenTodayCopy, type ShenId } from "@/features/home/data/shen";
 import { PostureAssessmentScreen } from "@/features/posture/components/PostureAssessmentScreen";
 import { getCameraStatus, getPoseStatusText } from "@/features/posture/lib/status-labels";
+import { getPostureAudioSrc } from "@/features/posture/lib/posture-audio";
 import { aggregatePostureAnalysisSnapshots, buildPostureReport, createPostureCapture, getPostureLiveCoachCue, getPostureOrientationCue, getPoseStabilityDistance, isPostureDetectorAbort, smoothPoseKeypoints, toPostureAnalysisSnapshot } from "@/features/posture/lib/posture-session";
 import type { PostureAssessmentCapture, PostureAssessmentStep, PostureRenderMode, PostureReport, PostureScanGuidance } from "@/features/posture/types";
 import { innerJourneyScenes, neijingStages, type InnerJourneyScene, type NeijingStage } from "@/features/journey/data/scenes";
@@ -950,6 +951,26 @@ function PostureScreen({
   const [capturedView, setCapturedView] = useState<PostureView | null>(null);
   const [postureVoiceEnabled, setPostureVoiceEnabled] = useState(true);
 
+  function stopPostureVoice() {
+    postureAudioRef.current?.pause();
+    postureAudioRef.current = null;
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+  }
+
+  function playPostureVoice(cue: string) {
+    stopPostureVoice();
+    const src = getPostureAudioSrc(cue);
+    if (!src) {
+      speakCoach(cue);
+      return;
+    }
+    const audio = new Audio(src);
+    postureAudioRef.current = audio;
+    void audio.play().catch(() => {
+      if (postureAudioRef.current === audio && postureVoiceEnabled) speakCoach(cue);
+    });
+  }
+
   useEffect(() => {
     if (!initialReportId) return;
     const report = postureReports.find((item) => item.id === initialReportId);
@@ -1109,13 +1130,14 @@ function PostureScreen({
 
     postureAnnouncedStepRef.current = postureStep;
     const orientationCue = getPostureOrientationCue(postureStep);
+    postureLastVoiceCueRef.current = orientationCue;
+    postureLastVoiceAtRef.current = Date.now();
     const timer = window.setTimeout(() => {
-      postureAudioRef.current?.pause();
-      if (postureVoiceEnabled) speakCoach(orientationCue);
+      if (postureVoiceEnabled) playPostureVoice(orientationCue);
     }, 300);
     return () => {
       window.clearTimeout(timer);
-      postureAudioRef.current?.pause();
+      stopPostureVoice();
     };
   }, [postureStep, postureVoiceEnabled]);
 
@@ -1126,7 +1148,7 @@ function PostureScreen({
     if (postureCoachCue === postureLastVoiceCueRef.current || now - postureLastVoiceAtRef.current < 6500) return;
     postureLastVoiceCueRef.current = postureCoachCue;
     postureLastVoiceAtRef.current = now;
-    speakCoach(postureCoachCue);
+    playPostureVoice(postureCoachCue);
   }, [postureCoachCue, postureStep, postureVoiceEnabled, scanGuidance]);
 
   useEffect(() => {
@@ -1271,16 +1293,16 @@ function PostureScreen({
     setPoseStatus("bekliyor");
     targetScoreRef.current = 0;
     setMovementScore(0);
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    stopPostureVoice();
   }
 
   function togglePostureVoice() {
     if (postureVoiceEnabled) {
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      stopPostureVoice();
     } else {
       postureLastVoiceCueRef.current = "";
       postureLastVoiceAtRef.current = 0;
-      speakCoach(postureCoachCue);
+      playPostureVoice(postureCoachCue);
     }
     setPostureVoiceEnabled((enabled) => !enabled);
   }

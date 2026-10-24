@@ -1,6 +1,6 @@
 import {Ionicons} from '@expo/vector-icons';
+import {setAudioModeAsync,useAudioPlayer} from 'expo-audio';
 import {CameraView,useCameraPermissions} from 'expo-camera';
-import * as Speech from 'expo-speech';
 import {router} from 'expo-router';
 import {useEffect,useRef,useState} from 'react';
 import {ActivityIndicator,Image,Platform,Pressable,ScrollView,StyleSheet,Text,View,type LayoutChangeEvent} from 'react-native';
@@ -28,10 +28,17 @@ type Metric={label:string;icon:keyof typeof Ionicons.glyphMap;value:number;measu
 type ScanState='model-loading'|'find-body'|'wrong-angle'|'hold'|'capturing'|'turning'|'error';
 type FrameSize={width:number;height:number};
 
-const scanCopy:Record<PostureView,{start:string;turn:string;waiting:string}>={
- front:{start:'Kameraya dön. Başın ve ayakların göründüğünde ölçüm başlayacak.',turn:'Kameraya dön.',waiting:'Önden görünümünü algılıyorum.'},
- side:{start:'Şimdi yana dön. Yan duruşun algılandığında üç saniye bekle.',turn:'Şimdi yana dön.',waiting:'Yan görünümünü algılıyorum.'},
- back:{start:'Şimdi arkaya dön. Arka görünüm algılandığında üç saniye bekle.',turn:'Şimdi arkaya dön.',waiting:'Arka görünümünü algılıyorum.'},
+const scanCopy:Record<PostureView,{turn:string;waiting:string}>={
+ front:{turn:'Kameraya dön.',waiting:'Önden görünümünü algılıyorum.'},
+ side:{turn:'Şimdi yana dön.',waiting:'Yan görünümünü algılıyorum.'},
+ back:{turn:'Şimdi arkaya dön.',waiting:'Arka görünümünü algılıyorum.'},
+};
+
+const postureVoice={
+ front:require('../assets/posture-narration/postur-mobil-on.mp3'),
+ side:require('../assets/posture-narration/postur-mobil-yan.mp3'),
+ back:require('../assets/posture-narration/postur-mobil-arka.mp3'),
+ complete:require('../assets/posture-narration/postur-mobil-bitti.mp3'),
 };
 
 export default function PostureSession(){
@@ -68,24 +75,31 @@ export default function PostureSession(){
  const capturesRef=useRef<PostureCapture[]>([]);
  const speakingRef=useRef('');
  const draftPhotosRef=useRef<string[]>([]);
+ const frontVoice=useAudioPlayer(postureVoice.front);
+ const sideVoice=useAudioPlayer(postureVoice.side);
+ const backVoice=useAudioPlayer(postureVoice.back);
+ const completeVoice=useAudioPlayer(postureVoice.complete);
+ const voicePlayers={front:frontVoice,side:sideVoice,back:backVoice,complete:completeVoice};
 
  useEffect(()=>setVision3DActive(isAppleVision3DAvailable()),[]);
+ useEffect(()=>{void setAudioModeAsync({playsInSilentMode:true,shouldPlayInBackground:false})},[]);
 
- const speakOnce=(key:string,text:string)=>{
+ const playVoiceOnce=(key:'front'|'side'|'back'|'complete')=>{
   if(speakingRef.current===key)return;
   speakingRef.current=key;
-  Speech.stop();
-  void Speech.speak(text,{language:'tr-TR',rate:0.9,pitch:1});
+  Object.values(voicePlayers).forEach(player=>player.pause());
+  const player=voicePlayers[key];
+  void player.seekTo(0);
+  player.play();
  };
 
  useEffect(()=>{
   if(!permission?.granted||!cameraReady||phase!=='scan')return;
-  if(speakingRef.current===`view-${view}`)return;
-  speakOnce(`view-${view}`,scanCopy[view].start);
+  playVoiceOnce(view);
  },[view,cameraReady,phase,permission?.granted]);
 
  useEffect(()=>()=>{
-  Speech.stop();
+  Object.values(voicePlayers).forEach(player=>player.pause());
   scanSessionRef.current+=1;
   draftPhotosRef.current.forEach(deletePostureCapturePhoto);
  },[]);
@@ -174,7 +188,7 @@ export default function PostureSession(){
     const previous=postureReports[0];
     const narrative=buildPostureNarrative(nextCaptures.map(toPostureNarrativeCapture),average,previous?.captures?.length?{score:previous.score,captures:previous.captures.map(toPostureNarrativeCapture)}:undefined);
     setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,analysisSource:nextCaptures.some(saved=>saved.analysisSource==='vision-3d+mediapipe-33')?'vision-3d+mediapipe-33':'mediapipe-33',summary:narrative.summary,trendText:narrative.trendText,asymmetrySignal:narrative.weakestAverage<62?'yüksek':narrative.weakestAverage<78?'orta':'düşük'});
-    speakOnce('complete','Bitti. Üç görünüm tamamlandı. Postür raporun hazırlanıyor.');
+    playVoiceOnce('complete');
     setPhase('processing');
    }catch(error){
     if(scanSessionRef.current!==session)return;
@@ -207,7 +221,7 @@ export default function PostureSession(){
    setSaving(false);
   }
  };
- const restart=()=>{draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
+ const restart=()=>{Object.values(voicePlayers).forEach(player=>player.pause());draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
 
  if(!permission)return <View style={styles.permission}/>;
  if(!permission.granted)return <SafeAreaView style={styles.permission}>

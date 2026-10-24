@@ -27,6 +27,7 @@ import { aiCoaches, coachDialogues, inferCoachIntent, type AiCoach, type CoachIn
 import { CoachMeridianCard } from "@/components/meridian/MeridianKnowledge";
 import type { TabId } from "@/types/navigation";
 import { speakCoach } from "@/features/practice/lib/coach-audio";
+import { usePreviewNarration } from "@/features/practice/lib/usePreviewNarration";
 import { meridianMovements } from "@/packages/meridian-knowledge";
 import { loadCompletedMovements, movementCompletionEvent } from "@/lib/movement-completion";
 import { BODY_GATE_ORDER, gateGuidance, gateProgress, gates, movementGateWeights } from "@/packages/eight-gates";
@@ -49,6 +50,7 @@ function HumanMap({
   const [gateInfoOpen, setGateInfoOpen] = useState(false);
   const [completedOrders, setCompletedOrders] = useState<number[]>([]);
   const [playingOrder, setPlayingOrder] = useState<number | null>(null);
+  const narration = usePreviewNarration();
   const selectedManually = useRef(false);
   const completed = useMemo(() => new Set(completedOrders), [completedOrders]);
   const progress = useMemo(() => gateProgress(completedOrders), [completedOrders]);
@@ -74,6 +76,7 @@ function HumanMap({
 
   function selectStage(index: number) {
     selectedManually.current = true;
+    narration.stop();
     setActiveStageIndex(index);
     setPlayingOrder(null);
     setGateInfoOpen(true);
@@ -159,7 +162,7 @@ function HumanMap({
           <div className="journey-gate-panel-title"><div><span className="eyebrow">BU KAPIYLA İLGİLİ</span><h4>Hareket videoları</h4></div><span>{selectedMovements.length} video</span></div>
           <div className="journey-gate-video-grid">{selectedMovements.map((movement) => <article className="journey-gate-video-card" key={movement.order}>
             <div className="journey-gate-video-media">
-              {playingOrder === movement.order ? <video autoPlay controls playsInline poster={`/images/shibashi-new/${movement.order}.jpg`} src={`/videos/shibashi/${movement.order}.mp4`} /> : <button aria-label={`${movement.sourceTitle} videosunu oynat`} onClick={() => setPlayingOrder(movement.order)} type="button"><NextImage alt="" fill sizes="(max-width: 700px) 100vw, 30vw" src={`/images/shibashi-new/${movement.order}.jpg`} /><span aria-hidden="true">▶</span></button>}
+              {playingOrder === movement.order ? <video autoPlay controls onError={narration.stop} onPause={narration.onPause} onPlay={narration.onPlay} onTimeUpdate={(event) => narration.onTimeUpdate(event.currentTarget)} playsInline poster={`/images/shibashi-new/${movement.order}.jpg`} src={`/videos/shibashi/${movement.order}.mp4`} /> : <button aria-label={`${movement.sourceTitle} videosunu oynat`} onClick={() => { narration.start(movement.order); setPlayingOrder(movement.order); }} type="button"><NextImage alt="" fill sizes="(max-width: 700px) 100vw, 30vw" src={`/images/shibashi-new/${movement.order}.jpg`} /><span aria-hidden="true">▶</span></button>}
               {completed.has(movement.order) ? <span className="journey-gate-completed" aria-label="Tamamlandı">✓ Tamamlandı</span> : null}
             </div>
             <div className="journey-gate-video-copy"><small>HAREKET {String(movement.order).padStart(2, "0")}</small><strong>{movement.sourceTitle}</strong></div>

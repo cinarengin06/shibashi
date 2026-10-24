@@ -906,6 +906,8 @@ export function evaluateWebPostureFrame(
   } else if (horizontalOffset > 0.1) {
     positionReady = false;
     positionCue = "Biraz sola geç.";
+  } else if (Math.abs(horizontalOffset) > 0.08) {
+    positionReady = false;
   }
 
   return { bodyReady, angleReady, positionReady, positionCue };

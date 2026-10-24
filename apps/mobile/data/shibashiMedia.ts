@@ -1,3 +1,24 @@
+export const shibashiNarrations: Record<number, number> = {
+  1: require("../assets/shibashi-narration/shibashi_01.mp3"),
+  2: require("../assets/shibashi-narration/shibashi_02.mp3"),
+  3: require("../assets/shibashi-narration/shibashi_03.mp3"),
+  4: require("../assets/shibashi-narration/shibashi_04.mp3"),
+  5: require("../assets/shibashi-narration/shibashi_05.mp3"),
+  6: require("../assets/shibashi-narration/shibashi_06.mp3"),
+  7: require("../assets/shibashi-narration/shibashi_07.mp3"),
+  8: require("../assets/shibashi-narration/shibashi_08.mp3"),
+  9: require("../assets/shibashi-narration/shibashi_09.mp3"),
+  10: require("../assets/shibashi-narration/shibashi_10.mp3"),
+  11: require("../assets/shibashi-narration/shibashi_11.mp3"),
+  12: require("../assets/shibashi-narration/shibashi_12.mp3"),
+  13: require("../assets/shibashi-narration/shibashi_13.mp3"),
+  14: require("../assets/shibashi-narration/shibashi_14.mp3"),
+  15: require("../assets/shibashi-narration/shibashi_15.mp3"),
+  16: require("../assets/shibashi-narration/shibashi_16.mp3"),
+  17: require("../assets/shibashi-narration/shibashi_17.mp3"),
+  18: require("../assets/shibashi-narration/shibashi_18.mp3"),
+};
+
 export const shibashiVideos: Record<number, number> = {
   1: require("../assets/shibashi-videos/1.mp4"),
   2: require("../assets/shibashi-videos/2.mp4"),

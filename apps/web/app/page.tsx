@@ -16,7 +16,7 @@ import { fiveShen, shenTodayCopy, type ShenId } from "@/features/home/data/shen"
 import { PostureAssessmentScreen } from "@/features/posture/components/PostureAssessmentScreen";
 import { getCameraStatus, getPoseStatusText } from "@/features/posture/lib/status-labels";
 import { getPostureAudioSrc } from "@/features/posture/lib/posture-audio";
-import { aggregatePostureAnalysisSnapshots, buildPostureReport, createPostureCapture, getPostureLiveCoachCue, getPostureOrientationCue, getPoseStabilityDistance, isPostureDetectorAbort, smoothPoseKeypoints, toPostureAnalysisSnapshot } from "@/features/posture/lib/posture-session";
+import { aggregatePostureAnalysisSnapshots, buildPostureReport, createPostureCapture, getPostureLiveCoachCue, getPostureOrientationCue, getPoseStabilityDistance, getWebPostureMeasurementConfidence, isPostureDetectorAbort, smoothPoseKeypoints, toPostureAnalysisSnapshot } from "@/features/posture/lib/posture-session";
 import type { PostureAssessmentCapture, PostureAssessmentStep, PostureRenderMode, PostureReport, PostureScanGuidance } from "@/features/posture/types";
 import { innerJourneyScenes, neijingStages, type InnerJourneyScene, type NeijingStage } from "@/features/journey/data/scenes";
 import { FiveShenJourneyWeb } from "@/features/journey/components/FiveShenJourneyScreen";
@@ -926,6 +926,10 @@ function PostureScreen({
   const postureStableSinceRef = useRef<number | null>(null);
   const posturePreviousPointsRef = useRef<PoseKeypoint[]>([]);
   const postureSampleAnalysesRef = useRef<PostureAnalysisSnapshot[]>([]);
+  const postureLiveSamplesRef = useRef<PostureAnalysisSnapshot[]>([]);
+  const postureCueCandidateRef = useRef("");
+  const postureCueCandidateSinceRef = useRef(0);
+  const postureCorrectionUntilRef = useRef(0);
   const postureAutoCaptureLockRef = useRef(false);
   const postureReadyAtRef = useRef(0);
   const postureAnnouncedStepRef = useRef<PostureAssessmentStep | null>(null);
@@ -938,6 +942,7 @@ function PostureScreen({
   const lastPoseUiUpdateRef = useRef(0);
   const [cameraStatus, setCameraStatus] = useState<"idle" | "requesting" | "ready" | "denied" | "unsupported">("idle");
   const [keypoints, setKeypoints] = useState<PoseKeypoint[]>([]);
+  const [postureLiveAnalysis, setPostureLiveAnalysis] = useState<PostureAnalysisSnapshot | null>(null);
   const [movementScore, setMovementScore] = useState(0);
   const [poseStatus, setPoseStatus] = useState<"bekliyor" | "yükleniyor" | "aktif" | "beden-yok" | "hata">("bekliyor");
   const [postureMode, setPostureMode] = useState<PostureRenderMode>("3d");
@@ -990,11 +995,14 @@ function PostureScreen({
     videoRef.current?.videoWidth,
     videoRef.current?.videoHeight,
   );
+  const postureMeasurementReady = getWebPostureMeasurementConfidence(keypoints, activeScanView) !== null;
   const scanGuidance: PostureScanGuidance =
     poseStatus === "yükleniyor"
       ? "model-loading"
       : !postureFrameReadiness.bodyReady
         ? "find-body"
+        : !postureMeasurementReady
+          ? "find-body"
         : !postureFrameReadiness.angleReady
           ? "wrong-angle"
           : !postureFrameReadiness.positionReady
@@ -1004,13 +1012,18 @@ function PostureScreen({
             : "hold";
   const postureCoachCue =
     postureStep === "front" || postureStep === "side" || postureStep === "back"
-      ? getPostureLiveCoachCue(
+      ? postureFrameReadiness.bodyReady && !postureMeasurementReady
+        ? "Kadrajdaki beden kılavuzunun ortasında kal."
+        : getPostureLiveCoachCue(
           postureStep,
           postureFrameReadiness,
-          analyzePosture(keypoints, movementScore, selectedShen.id, postureStep),
+          postureLiveAnalysis ?? toPostureAnalysisSnapshot(analyzePosture(keypoints, movementScore, selectedShen.id, postureStep)),
           keypoints,
         )
       : "Tam bedenini kadraja al.";
+  const postureCorrectionActive = postureMeasurementReady && postureLiveAnalysis !== null &&
+    postureFrameReadiness.bodyReady && postureFrameReadiness.angleReady && postureFrameReadiness.positionReady &&
+    Math.min(postureLiveAnalysis.shoulderScore, postureLiveAnalysis.axisScore, postureLiveAnalysis.hipScore) < 70;
 
   useEffect(() => {
     if (previewLive) setPostureStep("front");
@@ -1064,6 +1077,11 @@ function PostureScreen({
     posturePreviousPointsRef.current = [];
     postureSmoothedPointsRef.current = [];
     postureSampleAnalysesRef.current = [];
+    postureLiveSamplesRef.current = [];
+    postureCueCandidateRef.current = "";
+    postureCueCandidateSinceRef.current = 0;
+    postureCorrectionUntilRef.current = 0;
+    setPostureLiveAnalysis(null);
     postureAutoCaptureLockRef.current = false;
     postureReadyAtRef.current = Date.now() + (postureStep === "front" ? 0 : 1200);
     setAutoCaptureProgress(0);
@@ -1096,6 +1114,14 @@ function PostureScreen({
       setAutoCaptureProgress(0);
       return;
     }
+    const measurementConfidence = getWebPostureMeasurementConfidence(keypoints, postureStep);
+    if (measurementConfidence === null) {
+      postureStableSinceRef.current = null;
+      posturePreviousPointsRef.current = [];
+      postureSampleAnalysesRef.current = [];
+      setAutoCaptureProgress(0);
+      return;
+    }
 
     const previousPoints = posturePreviousPointsRef.current;
     posturePreviousPointsRef.current = keypoints;
@@ -1112,17 +1138,18 @@ function PostureScreen({
 
     postureStableSinceRef.current ??= Date.now();
     const sample = toPostureAnalysisSnapshot(analyzePosture(keypoints, 0, selectedShen.id, postureStep));
-    if (sample.confidence >= 50) {
-      postureSampleAnalysesRef.current = [...postureSampleAnalysesRef.current.slice(-119), sample];
-    }
+    sample.confidence = Math.round(measurementConfidence * 100);
+    postureSampleAnalysesRef.current = [...postureSampleAnalysesRef.current.slice(-119), sample];
     const progress = Math.min(100, ((Date.now() - postureStableSinceRef.current) / 2000) * 100);
     setAutoCaptureProgress(progress);
 
     if (progress >= 100 && !postureAutoCaptureLockRef.current) {
+      if (postureVoiceEnabled && postureCorrectionActive &&
+          (postureLastVoiceCueRef.current !== postureCoachCue || Date.now() < postureCorrectionUntilRef.current)) return;
       postureAutoCaptureLockRef.current = true;
       window.setTimeout(captureCurrentPosture, 80);
     }
-  }, [cameraStatus, keypoints, poseStatus, postureStep, selectedShen.id]);
+  }, [cameraStatus, keypoints, poseStatus, postureStep, selectedShen.id, postureVoiceEnabled, postureCorrectionActive, postureCoachCue]);
 
   useEffect(() => {
     if (postureStep !== "front" && postureStep !== "side" && postureStep !== "back") return;
@@ -1145,11 +1172,26 @@ function PostureScreen({
     if (postureStep !== "front" && postureStep !== "side" && postureStep !== "back") return;
     if (!postureVoiceEnabled || scanGuidance === "model-loading" || scanGuidance === "capturing") return;
     const now = Date.now();
+    if (postureCorrectionActive) {
+      if (postureCueCandidateRef.current !== postureCoachCue) {
+        postureCueCandidateRef.current = postureCoachCue;
+        postureCueCandidateSinceRef.current = now;
+        return;
+      }
+      if (now - postureCueCandidateSinceRef.current < 1000 || now - postureLastVoiceAtRef.current < 3500) return;
+      if (postureCoachCue === postureLastVoiceCueRef.current && now - postureLastVoiceAtRef.current < 10000) return;
+      postureLastVoiceCueRef.current = postureCoachCue;
+      postureLastVoiceAtRef.current = now;
+      postureCorrectionUntilRef.current = now + 4000;
+      playPostureVoice(postureCoachCue);
+      return;
+    }
+    postureCueCandidateRef.current = "";
     if (postureCoachCue === postureLastVoiceCueRef.current || now - postureLastVoiceAtRef.current < 6500) return;
     postureLastVoiceCueRef.current = postureCoachCue;
     postureLastVoiceAtRef.current = now;
     playPostureVoice(postureCoachCue);
-  }, [postureCoachCue, postureStep, postureVoiceEnabled, scanGuidance]);
+  }, [postureCoachCue, postureStep, postureVoiceEnabled, scanGuidance, postureCorrectionActive, keypoints]);
 
   useEffect(() => {
     if (postureStep !== "processing" || !postureResult) return;
@@ -1184,9 +1226,16 @@ function PostureScreen({
             }
             drawPoseCanvas(canvasRef.current, undefined, selectedShen.color);
             targetScoreRef.current = 0;
+            postureLiveSamplesRef.current = [];
+            setPostureLiveAnalysis(null);
           } else {
             const smoothedKeypoints = smoothPoseKeypoints(postureSmoothedPointsRef.current, pose.keypoints, 0.24);
             postureSmoothedPointsRef.current = smoothedKeypoints;
+            const currentView =
+              postureStepRef.current === "front" || postureStepRef.current === "side" || postureStepRef.current === "back"
+                ? postureStepRef.current
+                : "front";
+            const measurementConfidence = getWebPostureMeasurementConfidence(smoothedKeypoints, currentView);
             const importantVisible = [
               "nose",
               "left_shoulder",
@@ -1198,23 +1247,31 @@ function PostureScreen({
               "left_ankle",
               "right_ankle",
             ].filter((name) => (smoothedKeypoints.find((point) => point.name === name)?.score ?? 0) > 0.28);
-            const nextStatus=importantVisible.length>=6?"aktif":"beden-yok";
+            const nextStatus=importantVisible.length>=6&&measurementConfidence!==null?"aktif":"beden-yok";
             if(poseStatusRef.current!==nextStatus){
               poseStatusRef.current=nextStatus;
               setPoseStatus(nextStatus);
             }
             const now=performance.now();
+            const rawAnalysis = analyzePosture(smoothedKeypoints, 0, selectedShen.id, currentView);
             if(now-lastPoseUiUpdateRef.current>=100){
               lastPoseUiUpdateRef.current=now;
               setKeypoints(smoothedKeypoints);
+              if(measurementConfidence!==null){
+                const sample=toPostureAnalysisSnapshot(rawAnalysis);
+                sample.confidence=Math.round(measurementConfidence*100);
+                postureLiveSamplesRef.current=[...postureLiveSamplesRef.current.slice(-8),sample];
+                setPostureLiveAnalysis(postureLiveSamplesRef.current.length>=2?aggregatePostureAnalysisSnapshots(postureLiveSamplesRef.current):null);
+              }else{
+                postureLiveSamplesRef.current=[];
+                setPostureLiveAnalysis(null);
+              }
             }
-            const currentView =
-              postureStepRef.current === "front" || postureStepRef.current === "side" || postureStepRef.current === "back"
-                ? postureStepRef.current
-                : "front";
-            const liveAnalysis = analyzePosture(smoothedKeypoints, 0, selectedShen.id, currentView);
-            drawPoseCanvas(canvasRef.current, { ...pose, keypoints: smoothedKeypoints }, selectedShen.color, liveAnalysis);
-            targetScoreRef.current = nextStatus === "aktif" ? getPostureOverallScore(liveAnalysis) : 0;
+            const smoothedAnalysis=postureLiveSamplesRef.current.length>=2
+              ? {...rawAnalysis,...aggregatePostureAnalysisSnapshots(postureLiveSamplesRef.current),view:currentView}
+              : null;
+            drawPoseCanvas(canvasRef.current, { ...pose, keypoints: smoothedKeypoints }, selectedShen.color, smoothedAnalysis??undefined);
+            targetScoreRef.current = nextStatus === "aktif"&&smoothedAnalysis ? getPostureOverallScore(smoothedAnalysis) : 0;
           }
         } catch (error) {
           if (isCancelled() || isPostureDetectorAbort(error)) return;
@@ -1290,6 +1347,8 @@ function PostureScreen({
     setCameraStatus("idle");
     setKeypoints([]);
     postureSmoothedPointsRef.current = [];
+    postureLiveSamplesRef.current = [];
+    setPostureLiveAnalysis(null);
     setPoseStatus("bekliyor");
     targetScoreRef.current = 0;
     setMovementScore(0);
@@ -1428,6 +1487,7 @@ function PostureScreen({
       captures={postureCaptures}
       capturedView={capturedView}
       keypoints={keypoints}
+      analysisSnapshot={postureLiveAnalysis}
       mode={postureMode}
       movementScore={movementScore}
       autoCaptureProgress={autoCaptureProgress}

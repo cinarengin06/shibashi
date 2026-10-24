@@ -1,5 +1,5 @@
 import type { CSSProperties, RefObject } from "react";
-import { analyzePosture, getPostureOverallScore, getPostureQualityCounts, type PoseKeypoint, type PostureView } from "@/packages/posture-analysis";
+import { analyzePosture, getPostureOverallScore, getPostureQualityCounts, type PoseKeypoint, type PostureAnalysisSnapshot, type PostureView } from "@/packages/posture-analysis";
 import { fiveShen } from "@/features/home/data/shen";
 import {
   PostureAssessmentLanding,
@@ -27,6 +27,7 @@ export function PostureAssessmentScreen({
   captures,
   capturedView = null,
   keypoints,
+  analysisSnapshot,
   mode,
   movementScore,
   onCapture,
@@ -62,6 +63,7 @@ export function PostureAssessmentScreen({
   captures: Partial<Record<PostureView, PostureAssessmentCapture>>;
   capturedView?: PostureView | null;
   keypoints: PoseKeypoint[];
+  analysisSnapshot?: PostureAnalysisSnapshot | null;
   mode: PostureRenderMode;
   movementScore: number;
   onCapture: () => void;
@@ -94,7 +96,8 @@ export function PostureAssessmentScreen({
   const activeLabel = activeView === "front" ? "Ön" : activeView === "side" ? "Yan" : "Arka";
   const captureCount = (["front", "side", "back"] as const).filter((item) => captures[item]).length;
   const canCapture = cameraStatus === "ready" && poseStatus === "aktif";
-  const liveAnalysis = analyzePosture(keypoints, movementScore, selectedShen.id, activeView);
+  const rawAnalysis = analyzePosture(keypoints, movementScore, selectedShen.id, activeView);
+  const liveAnalysis = analysisSnapshot ? { ...rawAnalysis, ...analysisSnapshot, view: activeView } : analyzePosture([], 0, selectedShen.id, activeView);
   const postureScore = getPostureOverallScore(liveAnalysis);
   const postureReady = cameraStatus === "ready" && poseStatus === "aktif";
   const autoCaptureInstruction =

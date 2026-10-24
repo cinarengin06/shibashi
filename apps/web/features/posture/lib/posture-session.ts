@@ -39,6 +39,20 @@ export function aggregatePostureAnalysisSnapshots(samples: PostureAnalysisSnapsh
   };
 }
 
+export function getWebPostureMeasurementConfidence(keypoints: PoseKeypoint[], view: PostureView): number | null {
+  const byName = new Map(keypoints.map((point) => [point.name, point]));
+  const left = ["left_ear", "left_shoulder", "left_hip", "left_knee", "left_ankle"];
+  const right = ["right_ear", "right_shoulder", "right_hip", "right_knee", "right_ankle"];
+  const total = (names: string[]) => names.reduce((sum, name) => sum + (byName.get(name)?.score ?? 0), 0);
+  const measured = view === "side"
+    ? (total(left) >= total(right) ? left : right)
+    : ["left_shoulder", "right_shoulder", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"];
+  const confidences = measured.map((name) => byName.get(name)?.score ?? 0);
+  if (confidences.some((confidence) => confidence < 0.42)) return null;
+  const average = confidences.reduce((sum, confidence) => sum + confidence, 0) / confidences.length;
+  return average >= 0.55 ? average : null;
+}
+
 export function createPostureCapture(
   video: HTMLVideoElement | null,
   keypoints: PoseKeypoint[],
@@ -116,7 +130,7 @@ export function getPostureLiveCoachCue(
   view: PostureView,
   readiness: ReturnType<typeof evaluateWebPostureFrame>,
   analysis: PostureAnalysisSnapshot,
-  keypoints: PoseKeypoint[],
+  _keypoints: PoseKeypoint[],
 ) {
   if (!readiness.bodyReady) return "Laptop ekranını sabitle. Başınla ayakların aynı karede görünene kadar biraz geri çekil.";
   if (!readiness.angleReady) return getPostureOrientationCue(view);
@@ -127,14 +141,9 @@ export function getPostureLiveCoachCue(
     if (analysis.axisScore < 70) return "Göğsünü kaldırmadan gövdeni dikey hatta getir.";
     if (analysis.hipScore < 70) return "Kalçanı ayak bileğinin üzerinde hizala.";
   } else {
-    if (analysis.shoulderScore < 70) {
-      const left = keypoints.find((point) => point.name === "left_shoulder");
-      const right = keypoints.find((point) => point.name === "right_shoulder");
-      if (left && right) return left.y < right.y ? "Sol omzunu biraz indir." : "Sağ omzunu biraz indir.";
-      return "Omuzlarını aynı yüksekliğe getir.";
-    }
+    if (analysis.shoulderScore < 70) return "Omuzlarını aynı yüksekliğe getir.";
     if (analysis.hipScore < 70) return "Ağırlığını iki ayağına eşit dağıt.";
-    if (analysis.axisScore < 70) return analysis.spineShift > 0 ? "Gövdeni hafifçe sola taşı." : "Gövdeni hafifçe sağa taşı.";
+    if (analysis.axisScore < 70) return "Göğsünü kaldırmadan gövdeni dikey hatta getir.";
   }
   return "Duruşun dengeli. Nefesini değiştirmeden sabit kal.";
 }

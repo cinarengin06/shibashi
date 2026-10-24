@@ -107,7 +107,7 @@ export default function PostureSession(){
   Object.values(voicePlayers).forEach(player=>{try{player.pause()}catch{}});
   setClosing(true);
   setCameraReady(false);
-  setTimeout(()=>router.back(),120);
+  setTimeout(()=>router.back(),350);
  };
 
  useEffect(()=>{
@@ -191,7 +191,10 @@ export default function PostureSession(){
     setScanState('capturing');
     const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
     if(scanSessionRef.current!==session)return;
-    const savedFrame=Platform.OS==='android'&&isPreviewFrameAvailable()?await capturePreviewFrame(true):photo;
+    const saveCapture=Platform.OS==='android'&&isPreviewFrameAvailable()?capturePreviewFrame(true):Promise.resolve(photo);
+    captureInFlightRef.current=saveCapture;
+    const savedFrame=await saveCapture;
+    captureInFlightRef.current=null;
     if(scanSessionRef.current!==session)return;
     if(!savedFrame.uri)throw new Error('Fotoğraf dosyası alınamadı');
     const imageUri=await savePostureCapturePhoto(savedFrame.uri,view);
@@ -288,7 +291,7 @@ export default function PostureSession(){
   </View>
   <View style={styles.sessionContent}>
    <View onLayout={(event:LayoutChangeEvent)=>{const{width,height}=event.nativeEvent.layout;setPreviewSize(current=>current.width===width&&current.height===height?current:{width,height})}} style={[styles.cameraStage,{borderColor:`${shen.color}55`}]}>
-    <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} active={!closing} onCameraReady={()=>{if(!closingRef.current){setCameraReady(true);setCameraError(false)}}} onMountError={()=>{if(!closingRef.current){setCameraError(true);setCameraReady(false)}}} mirror/>
+    {!closing&&<CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} onCameraReady={()=>{if(!closingRef.current){setCameraReady(true);setCameraError(false)}}} onMountError={()=>{if(!closingRef.current){setCameraError(true);setCameraReady(false)}}} mirror/>}
     <View style={styles.cameraShade}/>
     <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>
     <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize} view={view}/>

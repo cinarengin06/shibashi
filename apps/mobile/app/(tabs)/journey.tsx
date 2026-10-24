@@ -141,10 +141,10 @@ export default function Journey() {
         </View>
       </Card>
 
-      <Text style={[styles.mapTitle, { marginTop: 14 }]}>Bu kapının videoları</Text>
+      <Text style={[styles.mapTitle, { marginTop: 14 }]}>İlgili videolar aşağıda</Text>
       {relatedMovements.map(item => {
         const done = allCompletedOrders.includes(item.order);
-        return <Pressable key={item.order} accessibilityRole="button" accessibilityLabel={`${item.order}. form ${item.sourceTitle}${done ? ', tamamlandı' : ''}`} onPress={() => router.push(`/body-lines?movementOrder=${item.order}`)} style={[styles.relatedVideo, { borderColor: `${accent}55` }]}><Image source={shibashiPosters[item.order]} style={styles.relatedPoster}/><View style={styles.flex}><Text style={[styles.kicker, { color: accent }]}>FORM {String(item.order).padStart(2, '0')}</Text><Text numberOfLines={2} style={styles.relatedTitle}>{item.sourceTitle}</Text><Text style={[styles.relatedStatus, { color: done ? '#A8DCB3' : colors.muted }]}>{done ? '✓ Tamamlandı' : 'Videoyu izle'}</Text></View><Ionicons name="play-circle-outline" color={accent} size={25}/></Pressable>;
+        return <Pressable key={item.order} accessibilityRole="button" accessibilityLabel={`${item.order}. form ${item.sourceTitle}${done ? ', tamamlandı' : ''}`} onPress={() => router.push(`/body-lines?movementOrder=${item.order}`)} style={[styles.relatedVideo, { borderColor: `${accent}55` }]}><Image source={shibashiPosters[item.order]} style={styles.relatedPoster}/><View style={styles.flex}><Text style={[styles.kicker, { color: accent }]}>FORM {String(item.order).padStart(2, '0')}</Text><Text numberOfLines={2} style={styles.relatedTitle}>{item.sourceTitle}</Text><Text style={[styles.relatedStatus, { color: done ? '#A8DCB3' : colors.muted }]}>{done ? '✓ Tamamlandı' : '18 Form’da izle'}</Text></View><Ionicons name="play-circle-outline" color={accent} size={25}/></Pressable>;
       })}
     </Screen>
   );

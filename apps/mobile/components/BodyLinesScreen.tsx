@@ -37,17 +37,31 @@ export function BodyLinesScreen() {
   const params = useLocalSearchParams<{ movementOrder?: string }>();
   const requested = Number(params.movementOrder);
   const [order, setOrder] = useState(Number.isInteger(requested) && requested >= 1 && requested <= 18 ? requested : 1);
+  const [switching, setSwitching] = useState(false);
+  const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
   const [photos, setPhotos] = useState<ShibashiPhoto[]>([]);
   const [selected, setSelected] = useState<ShibashiPhoto | null>(null);
   useEffect(() => { void loadShibashiPhotos().then(setPhotos); }, []);
-  const choose = (next: number) => { setOrder(next); void Haptics.selectionAsync(); };
+  const choose = (next: number) => {
+    if (next === order || next < 1 || next > 18) return;
+    if (switchTimer.current) clearTimeout(switchTimer.current);
+    setSwitching(true);
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    switchTimer.current = setTimeout(() => { setOrder(next); setSwitching(false); switchTimer.current = null; }, 350);
+    void Haptics.selectionAsync();
+  };
+  useEffect(() => {
+    if (Number.isInteger(requested) && requested >= 1 && requested <= 18) choose(requested);
+  }, [requested]);
+  useEffect(() => () => { if (switchTimer.current) clearTimeout(switchTimer.current); }, []);
   const removePhoto = (photo: ShibashiPhoto) => Alert.alert('Fotoğrafı sil?', 'Bu fotoğraf cihazından kalıcı olarak silinecek.', [
     { text: 'Vazgeç', style: 'cancel' },
     { text: 'Sil', style: 'destructive', onPress: () => { void deleteShibashiPhoto(photo.id).then(items => { setPhotos(items); setSelected(null); }); } },
   ]);
-  return <SafeAreaView style={[s.root,{backgroundColor:theme.surface}]} edges={['top']}><ScrollView contentContainerStyle={s.page} showsVerticalScrollIndicator={false}>
+  return <SafeAreaView style={[s.root,{backgroundColor:theme.surface}]} edges={['top']}><ScrollView ref={scrollRef} contentContainerStyle={s.page} showsVerticalScrollIndicator={false}>
     <View style={s.top}><Pressable accessibilityLabel="Odam'a dön" onPress={() => router.replace('/(tabs)')} style={s.icon}><Ionicons name="arrow-back" size={23} color={colors.cream}/></Pressable><Text style={s.topTitle}>18 Form</Text><Pressable accessibilityLabel="Fotoğraflarım" onPress={() => { void loadShibashiPhotos().then(setPhotos); }} style={s.icon}><Ionicons name="images-outline" size={22} color={colors.cream}/></Pressable></View>
-    <MovementStage key={order} order={order} completed={photos.some(photo => photo.order === order)} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>
+    {!switching&&<MovementStage key={order} order={order} completed={photos.some(photo => photo.order === order)} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>}
     <Text style={s.sectionTitle}>18 Form</Text>
     <View style={s.grid}>{meridianMovements.map(item => <Pressable key={item.order} onPress={() => choose(item.order)} style={[s.tile, item.order === order && s.tileActive]} accessibilityLabel={`${item.order}. form: ${item.sourceTitle}, ${photos.some(photo => photo.order === item.order)?'tamamlandı':'başlanmadı'}`} accessibilityState={{ selected: item.order === order }}><Image source={shibashiPosters[item.order]} style={s.tileImage}/><View style={s.tileShade}/><Text style={s.tileNumber}>{String(item.order).padStart(2,'0')}</Text>{photos.some(photo => photo.order === item.order) && <Text style={{ position:'absolute',right:6,top:6,color:'#A8DCB3',backgroundColor:'rgba(3,15,10,.85)',paddingHorizontal:5,paddingVertical:3,borderRadius:5,fontSize:10,fontWeight:'800' }}>✓ Tamamlandı</Text>}<Text numberOfLines={2} style={s.tileTitle}>{item.sourceTitle}</Text></Pressable>)}</View>
     <View style={s.galleryHead}><Text style={s.sectionTitle}>Fotoğraflarım</Text><Text style={s.muted}>{photos.length} fotoğraf</Text></View>

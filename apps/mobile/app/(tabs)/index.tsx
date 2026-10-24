@@ -15,6 +15,7 @@ import { practices } from "../../data/content";
 import { fiveShen } from "../../data/fiveShen";
 import { shenBackgrounds } from "../../data/shenAssets";
 import { shenIcons } from "../../data/shenIcons";
+import { loadCompletedMovements } from "../../services/movementCompletion";
 import { ensureSystemNotifications, unreadNotificationCount } from "../../services/notifications/NotificationInbox";
 import { loadShibashiPhotos, type ShibashiPhoto } from "../../services/shibashiPhotos";
 import { useApp } from "../../store/AppStore";
@@ -42,7 +43,7 @@ function practiceStreak(sessions: PracticeSession[]) {
 }
 
 export default function Today() {
-  const { profile, saveProfile, sessions, postureReports } = useApp();
+  const { profile, saveProfile, sessions, entries, shenActivities, postureReports } = useApp();
   const { shen, soundEnabled, toggleSound } = useShenExperience();
   const theme = shenThemes[shen.id];
   const daily = copy[shen.id];
@@ -61,6 +62,7 @@ export default function Today() {
     return () => { active = false; };
   }, [profile.onboardingDone]));
   const [photos, setPhotos] = useState<ShibashiPhoto[]>([]);
+  const [completedMovementOrders, setCompletedMovementOrders] = useState<number[]>([]);
   const now = Date.now();
   const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
   const weekSessions = sessions.filter((item) => new Date(item.date).getTime() >= sevenDaysAgo);
@@ -68,22 +70,30 @@ export default function Today() {
   const xp = sessions.reduce((sum, item) => sum + (item.xp ?? 0), 0);
   const level = Math.floor(xp / 240) + 1;
   const levelProgress = xp % 240;
-  const energy = profile.onboardingCheckin?.energy ?? 50;
+  const energyRecord = entries.reduce<{ date: string; value: number } | null>((latest, entry) => !latest || entry.date > latest.date ? { date: entry.date, value: entry.energy } : latest, profile.onboardingCheckin ? { date: profile.onboardingCheckin.createdAt, value: profile.onboardingCheckin.energy } : null);
+  const energy = energyRecord?.value;
   const streak = practiceStreak(sessions);
   const lastReport = postureReports[0];
   const formRecords = photos.map(photo => ({ order:photo.order, date:photo.savedAt }));
-  const completedForms = new Set(formRecords.map(record => record.order)).size;
+  const completedFormOrders = new Set([
+    ...completedMovementOrders,
+    ...photos.filter(photo => photo.score >= 70).map(photo => photo.order),
+    ...sessions.filter(session => session.postureScore >= 70).map(session => Number(session.practiceId.match(/^movement-(\d+)$/)?.[1])),
+    ...shenActivities.filter(activity => activity.type === "practice" && activity.completed !== false).map(activity => Number(activity.practiceId?.match(/^movement-(\d+)$/)?.[1])),
+  ].filter(order => Number.isInteger(order) && order >= 1 && order <= 18));
+  const completedForms = completedFormOrders.size;
   const dailyFormDone = formRecords.some(record => localDateKey(record.date) === localDateKey(new Date()));
   useFocusEffect(useCallback(() => {
     let active = true;
     void loadShibashiPhotos().then((items) => { if (active) setPhotos(items); });
+    void loadCompletedMovements(profile.authUserId).then((orders) => { if (active) setCompletedMovementOrders(orders); });
     void ensureSystemNotifications({
       hasPostureReport: postureReports.length > 0,
       hasSessionToday: sessions.some((item) => new Date(item.date).toDateString() === new Date().toDateString()),
       remindersEnabled: profile.reminders,
     }).then((items) => { if (active) setUnread(unreadNotificationCount(items)); });
     return () => { active = false; };
-  }, [postureReports.length, profile.reminders, sessions]));
+  }, [postureReports.length, profile.authUserId, profile.reminders, sessions]));
 
   const startDailyPractice = () => {
     const practice = practices.find((item) => item.id === shen.practiceId) ?? practices[0];
@@ -135,12 +145,12 @@ export default function Today() {
       <StatTile label="♨  Seri" value={String(streak)} unit="gün" detail="Pratik günlerin" shenId={shen.id} />
       <StatTile label="Seviye" value={String(level)} unit="Yolcu" detail={`${levelProgress} / 240 XP`} progress={levelProgress / 240} shenId={shen.id} />
       <StatTile label="Son 7 gün" value={String(weekSessions.length)} unit="pratik" detail={`Toplam ${weekMinutes} dakika`} shenId={shen.id} />
-      <ImageBackground source={shenBackgrounds[shen.id]} style={[s.stat, s.energyStat, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><View style={s.energyShade} /><Text style={s.statLabel}>Enerjin ({shen.name})</Text><Text style={[s.statValue, { color: theme.button }]}>{energy}<Text style={s.statUnit}> / 100</Text></Text><Text style={s.statDetail}>{energy >= 70 ? "Canlı bir başlangıç" : "Bugün kendini dinle"}</Text><Text style={s.energyMotif}>{shenMotifs[shen.id]}</Text></ImageBackground>
+      <ImageBackground source={shenBackgrounds[shen.id]} style={[s.stat, s.energyStat, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><View style={s.energyShade} /><Text style={s.statLabel}>Enerjin ({shen.name})</Text><Text style={[s.statValue, { color: theme.button }]}>{energy ?? "—"}{energy !== undefined && <Text style={s.statUnit}> / 100</Text>}</Text><Text style={s.statDetail}>{energy === undefined ? "Günlük kaydını bekliyor" : energy >= 70 ? "Canlı bir başlangıç" : "Bugün kendini dinle"}</Text><Text style={s.energyMotif}>{shenMotifs[shen.id]}</Text></ImageBackground>
     </View>
 
     <View style={{ gap:12, marginBottom:20 }}>
       <View style={[s.gameCard,{backgroundColor:theme.surfaceRaised,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ</Text><Text style={s.gameTitle}>{dailyFormDone?'Bugünkü adımın tamamlandı ✨':'Bir formu bedeninde dene'}</Text><Text style={s.gameBody}>{shenDailyCues[shen.id]}</Text><Text style={[s.gameStatus,{color:dailyFormDone?'#A8DCB3':theme.light}]}>{dailyFormDone?'✓ Bugün form kaydın var':'Fotoğrafın kaydedilince tamamlanır'}</Text><Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')}><Text style={[s.gameLink,{color:theme.button}]}>18 Form'a git →</Text></Pressable></View>
-      <View style={[s.gameCard,{backgroundColor:theme.surfaceRaised,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Text style={[s.gameEyebrow,{color:theme.button}]}>18 FORM YOLU</Text><Text style={s.gameTitle}>{completedForms} / 18 form</Text><View style={s.formProgress}>{Array.from({length:18},(_,index)=><View key={index} style={[s.formProgressDot,{backgroundColor:index<completedForms?theme.button:`${theme.primary}35`}]}/>)}</View><Text style={s.gameBody}>Hocayı izle, kamerayla dene, kaydını oluştur.</Text><Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')}><Text style={[s.gameLink,{color:theme.button}]}>Yolculuğa devam et →</Text></Pressable></View>
+      <View style={[s.gameCard,{backgroundColor:theme.surfaceRaised,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Text style={[s.gameEyebrow,{color:theme.button}]}>18 FORM YOLU</Text><Text style={s.gameTitle}>{completedForms} / 18 form</Text><View style={s.formProgress}>{Array.from({length:18},(_,index)=><View key={index} style={[s.formProgressDot,{backgroundColor:completedFormOrders.has(index+1)?theme.button:`${theme.primary}35`}]}/>)}</View><Text style={s.gameBody}>Hocayı izle, kamerayla dene, kaydını oluştur.</Text><Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')}><Text style={[s.gameLink,{color:theme.button}]}>Yolculuğa devam et →</Text></Pressable></View>
 
     </View>
 
@@ -149,6 +159,8 @@ export default function Today() {
       <Pressable accessibilityRole="button" onPress={() => router.push("/body-lines")} style={[s.quick, { backgroundColor: theme.button }, shenShape(shen.id)]}><Ionicons name="arrow-forward" color={theme.buttonInk} size={25} /><View><Text style={[s.quickTitle, { color: theme.buttonInk }]}>18 Form</Text><Text style={[s.quickSubtitle, { color: theme.buttonInk }]}>Hoca videosuyla öğren</Text></View></Pressable>
       <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.quick, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><Ionicons name="body-outline" color={theme.button} size={27} /><View><Text style={s.quickTitle}>Postür</Text><Text style={s.quickSubtitle}>Bedenini tanı</Text></View></Pressable>
     </View>
+    <Pressable accessibilityRole="button" onPress={() => router.push('/warmup-lessons')} style={[s.postureSummary, { backgroundColor: theme.surfaceRaised, marginTop: 10 }, shenShape(shen.id)]}><View><Text style={[s.statLabel, { color: theme.button }]}>FORMDAN ÖNCE</Text><Text style={s.postureTitle}>Isınma Dersleri</Text><Text style={s.quickSubtitle}>Wuji · Eklemler · Merkez</Text></View><Ionicons name="play-circle-outline" color={theme.button} size={25} /></Pressable>
+    <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/journey' as Href)} style={[s.postureSummary, { backgroundColor: theme.surfaceRaised, marginTop: 10 }, shenShape(shen.id)]}><View><Text style={[s.statLabel, { color: theme.button }]}>SEKİZ KAPI</Text><Text style={s.postureTitle}>Beden Haritam</Text><Text style={s.quickSubtitle}>Kapıları ve ilgili formları keşfet</Text></View><Ionicons name="compass-outline" color={theme.button} size={25} /></Pressable>
 
     <View style={s.sectionHeader}><Text style={s.sectionTitle}>Son hareketlerin</Text><Pressable onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint, { color: theme.button }]}>Fotoğraflarım →</Text></Pressable></View>
     {photos.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photos}>{photos.slice(0,5).map((item) => <Pressable key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.photoCard, shenShape(shen.id)]}><Image source={{ uri: item.uri }} style={s.photo} /><LinearGradient colors={["transparent", "rgba(5,9,10,.9)"]} style={s.photoShade}><Text numberOfLines={1} style={s.photoTitle}>{item.name}</Text><Text style={[s.photoScore, { color: theme.button }]}>%{item.score}</Text></LinearGradient></Pressable>)}</ScrollView> : <View style={[s.emptyCard, { backgroundColor: theme.surfaceRaised }, shenShape(shen.id)]}><Ionicons name="images-outline" color={theme.button} size={24} /><Text style={s.emptyText}>İlk hareket fotoğrafın burada görünecek.</Text></View>}

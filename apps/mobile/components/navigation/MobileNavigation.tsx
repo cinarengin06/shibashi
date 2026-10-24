@@ -21,9 +21,9 @@ type Props = {
 
 const items = [
   { label: "Odam", tab: "index" },
+  { label: "Gelişim Haritam", tab: "main-map" },
   { label: "18 Form", tab: "moves" },
   { label: "Postür", tab: "posture" },
-  { label: "Gelişim Haritam", tab: "main-map" },
   { label: "Kayıtlarım", tab: "journal" },
 ] as const;
 

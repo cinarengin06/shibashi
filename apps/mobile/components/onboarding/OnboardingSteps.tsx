@@ -7,10 +7,12 @@ import {
   Pressable,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
   type ImageSourcePropType,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   createFirstJourneyPlan,
   onboardingShenResults,
@@ -51,6 +53,9 @@ const bodyFocusMarkers: Record<BodyFocus, Array<{ height?: number; width?: numbe
 };
 
 export function Welcome({ onSkip, onStart }: { onSkip: () => void; onStart: () => void }) {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const compact = width < 380;
   return (
     <ImageBackground
       imageStyle={m.welcomeImage}
@@ -60,7 +65,7 @@ export function Welcome({ onSkip, onStart }: { onSkip: () => void; onStart: () =
       <LinearGradient
         colors={["rgba(4,8,5,.12)", "rgba(4,8,5,.3)", "rgba(4,8,5,.98)"]}
         locations={[0, 0.45, 1]}
-        style={m.welcomeShade}
+        style={[m.welcomeShade, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 20 }]}
       >
         <View style={m.welcomeBrand}>
           <View style={m.brandRing} />
@@ -70,17 +75,18 @@ export function Welcome({ onSkip, onStart }: { onSkip: () => void; onStart: () =
           </View>
         </View>
         <View style={m.welcomeSpace} />
-        <Text style={m.welcomeTitle}>
+        <Text style={m.welcomeEyebrow}>YOLCULUĞUN BURADA BAŞLIYOR</Text>
+        <Text style={[m.welcomeTitle, compact && m.welcomeTitleCompact]}>
           Sana iyi gelecek yolu birlikte bulalım.
         </Text>
-        <Text style={m.welcomeBody}>
+        <Text style={[m.welcomeBody, compact && m.welcomeBodyCompact]}>
           Deneyim ve ekipman gerektirmez. Altı kısa adımda ilk 5 dakikalık pratiğini hazırlayacağız.
         </Text>
-        <View style={m.welcomeActions}>
+        <View style={[m.welcomeActions, compact && m.welcomeActionsCompact]}>
           <Pressable
             accessibilityRole="button"
             onPress={onStart}
-            style={({ pressed }) => [m.primary, m.welcomePrimary, pressed && m.pressed]}
+            style={({ pressed }) => [m.primary, m.welcomePrimary, compact && m.welcomeActionCompact, pressed && m.pressed]}
           >
             <Text style={m.primaryText}>BAŞLA</Text>
             <Ionicons color={colors.ink} name="arrow-forward" size={18} />
@@ -88,7 +94,7 @@ export function Welcome({ onSkip, onStart }: { onSkip: () => void; onStart: () =
           <Pressable
             accessibilityRole="button"
             onPress={onSkip}
-            style={({ pressed }) => [m.welcomeSkip, pressed && m.pressed]}
+            style={({ pressed }) => [m.welcomeSkip, compact && m.welcomeActionCompact, pressed && m.pressed]}
           >
             <Text style={m.welcomeSkipText}>Zaten bilgilerimi girdim</Text>
           </Pressable>

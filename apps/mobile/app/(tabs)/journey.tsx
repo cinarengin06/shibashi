@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useMemo, useState } from "react";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Card, Eyebrow, Screen, Title } from "../../components/ui";
 import { colors, fonts, radii } from "../../constants/theme";
 import { humanMapStages } from "../../data/journey";
-import { BODY_GATE_ORDER, gateGuidance, gateProgress, gates, uniqueMovementOrders } from "../../../../packages/eight-gates";
+import { BODY_GATE_ORDER, gateGuidance, gateProgress, gates, movementGateWeights, uniqueMovementOrders } from "../../../../packages/eight-gates";
+import { meridianMovements } from "../../../../packages/meridian-knowledge";
+import { shibashiPosters } from "../../data/shibashiMedia";
 import { getShen } from "../../data/fiveShen";
 import { loadCompletedMovements } from "../../services/movementCompletion";
 import { useApp } from "../../store/AppStore";
@@ -33,6 +35,7 @@ export default function Journey() {
   const guidance = gateGuidance[activeGateId];
   const currentGate = progress.find((item) => item.id === BODY_GATE_ORDER[currentGateIndex])!;
   const isCurrentGate = activeIndex === currentGateIndex;
+  const relatedMovements = meridianMovements.filter(item => Boolean(movementGateWeights[item.order]?.[activeGateId]));
 
   useFocusEffect(useCallback(() => {
     let active = true;
@@ -137,6 +140,12 @@ export default function Journey() {
           </Pressable>
         </View>
       </Card>
+
+      <Text style={[styles.mapTitle, { marginTop: 14 }]}>Bu kapının videoları</Text>
+      {relatedMovements.map(item => {
+        const done = allCompletedOrders.includes(item.order);
+        return <Pressable key={item.order} accessibilityRole="button" accessibilityLabel={`${item.order}. form ${item.sourceTitle}${done ? ', tamamlandı' : ''}`} onPress={() => router.push(`/body-lines?movementOrder=${item.order}`)} style={[styles.relatedVideo, { borderColor: `${accent}55` }]}><Image source={shibashiPosters[item.order]} style={styles.relatedPoster}/><View style={styles.flex}><Text style={[styles.kicker, { color: accent }]}>FORM {String(item.order).padStart(2, '0')}</Text><Text numberOfLines={2} style={styles.relatedTitle}>{item.sourceTitle}</Text><Text style={[styles.relatedStatus, { color: done ? '#A8DCB3' : colors.muted }]}>{done ? '✓ Tamamlandı' : 'Videoyu izle'}</Text></View><Ionicons name="play-circle-outline" color={accent} size={25}/></Pressable>;
+      })}
     </Screen>
   );
 }
@@ -174,4 +183,8 @@ const styles = StyleSheet.create({
   mapActionText: { color: colors.muted, fontSize: 15, fontWeight: "800" },
   mapActionPrimaryText: { color: colors.ink, fontSize: 15, fontWeight: "900" },
   disabled: { opacity: 0.35 },
+  relatedVideo: { flexDirection: 'row', alignItems: 'center', gap: 11, minHeight: 84, padding: 8, borderWidth: 1, borderRadius: 14, backgroundColor: colors.surface },
+  relatedPoster: { width: 64, height: 68, borderRadius: 7 },
+  relatedTitle: { color: colors.cream, fontFamily: fonts.sansStrong, fontSize: 15, marginTop: 3 },
+  relatedStatus: { fontFamily: fonts.sansMedium, fontSize: 12, marginTop: 3 },
 });

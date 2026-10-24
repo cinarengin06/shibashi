@@ -19,7 +19,6 @@ import {
   emptyOnboardingProfile,
   onboardingShenResults,
   onboardingStages,
-  profileQuestions,
   type OnboardingProfile,
 } from "../../../packages/onboarding";
 import { dailyShenDate } from "../../../packages/daily-shen-checkin";
@@ -34,7 +33,10 @@ export default function Onboarding() {
   const { profile, saveProfile } = useApp();
   const { background, playing, startSound, toggleSound, shen } = useShenExperience();
   const surface = shenThemes[profile.selectedShenId].surface;
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => {
+    if (!profile.onboardingStage || profile.onboardingStage === "completed") return 0;
+    return Math.max(0, onboardingStages.findIndex((stage) => stage.id === profile.onboardingStage));
+  });
   const [data, setData] = useState<OnboardingProfile>({
     ...emptyOnboardingProfile,
     ...profile.onboardingProfile,
@@ -111,7 +113,15 @@ export default function Onboarding() {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace("/(tabs)");
   };
-  const skipCompletedGuide = () => router.replace("/(tabs)");
+  const skipCompletedGuide = async () => {
+    saveProfile({
+      onboardingDone: true,
+      onboardingVersion: 9,
+      onboardingStage: "completed",
+    });
+    await AsyncStorage.setItem("shibashi-daily-shen-date", dailyShenDate());
+    router.replace("/(tabs)");
+  };
   const canContinue = step !== 1 || data.name.trim().length >= 2;
 
   return (
@@ -123,7 +133,7 @@ export default function Onboarding() {
         colors={[surface, shenThemes[profile.selectedShenId].surfaceRaised, surface]}
         style={StyleSheet.absoluteFill}
       />
-      <SafeAreaView edges={["top", "bottom"]} style={m.safe}>
+      <SafeAreaView edges={step === 0 ? [] : ["top", "bottom"]} style={m.safe}>
         {step > 0 ? <Header back={() => goTo(step - 1)} step={step} /> : null}
         <ScrollView
           contentContainerStyle={[
@@ -135,7 +145,7 @@ export default function Onboarding() {
           showsVerticalScrollIndicator={false}
           style={m.scroll}
         >
-          {step === 0 ? <Welcome onSkip={skipCompletedGuide} onStart={next} /> : null}
+          {step === 0 ? <Welcome onSkip={() => { void skipCompletedGuide(); }} onStart={next} /> : null}
           {step === 1 ? (
             <QuestionCopy
               kicker="1 / 6"

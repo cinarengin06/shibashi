@@ -18,7 +18,7 @@ import { useApp } from "../store/AppStore";
 const introVideo = require("../assets/intro/intro-gate.mp4");
 const introPoster = require("../assets/intro/intro-gate-poster-hq-v2.png");
 const VIDEO_PLAYBACK_RATE = 0.82;
-const VIDEO_DURATION_MS = Math.round((10000 / VIDEO_PLAYBACK_RATE) * 1000);
+const VIDEO_DURATION_MS = Math.round(10000 / VIDEO_PLAYBACK_RATE);
 
 export default function Welcome() {
   const { profile } = useApp();

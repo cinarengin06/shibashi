@@ -59,7 +59,7 @@ export const m = StyleSheet.create({
     fontSize: 16,
     lineHeight: 25,
   },
-  welcome: { flex: 1, minHeight: 720 },
+  welcome: { flex: 1, minHeight: 0 },
   welcomeImage: { height: "100%", width: "100%" },
   welcomeShade: { flex: 1, padding: 24 },
   welcomeBrand: {
@@ -91,12 +91,14 @@ export const m = StyleSheet.create({
     textAlign: "center",
   },
   welcomeSpace: { flex: 1 },
+  welcomeEyebrow: { color: colors.gold, fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 1.5, marginBottom: 9 },
   welcomeTitle: {
     color: colors.cream,
     fontFamily: fonts.displayStrong,
     fontSize: 39,
     lineHeight: 43,
   },
+  welcomeTitleCompact: { fontSize: 33, lineHeight: 37 },
   welcomeBody: {
     color: colors.cream,
     fontFamily: fonts.sans,
@@ -106,8 +108,11 @@ export const m = StyleSheet.create({
     marginTop: 12,
     maxWidth: 320,
   },
+  welcomeBodyCompact: { fontSize: 15, lineHeight: 22, marginBottom: 16 },
   welcomeActions: { flexDirection: "row", gap: 9, width: "100%" },
+  welcomeActionsCompact: { flexDirection: "column" },
   welcomePrimary: { flex: 1, paddingHorizontal: 10 },
+  welcomeActionCompact: { flex: 0, width: "100%" },
   welcomeSkip: {
     alignItems: "center",
     backgroundColor: "rgba(9,16,11,.78)",

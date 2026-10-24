@@ -11,7 +11,7 @@ import {colors,radii} from '../constants/theme';
 import {getShen} from '../data/fiveShen';
 import {analyzeWithAppleVision3D,isAppleVision3DAvailable} from '../services/pose/AppleVisionPose3D';
 import {MediaPipePoseBridge,MediaPipePoseBridgeRef,PoseLandmark} from '../services/pose/MediaPipePoseBridge';
-import {aggregatePostureCaptures,createPostureCapture,evaluatePoseFrame,getLandmarkMovement,isLandmarkVisible,toPostureNarrativeCapture} from '../services/pose/PostureMetrics';
+import {aggregatePostureCaptures,createPostureCapture,evaluatePoseFrame,getLandmarkMovement,getPostureCorrectionCue,getPostureMeasurementConfidence,isLandmarkVisible,toPostureNarrativeCapture,type PostureCorrectionCue} from '../services/pose/PostureMetrics';
 import {useApp} from '../store/AppStore';
 import {PostureCapture,PostureReport,PostureView} from '../types';
 import {buildPostureNarrative} from '../../../packages/posture-analysis';
@@ -27,7 +27,7 @@ const viewCopy:Record<PostureView,{title:string;instruction:string;icon:keyof ty
 };
 
 type Metric={label:string;icon:keyof typeof Ionicons.glyphMap;value:number;measurement:string;confidence:number};
-type ScanState='model-loading'|'find-body'|'wrong-angle'|'hold'|'capturing'|'turning'|'error';
+type ScanState='model-loading'|'find-body'|'wrong-angle'|'low-confidence'|'hold'|'capturing'|'turning'|'error';
 type FrameSize={width:number;height:number};
 
 const scanCopy:Record<PostureView,{turn:string;waiting:string}>={
@@ -41,6 +41,20 @@ const postureVoice={
  side:require('../assets/posture-narration/postur-mobil-yan.mp3'),
  back:require('../assets/posture-narration/postur-mobil-arka.mp3'),
  complete:require('../assets/posture-narration/postur-mobil-bitti.mp3'),
+};
+
+const correctionVoice={
+ head:require('../assets/posture-guidance/cene.mp3'),
+ shoulder:require('../assets/posture-guidance/omuzlar.mp3'),
+ axis:require('../assets/posture-guidance/dikey.mp3'),
+ hip:require('../assets/posture-guidance/kalca.mp3'),
+};
+
+const correctionCopy:Record<PostureCorrectionCue,string>={
+ head:'Çeneni hafifçe geriye al.',
+ shoulder:'Omuzlarını aynı yüksekliğe getir.',
+ axis:'Gövdeni dikey hatta getir.',
+ hip:'Kalçanı ayak bileğinin üzerinde hizala.',
 };
 
 export default function PostureSession(){
@@ -58,6 +72,8 @@ export default function PostureSession(){
  const[previewSize,setPreviewSize]=useState<FrameSize>({width:1,height:1});
  const[frameConfidence,setFrameConfidence]=useState(0);
  const[liveScore,setLiveScore]=useState<number|null>(null);
+ const[liveCapture,setLiveCapture]=useState<PostureCapture|null>(null);
+ const[audioGuide,setAudioGuide]=useState<string|null>(null);
  const[validSampleCount,setValidSampleCount]=useState(0);
  const[cameraReady,setCameraReady]=useState(false);
  const[analysisError,setAnalysisError]=useState('');
@@ -74,6 +90,10 @@ export default function PostureSession(){
  const holdStartedAtRef=useRef<number|null>(null);
  const previousLandmarksRef=useRef<PoseLandmark[]>([]);
  const stableCapturesRef=useRef<PostureCapture[]>([]);
+ const cueCandidateRef=useRef<PostureCorrectionCue|null>(null);
+ const cueCandidateSinceRef=useRef(0);
+ const lastCueAtRef=useRef(0);
+ const correctionPendingUntilRef=useRef(0);
  const capturesRef=useRef<PostureCapture[]>([]);
  const speakingRef=useRef('');
  const draftPhotosRef=useRef<string[]>([]);
@@ -85,7 +105,13 @@ export default function PostureSession(){
  const sideVoice=useAudioPlayer(postureVoice.side);
  const backVoice=useAudioPlayer(postureVoice.back);
  const completeVoice=useAudioPlayer(postureVoice.complete);
+ const headVoice=useAudioPlayer(correctionVoice.head);
+ const shoulderVoice=useAudioPlayer(correctionVoice.shoulder);
+ const axisVoice=useAudioPlayer(correctionVoice.axis);
+ const hipVoice=useAudioPlayer(correctionVoice.hip);
  const voicePlayers={front:frontVoice,side:sideVoice,back:backVoice,complete:completeVoice};
+ const correctionPlayers={head:headVoice,shoulder:shoulderVoice,axis:axisVoice,hip:hipVoice};
+ const allVoicePlayers=[...Object.values(voicePlayers),...Object.values(correctionPlayers)];
 
  useEffect(()=>setVision3DActive(isAppleVision3DAvailable()),[]);
  useEffect(()=>{void setAudioModeAsync({playsInSilentMode:true,shouldPlayInBackground:false})},[]);
@@ -94,8 +120,17 @@ export default function PostureSession(){
   if(speakingRef.current===key)return;
   speakingRef.current=key;
   const session=++voiceSessionRef.current;
-  Object.values(voicePlayers).forEach(player=>safeMediaAction(()=>player.pause()));
   const player=voicePlayers[key];
+  allVoicePlayers.filter(other=>other!==player).forEach(other=>safeMediaAction(()=>other.pause()));
+  void player.seekTo(0).then(()=>{if(voiceSessionRef.current===session)return player.play()}).catch(()=>{});
+ };
+
+ const playCorrectionCue=(cue:PostureCorrectionCue)=>{
+  const session=++voiceSessionRef.current;
+  const player=correctionPlayers[cue];
+  allVoicePlayers.filter(other=>other!==player).forEach(other=>safeMediaAction(()=>other.pause()));
+  correctionPendingUntilRef.current=Date.now()+4000;
+  setAudioGuide(correctionCopy[cue]);
   void player.seekTo(0).then(()=>{if(voiceSessionRef.current===session)return player.play()}).catch(()=>{});
  };
 
@@ -105,7 +140,7 @@ export default function PostureSession(){
   scanSessionRef.current+=1;
   voiceSessionRef.current+=1;
   try{await captureInFlightRef.current}catch{}
-  Object.values(voicePlayers).forEach(player=>safeMediaAction(()=>player.pause()));
+  allVoicePlayers.forEach(player=>safeMediaAction(()=>player.pause()));
   setClosing(true);
   setCameraReady(false);
   setTimeout(()=>router.back(),350);
@@ -137,7 +172,12 @@ export default function PostureSession(){
   stableCapturesRef.current=[];
   setLiveLandmarks([]);
   setLiveScore(null);
+  setLiveCapture(null);
+  setAudioGuide(null);
   setValidSampleCount(0);
+  cueCandidateRef.current=null;
+  cueCandidateSinceRef.current=0;
+  correctionPendingUntilRef.current=0;
   setCountdown(3);
   setScanState('model-loading');
   let timer:ReturnType<typeof setTimeout>|undefined;
@@ -164,29 +204,46 @@ export default function PostureSession(){
     const frame=evaluatePoseFrame(analysis.landmarks,view);
     if(!frame.bodyReady){
      holdStartedAtRef.current=null;previousLandmarksRef.current=[];stableCapturesRef.current=[];
+     cueCandidateRef.current=null;setAudioGuide(null);setLiveCapture(null);
      setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('find-body');schedule();return;
     }
     if(!frame.angleReady){
      holdStartedAtRef.current=null;previousLandmarksRef.current=analysis.landmarks;stableCapturesRef.current=[];
+     cueCandidateRef.current=null;setAudioGuide(null);setLiveCapture(null);
      setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('wrong-angle');schedule();return;
+    }
+    const measurementConfidence=getPostureMeasurementConfidence(analysis.landmarks,view);
+    if(measurementConfidence===null){
+     holdStartedAtRef.current=null;previousLandmarksRef.current=[];stableCapturesRef.current=[];
+     cueCandidateRef.current=null;setAudioGuide(null);setLiveCapture(null);
+     setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('low-confidence');schedule();return;
     }
     const movement=getLandmarkMovement(previousLandmarksRef.current,analysis.landmarks);
     previousLandmarksRef.current=analysis.landmarks;
     if(movement>.026){
      holdStartedAtRef.current=Date.now();
      stableCapturesRef.current=[];
+     cueCandidateRef.current=null;setLiveCapture(null);
      setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('hold');schedule();return;
     }
-    const frameCapture=createPostureCapture(view,analysis.landmarks,analysis.confidence);
+    const frameCapture=createPostureCapture(view,analysis.landmarks,measurementConfidence);
     stableCapturesRef.current=[...stableCapturesRef.current,frameCapture].slice(-12);
     const rollingCapture=aggregatePostureCaptures(view,stableCapturesRef.current);
-    setLiveScore(rollingCapture.score);
+    setLiveCapture(stableCapturesRef.current.length>=2?rollingCapture:null);
+    setLiveScore(stableCapturesRef.current.length>=2?rollingCapture.score:null);
     setValidSampleCount(stableCapturesRef.current.length);
     holdStartedAtRef.current??=Date.now();
     const elapsed=Date.now()-holdStartedAtRef.current;
+    const cue=stableCapturesRef.current.length>=2?getPostureCorrectionCue(rollingCapture):null;
+    if(cue!==cueCandidateRef.current){cueCandidateRef.current=cue;cueCandidateSinceRef.current=Date.now()}
+    else if(cue&&Date.now()-cueCandidateSinceRef.current>=1000&&Date.now()-lastCueAtRef.current>=9000){
+     lastCueAtRef.current=Date.now();
+     playCorrectionCue(cue);
+    }
+    if(!cue)setAudioGuide(null);
     setCountdown(Math.max(0,Math.ceil((3000-elapsed)/1000)));
     setScanState('hold');
-    if(elapsed<3000||stableCapturesRef.current.length<4){schedule();return}
+    if(elapsed<3000||stableCapturesRef.current.length<4||Date.now()<correctionPendingUntilRef.current){schedule();return}
 
     setScanState('capturing');
     const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
@@ -258,7 +315,7 @@ export default function PostureSession(){
    setSaving(false);
   }
  };
- const restart=()=>{Object.values(voicePlayers).forEach(player=>safeMediaAction(()=>player.pause()));draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
+ const restart=()=>{voiceSessionRef.current+=1;allVoicePlayers.forEach(player=>safeMediaAction(()=>player.pause()));draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
 
  if(!permission)return <View style={styles.permission}/>;
  if(!permission.granted)return <SafeAreaView style={styles.permission}>
@@ -294,12 +351,13 @@ export default function PostureSession(){
     {!closing&&<CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} onCameraReady={()=>{if(!closingRef.current){setCameraReady(true);setCameraError(false)}}} onMountError={()=>{if(!closingRef.current){setCameraError(true);setCameraReady(false)}}} mirror/>}
     <View style={styles.cameraShade}/>
     <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>
-    <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize} view={view}/>
+    <LivePoseOverlay imageSize={analysisImageSize} landmarks={liveLandmarks} previewSize={previewSize} view={view} quality={liveCapture}/>
     {(!cameraReady||cameraError||scanState==='model-loading'||scanState==='error')&&<View style={styles.cameraMessage}><Ionicons name={cameraError||analysisError?'warning-outline':'analytics-outline'} size={22} color={shen.color}/><Text style={styles.cameraMessageText}>{analysisError||(cameraError?'Kamera açılamadı. Ayarlar içinden kamera iznini aç.':scanState==='model-loading'?'Gerçek 33 noktalı poz modeli hazırlanıyor…':'Kamera hazırlanıyor…')}</Text></View>}
     <View style={styles.captureInstruction}>
      <Text style={styles.mobileCountdown}>{scanState==='hold'?String(countdown):scanState==='capturing'?'✓':'•'}</Text>
      <Text style={[styles.stepLabel,{color:shen.color}]}>{getScanInstruction(scanState,view)}</Text>
      <Text style={styles.scanDetail}>{getScanDetail(scanState,view)}</Text>
+     {audioGuide&&<Text style={[styles.scanDetail,{color:'#F4C66A'}]}>Sesli yönlendirme: {audioGuide}</Text>}
     </View>
     <View style={styles.angleSteps}>{views.map((item)=><View key={item} style={[styles.angleStep,item===view&&styles.angleStepActive]}><Ionicons name={viewCopy[item].icon} color={item===view?colors.cream:colors.muted} size={17}/><Text style={styles.angleStepText}>{viewCopy[item].title.replace(' görünüm','')}</Text></View>)}</View>
    </View>
@@ -315,7 +373,7 @@ const livePoseConnections=[
 ] as const;
 const livePosePoints=[0,7,8,11,12,13,14,15,16,23,24,25,26,27,28,29,30,31,32] as const;
 
-function LivePoseOverlay({imageSize,landmarks,previewSize,view}:{imageSize:FrameSize;landmarks:PoseLandmark[];previewSize:FrameSize;view:PostureView}){
+function LivePoseOverlay({imageSize,landmarks,previewSize,view,quality}:{imageSize:FrameSize;landmarks:PoseLandmark[];previewSize:FrameSize;view:PostureView;quality:PostureCapture|null}){
  if(landmarks.length<33||imageSize.width<=1||imageSize.height<=1||previewSize.width<=1||previewSize.height<=1)return null;
  const scale=Math.max(previewSize.width/imageSize.width,previewSize.height/imageSize.height);
  const renderedWidth=imageSize.width*scale;
@@ -326,11 +384,6 @@ function LivePoseOverlay({imageSize,landmarks,previewSize,view}:{imageSize:Frame
   x:offsetX+point.x*renderedWidth,
   y:offsetY+point.y*renderedHeight,
  });
- const readiness=evaluatePoseFrame(landmarks,view);
- let quality:PostureCapture|null=null;
- if(readiness.angleReady){
-  try{quality=createPostureCapture(view,landmarks,1)}catch{}
- }
  const scoreFor=(index:number)=>{
   if(!quality)return null;
   if(index===0||index===7||index===8||(index>=11&&index<=16))return quality.shoulderScore;
@@ -366,6 +419,7 @@ function getScanInstruction(state:ScanState,view:PostureView){
  if(state==='model-loading')return'Analiz hazırlanıyor';
  if(state==='find-body')return'Tam bedenini kadraja al';
  if(state==='wrong-angle')return scanCopy[view].turn;
+ if(state==='low-confidence')return'Eklemlerin net görünmüyor';
  if(state==='hold')return'Hareketsiz kal';
  if(state==='capturing')return`${viewCopy[view].title} kaydedildi`;
  if(state==='turning')return'Görünüm tamamlandı';
@@ -376,6 +430,7 @@ function getScanInstruction(state:ScanState,view:PostureView){
 function getScanDetail(state:ScanState,view:PostureView){
  if(state==='find-body')return'Başın, omuzların, kalçan, dizlerin ve ayakların birlikte görünmeli.';
  if(state==='wrong-angle')return`${viewCopy[view].title} henüz doğrulanmadı; doğru yöne geçince sayaç başlayacak.`;
+ if(state==='low-confidence')return'Işığı artır veya bedenin kamerada daha net görünecek kadar yaklaş.';
  if(state==='hold')return'Üç saniye boyunca aynı duruşu koru.';
  if(state==='capturing'||state==='turning')return'Gerçek MediaPipe ölçümü alındı.';
  return scanCopy[view].waiting;

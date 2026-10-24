@@ -46,6 +46,31 @@ export function getLandmarkMovement(previous:PoseLandmark[],current:PoseLandmark
  },0)/indexes.length;
 }
 
+// Only joints that contribute to the posture score determine whether a frame
+// is usable. Face and finger visibility should not lower a back-view score.
+export function getPostureMeasurementConfidence(points:PoseLandmark[],view:PostureView):number|null{
+ if(points.length<33)return null;
+ const left=[7,11,23,25,27],right=[8,12,24,26,28];
+ const total=(set:number[])=>set.reduce((sum,item)=>sum+(points[item]?.visibility??0),0);
+ const indexes=view==='side'?(total(left)>=total(right)?left:right):[11,12,23,24,25,26,27,28];
+ const values=indexes.map(index=>points[index]?.visibility??0);
+ if(values.some(value=>value<.42))return null;
+ const confidence=values.reduce((sum,value)=>sum+value,0)/values.length;
+ return confidence>=.55?confidence:null;
+}
+
+export type PostureCorrectionCue='head'|'shoulder'|'axis'|'hip';
+
+export function getPostureCorrectionCue(capture:PostureCapture):PostureCorrectionCue|null{
+ const regions:[PostureCorrectionCue,number][]=[
+  [capture.view==='side'?'head':'shoulder',capture.shoulderScore],
+  ['axis',capture.axisScore],
+  ['hip',capture.hipScore],
+ ];
+ const weakest=regions.sort((a,b)=>a[1]-b[1])[0];
+ return weakest[1]<70?weakest[0]:null;
+}
+
 const clampScore=(value:number)=>Math.max(0,Math.min(100,Math.round(value)));
 const scoreDeviation=(deviation:number,excellent:number,limit:number)=>{
  if(deviation<=excellent)return 100;

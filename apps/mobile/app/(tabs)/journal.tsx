@@ -9,10 +9,10 @@ import {loadShibashiPhotos,type ShibashiPhoto} from '../../services/shibashiPhot
 import {loadEarnedMilestones,subscribeMilestones} from '../../services/milestones';
 import {milestoneDefinitions,type EarnedMilestone} from '../../../../packages/gamification';
 import {useApp} from '../../store/AppStore';
-import {visualThemes} from '../../../../packages/design-tokens';
+import {getShenVisualTheme} from '../../../../packages/design-tokens';
 
 export default function Journal(){
- const{profile,entries,sessions,addEntry}=useApp();const[mood,setMood]=useState(3),[note,setNote]=useState('');const[photos,setPhotos]=useState<ShibashiPhoto[]>([]);const[badges,setBadges]=useState<EarnedMilestone[]>([]);const shen=getShen(profile.selectedShenId);const visual=visualThemes[profile.visualThemeId]??visualThemes["ink-night"];
+ const{profile,entries,sessions,addEntry}=useApp();const[mood,setMood]=useState(3),[note,setNote]=useState('');const[photos,setPhotos]=useState<ShibashiPhoto[]>([]);const[badges,setBadges]=useState<EarnedMilestone[]>([]);const shen=getShen(profile.selectedShenId);const visual=getShenVisualTheme(profile.selectedShenId,profile.visualThemeId);
  const weekStart=Date.now()-7*24*60*60*1000;
  const weekSessions=sessions.filter(item=>new Date(item.date).getTime()>=weekStart);
  const weekEntries=entries.filter(item=>new Date(item.date).getTime()>=weekStart);

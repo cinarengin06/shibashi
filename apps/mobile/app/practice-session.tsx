@@ -13,6 +13,7 @@ import {movements,practices} from '../data/content';
 import {livingGhostTeacherImages} from '../data/livingLearning';
 import {MediaPipePoseBridge,MediaPipePoseBridgeRef,PoseLandmark} from '../services/pose/MediaPipePoseBridge';
 import {useApp} from '../store/AppStore';
+import {KeepAwakeWhileCamera} from '../components/navigation/KeepAwakeWhileCamera';
 
 const mediaNames=['nose','left_eye_inner','left_eye','left_eye_outer','right_eye_inner','right_eye','right_eye_outer','left_ear','right_ear','mouth_left','mouth_right','left_shoulder','right_shoulder','left_elbow','right_elbow','left_wrist','right_wrist','left_pinky','right_pinky','left_index','right_index','left_thumb','right_thumb','left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle','left_heel','right_heel','left_foot_index','right_foot_index'];
 const fullBodyLandmarks=['left_shoulder','right_shoulder','left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle'];
@@ -113,6 +114,7 @@ export default function PracticeSession(){
  if(!permission.granted)return <SafeAreaView style={c.permission}><View style={c.permissionIcon}><Ionicons name="camera-outline" size={42} color={colors.gold}/></View><Text style={c.permissionTitle}>Kamera rehberini aç</Text><Text style={c.permissionBody}>Görüntün kaydedilmez veya sunucuya gönderilmez. Poz ölçümü cihazdaki akışta işlenir.</Text><PrimaryButton label="Kameraya izin ver" icon="camera" onPress={requestPermission}/><Pressable onPress={leavePractice}><Text style={c.cancel}>Şimdi değil</Text></Pressable></SafeAreaView>;
 
  return <View style={c.root}>
+  {!paused&&<KeepAwakeWhileCamera/>}
   <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} active={!paused} mirror zoom={cameraZoom}/>
   <CameraZoomControl onChange={setCameraZoom} zoom={cameraZoom}/>
   <View style={c.shade}/>

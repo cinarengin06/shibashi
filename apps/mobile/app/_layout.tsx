@@ -13,7 +13,7 @@ import { fonts, type } from "../constants/theme";
 import { AppProvider } from "../store/AppStore";
 import { ShenExperienceProvider } from "../store/ShenExperience";
 import { useApp } from "../store/AppStore";
-import { visualThemes } from "../../../packages/design-tokens";
+import { getShenVisualTheme } from "../../../packages/design-tokens";
 import { MilestoneCelebration } from "../components/MilestoneCelebration";
 
 void SplashScreen.preventAutoHideAsync();
@@ -61,7 +61,7 @@ export default function RootLayout() {
 
 function BootContent() {
   const { ready, profile } = useApp();
-  const visualTheme = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
+  const visualTheme = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const segments = useSegments();
   useEffect(() => {
     if (ready && segments[0] && segments[0] !== 'welcome') void SplashScreen.hideAsync();

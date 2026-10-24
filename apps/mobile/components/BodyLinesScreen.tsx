@@ -23,6 +23,7 @@ import type { FormSteps } from '../../../packages/gamification';
 import referenceData from '../data/teacherPoseSamples.json';
 import { shenThemes } from '../../../packages/design-tokens';
 import { useApp } from '../store/AppStore';
+import { KeepAwakeWhileCamera } from './navigation/KeepAwakeWhileCamera';
 
 const targetKey = 'shibashi-learning-target-score';
 const references = referenceData as unknown as Record<string, ReferenceMovement>;
@@ -199,6 +200,7 @@ function MovementStage({ order, completed, onNext, onPhoto }: { order: number; c
   }, [phase === 'watch' || phase === 'result', permission?.granted, order]);
   const steps = meridianLivingSteps[order-1] || [];
   return <View style={[s.stage,{backgroundColor:theme.surface,borderColor:`${theme.primary}55`}]}>
+    {phase!=='watch' && phase!=='result' && <KeepAwakeWhileCamera />}
     <Text style={[s.number,{color:theme.primary}]}>HAREKET {String(order).padStart(2,'0')} / 18</Text><Text style={s.title}>{movement.sourceTitle}</Text>
     <View style={{ backgroundColor:theme.surfaceRaised, borderColor:`${theme.primary}55`, borderWidth:1, borderRadius:14, padding:13, gap:9, marginBottom:12 }}><Text style={{ color:theme.button, fontSize:11, fontWeight:'800', letterSpacing:1 }}>FORM YOLCULUĞUN</Text><Pressable accessibilityRole="button" accessibilityState={{ selected:Boolean(formSteps[order]?.watched) }} onPress={() => { void markFormStep(order,'watched',profile.authUserId).then(setFormSteps); }}><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.watched?'✓':'○'}  Hocayı izledim</Text></Pressable><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.attempted?'✓':'○'}  Kamerayla denedim</Text><Text style={{ color:colors.cream, fontSize:14 }}>{completed?'✓':'○'}  Formu tamamladım</Text></View>
     {phase==='watch' && <View style={s.steps}>{(steps.length ? steps : ['Önce hocayı izle, sonra kameranla kendi ritmini takip et.']).map((step,index)=><Text key={`${order}-${index}`} style={s.step}>{index+1}. {step}</Text>)}</View>}

@@ -4,6 +4,8 @@ import NextImage from "next/image";
 import type { CSSProperties, RefObject } from "react";
 import { useState } from "react";
 import { analyzePosture, getPostureCorrections, getPostureMetricList, getPostureQualityCounts, getPostureRecommendations, getPostureReportCompositeAnalysis, type PoseKeypoint, type PostureAnalysisSnapshot, type PostureView } from "@/packages/posture-analysis";
+import { meridianMovements } from "@/packages/meridian-knowledge";
+import { recommendFormsForPosture } from "@/packages/posture-form-recommendations";
 
 type PostureScanGuidance = "model-loading" | "find-body" | "wrong-angle" | "reposition" | "hold" | "capturing";
 type PostureShen = { color: string; dailyName: string };
@@ -506,6 +508,7 @@ export function PostureResultDashboard({
               selectedShen={selectedShen}
               view={activeView}
             />
+            <PostureFormSuggestions report={report} />
             <article className="posture-feedback-card posture-feedback-good">
               <span className="posture-feedback-title">Önceki ölçümle karşılaştırma</span>
               <p>{report.trendText}</p>
@@ -523,6 +526,24 @@ export function PostureResultDashboard({
 }
 
 
+
+function PostureFormSuggestions({ report }: { report: PostureReport }) {
+  const recommendations = recommendFormsForPosture(Object.values(report.captures).map(capture => capture.analysis));
+  if (!recommendations.length) return null;
+  return <article className="posture-feedback-card" style={{ display: "grid", gap: 12 }}>
+    <span className="posture-feedback-title">Postürüne göre 18 Form</span>
+    <p>Ölçümünde öne çıkan beden hatları için hareket önerileri.</p>
+    {recommendations.map(item => {
+      const movement = meridianMovements.find(candidate => candidate.order === item.order);
+      if (!movement) return null;
+      return <a key={item.order} href={`/beden-hatlari?movementOrder=${item.order}`} style={{ display: "flex", alignItems: "center", gap: 12, padding: 10, borderRadius: 14, border: "1px solid rgba(211,178,112,.38)", color: "inherit", textDecoration: "none" }}>
+        <NextImage alt="" src={`/images/shibashi-new/${item.order}.jpg`} width={74} height={88} style={{ objectFit: "cover", borderRadius: 9 }} />
+        <span style={{ display: "grid", gap: 4, minWidth: 0 }}><small>{item.focus} · FORM {String(item.order).padStart(2, "0")}</small><strong>{movement.sourceTitle}</strong><small>{item.reason}</small><small>Videoyu 18 Form’da aç →</small></span>
+      </a>;
+    })}
+    <small>Öneriler kamera hizalama skorlarına dayanır; tıbbi değerlendirme değildir.</small>
+  </article>;
+}
 
 export function PostureSavedReportsGallery({
   onDeleteReport,

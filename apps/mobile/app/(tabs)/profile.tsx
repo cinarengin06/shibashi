@@ -25,7 +25,7 @@ import { getShen } from "../../data/fiveShen";
 import { signOut } from "../../services/auth/SupabaseAuth";
 import { useApp } from "../../store/AppStore";
 import { useShenExperience } from "../../store/ShenExperience";
-import { visualThemes } from "../../../../packages/design-tokens";
+import { getShenVisualTheme } from "../../../../packages/design-tokens";
 
 export default function Profile() {
   const {
@@ -43,7 +43,7 @@ export default function Profile() {
   } = useApp();
   const { playing, toggleSound } = useShenExperience();
   const shen = getShen(profile.selectedShenId);
-  const visual = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
+  const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const [pairCode, setPairCode] = useState("");
   const connect = async () => {
     const success = await setSyncCode(pairCode);
@@ -252,10 +252,11 @@ export default function Profile() {
           </Card>
         </Pressable>
       </Section>
-      <Section title="Görünüm" action="Tüm uygulamaya uygulanır">
+      <Section title="Görünüm" action="Renkler ve şekiller seçili Shen’e uyar">
         <View style={p.themeGrid}>
-          {Object.values(visualThemes).map((theme) => {
-            const active = profile.visualThemeId === theme.id;
+          {(['ink-night', 'morning-light'] as const).map((mode) => {
+            const theme = getShenVisualTheme(profile.selectedShenId, mode);
+            const active = visual.id === mode;
             return (
               <Pressable
                 accessibilityRole="radio"
@@ -273,11 +274,11 @@ export default function Profile() {
                 <View style={p.themeSwatches}>
                   <View style={[p.themeSwatch, { backgroundColor: theme.background }]} />
                   <View style={[p.themeSwatch, { backgroundColor: theme.surfaceRaised }]} />
-                  <View style={[p.themeSwatch, { backgroundColor: theme.glow }]} />
+                  <View style={[p.themeSwatch, { backgroundColor: shen.color }]} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[p.themeName, { color: theme.text }]}>{theme.name}</Text>
-                  <Text style={[p.themeDescription, { color: theme.textSecondary }]}>{theme.description}</Text>
+                  <Text style={[p.themeName, { color: theme.text }]}>{mode === 'morning-light' ? 'Açık' : 'Koyu'}</Text>
+                  <Text style={[p.themeDescription, { color: theme.textSecondary }]}>Renkler {shen.name} Shen’e uyarlanır.</Text>
                 </View>
                 <Ionicons name={active ? "checkmark-circle" : "ellipse-outline"} color={active ? shen.color : theme.textSecondary} size={23} />
               </Pressable>

@@ -18,6 +18,8 @@ import {buildPostureNarrative} from '../../../packages/posture-analysis';
 import {deletePostureCapturePhoto,savePostureCapturePhoto} from '../services/posturePhotos';
 import {capturePreviewFrame,isPreviewFrameAvailable} from '../modules/shibashi-vision/src/preview';
 import {safeMediaAction} from '../services/safeMediaAction';
+import {KeepAwakeWhileCamera} from '../components/navigation/KeepAwakeWhileCamera';
+import {PostureFormSuggestions} from '../components/PostureFormSuggestions';
 
 const views:PostureView[]=['front','side','back'];
 const viewCopy:Record<PostureView,{title:string;instruction:string;icon:keyof typeof Ionicons.glyphMap}>={
@@ -334,6 +336,7 @@ export default function PostureSession(){
    <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text><Text style={styles.overallConfidence}>Genel güven %{getReportConfidence(result)}</Text></View>
    <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}>{item.imageData?<Image source={{uri:item.imageData}} style={styles.captureThumbnail}/>:<View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View>}<View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
    <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişiselleştirilmiş Öneriler ve Notlar</Text><Text style={styles.insightBody}>{getReportRecommendation(result)}</Text></View></View>
+   <PostureFormSuggestions captures={result.captures} accent={shen.color}/>
    <PrimaryButton label={saving?'Kaydediliyor…':'Analizi kaydet'} icon="checkmark" onPress={save}/>
    {saveError?<Text style={styles.saveError}>{saveError}</Text>:null}
    <Pressable onPress={restart} style={styles.retake}><Text style={styles.retakeText}>Yeniden çek</Text></Pressable>
@@ -348,6 +351,7 @@ export default function PostureSession(){
   </View>
   <View style={styles.sessionContent}>
    <View onLayout={(event:LayoutChangeEvent)=>{const{width,height}=event.nativeEvent.layout;setPreviewSize(current=>current.width===width&&current.height===height?current:{width,height})}} style={[styles.cameraStage,{borderColor:`${shen.color}55`}]}>
+    {!closing&&<KeepAwakeWhileCamera/>}
     {!closing&&<CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" flash="off" enableTorch={false} onCameraReady={()=>{if(!closingRef.current){setCameraReady(true);setCameraError(false)}}} onMountError={()=>{if(!closingRef.current){setCameraError(true);setCameraReady(false)}}} mirror/>}
     <View style={styles.cameraShade}/>
     <View style={styles.livePill}><View style={[styles.liveDot,{backgroundColor:scanState==='hold'?colors.jade:colors.gold}]}/><Text style={styles.liveText}>{liveScore!==null?`CANLI MEDYAN · ${liveScore} · ${validSampleCount} KARE`:scanState==='hold'?`${vision3DActive?'VISION 3D + ':''}33 NOKTA · %${Math.round(frameConfidence*100)}`:'ALGILANIYOR'}</Text></View>

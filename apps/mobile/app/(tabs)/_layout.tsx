@@ -1,22 +1,19 @@
 import { Tabs } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
-import { visualThemes } from "../../../../packages/design-tokens";
-import { MobileNavigation } from "../../components/navigation/MobileNavigation";
+import { getShenVisualTheme } from "../../../../packages/design-tokens";
 import { MobileDrawer, MobileMenuHeader } from "../../components/navigation/MobileDrawer";
-import { useShenExperience } from "../../store/ShenExperience";
 import { useApp } from "../../store/AppStore";
 
 export default function TabLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { shen } = useShenExperience();
   const { profile } = useApp();
-  const visual = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
+  const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   return (
     <View style={{ flex: 1, backgroundColor: visual.background }}>
     <MobileMenuHeader onOpen={() => setMenuOpen(true)} />
     <Tabs
-      tabBar={(props) => <MobileNavigation {...props} />}
+      tabBar={() => null}
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen name="index" options={{ title: "Odam" }} />

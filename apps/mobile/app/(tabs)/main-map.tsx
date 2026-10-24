@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { shenThemes, visualThemes } from '../../../../packages/design-tokens';
+import { getShenVisualTheme, shenThemes } from '../../../../packages/design-tokens';
 import { BODY_GATE_ORDER, gateGuidance, gateProgress, movementGateWeights, type GateId } from '../../../../packages/eight-gates';
 import { meridianMovements } from '../../../../packages/meridian-knowledge';
 import { shibashiPosters } from '../../data/shibashiMedia';
@@ -21,7 +21,7 @@ const positions = [
 export default function MainMap() {
   const { profile, sessions, shenActivities } = useApp();
   const theme = shenThemes[profile.selectedShenId];
-  const visual = visualThemes[profile.visualThemeId] ?? visualThemes["ink-night"];
+  const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const accent = theme.primary;
   const [completed, setCompleted] = useState<number[]>([]);
   const [selectedId, setSelectedId] = useState<GateId | null>(null);

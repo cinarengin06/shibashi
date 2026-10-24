@@ -175,6 +175,32 @@ export const visualThemes = {
 
 export type VisualThemeId = keyof typeof visualThemes;
 
+export function normalizeVisualThemeId(value: string | null | undefined): "ink-night" | "morning-light" {
+  return value === "morning-light" ? "morning-light" : "ink-night";
+}
+
+function blendHex(first: string, second: string, secondWeight: number) {
+  const channel = (value: string, offset: number) => parseInt(value.slice(offset, offset + 2), 16);
+  return `#${[1, 3, 5].map(offset => Math.round(channel(first, offset) * (1 - secondWeight) + channel(second, offset) * secondWeight).toString(16).padStart(2, "0")).join("")}`;
+}
+
+export function getShenVisualTheme(shenId: SharedShenId, selectedMode: VisualThemeId) {
+  const mode = normalizeVisualThemeId(selectedMode);
+  const base = visualThemes[mode];
+  const shen = shenThemes[shenId];
+  const light = mode === "morning-light";
+  const tint = light ? shen.primary : shen.surface;
+  return {
+    ...base,
+    background: blendHex(base.background, tint, light ? .08 : .46),
+    backgroundSecondary: blendHex(base.backgroundSecondary, tint, light ? .1 : .52),
+    surface: blendHex(base.surface, tint, light ? .075 : .61),
+    surfaceRaised: blendHex(base.surfaceRaised, light ? tint : shen.surfaceRaised, light ? .13 : .64),
+    navigation: blendHex(base.navigation, tint, light ? .06 : .34),
+    glow: shen.primary,
+  };
+}
+
 export const designTokens = {
   palette,
   spacing,

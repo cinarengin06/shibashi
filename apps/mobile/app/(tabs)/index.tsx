@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
 import { Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { shenThemes, visualThemes } from "../../../../packages/design-tokens";
+import { getShenVisualTheme, shenThemes } from "../../../../packages/design-tokens";
 import { localDateKey, shenDailyCues } from "../../../../packages/gamification";
 import { Screen } from "../../components/ui";
 import { fonts } from "../../constants/theme";
@@ -45,7 +45,7 @@ export default function Today() {
   const { profile, saveProfile, sessions, entries, shenActivities, postureReports } = useApp();
   const { shen } = useShenExperience();
   const theme = shenThemes[shen.id];
-  const visual = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
+  const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const daily = copy[shen.id];
   const [shenQuestion, setShenQuestion] = useState(-1);
   const [shenAnswers, setShenAnswers] = useState<DailyShenId[]>([]);
@@ -153,7 +153,7 @@ export default function Today() {
   </Screen></>;
 }
 
-function StatTile({ label, value, unit, detail, progress, shenId, visual }: { label: string; value: string; unit: string; detail: string; progress?: number; shenId: ShenId; visual: typeof visualThemes[keyof typeof visualThemes] }) {
+function StatTile({ label, value, unit, detail, progress, shenId, visual }: { label: string; value: string; unit: string; detail: string; progress?: number; shenId: ShenId; visual: ReturnType<typeof getShenVisualTheme> }) {
   const theme = shenThemes[shenId];
   return <View style={[s.stat, { backgroundColor: visual.surface, borderWidth:1, borderColor:visual.border }, shenShape(shenId)]}><Text style={[s.statLabel,{color:visual.textSecondary}]}>{label}</Text><Text style={[s.statValue, { color: theme.button }]}>{value}<Text style={[s.statUnit,{color:visual.text}]}> {unit}</Text></Text>{progress === undefined ? <Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text> : <><View style={s.track}><View style={[s.fill, { width: `${Math.max(0, Math.min(1, progress)) * 100}%`, backgroundColor: theme.button }]} /></View><Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text></>}</View>;
 }

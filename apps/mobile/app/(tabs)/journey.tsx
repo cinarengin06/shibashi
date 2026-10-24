@@ -11,12 +11,12 @@ import { shibashiPosters } from "../../data/shibashiMedia";
 import { getShen } from "../../data/fiveShen";
 import { loadCompletedMovements } from "../../services/movementCompletion";
 import { useApp } from "../../store/AppStore";
-import { visualThemes } from "../../../../packages/design-tokens";
+import { getShenVisualTheme } from "../../../../packages/design-tokens";
 
 export default function Journey() {
   const { profile, sessions, shenActivities } = useApp();
   const selectedShen = getShen(profile.selectedShenId);
-  const visual = visualThemes[profile.visualThemeId] ?? visualThemes["ink-night"];
+  const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const accent = selectedShen.color;
   const [completedOrders, setCompletedOrders] = useState<number[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);

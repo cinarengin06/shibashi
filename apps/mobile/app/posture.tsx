@@ -3,7 +3,7 @@ import {router,useLocalSearchParams} from 'expo-router';
 import {useEffect,useState} from 'react';
 import {Image,Pressable,StyleSheet,Text,View} from 'react-native';
 import Svg,{Circle,Line} from 'react-native-svg';
-import {Card,Eyebrow,PrimaryButton,ProgressBar,Screen,Section,Title} from '../components/ui';
+import {Card,Eyebrow,PrimaryButton,Screen,Section,Title} from '../components/ui';
 import {colors,radii} from '../constants/theme';
 import {getShen} from '../data/fiveShen';
 import {useApp} from '../store/AppStore';
@@ -11,6 +11,7 @@ import {PostureCapture,PostureReport,PostureView} from '../types';
 import {buildPostureNarrative} from '../../../packages/posture-analysis';
 import {toPostureNarrativeCapture} from '../services/pose/PostureMetrics';
 import {meridianClinicalBoundary} from '../../../packages/meridian-knowledge';
+import {PostureFormSuggestions} from '../components/PostureFormSuggestions';
 
 const bodyImage=require('../assets/posture/posture-back-translucent.png');
 const viewLabels:Record<PostureView,string>={front:'Ön',side:'Yan',back:'Arka'};
@@ -24,20 +25,17 @@ export default function Posture(){
 
  if(openedReport)return <ReportDetail report={openedReport} shen={shen} onBack={()=>setOpenedReport(null)}/>;
 
- const latest=postureReports[0];
  return <Screen>
   <Pressable onPress={()=>router.back()} style={p.back}><Ionicons name="arrow-back" color={colors.cream} size={20}/><Text style={p.backText}>Geri</Text></Pressable>
-  <Eyebrow>POSTÜR AYNASI · {shen.name}</Eyebrow><Title>Beden çizgini üç açıdan gör.</Title>
-  <Text style={p.lead}>Ön, yan ve arka görünümden kısa bir tarama al. Omuz, omurga, kalça ve denge çizgilerin tek raporda birleşsin.</Text>
+  <Title>Beden çizgini üç açıdan gör</Title>
+  <PrimaryButton label="Yeni analiz" icon="scan" onPress={()=>router.push('/posture-session')}/>
   <Card style={[p.hero,{borderColor:`${shen.color}55`}]}>
-   <View style={p.heroCopy}><Text style={[p.label,{color:shen.color}]}>3 AŞAMALI TARAMA</Text><Text style={p.heroTitle}>15 saniyelik beden aynası</Text><Text style={p.small}>Önden, yandan ve arkadan beşer saniyelik kısa ölçüm. Görüntüler cihazında kalır.</Text></View>
+   <View style={p.heroCopy}><Text style={[p.label,{color:shen.color}]}>AŞAMALI BEDEN TARAMASI</Text><Text style={p.small}>Ön, yan ve arka görünümün cihazında ölçülür.</Text></View>
    <BodyPreview color={shen.color}/>
   </Card>
   <View style={p.stages}>{[['body-outline','Ön','Omuz ve kalça'],['accessibility-outline','Yan','Baş ve omurga'],['scan-outline','Arka','Sağ-sol denge']].map(([icon,title,copy],index)=><View key={title} style={p.stage}><View style={[p.stageIcon,{borderColor:`${shen.color}66`}]}><Ionicons name={icon as keyof typeof Ionicons.glyphMap} color={shen.color} size={20}/></View><Text style={p.stageNo}>0{index+1}</Text><Text style={p.stageTitle}>{title}</Text><Text style={p.stageCopy}>{copy}</Text></View>)}</View>
-  <Card style={[p.traditionNote,{borderColor:`${shen.color}55`}]}><Text style={[p.detailSectionTitle,{color:shen.color}]}>ÖLÇÜM VE GELENEK AYRI KATMANLAR</Text><Text style={p.small}>Postür puanı yalnızca kamera ile görülen anatomik hizadan hesaplanır. Meridyen öğretimi puana dönüştürülmez.</Text></Card>
-  <PrimaryButton label="Yeni analiz" icon="scan" onPress={()=>router.push('/posture-session')}/>
-  {latest&&<Section title="Son analiz"><Pressable accessibilityRole="button" onPress={()=>setOpenedReport(latest)}><Card style={p.report}><View style={[p.scoreRing,{borderColor:shen.color}]}><Text style={[p.score,{color:shen.color}]}>{latest.score}</Text><Text style={p.scoreLabel}>GENEL</Text></View><View style={{flex:1,gap:8}}><Text style={p.reportTitle}>{latest.summary}</Text><Text style={p.small}>{new Date(latest.date).toLocaleDateString('tr-TR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}</Text><ProgressBar value={latest.score} color={shen.color}/><Text style={[p.signal,{color:shen.color}]}>{latest.asymmetrySignal}</Text></View><Ionicons name="chevron-forward" color={shen.color} size={20}/></Card></Pressable></Section>}
   <Section title="Geçmiş analizler">{postureReports.length===0?<Card><Text style={p.small}>İlk üç açılı taraman tamamlandığında raporların burada birikecek.</Text></Card>:postureReports.slice(0,6).map(report=><Pressable accessibilityRole="button" key={report.id} onPress={()=>setOpenedReport(report)}><Card style={p.history}><View><Text style={[p.historyScore,{color:shen.color}]}>{report.score}</Text><Text style={p.scoreLabel}>PUAN</Text></View><View style={{flex:1}}><Text style={p.reportTitle}>{report.summary}</Text><Text style={p.small}>{new Date(report.date).toLocaleDateString('tr-TR',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'})}</Text><Text style={[p.openHint,{color:shen.color}]}>Sonuçları gör</Text></View><Ionicons name="chevron-forward-circle" color={shen.color} size={23}/></Card></Pressable>)}</Section>
+  <Card style={[p.traditionNote,{borderColor:`${shen.color}55`}]}><Text style={[p.detailSectionTitle,{color:shen.color}]}>ÖLÇÜM VE GELENEK AYRI KATMANLAR</Text><Text style={p.small}>Postür puanı yalnızca kamera ile görülen anatomik hizadan hesaplanır. Meridyen öğretimi puana dönüştürülmez.</Text></Card>
  </Screen>;
 }
 
@@ -60,6 +58,7 @@ function ReportDetail({report,shen,onBack}:{report:PostureReport;shen:ReturnType
   <Card style={[p.detailVisualCard,{borderColor:`${shen.color}55`}]}><View style={p.detailVisual}>{hasPose?<CapturePoseOverlay capture={capture}/>:<View style={p.missingCapture}><Ionicons name="image-outline" color={colors.muted} size={28}/><Text style={p.missingCaptureText}>Bu kaydın kamera görüntüsü bu cihazda saklanmamış.</Text></View>}</View><View style={p.detailVisualCopy}><Text style={[p.detailViewEyebrow,{color:shen.color}]}>{viewLabels[activeView]} GÖRÜNÜM</Text><Text style={p.detailVisualTitle}>{getViewSummary(capture)}</Text>{hasPose&&<View style={p.pointLegend}><View style={p.legendItem}><View style={[p.legendDot,{backgroundColor:colors.jade}]}/><Text style={p.small}>İyi</Text></View><View style={p.legendItem}><View style={[p.legendDot,{backgroundColor:colors.gold}]}/><Text style={p.small}>Dikkat</Text></View><View style={p.legendItem}><View style={[p.legendDot,{backgroundColor:colors.danger}]}/><Text style={p.small}>Düzelt</Text></View></View>}</View></Card>
   <Card style={p.overallCard}><View style={p.overallScore}><Text style={[p.overallValue,{color:shen.color}]}>{report.score}</Text><Text style={p.overallSlash}>/100</Text><Text style={[p.overallState,{color:shen.color}]}>{report.score>=82?'İyi':report.score>=68?'Orta':'Geliştir'}</Text></View><View style={p.overallCopy}><Text style={p.detailSectionTitle}>GENEL SKOR</Text><Text style={p.reportTitle}>{report.summary}</Text><Text style={p.small}>{report.asymmetrySignal}.</Text>{report.trendText?<Text style={[p.small,{color:shen.color}]}>{report.trendText}</Text>:null}</View></Card>
   <Card style={p.noteCard}><Ionicons name="sparkles-outline" color={shen.color} size={21}/><View style={{flex:1,gap:5}}><Text style={[p.detailSectionTitle,{color:shen.color}]}>KİŞİSELLEŞTİRİLMİŞ ÖNERİLER VE NOTLAR</Text><Text style={p.noteText}>{personalNote}</Text></View></Card>
+  <PostureFormSuggestions captures={report.captures} accent={shen.color}/>
   <Card style={[p.traditionNote,{borderColor:`${shen.color}55`}]}><Text style={[p.detailSectionTitle,{color:shen.color}]}>GELENEKSEL ÖĞRETİM NOTU</Text><Text style={p.small}>{meridianClinicalBoundary}</Text></Card>
  </Screen>;
 }

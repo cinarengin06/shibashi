@@ -4,7 +4,7 @@ import { router, type Href, usePathname } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { shenThemes, visualThemes } from '../../../../packages/design-tokens';
+import { getShenVisualTheme, shenThemes } from '../../../../packages/design-tokens';
 import { fonts } from '../../constants/theme';
 import { shenShape } from '../../constants/shenDesign';
 import { shenBackgrounds } from '../../data/shenAssets';
@@ -19,6 +19,7 @@ const menuItems = [
   { label: 'Gelişim Haritam', tab: 'main-map', icon: 'trending-up-outline', detail: 'Formlarında ilerle' },
   { label: 'Isınma Dersleri', tab: 'lessons', icon: 'play-circle-outline', detail: 'Bedenini hazırla' },
   { label: '18 Form', tab: 'moves', icon: 'fitness-outline', detail: 'Hocayla hareket et' },
+  { label: 'Pratikler', tab: 'practice', icon: 'walk-outline', detail: 'Sana uygun rutinler' },
   { label: 'Postür', tab: 'posture', icon: 'body-outline', detail: 'Beden çizgini gör' },
   { label: 'Beden Haritam', tab: 'journey', icon: 'map-outline', detail: 'Sekiz kapıyı keşfet' },
   { label: 'Kayıtlarım', tab: 'journal', icon: 'book-outline', detail: 'Fotoğraf ve notların' },
@@ -29,7 +30,7 @@ export function MobileMenuHeader({ onOpen }: { onOpen: () => void }) {
   const { shen } = useShenExperience();
   const theme = shenThemes[shen.id];
   const { profile } = useApp();
-  const visual = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
+  const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const [unread, setUnread] = useState(0);
   const insets = useSafeAreaInsets();
   useEffect(() => {
@@ -51,7 +52,7 @@ export function MobileDrawer({ visible, onClose }: { visible: boolean; onClose: 
   const { profile } = useApp();
   const { shen, soundEnabled, toggleSound } = useShenExperience();
   const theme = shenThemes[shen.id];
-  const visual = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
+  const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const light = visual.id === 'morning-light';
   const { width } = useWindowDimensions();
   const drawerWidth = Math.min(354, width * .86);
@@ -65,7 +66,7 @@ export function MobileDrawer({ visible, onClose }: { visible: boolean; onClose: 
     onClose();
     router.navigate((tab === 'index' ? '/(tabs)' : `/(tabs)/${tab}`) as Href);
   };
-  const rowImages = [shenBackgrounds[shen.id], shenBackgrounds.hun, shibashiPosters[1], shibashiPosters[2], shenBackgrounds.po, require('../../assets/journey/neijing-map.jpg'), shenBackgrounds.yi, shenBackgrounds.zhi];
+  const rowImages = [shenBackgrounds[shen.id], shenBackgrounds.hun, shibashiPosters[1], shibashiPosters[2], shenBackgrounds.shen, shenBackgrounds.po, require('../../assets/journey/neijing-map.jpg'), shenBackgrounds.yi, shenBackgrounds.zhi];
   return <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
     <View style={styles.modal}>
       <Pressable accessibilityLabel="Menüyü kapat" onPress={onClose} style={styles.dismiss} />

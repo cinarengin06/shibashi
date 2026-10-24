@@ -11,9 +11,9 @@ import {useShenExperience} from '../store/ShenExperience';
 import {shenThemes} from '../../../packages/design-tokens';
 import {shenShape} from '../constants/shenDesign';
 import {useApp} from '../store/AppStore';
-import {visualThemes} from '../../../packages/design-tokens';
+import {getShenVisualTheme} from '../../../packages/design-tokens';
 
-function useVisualPalette(){const{profile}=useApp();return visualThemes[profile.visualThemeId]??visualThemes['ink-night']}
+function useVisualPalette(){const{profile}=useApp();return getShenVisualTheme(profile.selectedShenId,profile.visualThemeId)}
 
 export function Screen({children,scroll=true,style}:{children:React.ReactNode;scroll?:boolean;style?:StyleProp<ViewStyle>}){
  const inTabs=useSegments()[0]==='(tabs)';

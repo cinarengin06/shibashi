@@ -1,3 +1,4 @@
+
 plugins {
   id 'com.android.library'
   id 'expo-module-gradle-plugin'
@@ -8,6 +9,10 @@ version = '1.0.0'
 
 android {
   namespace 'expo.modules.shibashivision'
+
+  defaultConfig {
+    versionName "1.0.0"
+  }
 }
 
 dependencies {

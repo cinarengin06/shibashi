@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { CSSProperties } from "react";
 import type {
   HomeEnergySummary,
@@ -15,6 +16,7 @@ import type {
 import styles from "./home-dashboard.module.css";
 
 type HomeDashboardProps = {
+  gamification: { dailyCue: string; dailyDone: boolean; completedForms: number };
   energy: HomeEnergySummary;
   level: HomeLevelSummary;
   onHistory: () => void;
@@ -41,6 +43,10 @@ export function HomeDashboard(props: HomeDashboardProps) {
       <HomeHero {...props} />
       <ShenSelector activeShen={props.shen} onSelect={props.onSelectShen} options={props.shenOptions} />
       <HomeStatsRow energy={props.energy} level={props.level} streak={props.streak} week={props.week} />
+      <section className={styles.gameGrid} aria-label="Shibashi yolculuğun">
+        <article className={styles.gameCard}><span className={styles.gameEyebrow}>BUGÜNÜN SHEN GÖREVİ</span><h2>{props.gamification.dailyDone ? "Bugünkü adımın tamamlandı ✨" : "Bir formu bedeninde dene"}</h2><p>{props.gamification.dailyCue}</p><span className={styles.gameStatus}>{props.gamification.dailyDone ? "✓ Bugün form kaydın var" : "Fotoğrafın kaydedilince tamamlanır"}</span><Link href="/beden-hatlari">18 Form'a git →</Link></article>
+        <article className={styles.gameCard}><span className={styles.gameEyebrow}>18 FORM YOLU</span><h2>{props.gamification.completedForms} / 18 form</h2><div className={styles.formProgress} aria-label={`${props.gamification.completedForms} form tamamlandı`}>{Array.from({ length:18 }, (_,index) => <i className={index < props.gamification.completedForms ? styles.formDone : undefined} key={index} />)}</div><p>Her formda hocayı izle, kamerayla dene, kaydını oluştur.</p><Link href="/beden-hatlari">Yolculuğa devam et →</Link></article>
+      </section>
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
         <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
         <PostureAnalysisCard onPosture={props.onPosture} reports={props.postureReports} />

@@ -6,19 +6,25 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": { "image": "sdk-57" },
+      "ios": { "image": "sdk-57" }
     },
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
-      }
+        "buildType": "apk",
+        "image": "sdk-57"
+      },
+      "ios": { "image": "sdk-57" }
     },
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "app-bundle"
-      }
+        "buildType": "app-bundle",
+        "image": "sdk-57"
+      },
+      "ios": { "image": "sdk-57" }
     }
   }
 }

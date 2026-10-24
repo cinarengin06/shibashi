@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { milestoneDefinitions, type EarnedMilestone } from "@/packages/gamification";
+import { loadEarnedMilestones, milestonesChangedEvent } from "@/lib/milestones";
 
 type JournalPracticeSnapshot = {
   id: string; dateKey: string; timeLabel: string; movementName: string; score: number; imageData: string; trainerVisible?: boolean;
@@ -27,11 +29,13 @@ export function JournalScreen({
   onSetTrainerVisibility,
   postureReports,
   selectedShen,
+  userId,
 }: {
   gallery: JournalPracticeSnapshot[];
   onSetTrainerVisibility: (snapshotId: string, trainerVisible: boolean) => void;
   postureReports: JournalPostureReport[];
   selectedShen: JournalShen;
+  userId?: string;
 }) {
   const todayKey = formatSnapshotDate(new Date());
   const todaysPractices = gallery.filter((item) => item.dateKey === todayKey);
@@ -41,6 +45,13 @@ export function JournalScreen({
   const [saved, setSaved] = useState(false);
   const [mood, setMood] = useState("Sakin");
   const [selectedSnapshot, setSelectedSnapshot] = useState<JournalPracticeSnapshot | null>(null);
+  const [earnedMilestones, setEarnedMilestones] = useState<EarnedMilestone[]>([]);
+  useEffect(() => {
+    const refresh = () => setEarnedMilestones(loadEarnedMilestones(userId));
+    refresh();
+    window.addEventListener(milestonesChangedEvent, refresh);
+    return () => window.removeEventListener(milestonesChangedEvent, refresh);
+  }, [userId]);
   const recentScores = [...gallery].slice(0, 7).map((item) => item.score);
   const averagePracticeScore = recentScores.length ? Math.round(recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length) : 0;
   const averagePostureScore = postureReports.length ? Math.round(postureReports.slice(0, 7).reduce((sum, item) => sum + item.score, 0) / Math.min(7, postureReports.length)) : 0;
@@ -112,6 +123,8 @@ export function JournalScreen({
           <small>tüm pratikler</small>
         </article>
       </div>
+
+      <section className="glass-card journal-badges" aria-label="Kazandığın Shibashi rozetleri"><div className="section-heading"><div><span className="eyebrow">SHIBASHI YOLCULUĞUN</span><h2>Rozetlerim</h2></div><span>{earnedMilestones.length} rozet</span></div>{earnedMilestones.length ? <div className="journal-badge-list">{earnedMilestones.map((earned) => { const badge = milestoneDefinitions.find((item) => item.id === earned.id); return badge ? <article key={earned.id}><span aria-hidden="true">{badge.icon}</span><div><strong>{badge.title}</strong><small>{badge.detail}</small><time dateTime={earned.earnedAt}>{new Date(earned.earnedAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}</time></div></article> : null; })}</div> : <p className="journal-badge-empty">İlk formunu tamamladığında ilk rozetin burada görünecek.</p>}</section>
 
       <div className="journal-insight-grid">
         <article className="glass-card journal-wellbeing-card">

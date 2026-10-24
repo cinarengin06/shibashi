@@ -14,6 +14,7 @@ import { AppProvider } from "../store/AppStore";
 import { ShenExperienceProvider } from "../store/ShenExperience";
 import { useApp } from "../store/AppStore";
 import { shenThemes } from "../../../packages/design-tokens";
+import { MilestoneCelebration } from "../components/MilestoneCelebration";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -81,6 +82,7 @@ function BootContent() {
           animation: "fade",
         }}
       />
+      <MilestoneCelebration />
     </ShenExperienceProvider>
   );
 }

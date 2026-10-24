@@ -1,5 +1,6 @@
 "use client";
 import { DailyShenCheckin } from "@/features/home/components/DailyShenCheckin";
+import { MilestoneCelebration } from "@/features/home/components/MilestoneCelebration";
 
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
@@ -611,6 +612,7 @@ export default function RitimKapisiOS() {
 
   return (
     <>{onboardingComplete ? <DailyShenCheckin onSelect={selectShen} /> : null}
+    {onboardingComplete && auth.ready ? <MilestoneCelebration records={practiceGallery.filter((item) => isCapturedPracticePhoto(item.imageData)).map((item) => ({ order: item.movementId, date: item.createdAt }))} postureCount={postureReports.length} userId={auth.user?.id} /> : null}
     <main
       className={`app-shell shen-theme-${selectedShen.id} device-mode-desktop active-tab-${activeTab}`}
       data-shen={selectedShen.id}
@@ -724,6 +726,7 @@ export default function RitimKapisiOS() {
             onSetTrainerVisibility={setPracticeSnapshotTrainerVisibility}
             postureReports={postureReports}
             selectedShen={selectedShen}
+            userId={auth.user?.id}
           />
         ) : null}
         {onboardingComplete && activeTab === "profile" ? (

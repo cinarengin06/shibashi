@@ -61,6 +61,10 @@ Depo kökünden çalışmak isterseniz `npm run build:android:preview` komutunu
 kullanın. iOS önizleme derlemesi için `npm run build:ios:preview` kullanılabilir.
 
 `preview` profili APK, `production` profili Google Play için AAB üretir.
+Expo GitHub bağlantısında **Base directory** `apps/mobile` olmalıdır. Depo
+kökündeki eski Expo ayarları bu nedenle kaldırılmıştır. iOS App Store build'i
+`production` profilinden, SDK 57 için Xcode 26 içeren EAS görüntüsünde alınır;
+Apple Developer dağıtım sertifikası ve provisioning profile gerekir.
 
 Yerel geliştirme derlemesi için Android Studio/JDK kurulu bir ortamda:
 

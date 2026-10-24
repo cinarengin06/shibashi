@@ -11,10 +11,13 @@ import {
   type MeridianMovementKnowledge,
 } from "@/packages/meridian-knowledge";
 import { MovementCameraPractice } from "@/features/living-learning/components/MovementCameraPractice";
+import { MilestoneCelebration } from "@/features/home/components/MilestoneCelebration";
 import type { PracticeSnapshot } from "@/features/practice/types";
 import { deletePracticeSnapshotFromIndexedDb, loadPracticeSnapshotsFromIndexedDb, mergePracticeSnapshots, persistPracticeSnapshotsToLocalStorage, rememberDeletedPracticeSnapshot, savePracticeSnapshotToIndexedDb } from "@/lib/local-history-storage";
 import { isCapturedPracticePhoto } from "@/features/home/utils/practice-photo";
 import { markMovementCompleted } from "@/lib/movement-completion";
+import { loadFormSteps, markFormStep } from "@/lib/form-steps";
+import type { FormSteps } from "@/packages/gamification";
 import { useShibashiAuth } from "@/lib/supabase-auth";
 import { toDomainShenId, type ShenActivity } from "@/packages/shen-domain";
 import styles from "./body-lines.module.css";
@@ -124,8 +127,10 @@ function InfoBlock({
 }
 
 export function BodyLinesScreen() {
-  const { user } = useShibashiAuth();
+  const { ready: authReady, user } = useShibashiAuth();
   const [movementOrder, setMovementOrder] = useState(1);
+  const [formSteps, setFormSteps] = useState<FormSteps>({});
+  useEffect(() => { setFormSteps(loadFormSteps(user?.id)); }, [user?.id]);
   useEffect(() => {
     const requested = Number(new URLSearchParams(window.location.search).get("movementOrder"));
     if (Number.isInteger(requested) && requested >= 1 && requested <= 18) setMovementOrder(requested);
@@ -205,9 +210,12 @@ export function BodyLinesScreen() {
   }, [chooseMovement, movementOrder]);
   const keepCurrentMovement = useCallback(() => {}, []);
   const movementSteps = meridianLivingSteps[movementOrder - 1];
+  const currentFormSteps = formSteps[movementOrder] ?? {};
+  const completedHere = photos.some((photo) => photo.movementId === movementOrder);
 
   return (
     <main className={styles.page}>
+      {authReady && !miniCameraOpen ? <MilestoneCelebration records={photos.map((item) => ({ order: item.movementId, date: item.createdAt }))} postureCount={0} userId={user?.id} /> : null}
       <div className={styles.workspace}>
         <aside className={styles.rail} aria-label="Hareket adımları">
           <div className={styles.railHead}>
@@ -217,8 +225,14 @@ export function BodyLinesScreen() {
           <ol className={styles.quickSteps}>
             {movementSteps.map((step, index) => <li key={step}><i>{index + 1}</i><span>{step}</span></li>)}
           </ol>
+          <div className={styles.formJourney} aria-label={`${movementOrder}. form yolculuğu`}>
+            <strong>FORM YOLCULUĞUN</strong>
+            <button aria-pressed={Boolean(currentFormSteps.watched)} onClick={() => setFormSteps(markFormStep(movementOrder, "watched", user?.id))} type="button"><span>{currentFormSteps.watched ? "✓" : "○"}</span> Hocayı izledim</button>
+            <span>{currentFormSteps.attempted ? "✓" : "○"} Kamerayla denedim</span>
+            <span>{completedHere ? "✓" : "○"} Formu tamamladım</span>
+          </div>
           <div className={styles.practiceActions}>
-            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) demoVideoRef.current?.play().catch(() => {}); setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Küçük kamerayı kapat" : "📷 Kameramla uyumumu gör"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
+            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { demoVideoRef.current?.play().catch(() => {}); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Küçük kamerayı kapat" : "📷 Kameramla uyumumu gör"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
           </div>
           {miniCameraOpen ? <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={0} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score",String(value)); }} /><small>Bu değere ulaştığında üç fotoğraf kaydedilir.</small></label> : null}
@@ -275,7 +289,7 @@ export function BodyLinesScreen() {
       <section className={styles.movementSelector} aria-label="18 hareket">
         <div className={styles.selectorHeading}><span className={styles.eyebrow}>HAREKET ŞERİDİ</span><strong>Şu an 18 hareketin {movementOrder}. hareketindesin.</strong><button onClick={() => stepMovement(1)} type="button">Sonraki harekete geç →</button></div>
         <div className={styles.movementTiles}>
-          {meridianMovements.map((item) => <button aria-current={item.order === movementOrder ? "step" : undefined} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/shibashi-new/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><strong>{item.sourceTitle}</strong></button>)}
+          {meridianMovements.map((item) => <button aria-current={item.order === movementOrder ? "step" : undefined} aria-label={`${item.order}. form: ${item.sourceTitle}, ${photos.some((photo) => photo.movementId === item.order) ? "tamamlandı" : formSteps[item.order]?.attempted ? "denendi" : formSteps[item.order]?.watched ? "izlendi" : "başlanmadı"}`} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/shibashi-new/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><b className={styles.tileProgress}>{photos.some((photo) => photo.movementId === item.order) ? "✓ Tamamlandı" : formSteps[item.order]?.attempted ? "◉ Denendi" : formSteps[item.order]?.watched ? "◌ İzlendi" : ""}</b><strong>{item.sourceTitle}</strong></button>)}
         </div>
       </section>
       {galleryOpen ? <div className={styles.galleryBackdrop} onClick={() => { setGalleryOpen(false); setSelectedPhoto(null); }} role="presentation">

@@ -6,6 +6,7 @@ import { HomeDashboard } from "./HomeDashboard";
 import { isCapturedPracticePhoto } from "../utils/practice-photo";
 import { localDayKey, recentDates, recordedPractices } from "../lib/practice-stats";
 import type { HomeShenId } from "../types/home";
+import { localDateKey as gameDateKey, shenDailyCues } from "@/packages/gamification";
 
 type PracticeRecord = PracticeSnapshot;
 
@@ -143,8 +144,12 @@ export function DojoHomeScreen({
   const experience = sessions.length * 35 + shenActivities.filter((item) => item.type === "reflection").length * 15;
   const experienceIntoLevel = experience % 240;
   const hasRecordedActivity = sessions.length > 0 || postureDays.some(Boolean);
+  const formRecords = practiceGallery.filter((item) => isCapturedPracticePhoto(item.imageData)).map((item) => ({ order: item.movementId, date: item.createdAt }));
+  const completedForms = new Set(formRecords.map((item) => item.order)).size;
+  const dailyFormDone = formRecords.some((item) => gameDateKey(item.date) === gameDateKey(new Date()));
 
   return <HomeDashboard
+    gamification={{ dailyCue: shenDailyCues[selectedShen.id], dailyDone: dailyFormDone, completedForms }}
     energy={{ score: hasRecordedActivity ? Math.round((activeDays.filter(Boolean).length / 7) * 100) : null, trend: activeDays.map((active) => active ? 100 : 0) }}
     level={{ experience: experienceIntoLevel, level: 1 + Math.floor(experience / 240), nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
     onHistory={onJournal}

@@ -16,6 +16,8 @@ import { compareShibashiPose, referenceAt, type ReferenceMovement } from '../ser
 import { MediaPipePoseBridge, type MediaPipePoseBridgeRef, type PoseLandmark } from '../services/pose/MediaPipePoseBridge';
 import { deleteShibashiPhoto, loadShibashiPhotos, saveShibashiPhoto, type ShibashiPhoto } from '../services/shibashiPhotos';
 import { markMovementCompleted } from '../services/movementCompletion';
+import { loadFormSteps, markFormStep } from '../services/formSteps';
+import type { FormSteps } from '../../../packages/gamification';
 import referenceData from '../data/teacherPoseSamples.json';
 import { shenThemes } from '../../../packages/design-tokens';
 import { useApp } from '../store/AppStore';
@@ -44,15 +46,15 @@ export function BodyLinesScreen() {
   ]);
   return <SafeAreaView style={[s.root,{backgroundColor:theme.surface}]} edges={['top']}><ScrollView contentContainerStyle={s.page} showsVerticalScrollIndicator={false}>
     <View style={s.top}><Pressable accessibilityLabel="Odam'a dön" onPress={() => router.replace('/(tabs)')} style={s.icon}><Ionicons name="arrow-back" size={23} color={colors.cream}/></Pressable><Text style={s.topTitle}>18 Form</Text><Pressable accessibilityLabel="Fotoğraflarım" onPress={() => { void loadShibashiPhotos().then(setPhotos); }} style={s.icon}><Ionicons name="images-outline" size={22} color={colors.cream}/></Pressable></View>
-    <MovementStage key={order} order={order} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>
+    <MovementStage key={order} order={order} completed={photos.some(photo => photo.order === order)} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>
     <Text style={s.sectionTitle}>18 Form</Text>
-    <View style={s.grid}>{meridianMovements.map(item => <Pressable key={item.order} onPress={() => choose(item.order)} style={[s.tile, item.order === order && s.tileActive]} accessibilityState={{ selected: item.order === order }}><Image source={shibashiPosters[item.order]} style={s.tileImage}/><View style={s.tileShade}/><Text style={s.tileNumber}>{String(item.order).padStart(2,'0')}</Text><Text numberOfLines={2} style={s.tileTitle}>{item.sourceTitle}</Text></Pressable>)}</View>
+    <View style={s.grid}>{meridianMovements.map(item => <Pressable key={item.order} onPress={() => choose(item.order)} style={[s.tile, item.order === order && s.tileActive]} accessibilityLabel={`${item.order}. form: ${item.sourceTitle}, ${photos.some(photo => photo.order === item.order)?'tamamlandı':'başlanmadı'}`} accessibilityState={{ selected: item.order === order }}><Image source={shibashiPosters[item.order]} style={s.tileImage}/><View style={s.tileShade}/><Text style={s.tileNumber}>{String(item.order).padStart(2,'0')}</Text>{photos.some(photo => photo.order === item.order) && <Text style={{ position:'absolute',right:6,top:6,color:'#A8DCB3',backgroundColor:'rgba(3,15,10,.85)',paddingHorizontal:5,paddingVertical:3,borderRadius:5,fontSize:10,fontWeight:'800' }}>✓ Tamamlandı</Text>}<Text numberOfLines={2} style={s.tileTitle}>{item.sourceTitle}</Text></Pressable>)}</View>
     <View style={s.galleryHead}><Text style={s.sectionTitle}>Fotoğraflarım</Text><Text style={s.muted}>{photos.length} fotoğraf</Text></View>
     {photos.length ? <View style={s.photoGrid}>{photos.map(photo => <Pressable key={photo.id} onPress={() => setSelected(photo)} style={s.photoTile}><Image source={{uri:photo.uri}} style={s.photoImage}/><Text style={s.photoScore}>%{photo.score}</Text></Pressable>)}</View> : <Text style={s.muted}>Hareket sırasında hedef uyuma ulaştığında fotoğrafların burada görünür.</Text>}
   </ScrollView><Modal visible={!!selected} transparent animationType="fade" onRequestClose={() => setSelected(null)}><View style={s.modal}><Pressable onPress={() => setSelected(null)} style={s.modalClose}><Ionicons name="close" size={26} color="white"/></Pressable>{selected && <><Image source={{uri:selected.uri}} style={s.modalImage} resizeMode="contain"/><Text style={s.modalTitle}>{selected.name} · %{selected.score}</Text><Text style={s.muted}>{new Date(selected.savedAt).toLocaleString('tr-TR')}</Text><Pressable onPress={() => removePhoto(selected)} style={s.delete}><Ionicons name="trash-outline" size={18} color="white"/><Text style={s.deleteText}>Fotoğrafı sil</Text></Pressable></>}</View></Modal></SafeAreaView>;
 }
 
-function MovementStage({ order, onNext, onPhoto }: { order: number; onNext: () => void; onPhoto: (photo: ShibashiPhoto) => void }) {
+function MovementStage({ order, completed, onNext, onPhoto }: { order: number; completed: boolean; onNext: () => void; onPhoto: (photo: ShibashiPhoto) => void }) {
   const {profile} = useApp();
   const theme = shenThemes[profile.selectedShenId];
   const movement = meridianMovements.find(item => item.order === order) ?? meridianMovements[0];
@@ -62,6 +64,8 @@ function MovementStage({ order, onNext, onPhoto }: { order: number; onNext: () =
   const cameraRef = useRef<CameraView>(null);
   const bridgeRef = useRef<MediaPipePoseBridgeRef>(null);
   const [phase, setPhaseState] = useState<Phase>('watch');
+  const [formSteps, setFormSteps] = useState<FormSteps>({});
+  useEffect(() => { void loadFormSteps(profile.authUserId).then(setFormSteps); }, [profile.authUserId]);
   const phaseRef = useRef<Phase>('watch');
   const setPhase = (next: Phase) => { phaseRef.current = next; setPhaseState(next); };
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -97,6 +101,7 @@ function MovementStage({ order, onNext, onPhoto }: { order: number; onNext: () =
   const speak = (text:string, done?:()=>void) => { void Speech.stop(); Speech.speak(text,{language:'tr-TR',rate:.86,onDone:done,onError:done}); };
   const begin = async () => {
     if (!permission?.granted) { const response = await requestPermission(); if (!response.granted) { Alert.alert('Kamera izni gerekli','Kamerayı açmak için izin vermelisin.'); return; } }
+    void markFormStep(order, 'attempted', profile.authUserId).then(setFormSteps);
     player.pause(); player.currentTime = 0; setVideoPlaying(false);
     resetTracking();
     setMessage('Bedenini kamerada göstermek için biraz geri çekil.'); setPhase('framing');
@@ -105,6 +110,7 @@ function MovementStage({ order, onNext, onPhoto }: { order: number; onNext: () =
   const closeMini = () => { captureSession.current++; photoPending.current=false; setCelebration(null); setPhase('watch'); };
   const openMini = async () => {
     if (!permission?.granted) { const response = await requestPermission(); if (!response.granted) { Alert.alert('Kamera izni gerekli','Kamerayı açmak için izin vermelisin.'); return; } }
+    void markFormStep(order, 'attempted', profile.authUserId).then(setFormSteps);
     resetTracking();
     setPhase('mini');
     setMessage('Tam bedenin görünürken hocayla birlikte hareket et.');
@@ -177,6 +183,7 @@ function MovementStage({ order, onNext, onPhoto }: { order: number; onNext: () =
   const steps = meridianLivingSteps[order-1] || [];
   return <View style={[s.stage,{backgroundColor:theme.surface,borderColor:`${theme.primary}55`}]}>
     <Text style={[s.number,{color:theme.primary}]}>HAREKET {String(order).padStart(2,'0')} / 18</Text><Text style={s.title}>{movement.sourceTitle}</Text>
+    <View style={{ backgroundColor:theme.surfaceRaised, borderColor:`${theme.primary}55`, borderWidth:1, borderRadius:14, padding:13, gap:9, marginBottom:12 }}><Text style={{ color:theme.button, fontSize:11, fontWeight:'800', letterSpacing:1 }}>FORM YOLCULUĞUN</Text><Pressable accessibilityRole="button" accessibilityState={{ selected:Boolean(formSteps[order]?.watched) }} onPress={() => { void markFormStep(order,'watched',profile.authUserId).then(setFormSteps); }}><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.watched?'✓':'○'}  Hocayı izledim</Text></Pressable><Text style={{ color:colors.cream, fontSize:14 }}>{formSteps[order]?.attempted?'✓':'○'}  Kamerayla denedim</Text><Text style={{ color:colors.cream, fontSize:14 }}>{completed?'✓':'○'}  Formu tamamladım</Text></View>
     <Text style={s.description}>{steps[0] || 'Önce hocayı izle, sonra kameranla kendi ritmini takip et.'}</Text>{phase==='watch' && steps.length>1 && <View style={s.steps}>{steps.slice(1).map((step,index)=><Text key={step} style={s.step}>{index+2}. {step}</Text>)}</View>}
     <View style={[s.mediaRow,(phase === 'watch' || phase === 'mini') && s.mediaOnly]}>
       <View style={s.media} onLayout={event => { const {width,height}=event.nativeEvent.layout; setMiniBounds(current => current.width===width && current.height===height ? current : {width,height}); }}>

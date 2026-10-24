@@ -227,3 +227,14 @@
   .postureCard { grid-template-columns: 1fr 1fr; }
   .postureModels { left: 40%; }
 }
+.gameGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.gameCard,.milestones { background:linear-gradient(145deg,color-mix(in srgb,var(--gold) 10%,#111a14),#101813); border:1px solid color-mix(in srgb,var(--gold) 25%,transparent); border-radius:var(--card-radius); padding:19px 21px; }
+.gameEyebrow { color:var(--gold); font-size:11px; font-weight:800; letter-spacing:.14em; }
+.gameCard h2,.milestones h2 { color:var(--text); font-family:var(--font-display),Georgia,serif; font-size:23px; font-weight:400; margin:10px 0 6px; }
+.gameCard p { color:var(--muted); font-size:14px; line-height:1.55; margin:0 0 13px; }
+.gameCard a { color:var(--gold); display:inline-block; font-size:13px; font-weight:700; margin-top:9px; text-decoration:none; }
+.gameStatus { color:#a8dcb3; display:block; font-size:13px; }
+.formProgress { display:grid; grid-template-columns:repeat(18,minmax(0,1fr)); gap:4px; margin:14px 0; }
+.formProgress i { background:rgba(255,255,255,.12); border-radius:8px; height:9px; }
+.formProgress i.formDone { background:var(--gold); box-shadow:0 0 10px color-mix(in srgb,var(--gold) 45%,transparent); }
+@media(max-width:899px){.gameGrid{grid-template-columns:1fr;order:7}}

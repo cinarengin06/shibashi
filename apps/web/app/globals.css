@@ -19154,3 +19154,10 @@ body { font-size: 16px; line-height: 1.55; }
   .device-shell .bottom-nav .web-nav-account > span,
   .device-shell .bottom-nav .web-nav-account > button { display: none; }
 }
+.journal-badges { padding:20px; }
+.journal-badge-list { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:16px; }
+.journal-badge-list article { align-items:center; background:color-mix(in srgb,var(--site-accent) 10%,var(--site-surface)); border:1px solid color-mix(in srgb,var(--site-accent) 35%,transparent); border-radius:14px; display:flex; gap:12px; min-height:88px; padding:13px; }
+.journal-badge-list article > span { align-items:center; background:linear-gradient(140deg,#6e5729,#d8bc7b); border-radius:50%; color:#132018; display:flex; flex:none; font-size:23px; height:48px; justify-content:center; width:48px; }
+.journal-badge-list article > div { display:grid; gap:3px; }
+.journal-badge-list strong { color:var(--site-text); font-size:14px; }
+.journal-badge-list small,.journal-badge-list time,.journal-badge-empty { color:var(--site-muted); font-size:12px; }

@@ -40,10 +40,8 @@
 .header nav a.active::after { opacity: 1; transform: scaleX(1); }
 
 .account { align-items: center; display: flex; gap: 10px; justify-self: end; }
-.streak,
 .iconButton,
 .profile { background: #0b120e; border: 1px solid rgba(255, 255, 255, .07); border-radius: 9px; color: #f2eee7; min-height: 40px; }
-.streak { align-items: center; color: var(--site-accent); display: flex; font-size: 12px; padding: 0 14px; white-space: nowrap; }
 .iconButton { cursor: pointer; font-size: 18px; width: 42px; }
 .playing { color: var(--site-accent); }
 .profile { align-items: center; display: flex; font-size: 12px; font-weight: 600; gap: 9px; padding: 0 12px 0 6px; text-decoration: none; white-space: nowrap; }
@@ -57,7 +55,6 @@
   .header nav { gap: clamp(10px, 1.35vw, 18px); }
   .header nav a { font-size: 12px; }
   .account { gap: 6px; }
-  .streak { display: none; }
 }
 
 @media (max-width: 1120px) {

@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { fiveShen, type ShenId } from "@/features/home/data/shen";
-import { getPracticeStreak } from "@/features/home/components/DojoHomeScreen";
-import type { ShenActivity } from "@/packages/shen-domain";
 import { ShibashiBrandMark } from "./ShibashiBrandMark";
 import { WebNotificationBell } from "./WebNotificationBell";
 import styles from "./web-header.module.css";
@@ -24,22 +22,12 @@ const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
 
 export function WebHeader({ active }: { active: WebHeaderTab }) {
   const [userName, setUserName] = useState("Çınar");
-  const [streak, setStreak] = useState(0);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const refresh = () => {
       setUserName(window.localStorage.getItem("ritim-kapisi-user-name") || "Çınar");
-      try {
-        const gallery: unknown = JSON.parse(window.localStorage.getItem("ritim-kapisi-practice-gallery") ?? "[]");
-        const activities: unknown = JSON.parse(window.localStorage.getItem("shibashi-shen-activities") ?? "[]");
-        const galleryDates = Array.isArray(gallery) ? gallery.filter((item): item is { createdAt: string } => typeof item?.createdAt === "string") : [];
-        const practiceActivities = Array.isArray(activities) ? activities.filter((item): item is ShenActivity => typeof item?.createdAt === "string" && item?.type === "practice") : [];
-        setStreak(getPracticeStreak(galleryDates, practiceActivities).current);
-      } catch {
-        setStreak(0);
-      }
     };
     refresh();
     window.addEventListener("focus", refresh);
@@ -89,7 +77,6 @@ export function WebHeader({ active }: { active: WebHeaderTab }) {
         ))}
       </nav>
       <div aria-label="Kullanıcı özeti" className={styles.account}>
-        <span className={styles.streak} title="Güncel seri">♨ {streak}</span>
         <button aria-label={`Müziği ${musicPlaying ? "kapat" : "aç"}`} aria-pressed={musicPlaying} className={`${styles.iconButton} ${musicPlaying ? styles.playing : ""}`} onClick={toggleMusic} title={`Shen müziği ${musicPlaying ? "açık" : "kapalı"}`} type="button"><span aria-hidden="true">{musicPlaying ? "♪" : "♪̸"}</span></button>
         <WebNotificationBell />
         <Link className={styles.profile} href="/?tab=profile"><i>{userName.slice(0, 1).toLocaleUpperCase("tr-TR")}</i><span>{userName}</span><b>⌄</b></Link>

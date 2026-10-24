@@ -49,7 +49,17 @@ export default function Today() {
   const [unread, setUnread] = useState(0);
   const [shenQuestion, setShenQuestion] = useState(-1);
   const [shenAnswers, setShenAnswers] = useState<DailyShenId[]>([]);
-  useFocusEffect(useCallback(() => { void AsyncStorage.getItem("shibashi-daily-shen-date").then(date => { if (date !== dailyShenDate()) setShenQuestion(0); }); }, []));
+  useFocusEffect(useCallback(() => {
+    if (!profile.onboardingDone) {
+      setShenQuestion(-1);
+      return;
+    }
+    let active = true;
+    void AsyncStorage.getItem("shibashi-daily-shen-date").then(date => {
+      if (active) setShenQuestion(date === dailyShenDate() ? -1 : 0);
+    });
+    return () => { active = false; };
+  }, [profile.onboardingDone]));
   const [photos, setPhotos] = useState<ShibashiPhoto[]>([]);
   const now = Date.now();
   const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
@@ -81,7 +91,23 @@ export default function Today() {
     router.push(`/practice-session?practiceId=${practice.id}`);
   };
 
-  return <><Modal visible={shenQuestion >= 0} transparent animationType="fade"><View style={{ flex:1, backgroundColor:"rgba(2,12,10,.9)", justifyContent:"center", padding:24 }}><View style={{ backgroundColor:theme.surface, borderColor:theme.button, borderWidth:1, borderRadius:22, padding:24, gap:12 }}><Text style={{ color:theme.button, fontSize:13 }}>BEŞ SHEN GÜNLÜĞÜ · {shenQuestion + 1} / 3</Text><Text style={{ color:theme.light, fontSize:24, fontWeight:"700", marginBottom:8 }}>{dailyShenQuestions[Math.max(0,shenQuestion)]?.title}</Text>{dailyShenQuestions[Math.max(0,shenQuestion)]?.answers.map(answer => <Pressable key={answer.shen} accessibilityRole="button" onPress={() => { const next=[...shenAnswers, answer.shen]; if (shenQuestion===2) { saveProfile({ selectedShenId:recommendDailyShen(next) }); void AsyncStorage.setItem("shibashi-daily-shen-date",dailyShenDate()); void AsyncStorage.setItem("shibashi-daily-shen-answers",JSON.stringify(next)); setShenQuestion(-1); setShenAnswers([]); } else { setShenAnswers(next); setShenQuestion(shenQuestion+1); } }} style={{ backgroundColor:theme.surfaceRaised, borderRadius:12, padding:15 }}><Text style={{ color:theme.light, fontSize:16 }}>{answer.label}</Text></Pressable>)}</View></View></Modal><Screen style={s.page}>
+  const answerDailyShen = async (answer: DailyShenId) => {
+    const next = [...shenAnswers, answer];
+    if (shenQuestion < dailyShenQuestions.length - 1) {
+      setShenAnswers(next);
+      setShenQuestion(shenQuestion + 1);
+      return;
+    }
+    await AsyncStorage.multiSet([
+      ["shibashi-daily-shen-date", dailyShenDate()],
+      ["shibashi-daily-shen-answers", JSON.stringify(next)],
+    ]);
+    saveProfile({ selectedShenId: recommendDailyShen(next) });
+    setShenQuestion(-1);
+    setShenAnswers([]);
+  };
+
+  return <><Modal visible={shenQuestion >= 0} transparent animationType="fade"><View style={{ flex:1, backgroundColor:"rgba(2,12,10,.9)", justifyContent:"center", padding:24 }}><View style={{ backgroundColor:theme.surface, borderColor:theme.button, borderWidth:1, borderRadius:22, padding:24, gap:12 }}><Text style={{ color:theme.button, fontSize:13 }}>BEŞ SHEN GÜNLÜĞÜ · {shenQuestion + 1} / 3</Text><Text style={{ color:theme.light, fontSize:24, fontWeight:"700", marginBottom:8 }}>{dailyShenQuestions[Math.max(0,shenQuestion)]?.title}</Text>{dailyShenQuestions[Math.max(0,shenQuestion)]?.answers.map(answer => <Pressable key={answer.shen} accessibilityRole="button" onPress={() => { void answerDailyShen(answer.shen); }} style={{ backgroundColor:theme.surfaceRaised, borderRadius:12, padding:15 }}><Text style={{ color:theme.light, fontSize:16 }}>{answer.label}</Text></Pressable>)}</View></View></Modal><Screen style={s.page}>
     <View style={s.header}>
       <View style={s.brand}><Text style={[s.brandRing, { color: theme.button }]}>◯</Text><Text style={s.brandText}>SHIBASHI EFE</Text></View>
       <View style={s.headerActions}>

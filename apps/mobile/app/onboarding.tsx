@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
@@ -21,6 +22,7 @@ import {
   profileQuestions,
   type OnboardingProfile,
 } from "../../../packages/onboarding";
+import { dailyShenDate } from "../../../packages/daily-shen-checkin";
 import { colors, fonts } from "../constants/theme";
 import { shenThemes } from "../../../packages/design-tokens";
 import { BodyStep, Header, IntentionStep, MoodCheckin, NameStep, PracticeSetup, Preferences, QuestionCopy, Result, Welcome } from "../components/onboarding/OnboardingSteps";
@@ -76,7 +78,7 @@ export default function Onboarding() {
     }
     goTo(step + 1);
   };
-  const finish = () => {
+  const finish = async () => {
     const finalData = {
       ...data,
       name: data.name.trim(),
@@ -105,6 +107,7 @@ export default function Onboarding() {
       onboardingProfile: finalData,
       firstJourneyPlan: plan,
     });
+    await AsyncStorage.setItem("shibashi-daily-shen-date", dailyShenDate());
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     router.replace("/(tabs)");
   };

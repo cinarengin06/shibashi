@@ -1,5 +1,6 @@
 "use client";
 import { DailyShenCheckin } from "@/features/home/components/DailyShenCheckin";
+import { dailyShenDate } from "@/packages/daily-shen-checkin";
 import { MilestoneCelebration } from "@/features/home/components/MilestoneCelebration";
 
 import NextImage from "next/image";
@@ -9,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { JournalScreen } from "@/features/journal/components/JournalScreen";
 import { ProfileScreen } from "@/features/profile/components/ProfileScreen";
 import { PremiumOnboarding } from "@/features/onboarding/components/PremiumOnboarding";
-import { DojoHomeScreen, getPracticeStreak } from "@/features/home/components/DojoHomeScreen";
+import { DojoHomeScreen } from "@/features/home/components/DojoHomeScreen";
 import { isCapturedPracticePhoto } from "@/features/home/utils/practice-photo";
 import { fiveShen, shenTodayCopy, type ShenId } from "@/features/home/data/shen";
 import { PostureAssessmentScreen } from "@/features/posture/components/PostureAssessmentScreen";
@@ -467,6 +468,7 @@ export default function RitimKapisiOS() {
     if (trimmedName) setUserName(trimmedName);
     if (trimmedName) window.localStorage.setItem("ritim-kapisi-user-name", trimmedName);
     window.localStorage.setItem("ritim-kapisi-onboarding-complete", "true");
+    window.localStorage.setItem("shibashi-daily-shen-date", dailyShenDate());
     setExperienceDay(1);
     setOnboardingComplete(true);
     setActiveTab("home");
@@ -611,7 +613,7 @@ export default function RitimKapisiOS() {
   }
 
   return (
-    <>{onboardingComplete ? <DailyShenCheckin onSelect={selectShen} /> : null}
+    <>{onboardingComplete && activeTab === "home" ? <DailyShenCheckin onSelect={selectShen} /> : null}
     {onboardingComplete && auth.ready ? <MilestoneCelebration records={practiceGallery.filter((item) => isCapturedPracticePhoto(item.imageData)).map((item) => ({ order: item.movementId, date: item.createdAt }))} postureCount={postureReports.length} userId={auth.user?.id} /> : null}
     <main
       className={`app-shell shen-theme-${selectedShen.id} device-mode-desktop active-tab-${activeTab}`}
@@ -770,7 +772,6 @@ export default function RitimKapisiOS() {
               ))}
             </div>
             <div className="web-nav-account" aria-label="Kullanıcı özeti">
-              <span className="web-nav-streak" title="Güncel seri">♨ {getPracticeStreak(practiceGallery, shenActivities).current}</span>
               <button aria-label={`Müziği ${soundState === "açık" ? "kapat" : "aç"}`} aria-pressed={soundState === "açık"} className={`web-nav-music ${soundState === "açık" ? "is-playing" : ""}`} onClick={toggleShenMusic} title={`Shen müziği ${soundState}`} type="button"><span aria-hidden="true">{soundState === "açık" ? "♪" : "♪̸"}</span></button>
               <WebNotificationBell className="web-nav-bell" />
               <button className="web-nav-profile" onClick={() => setActiveTab("profile")} type="button"><i>{(userName || "Ç").slice(0, 1).toLocaleUpperCase("tr-TR")}</i><span>{userName || "Çınar"}</span><b>⌄</b></button>

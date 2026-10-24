@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { shenThemes } from '../../../packages/design-tokens';
@@ -15,10 +15,11 @@ const lessons = [
 ] as const;
 
 export default function WarmupLessons() {
+  const isTab = usePathname() === '/lessons';
   const { profile } = useApp();
   const theme = shenThemes[profile.selectedShenId];
   return <Screen style={styles.page}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Geri dön" onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" color={theme.button} size={22}/><Text style={[styles.backText, { color: theme.button }]}>Geri</Text></Pressable>
+      {!isTab && <Pressable accessibilityRole="button" accessibilityLabel="Geri dön" onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" color={theme.button} size={22}/><Text style={[styles.backText, { color: theme.button }]}>Geri</Text></Pressable>}
       <Text style={[styles.eyebrow, { color: theme.button }]}>FORMDAN ÖNCE</Text>
       <Text style={[styles.title, { color: theme.light }]}>Isınma Dersleri</Text>
       <Text style={styles.lead}>Bedenini hazırlamak için kısa bir ders seç. Videoyu açıp kendi hızında izle.</Text>

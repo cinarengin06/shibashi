@@ -17,6 +17,7 @@ import {PostureCapture,PostureReport,PostureView} from '../types';
 import {buildPostureNarrative} from '../../../packages/posture-analysis';
 import {deletePostureCapturePhoto,savePostureCapturePhoto} from '../services/posturePhotos';
 import {capturePreviewFrame,isPreviewFrameAvailable} from '../modules/shibashi-vision/src/preview';
+import {safeMediaAction} from '../services/safeMediaAction';
 
 const views:PostureView[]=['front','side','back'];
 const viewCopy:Record<PostureView,{title:string;instruction:string;icon:keyof typeof Ionicons.glyphMap}>={
@@ -93,9 +94,9 @@ export default function PostureSession(){
   if(speakingRef.current===key)return;
   speakingRef.current=key;
   const session=++voiceSessionRef.current;
-  Object.values(voicePlayers).forEach(player=>{try{player.pause()}catch{}});
+  Object.values(voicePlayers).forEach(player=>safeMediaAction(()=>player.pause()));
   const player=voicePlayers[key];
-  void player.seekTo(0).then(()=>{if(voiceSessionRef.current===session)player.play()}).catch(()=>{});
+  void player.seekTo(0).then(()=>{if(voiceSessionRef.current===session)return player.play()}).catch(()=>{});
  };
 
  const closeCamera=async()=>{
@@ -104,7 +105,7 @@ export default function PostureSession(){
   scanSessionRef.current+=1;
   voiceSessionRef.current+=1;
   try{await captureInFlightRef.current}catch{}
-  Object.values(voicePlayers).forEach(player=>{try{player.pause()}catch{}});
+  Object.values(voicePlayers).forEach(player=>safeMediaAction(()=>player.pause()));
   setClosing(true);
   setCameraReady(false);
   setTimeout(()=>router.back(),350);
@@ -123,7 +124,6 @@ export default function PostureSession(){
 
  useEffect(()=>()=>{
   voiceSessionRef.current+=1;
-  Object.values(voicePlayers).forEach(player=>{try{player.pause()}catch{}});
   scanSessionRef.current+=1;
   draftPhotosRef.current.forEach(deletePostureCapturePhoto);
  },[]);
@@ -258,7 +258,7 @@ export default function PostureSession(){
    setSaving(false);
   }
  };
- const restart=()=>{Object.values(voicePlayers).forEach(player=>player.pause());draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
+ const restart=()=>{Object.values(voicePlayers).forEach(player=>safeMediaAction(()=>player.pause()));draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
 
  if(!permission)return <View style={styles.permission}/>;
  if(!permission.granted)return <SafeAreaView style={styles.permission}>

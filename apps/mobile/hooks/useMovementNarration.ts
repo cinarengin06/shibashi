@@ -2,6 +2,7 @@ import { useAudioPlayer } from 'expo-audio';
 import type { VideoPlayer } from 'expo-video';
 import { useEffect } from 'react';
 import { shibashiNarrations } from '../data/shibashiMedia';
+import { safeMediaAction } from '../services/safeMediaAction';
 
 export function useMovementNarration(order: number, video: VideoPlayer) {
   const narration = useAudioPlayer(shibashiNarrations[order], { downloadFirst: true });
@@ -9,12 +10,12 @@ export function useMovementNarration(order: number, video: VideoPlayer) {
   useEffect(() => {
     let disposed = false;
     let lastVideoTime = 0;
-    const pause = () => { try { narration.pause(); } catch {} };
+    const pause = () => safeMediaAction(() => narration.pause());
     const restart = () => {
       try {
         void narration.seekTo(0).then(() => {
           if (!disposed && video.playing) {
-            try { narration.play(); } catch {}
+            safeMediaAction(() => narration.play());
           }
         }).catch(() => {});
       } catch {}
@@ -26,7 +27,7 @@ export function useMovementNarration(order: number, video: VideoPlayer) {
         if (!status) return;
         if (video.currentTime < 0.3 && status.currentTime > 0.5) restart();
         else if (status.didJustFinish || (status.duration > 0 && status.currentTime >= status.duration - 0.15)) restart();
-        else narration.play();
+        else safeMediaAction(() => narration.play());
       } catch {}
     };
     try {
@@ -53,7 +54,6 @@ export function useMovementNarration(order: number, video: VideoPlayer) {
       disposed = true;
       playingSubscription.remove();
       timeSubscription.remove();
-      pause();
     };
   }, [narration, video]);
 }

@@ -126,6 +126,7 @@ export default function Today() {
       <LinearGradient colors={["rgba(5,10,12,.04)", "rgba(5,10,12,.38)", "rgba(5,10,12,.94)"]} style={s.heroShade}>
         <Text style={[s.heroEyebrow, { color: theme.button }]}>{daily.label.toLocaleUpperCase("tr-TR")} · {shen.name.toLocaleUpperCase("tr-TR")}</Text>
         <Text style={s.heroTitle}>{daily.title}</Text><Text style={s.heroCue}>{daily.cue}</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')} style={[s.heroAction, { backgroundColor: theme.button }, shenShape(shen.id, 'button')]}><Ionicons name="play" color={theme.buttonInk} size={15} /><Text style={[s.heroActionText, { color: theme.buttonInk }]}>PRATİĞE BAŞLA · 18 FORM</Text></Pressable>
       </LinearGradient>
     </ImageBackground>
 
@@ -186,6 +187,8 @@ const s = StyleSheet.create({
   heroEyebrow: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 1.5, marginBottom: 5 },
   heroTitle: { color: "#F6F3EC", fontFamily: fonts.displayMedium, fontSize: 26, lineHeight: 30, marginBottom: 5 },
   heroCue: { color: "#E7E6E2", fontFamily: fonts.sans, fontSize: 13, lineHeight: 18 },
+  heroAction: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 36, paddingHorizontal: 13, marginTop: 12 },
+  heroActionText: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: .4 },
   shenPickerOuter: { flexGrow: 0, marginBottom: 16 },
   shenPicker: { flexDirection: "row", gap: 7, paddingRight: 5 },
   shenChoice: { flexDirection: "row", alignItems: "center", gap: 5, minWidth: 62, height: 43, paddingHorizontal: 9, borderWidth: 1 },

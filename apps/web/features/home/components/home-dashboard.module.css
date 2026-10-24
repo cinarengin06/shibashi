@@ -59,6 +59,7 @@
 .heroActions { align-items: center; display: flex; gap: 26px; margin-top: 4px; }
 .heroActions button { cursor: pointer; }
 .primaryAction { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 72%, #f4efe4), var(--gold)); border: 0; border-radius: var(--action-radius); color: #09100c; font-size: 15px; font-weight: 700; letter-spacing: .05em; min-height: 52px; padding: 0 24px; text-transform: uppercase; transition: background .8s ease, border-radius .65s ease, filter .5s ease, transform .5s ease; }
+.heroActions .primaryAction { align-items: center; display: inline-flex; text-decoration: none; }
 .primaryAction:hover { filter: brightness(1.08); transform: translateY(-2px); }
 .primaryAction span { font-size: 12px; margin-right: 7px; }
 

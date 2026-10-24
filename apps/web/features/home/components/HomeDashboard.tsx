@@ -82,6 +82,7 @@ function HomeHero({ shen, shenOptions, userName }: HomeDashboardProps) {
         <p className={styles.eyebrow}><span>Hoş geldin,</span> <strong>{userName || "Çınar"}</strong></p>
         <h1>{shen.heroTitle}</h1>
         <p className={styles.lead}>{shen.heroBody}</p>
+        <div className={styles.heroActions}><Link className={styles.primaryAction} href="/beden-hatlari"><span aria-hidden="true">▶</span> Pratiğe başla · 18 Form</Link></div>
       </div>
     </article>
   );

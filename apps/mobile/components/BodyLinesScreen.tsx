@@ -60,7 +60,7 @@ export function BodyLinesScreen() {
     { text: 'Vazgeç', style: 'cancel' },
     { text: 'Sil', style: 'destructive', onPress: () => { void deleteShibashiPhoto(photo.id).then(items => { setPhotos(items); setSelected(null); }); } },
   ]);
-  return <SafeAreaView style={[s.root,{backgroundColor:theme.surface}]} edges={['top']}><ScrollView ref={scrollRef} contentContainerStyle={s.page} showsVerticalScrollIndicator={false}>
+  return <SafeAreaView style={[s.root,{backgroundColor:theme.surface}]} edges={[]}><ScrollView ref={scrollRef} contentContainerStyle={s.page} showsVerticalScrollIndicator={false}>
     <View style={s.top}><Pressable accessibilityLabel="Odam'a dön" onPress={() => router.replace('/(tabs)')} style={s.icon}><Ionicons name="arrow-back" size={23} color={colors.cream}/></Pressable><Text style={s.topTitle}>18 Form</Text><Pressable accessibilityLabel="Fotoğraflarım" onPress={() => { void loadShibashiPhotos().then(setPhotos); }} style={s.icon}><Ionicons name="images-outline" size={22} color={colors.cream}/></Pressable></View>
     {!switching&&<MovementStage key={order} order={order} completed={photos.some(photo => photo.order === order)} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>}
     <Text style={s.sectionTitle}>18 Form</Text>

@@ -43,6 +43,7 @@ export default function Profile() {
   } = useApp();
   const { playing, toggleSound } = useShenExperience();
   const shen = getShen(profile.selectedShenId);
+  const visual = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
   const [pairCode, setPairCode] = useState("");
   const connect = async () => {
     const success = await setSyncCode(pairCode);
@@ -85,7 +86,7 @@ export default function Profile() {
         <View>
           <Eyebrow>PRATİK PROFİLİ</Eyebrow>
           <Title>{profile.name}</Title>
-          <Text style={p.muted}>{profile.experience}</Text>
+          <Text style={[p.muted,{color:visual.textSecondary}]}>{profile.experience}</Text>
         </View>
       </View>
       <View style={p.metrics}>
@@ -110,10 +111,10 @@ export default function Profile() {
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={p.text}>
+              <Text style={[p.text,{color:visual.text}]}>
                 {profile.authEmail ? "Hesabın bağlı" : "Hesapsız kullanıyorsun"}
               </Text>
-              <Text style={p.muted}>
+              <Text style={[p.muted,{color:visual.textSecondary}]}>
                 {profile.authEmail ??
                   "Google ile giriş yaparak ilerlemeni cihazların arasında taşı."}
               </Text>
@@ -162,14 +163,14 @@ export default function Profile() {
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={p.text}>
+              <Text style={[p.text,{color:visual.text}]}>
                 {syncStatus === "synced"
                   ? "Verilerin iki cihazda güncel"
                   : syncStatus === "syncing"
                     ? "Veriler eşitleniyor"
                     : "Kayıtlar cihazda güvende"}
               </Text>
-              <Text style={p.muted}>
+              <Text style={[p.muted,{color:visual.textSecondary}]}>
                 {lastSyncedAt
                   ? `Son eşitleme ${new Date(lastSyncedAt).toLocaleString("tr-TR")}`
                   : (syncMessage ??
@@ -179,7 +180,7 @@ export default function Profile() {
           </View>
           <View style={p.codeRow}>
             <View>
-              <Text style={p.codeLabel}>EŞLEŞTİRME KODUN</Text>
+              <Text style={[p.codeLabel,{color:visual.textSecondary}]}>EŞLEŞTİRME KODUN</Text>
               <Text selectable style={[p.code, { color: shen.color }]}>
                 {syncCode || "Hazırlanıyor…"}
               </Text>
@@ -193,7 +194,7 @@ export default function Profile() {
               </Text>
             </Pressable>
           </View>
-          <Text style={p.muted}>
+          <Text style={[p.muted,{color:visual.textSecondary}]}>
             Web’de aynı kodu girerek geçmişini, serini ve yolculuğunu birleştir.
           </Text>
           <View style={p.pairRow}>
@@ -204,7 +205,7 @@ export default function Profile() {
               onChangeText={setPairCode}
               placeholder="XXXX-XXXX-XXXX"
               placeholderTextColor={colors.muted}
-              style={p.codeInput}
+              style={[p.codeInput,{color:visual.text}]}
               value={pairCode}
             />
             <Pressable
@@ -241,8 +242,8 @@ export default function Profile() {
               <Text style={[p.shenMode, { color: shen.color }]}>
                 {shen.dailyName.toUpperCase()}
               </Text>
-              <Text style={p.shenTitle}>{shen.label}</Text>
-              <Text style={p.muted}>{shen.note}</Text>
+              <Text style={[p.shenTitle,{color:visual.text}]}>{shen.label}</Text>
+              <Text style={[p.muted,{color:visual.textSecondary}]}>{shen.note}</Text>
               <Text style={[p.term, { color: shen.color }]}>
                 Geleneksel adı: {shen.name} Shen · {shen.organ}
               </Text>
@@ -294,8 +295,8 @@ export default function Profile() {
                 size={21}
               />
               <View>
-                <Text style={p.text}>Arka plan müziği</Text>
-                <Text style={p.muted}>
+                <Text style={[p.text,{color:visual.text}]}>Arka plan müziği</Text>
+                <Text style={[p.muted,{color:visual.textSecondary}]}>
                   {playing
                     ? `${shen.dailyName} müziği çalıyor`
                     : "Müzik kapalı"}
@@ -315,7 +316,7 @@ export default function Profile() {
                 color={shen.color}
                 size={21}
               />
-              <Text style={p.text}>Günlük hatırlatma</Text>
+              <Text style={[p.text,{color:visual.text}]}>Günlük hatırlatma</Text>
             </View>
             <Switch
               value={profile.reminders}
@@ -326,7 +327,7 @@ export default function Profile() {
           <View style={p.row}>
             <View style={p.rowLabel}>
               <Ionicons name="time-outline" color={shen.color} size={21} />
-              <Text style={p.text}>Günlük hedef</Text>
+              <Text style={[p.text,{color:visual.text}]}>Günlük hedef</Text>
             </View>
             <Text style={[p.gold, { color: shen.color }]}>
               {profile.dailyGoal} dk
@@ -345,7 +346,7 @@ export default function Profile() {
                 color={shen.color}
                 size={21}
               />
-              <Text style={p.text}>Giriş ve rehberi yeniden aç</Text>
+              <Text style={[p.text,{color:visual.text}]}>Giriş ve rehberi yeniden aç</Text>
             </View>
             <Ionicons name="chevron-forward" color={colors.muted} />
           </Pressable>
@@ -353,7 +354,7 @@ export default function Profile() {
             <Pressable key={label} style={p.row}>
               <View style={p.rowLabel}>
                 <Ionicons name={icon} color={shen.color} size={21} />
-                <Text style={p.text}>{label}</Text>
+                <Text style={[p.text,{color:visual.text}]}>{label}</Text>
               </View>
               <Ionicons name="chevron-forward" color={colors.muted} />
             </Pressable>

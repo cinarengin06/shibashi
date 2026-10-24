@@ -591,6 +591,23 @@
   --theme-glow: #86abc8;
 }
 
+.app-shell[data-visual-theme="morning-light"] {
+  color-scheme: light;
+  --theme-bg: #f7f3e9;
+  --theme-bg-secondary: #f0ebdf;
+  --theme-surface: #fffcf5;
+  --theme-surface-raised: #eae3d4;
+  --theme-nav: #fffdf8;
+  --theme-text: #202a25;
+  --theme-muted: #58635a;
+  --theme-border: rgba(52, 74, 60, .18);
+  --theme-glow: #b88b45;
+}
+
+.app-shell[data-visual-theme="morning-light"] :is(.glass-card, .profile-settings-list .list-item) {
+  box-shadow: 0 8px 28px rgba(42, 55, 43, .08);
+}
+
 .app-shell[data-visual-theme] {
   --bg: var(--theme-bg-secondary);
   --bg-deep: var(--theme-bg);

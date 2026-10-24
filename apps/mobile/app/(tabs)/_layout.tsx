@@ -1,8 +1,20 @@
 import { Tabs } from "expo-router";
+import { useState } from "react";
+import { View } from "react-native";
+import { visualThemes } from "../../../../packages/design-tokens";
 import { MobileNavigation } from "../../components/navigation/MobileNavigation";
+import { MobileDrawer, MobileMenuHeader } from "../../components/navigation/MobileDrawer";
+import { useShenExperience } from "../../store/ShenExperience";
+import { useApp } from "../../store/AppStore";
 
 export default function TabLayout() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { shen } = useShenExperience();
+  const { profile } = useApp();
+  const visual = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
   return (
+    <View style={{ flex: 1, backgroundColor: visual.background }}>
+    <MobileMenuHeader onOpen={() => setMenuOpen(true)} />
     <Tabs
       tabBar={(props) => <MobileNavigation {...props} />}
       screenOptions={{ headerShown: false }}
@@ -17,5 +29,7 @@ export default function TabLayout() {
       <Tabs.Screen name="journal" options={{ title: "Kayıtlarım" }} />
       <Tabs.Screen name="profile" options={{ title: "Ayarlar" }} />
     </Tabs>
+    <MobileDrawer visible={menuOpen} onClose={() => setMenuOpen(false)} />
+    </View>
   );
 }

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { shenThemes } from '../../../../packages/design-tokens';
+import { shenThemes, visualThemes } from '../../../../packages/design-tokens';
 import { fonts } from '../../constants/theme';
 import { shenShape } from '../../constants/shenDesign';
 import { shenIcons } from '../../data/shenIcons';
 import { useShenExperience } from '../../store/ShenExperience';
+import { useApp } from '../../store/AppStore';
 import type { ShenId } from '../../types';
 
 type Props = {
@@ -22,28 +23,27 @@ type Props = {
 const items = [
   { label: 'Odam', tab: 'index' },
   { label: 'Gelişim Haritam', tab: 'main-map' },
-  { label: 'Isınma Dersleri', tab: 'lessons' },
   { label: '18 Form', tab: 'moves' },
-  { label: 'Postür', tab: 'posture' },
   { label: 'Beden Haritam', tab: 'journey' },
   { label: 'Kayıtlarım', tab: 'journal' },
-  { label: 'Ayarlar', tab: 'profile' },
 ] as const;
 
 type TabName = (typeof items)[number]['tab'];
 const icons: Record<ShenId, Record<TabName, keyof typeof Ionicons.glyphMap>> = {
-  hun: { index: 'leaf-outline', 'main-map': 'navigate-outline', lessons: 'play-circle-outline', moves: 'walk-outline', posture: 'body-outline', journey: 'map-outline', journal: 'book-outline', profile: 'settings-outline' },
-  shen: { index: 'flame-outline', 'main-map': 'compass-outline', lessons: 'play-circle-outline', moves: 'sparkles-outline', posture: 'scan-outline', journey: 'map-outline', journal: 'book-outline', profile: 'settings-outline' },
-  yi: { index: 'square-outline', 'main-map': 'grid-outline', lessons: 'play-circle-outline', moves: 'fitness-outline', posture: 'scan-outline', journey: 'map-outline', journal: 'reader-outline', profile: 'settings-outline' },
-  po: { index: 'cloud-outline', 'main-map': 'navigate-outline', lessons: 'play-circle-outline', moves: 'body-outline', posture: 'scan-outline', journey: 'map-outline', journal: 'book-outline', profile: 'settings-outline' },
-  zhi: { index: 'water-outline', 'main-map': 'map-outline', lessons: 'play-circle-outline', moves: 'walk-outline', posture: 'scan-outline', journey: 'compass-outline', journal: 'journal-outline', profile: 'settings-outline' },
+  hun: { index: 'leaf-outline', 'main-map': 'navigate-outline', moves: 'walk-outline', journey: 'map-outline', journal: 'book-outline' },
+  shen: { index: 'flame-outline', 'main-map': 'compass-outline', moves: 'sparkles-outline', journey: 'map-outline', journal: 'book-outline' },
+  yi: { index: 'square-outline', 'main-map': 'grid-outline', moves: 'fitness-outline', journey: 'map-outline', journal: 'reader-outline' },
+  po: { index: 'cloud-outline', 'main-map': 'navigate-outline', moves: 'body-outline', journey: 'map-outline', journal: 'book-outline' },
+  zhi: { index: 'water-outline', 'main-map': 'map-outline', moves: 'walk-outline', journey: 'compass-outline', journal: 'journal-outline' },
 };
 
 export function MobileNavigation({ navigation, state }: Props) {
   const { shen } = useShenExperience();
   const theme = shenThemes[shen.id];
+  const { profile } = useApp();
+  const visual = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
   const insets = useSafeAreaInsets();
-  return <View style={[styles.bar, { backgroundColor: theme.surface, borderColor: `${theme.primary}35`, paddingBottom: Math.max(insets.bottom, 5) }]}>
+  return <View style={[styles.bar, { backgroundColor: visual.navigation, borderColor: visual.border, paddingBottom: Math.max(insets.bottom, 9) }]}>
     {items.map(item => {
       const routeIndex = state.routes.findIndex(route => route.name === item.tab);
       const route = state.routes[routeIndex];
@@ -52,17 +52,17 @@ export function MobileNavigation({ navigation, state }: Props) {
         if (!route) return;
         const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
         if (!selected && !event.defaultPrevented) navigation.navigate(route.name, route.params);
-      }} style={[styles.item, selected && { backgroundColor: theme.surfaceRaised }, selected && shenShape(shen.id, 'button')]}>
-        {item.tab === 'index' ? <Image source={shenIcons[shen.id]} style={styles.shenIcon} /> : <Ionicons name={icons[shen.id][item.tab]} color={selected ? theme.button : theme.light} size={19} />}
-        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={[styles.label, { color: selected ? theme.button : theme.light }]}>{item.label}</Text>
+      }} style={[styles.item, selected && { backgroundColor: visual.surfaceRaised }, selected && shenShape(shen.id, 'button')]}>
+        {item.tab === 'index' ? <Image source={shenIcons[shen.id]} style={styles.shenIcon} /> : <Ionicons name={icons[shen.id][item.tab]} color={selected ? theme.button : visual.textSecondary} size={22} />}
+        <Text numberOfLines={2} style={[styles.label, { color: selected ? theme.button : visual.textSecondary }]}>{item.label}</Text>
       </Pressable>;
     })}
   </View>;
 }
 
 const styles = StyleSheet.create({
-  bar: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 5, paddingTop: 5 },
-  item: { alignItems: 'center', width: '25%', gap: 2, justifyContent: 'center', minHeight: 48, paddingHorizontal: 1 },
-  label: { fontFamily: fonts.sansMedium, fontSize: 9, lineHeight: 11, textAlign: 'center' },
-  shenIcon: { width: 19, height: 19, borderRadius: 10 },
+  bar: { borderTopWidth: StyleSheet.hairlineWidth, flexDirection: 'row', gap: 2, paddingHorizontal: 7, paddingTop: 7 },
+  item: { alignItems: 'center', flex: 1, gap: 4, justifyContent: 'center', minHeight: 58, paddingHorizontal: 2 },
+  label: { fontFamily: fonts.sansMedium, fontSize: 9.5, lineHeight: 11, textAlign: 'center' },
+  shenIcon: { width: 22, height: 22, borderRadius: 11 },
 });

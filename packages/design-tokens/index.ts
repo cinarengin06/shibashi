@@ -170,6 +170,7 @@ export const visualThemes = {
   "ink-night": {id:"ink-night",name:"Mürekkep Gecesi",shortName:"Mürekkep",description:"Siyah mürekkep, kömür yüzeyler ve sıcak altın ışık.",background:"#090C0D",backgroundSecondary:"#111619",surface:"#1B2125",surfaceRaised:"#252C31",navigation:"#070A0B",text:"#F2EEE7",textSecondary:"#A7ADA6",border:"rgba(232,222,205,0.13)",glow:"#C8A56A"},
   "jade-garden": {id:"jade-garden",name:"Yeşim Bahçesi",shortName:"Yeşim",description:"Derin orman yeşili, yeşim taşları ve dingin krem tonları.",background:"#06100D",backgroundSecondary:"#0B1A15",surface:"#12241C",surfaceRaised:"#1A3127",navigation:"#050D0A",text:"#F0F1E9",textSecondary:"#A5B8AC",border:"rgba(153,193,169,0.16)",glow:"#79B397"},
   "moon-water": {id:"moon-water",name:"Ay Suyu",shortName:"Ay Suyu",description:"Gece mavisi, ay ışığı ve su gibi sakin gümüş yüzeyler.",background:"#070B14",backgroundSecondary:"#0C1421",surface:"#121E2D",surfaceRaised:"#1A2A3D",navigation:"#050913",text:"#EEF2F5",textSecondary:"#A4B0BF",border:"rgba(151,180,207,0.16)",glow:"#86ABC8"},
+  "morning-light": {id:"morning-light",name:"Sabah Işığı · Açık",shortName:"Açık",description:"Sıcak fildişi zemin, açık taş kartlar ve Shen vurguları.",background:"#F7F3E9",backgroundSecondary:"#F0EBDF",surface:"#FFFCF5",surfaceRaised:"#EAE3D4",navigation:"#FFFDF8",text:"#202A25",textSecondary:"#58635A",border:"rgba(52,74,60,0.18)",glow:"#B88B45"},
 } as const;
 
 export type VisualThemeId = keyof typeof visualThemes;

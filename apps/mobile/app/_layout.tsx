@@ -3,7 +3,7 @@ import { Inter_500Medium } from "@expo-google-fonts/inter/500Medium";
 import { Inter_600SemiBold } from "@expo-google-fonts/inter/600SemiBold";
 import { Inter_700Bold } from "@expo-google-fonts/inter/700Bold";
 import { useFonts } from "@expo-google-fonts/inter/useFonts";
-import { Stack } from "expo-router";
+import { Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -13,7 +13,7 @@ import { fonts, type } from "../constants/theme";
 import { AppProvider } from "../store/AppStore";
 import { ShenExperienceProvider } from "../store/ShenExperience";
 import { useApp } from "../store/AppStore";
-import { shenThemes } from "../../../packages/design-tokens";
+import { visualThemes } from "../../../packages/design-tokens";
 import { MilestoneCelebration } from "../components/MilestoneCelebration";
 
 void SplashScreen.preventAutoHideAsync();
@@ -61,18 +61,19 @@ export default function RootLayout() {
 
 function BootContent() {
   const { ready, profile } = useApp();
-  const visualTheme = shenThemes[profile.selectedShenId];
+  const visualTheme = visualThemes[profile.visualThemeId] ?? visualThemes['ink-night'];
+  const segments = useSegments();
   useEffect(() => {
-    if (ready) void SplashScreen.hideAsync();
-  }, [ready]);
+    if (ready && segments[0] && segments[0] !== 'welcome') void SplashScreen.hideAsync();
+  }, [ready, segments]);
   if (!ready) return null;
   return (
     <ShenExperienceProvider>
-      <StatusBar style="light" />
+      <StatusBar style={visualTheme.id === 'morning-light' ? 'dark' : 'light'} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: visualTheme.surface },
+          contentStyle: { backgroundColor: visualTheme.background },
           animation: "fade",
         }}
       />

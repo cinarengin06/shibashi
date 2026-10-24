@@ -1,4 +1,5 @@
 import {Ionicons} from '@expo/vector-icons';
+import {useSegments} from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import React,{PropsWithChildren,useEffect,useRef} from 'react';
 import {Animated,Pressable,ScrollView,StyleProp,StyleSheet,Text,useWindowDimensions,View,ViewStyle} from 'react-native';
@@ -9,17 +10,24 @@ import {shenBackgrounds} from '../data/shenAssets';
 import {useShenExperience} from '../store/ShenExperience';
 import {shenThemes} from '../../../packages/design-tokens';
 import {shenShape} from '../constants/shenDesign';
+import {useApp} from '../store/AppStore';
+import {visualThemes} from '../../../packages/design-tokens';
+
+function useVisualPalette(){const{profile}=useApp();return visualThemes[profile.visualThemeId]??visualThemes['ink-night']}
 
 export function Screen({children,scroll=true,style}:{children:React.ReactNode;scroll?:boolean;style?:StyleProp<ViewStyle>}){
+ const inTabs=useSegments()[0]==='(tabs)';
  const{width}=useWindowDimensions();
  const{shen}=useShenExperience();
  const personality=shenThemes[shen.id];
+ const visual=useVisualPalette();
+ const isLight=profileIsLight(visual.id);
  const body=<View style={[s.content,style]}>{children}</View>;
- return <View style={[s.safe,{width,backgroundColor:personality.surface}]}>
-  <ShenBackdrop opacity={.34}/>
-  <View style={[s.themeWash,{backgroundColor:personality.surfaceRaised}]}/>
-  <View style={[s.scrim,{backgroundColor:personality.surface,opacity:.84}]}/>
-  <SafeAreaView style={s.safeClear} edges={['top']}>
+ return <View style={[s.safe,{width,backgroundColor:visual.background}]}>
+  {!isLight&&<ShenBackdrop opacity={.34}/>}
+  <View style={[s.themeWash,{backgroundColor:visual.backgroundSecondary,opacity:isLight?1:.46}]}/>
+  {!isLight&&<View style={[s.scrim,{backgroundColor:visual.surface,opacity:.84}]}/>}
+  <SafeAreaView style={s.safeClear} edges={inTabs?[]:['top']}>
    {scroll?<ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>{body}</ScrollView>:body}
   </SafeAreaView>
  </View>;
@@ -51,13 +59,14 @@ export function ShenBackdrop({opacity=1,borderRadius=0}:{opacity?:number;borderR
 }
 
 export function Eyebrow({children}:PropsWithChildren){const{shen}=useShenExperience();return <Text style={[s.eyebrow,{color:shen.color}]}>{children}</Text>}
-export function Title({children}:PropsWithChildren){const{shen}=useShenExperience();const personality=shenThemes[shen.id];return <Text style={[s.title,{fontFamily:personality.headingWeight==='600'?fonts.displayStrong:personality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular,letterSpacing:shen.id==='zhi'?.4:shen.id==='yi'?-.35:shen.id==='shen'?.6:0}]}>{children}</Text>}
+const profileIsLight=(id:string)=>id==='morning-light';
+export function Title({children}:PropsWithChildren){const{shen}=useShenExperience();const personality=shenThemes[shen.id];const visual=useVisualPalette();return <Text style={[s.title,{color:visual.text,fontFamily:personality.headingWeight==='600'?fonts.displayStrong:personality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular,letterSpacing:shen.id==='zhi'?.4:shen.id==='yi'?-.35:shen.id==='shen'?.6:0}]}>{children}</Text>}
 export function Section({title,action,children}:{title:string;action?:string;children:React.ReactNode}){
- return <View style={s.section}><View style={s.sectionHead}><Text style={s.sectionTitle}>{title}</Text>{action&&<Text style={s.action}>{action}</Text>}</View>{children}</View>;
+ const visual=useVisualPalette();return <View style={s.section}><View style={s.sectionHead}><Text style={[s.sectionTitle,{color:visual.text}]}>{title}</Text>{action&&<Text style={s.action}>{action}</Text>}</View>{children}</View>;
 }
 export function Card({children,style}:{children:React.ReactNode;style?:StyleProp<ViewStyle>}){
  const{shen}=useShenExperience();const personality=shenThemes[shen.id];
- return <View style={[s.card,{backgroundColor:personality.surfaceRaised,borderColor:`${personality.primary}42`,shadowColor:personality.surface,...shenShape(shen.id,'card')},style]}>{children}</View>;
+ const visual=useVisualPalette();return <View style={[s.card,{backgroundColor:visual.surface,borderColor:visual.border,shadowColor:visual.background,...shenShape(shen.id,'card')},style]}>{children}</View>;
 }
 export function PrimaryButton({label,onPress,icon='arrow-forward',disabled=false}:{label:string;onPress:()=>void;icon?:keyof typeof Ionicons.glyphMap;disabled?:boolean}){
  const{shen}=useShenExperience();
@@ -70,7 +79,7 @@ export function PrimaryButton({label,onPress,icon='arrow-forward',disabled=false
 }
 export function Metric({label,value,color}:{label:string;value:string|number;color?:string}){
  const{shen}=useShenExperience();
- return <Card style={s.metric}><Text style={[s.metricValue,{color:color??shen.color}]}>{value}</Text><Text style={s.muted}>{label}</Text></Card>;
+ const visual=useVisualPalette();return <Card style={s.metric}><Text style={[s.metricValue,{color:color??shen.color}]}>{value}</Text><Text style={[s.muted,{color:visual.textSecondary}]}>{label}</Text></Card>;
 }
 export function ProgressBar({value,color}:{value:number;color?:string}){
  const{shen}=useShenExperience();

@@ -20,11 +20,13 @@ export function LessonVideosScreen() {
         <div className={styles.player}>
           <iframe
             key={selected.videoId}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
             allowFullScreen
-            loading="lazy"
-            src={`https://www.youtube-nocookie.com/embed/${selected.videoId}?rel=0&modestbranding=1`}
-            title={`${selected.title} - Qigong İzmir`}
+            loading="eager"
+            referrerPolicy="strict-origin-when-cross-origin"
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+            src={`https://www.youtube-nocookie.com/embed/${selected.videoId}?rel=0&playsinline=1`}
+            title={`${selected.title} · Shibashi EFE içinde oynat`}
           />
         </div>
         <div className={styles.description}>

@@ -7170,6 +7170,9 @@ img {
 .posture-result-left-column .posture-insight { gap:7px; grid-template-columns:34px minmax(0,1fr); min-height:62px; padding:6px; }
 .posture-result-left-column .posture-insight + .posture-insight { border-left:0; border-top:1px solid rgba(255,255,255,.08); }
 .posture-result-left-column .posture-insight > span { font-size:1.2rem; }
+.posture-result-left-column .posture-score-item { gap:6px; grid-template-columns:32px minmax(0,1fr) auto; padding:8px; }
+.posture-result-left-column .posture-score-icon { height:28px; width:28px; }
+.posture-result-left-column .posture-score-item strong, .posture-result-left-column .posture-score-item em { font-size:.72rem; }
 .posture-result-stage-card > .posture-feedback-card { margin-top:12px; min-width:0; }
 
 .posture-result-stage-card {

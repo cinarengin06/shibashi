@@ -473,7 +473,7 @@ export function PostureResultDashboard({
 
         <div className="posture-analysis-grid posture-result-grid">
           <div className="posture-result-left-column">
-            <PostureScorePanel analysis={compositeAnalysis} compact confidence={confidence} ready score={report.score} selectedShen={selectedShen} />
+            <PostureScorePanel analysis={compositeAnalysis} confidence={confidence} ready resultMode score={report.score} selectedShen={selectedShen} />
             <PostureInsightStrip analysis={compositeAnalysis} ready selectedShen={selectedShen} />
           </div>
 
@@ -651,6 +651,7 @@ export function PostureScorePanel({
   compact = false,
   confidence,
   ready,
+  resultMode = false,
   score,
   selectedShen,
 }: {
@@ -658,10 +659,12 @@ export function PostureScorePanel({
   compact?: boolean;
   confidence?: number;
   ready: boolean;
+  resultMode?: boolean;
   score: number;
   selectedShen: PostureShen;
 }) {
   const metrics = getPostureMetricList(analysis);
+  const visibleMetrics = resultMode ? metrics.filter((metric) => ["Omurga hizası", "Omuz hizası", "Kalça farkı", "Genel duruş"].includes(metric.label)) : metrics;
   const scoreLabel = !ready ? "Kurulum" : score >= 82 ? "İyi" : score >= 68 ? "Orta" : "Düzelt";
 
   return (
@@ -676,11 +679,11 @@ export function PostureScorePanel({
         </div>
         <p>Genel Skor</p>
         <b>{scoreLabel}</b>
-        {compact && typeof confidence === "number" ? <span className="posture-score-confidence">Genel güven %{confidence}</span> : null}
+        {typeof confidence === "number" ? <span className="posture-score-confidence">Genel güven %{confidence}</span> : null}
       </div>
 
       {!compact ? <div className="posture-score-list">
-        {metrics.map((metric) => (
+        {visibleMetrics.map((metric) => (
           <article className={`posture-score-item posture-score-${metric.value >= 80 ? "good" : metric.value >= 62 ? "mid" : "fix"}`} key={metric.label}>
             <span className="posture-score-icon">{metric.icon}</span>
             <div>
@@ -689,10 +692,10 @@ export function PostureScorePanel({
                 <b style={{ width: `${ready ? metric.value : 0}%` }} />
               </i>
             </div>
-            <em>{ready ? `${metric.value}/100` : "--"}</em>
+            <em>{ready ? `%${metric.value}` : "--"}</em>
           </article>
         ))}
-        <p className="posture-metric-limits">Diz yumuşaklığı ve akış sürekliliği bu üç durağan görüntüden güvenilir biçimde ölçülmez.</p>
+        <p className="posture-metric-limits">Bu yüzdeler görüntüdeki nokta hizasına dayanır. Diz yumuşaklığı, omuz gevşekliği ve akış sürekliliği bu üç durağan çekimden güvenilir biçimde puanlanmaz.</p>
       </div> : null}
     </aside>
   );

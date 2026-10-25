@@ -356,6 +356,7 @@ export default function PostureSession(){
    <View style={{flexDirection:'row',gap:8}} accessibilityLabel="Ön, yan ve arka fotoğrafların">{views.map(view=>{const item=result.captures.find(capture=>capture.view===view);return <View key={view} style={{flex:1,gap:5}}>{item?.imageData?<Image source={{uri:item.imageData}} style={{width:'100%',aspectRatio:3/4,borderRadius:10,backgroundColor:colors.ink}}/>:<View style={{width:'100%',aspectRatio:3/4,borderRadius:10,backgroundColor:colors.ink}}/>}<Text style={{color:colors.cream,textAlign:'center',fontWeight:'700'}}>{viewCopy[view].title}</Text></View>})}</View>
    <PostureFormSuggestions captures={result.captures} accent={shen.color}/>
    <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text><Text style={styles.overallConfidence}>Genel güven %{getReportConfidence(result)}</Text></View>
+   <PostureResultMetrics captures={result.captures} score={result.score} accent={shen.color}/>
    <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}>{item.imageData?<Image source={{uri:item.imageData}} style={styles.captureThumbnail}/>:<View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View>}<View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
    <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişiselleştirilmiş Öneriler ve Notlar</Text><Text style={styles.insightBody}>{getReportRecommendation(result)}</Text></View></View>
    <PrimaryButton label={saving?'Kaydediliyor…':'Analizi kaydet'} icon="checkmark" onPress={save}/>
@@ -510,6 +511,12 @@ function getReportRecommendation(report:PostureReport){
  return buildPostureNarrative(report.captures.map(toPostureNarrativeCapture),report.score).recommendation;
 }
 
+function PostureResultMetrics({captures,score,accent}:{captures:PostureCapture[];score:number;accent:string}){
+ const average=(key:'axisScore'|'shoulderScore'|'hipScore')=>Math.round(captures.reduce((total,capture)=>total+capture[key],0)/Math.max(1,captures.length));
+ const metrics=[{label:'Omurga hizası',value:average('axisScore')},{label:'Omuz hizası',value:average('shoulderScore')},{label:'Kalça hizası',value:average('hipScore')},{label:'Genel duruş',value:score}];
+ return <View style={styles.resultMetrics}><Text style={styles.resultMetricsHeading}>Görüntüdeki hizalanma</Text>{metrics.map(metric=><View key={metric.label} style={styles.resultMetricRow}><Text style={styles.resultMetricName}>{metric.label}</Text><View style={styles.resultMetricTrack}><View style={[styles.resultMetricFill,{width:`${metric.value}%`,backgroundColor:accent}]}/></View><Text style={[styles.resultMetricValue,{color:accent}]}>%{metric.value}</Text></View>)}<Text style={styles.resultMetricNote}>Diz yumuşaklığı, omuz gevşekliği ve akış sürekliliği bu üç durağan çekimden güvenilir biçimde puanlanmaz.</Text></View>;
+}
+
 const styles=StyleSheet.create({
  root:{flex:1,backgroundColor:colors.ink},
  sessionContent:{flex:1,gap:12,paddingBottom:12,paddingHorizontal:12,paddingTop:8},
@@ -615,6 +622,14 @@ const styles=StyleSheet.create({
  metricTrack:{height:3,borderRadius:2,backgroundColor:'rgba(255,255,255,.1)',overflow:'hidden'},
  metricFill:{height:'100%',borderRadius:2},
  metricConfidence:{color:'rgba(243,235,221,.45)',fontSize:17},
+ resultMetrics:{gap:10,padding:14,borderWidth:1,borderColor:'rgba(216,169,88,.25)',borderRadius:15,backgroundColor:colors.surface},
+ resultMetricsHeading:{color:colors.cream,fontSize:16,fontWeight:'800'},
+ resultMetricRow:{flexDirection:'row',alignItems:'center',gap:8},
+ resultMetricName:{color:colors.cream,fontSize:12,width:100},
+ resultMetricTrack:{flex:1,height:5,borderRadius:4,backgroundColor:'rgba(255,255,255,.12)',overflow:'hidden'},
+ resultMetricFill:{height:'100%',borderRadius:4},
+ resultMetricValue:{fontSize:13,fontWeight:'800',width:40,textAlign:'right'},
+ resultMetricNote:{color:colors.muted,fontSize:11,lineHeight:16},
  confidenceCard:{display:'none',flexDirection:'row',alignItems:'center',gap:10,padding:12,borderRadius:15,backgroundColor:'rgba(7,21,18,.94)',borderWidth:1,borderColor:'rgba(216,169,88,.28)'},
  confidenceTitle:{color:colors.cream,fontSize:17,fontWeight:'800'},
  confidenceText:{color:colors.muted,fontSize:16,lineHeight:15,marginTop:2},

@@ -3,14 +3,14 @@ export type GateId = (typeof GATE_IDS)[number];
 export const BODY_GATE_ORDER: readonly GateId[] = ["peng", "lu", "kao", "ji", "zhou", "an", "lie", "cai"];
 
 export const gates: Record<GateId, { name: string; cue: string; symbol: string }> = {
-  peng: { name: "Peng", cue: "Yumuşakça yükselme ve genişleme", symbol: "↗" },
-  lu: { name: "Lü", cue: "Akışa eşlik edip yön verme", symbol: "≈" },
-  ji: { name: "Ji", cue: "Merkezden ileriye uzanma", symbol: "➚" },
-  an: { name: "An", cue: "Sakin ve dengeli bastırma", symbol: "⌄" },
-  cai: { name: "Cai", cue: "Toplayıp merkeze çekme", symbol: "↓" },
-  lie: { name: "Lie", cue: "Açılma ve iki yana yayılma", symbol: "⤢" },
-  zhou: { name: "Zhou", cue: "Yakın mesafede dönme", symbol: "◌" },
-  kao: { name: "Kao", cue: "Bedenin merkezinden yön değiştirme", symbol: "△" },
+  peng: { name: "Zhi Okyanusu", cue: "Yumuşakça yükselme ve genişleme", symbol: "↗" },
+  lu: { name: "Alt Dantian", cue: "Akışa eşlik edip yön verme", symbol: "≈" },
+  ji: { name: "Kalp Tapınağı", cue: "Merkezden ileriye uzanma", symbol: "➚" },
+  an: { name: "12 Katlı Pagoda", cue: "Sakin ve dengeli bastırma", symbol: "⌄" },
+  cai: { name: "Po Gölü", cue: "Toplayıp merkeze çekme", symbol: "↓" },
+  lie: { name: "Kunlun Zirveleri", cue: "Açılma ve iki yana yayılma", symbol: "⤢" },
+  zhou: { name: "Hun Ormanı", cue: "Yakın mesafede dönme", symbol: "◌" },
+  kao: { name: "Yi Toprağı", cue: "Bedenin merkezinden yön değiştirme", symbol: "△" },
 };
 
 export const gateGuidance: Record<GateId, { focus: string; outcome: string; benefits: readonly string[]; dailyUse: string; microPractice: string }> = {

@@ -159,7 +159,7 @@ export function DojoHomeScreen({
   const formRecords = practiceGallery.filter((item) => isCapturedPracticePhoto(item.imageData)).map((item) => ({ order: item.movementId, date: item.createdAt }));
   const completedOrders = new Set([...formRecords.map((item) => item.order), ...completedMovementOrders]);
   const completedForms = completedOrders.size;
-  const nextFormOrder = Array.from({ length: 18 }, (_, index) => index + 1).find((order) => !completedOrders.has(order)) ?? 18;
+  const nextFormOrder = Array.from({ length: 18 }, (_, index) => index + 1).find((order) => !completedOrders.has(order)) ?? 1;
 
   return <HomeDashboard
     gamification={{ dailyCue: shenDailyCues[selectedShen.id], completedForms, nextFormOrder }}

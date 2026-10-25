@@ -78,7 +78,7 @@ export default function Today() {
     ...shenActivities.filter(activity => activity.type === "practice" && activity.completed !== false).map(activity => Number(activity.practiceId?.match(/^movement-(\d+)$/)?.[1])),
   ].filter(order => Number.isInteger(order) && order >= 1 && order <= 18));
   const completedForms = completedFormOrders.size;
-  const nextFormOrder = Array.from({length:18},(_,index)=>index+1).find(order=>!completedFormOrders.has(order)) ?? 18;
+  const nextFormOrder = Array.from({length:18},(_,index)=>index+1).find(order=>!completedFormOrders.has(order)) ?? 1;
   useFocusEffect(useCallback(() => {
     let active = true;
     void loadShibashiPhotos().then((items) => { if (active) setPhotos(items); });
@@ -114,7 +114,7 @@ export default function Today() {
       <LinearGradient colors={["rgba(5,10,12,.04)", "rgba(5,10,12,.38)", "rgba(5,10,12,.94)"]} style={s.heroShade}>
         <Text style={[s.heroEyebrow, { color: theme.button }]}>{daily.label.toLocaleUpperCase("tr-TR")} · {shen.name.toLocaleUpperCase("tr-TR")}</Text>
         <Text style={s.heroTitle}>{daily.title}</Text><Text style={s.heroCue}>{daily.cue}</Text>
-        <Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={[s.heroAction, { backgroundColor: theme.button }, shenShape(shen.id, 'button')]}><Ionicons name="play" color={theme.buttonInk} size={15} /><Text style={[s.heroActionText, { color: theme.buttonInk }]}>PRATİĞE BAŞLA · 18 FORM</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={[s.heroAction, { backgroundColor: theme.button }, shenShape(shen.id, 'button')]}><Ionicons name="play" color={theme.buttonInk} size={15} /><Text style={[s.heroActionText, { color: theme.buttonInk }]}>PRATİĞE DEVAM ET</Text></Pressable>
       </LinearGradient>
     </ImageBackground>
 

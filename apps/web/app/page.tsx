@@ -16,7 +16,7 @@ import { fiveShen, shenTodayCopy, type ShenId } from "@/features/home/data/shen"
 import { PostureAssessmentScreen } from "@/features/posture/components/PostureAssessmentScreen";
 import { getCameraStatus, getPoseStatusText } from "@/features/posture/lib/status-labels";
 import { getPostureAudioSrc } from "@/features/posture/lib/posture-audio";
-import { aggregatePostureAnalysisSnapshots, buildPostureReport, createPostureCapture, getPostureLiveCoachCue, getPostureOrientationCue, getPoseStabilityDistance, getWebPostureMeasurementConfidence, isPostureDetectorAbort, smoothPoseKeypoints, toPostureAnalysisSnapshot } from "@/features/posture/lib/posture-session";
+import { aggregatePostureAnalysisSnapshots, buildPostureReport, createPostureCapture, getPostureLiveCoachCue, getPostureOrientationCue, getPoseStabilityDistance, getWebPostureMeasurementConfidence, isPostureDetectorAbort, isReliablePostureCapture, smoothPoseKeypoints, toPostureAnalysisSnapshot } from "@/features/posture/lib/posture-session";
 import type { PostureAssessmentCapture, PostureAssessmentStep, PostureRenderMode, PostureReport, PostureScanGuidance } from "@/features/posture/types";
 import { innerJourneyScenes, neijingStages, type InnerJourneyScene, type NeijingStage } from "@/features/journey/data/scenes";
 import { FiveShenJourneyWeb } from "@/features/journey/components/FiveShenJourneyScreen";
@@ -41,6 +41,7 @@ import { useShibashiAuth } from "@/lib/supabase-auth";
 import { toWebPostureReport, toWebPracticeSnapshot } from "@/lib/sync-record-adapters";
 import {
   clearLocalShibashiDatabase,
+  deletePracticeSnapshotFromIndexedDb,
   deletePostureReportFromIndexedDb,
   loadPostureReportsFromIndexedDb,
   loadPracticeSnapshotsFromIndexedDb,
@@ -48,6 +49,7 @@ import {
   mergePracticeSnapshots,
   persistPostureReportsToLocalStorage,
   persistPracticeSnapshotsToLocalStorage,
+  rememberDeletedPracticeSnapshot,
   portableHistoryImage,
   savePostureReportToIndexedDb,
   savePracticeSnapshotToIndexedDb,
@@ -146,7 +148,7 @@ const tabs: { id: TabId | "bodyLines" | "mainMap"; label: string; icon: string }
   { id: "lessons", label: "Isınma Dersleri", icon: "▶" },
   { id: "bodyLines", label: "18 Form", icon: "✦" },
   { id: "posture", label: "Postür", icon: "↕" },
-  { id: "journey", label: "Beden Haritam", icon: "☯" },
+  { id: "journey", label: "8 Kapı", icon: "☯" },
   { id: "journal", label: "Kayıtlarım", icon: "◌" },
   { id: "profile", label: "Ayarlar", icon: "☰" },
 ];
@@ -333,8 +335,18 @@ export default function RitimKapisiOS() {
     const nextActivities=payload.journey.shenActivities as unknown as ShenActivity[];
     const nextReflections=payload.journey.reflections as unknown as DomainReflectionEntry[];
     const nextSentences=payload.journey.savedMasterSentences as unknown as SavedMasterSentence[];
-    if(JSON.stringify(nextGallery)!==JSON.stringify(practiceGallery)){const mergedGallery=mergePracticeSnapshots(nextGallery,practiceGallery);setPracticeGallery(mergedGallery);persistPracticeSnapshotsToLocalStorage(mergedGallery)}
-    if(JSON.stringify(nextReports)!==JSON.stringify(postureReports)){const mergedReports=mergePostureReports(nextReports,postureReports);setPostureReports(mergedReports);persistPostureReportsToLocalStorage(mergedReports)}
+    setPracticeGallery((current) => {
+      const mergedGallery = mergePracticeSnapshots(nextGallery, current);
+      if (JSON.stringify(mergedGallery) === JSON.stringify(current)) return current;
+      persistPracticeSnapshotsToLocalStorage(mergedGallery);
+      return mergedGallery;
+    });
+    setPostureReports((current) => {
+      const mergedReports = mergePostureReports(nextReports, current);
+      if (JSON.stringify(mergedReports) === JSON.stringify(current)) return current;
+      persistPostureReportsToLocalStorage(mergedReports);
+      return mergedReports;
+    });
     if(JSON.stringify(nextActivities)!==JSON.stringify(shenActivities)){setShenActivities(nextActivities);window.localStorage.setItem("shibashi-shen-activities",JSON.stringify(nextActivities))}
     if(JSON.stringify(nextReflections)!==JSON.stringify(shenReflections)){setShenReflections(nextReflections);window.localStorage.setItem("shibashi-shen-reflections",JSON.stringify(nextReflections))}
     if(JSON.stringify(nextSentences)!==JSON.stringify(savedMasterSentences)){setSavedMasterSentences(nextSentences);window.localStorage.setItem("shibashi-master-sentences",JSON.stringify(nextSentences))}
@@ -366,6 +378,16 @@ export default function RitimKapisiOS() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (activeTab !== "journal") return;
+    void loadPracticeSnapshotsFromIndexedDb().then((saved) => {
+      if (saved.length) setPracticeGallery((current) => mergePracticeSnapshots(current, saved));
+    });
+    void loadPostureReportsFromIndexedDb().then((saved) => {
+      if (saved.length) setPostureReports((current) => mergePostureReports(current, saved));
+    });
+  }, [activeTab]);
+
+  useEffect(() => {
     mobileFrameRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [activeTab, onboardingComplete]);
 
@@ -374,6 +396,20 @@ export default function RitimKapisiOS() {
       const nextGallery = current.map((snapshot) => snapshot.id === snapshotId ? { ...snapshot, trainerVisible } : snapshot);
       const updatedSnapshot = nextGallery.find((snapshot) => snapshot.id === snapshotId);
       if (updatedSnapshot) void savePracticeSnapshotToIndexedDb(updatedSnapshot);
+      persistPracticeSnapshotsToLocalStorage(nextGallery);
+      return nextGallery;
+    });
+  }
+
+  function deletePracticeSnapshots(snapshotIds: string[]) {
+    const ids = new Set(snapshotIds);
+    if (!ids.size) return;
+    ids.forEach((id) => {
+      rememberDeletedPracticeSnapshot(id);
+      void deletePracticeSnapshotFromIndexedDb(id);
+    });
+    setPracticeGallery((current) => {
+      const nextGallery = current.filter((snapshot) => !ids.has(snapshot.id));
       persistPracticeSnapshotsToLocalStorage(nextGallery);
       return nextGallery;
     });
@@ -690,6 +726,7 @@ export default function RitimKapisiOS() {
             shenActivities={shenActivities}
             shenOptions={fiveShen}
             userName={userName}
+            userId={auth.user?.id}
           />
         ) : null}
         {onboardingComplete && activeTab === "lessons" ? <LessonVideosScreen /> : null}
@@ -725,8 +762,10 @@ export default function RitimKapisiOS() {
         ) : null}
         {onboardingComplete && activeTab === "journal" ? (
           <JournalScreen
+            activities={shenActivities}
             gallery={practiceGallery}
             onSetTrainerVisibility={setPracticeSnapshotTrainerVisibility}
+            onDeleteSnapshots={deletePracticeSnapshots}
             postureReports={postureReports}
             selectedShen={selectedShen}
             userId={auth.user?.id}
@@ -929,7 +968,6 @@ function PostureScreen({
   const postureLiveSamplesRef = useRef<PostureAnalysisSnapshot[]>([]);
   const postureCueCandidateRef = useRef("");
   const postureCueCandidateSinceRef = useRef(0);
-  const postureCorrectionUntilRef = useRef(0);
   const postureAutoCaptureLockRef = useRef(false);
   const postureReadyAtRef = useRef(0);
   const postureAnnouncedStepRef = useRef<PostureAssessmentStep | null>(null);
@@ -954,6 +992,7 @@ function PostureScreen({
   const [autoCaptureProgress, setAutoCaptureProgress] = useState(0);
   const [captureFlash, setCaptureFlash] = useState(false);
   const [capturedView, setCapturedView] = useState<PostureView | null>(null);
+  const [postureCaptureIssue, setPostureCaptureIssue] = useState("");
   const [postureVoiceEnabled, setPostureVoiceEnabled] = useState(true);
 
   function stopPostureVoice() {
@@ -1023,6 +1062,7 @@ function PostureScreen({
       : "Tam bedenini kadraja al.";
   const postureCorrectionActive = postureMeasurementReady && postureLiveAnalysis !== null &&
     postureFrameReadiness.bodyReady && postureFrameReadiness.angleReady && postureFrameReadiness.positionReady &&
+    getPostureOverallScore(postureLiveAnalysis) <= 50 &&
     Math.min(postureLiveAnalysis.shoulderScore, postureLiveAnalysis.axisScore, postureLiveAnalysis.hipScore) < 70;
 
   useEffect(() => {
@@ -1080,7 +1120,6 @@ function PostureScreen({
     postureLiveSamplesRef.current = [];
     postureCueCandidateRef.current = "";
     postureCueCandidateSinceRef.current = 0;
-    postureCorrectionUntilRef.current = 0;
     setPostureLiveAnalysis(null);
     postureAutoCaptureLockRef.current = false;
     postureReadyAtRef.current = Date.now() + (postureStep === "front" ? 0 : 1200);
@@ -1129,7 +1168,7 @@ function PostureScreen({
       setAutoCaptureProgress(0);
       return;
     }
-    if (!previousPoints.length || getPoseStabilityDistance(previousPoints, keypoints) > 18) {
+    if (!previousPoints.length || getPoseStabilityDistance(previousPoints, keypoints) > 24) {
       postureStableSinceRef.current = Date.now();
       postureSampleAnalysesRef.current = [];
       setAutoCaptureProgress(0);
@@ -1142,16 +1181,15 @@ function PostureScreen({
     postureSampleAnalysesRef.current = [...postureSampleAnalysesRef.current.slice(-119), sample];
     const progress = Math.min(100, ((Date.now() - postureStableSinceRef.current) / 1000) * 100);
     setAutoCaptureProgress(progress);
+    if (progress > 0) setPostureCaptureIssue("");
 
     if (progress >= 100 && !postureAutoCaptureLockRef.current) {
       const sampleScore = aggregatePostureAnalysisSnapshots(postureSampleAnalysesRef.current);
-      if (postureSampleAnalysesRef.current.length < 3 || sampleScore.axisScore * .42 + sampleScore.shoulderScore * .32 + sampleScore.hipScore * .26 <= 50) return;
-      if (postureVoiceEnabled && postureCorrectionActive &&
-          (postureLastVoiceCueRef.current !== postureCoachCue || Date.now() < postureCorrectionUntilRef.current)) return;
+      if (postureSampleAnalysesRef.current.length < 3 || getPostureOverallScore(sampleScore) < 50) return;
       postureAutoCaptureLockRef.current = true;
-      window.setTimeout(captureCurrentPosture, 80);
+      captureCurrentPosture();
     }
-  }, [cameraStatus, keypoints, poseStatus, postureStep, selectedShen.id, postureVoiceEnabled, postureCorrectionActive, postureCoachCue]);
+  }, [cameraStatus, keypoints, poseStatus, postureStep, selectedShen.id]);
 
   useEffect(() => {
     if (postureStep !== "front" && postureStep !== "side" && postureStep !== "back") return;
@@ -1173,23 +1211,19 @@ function PostureScreen({
   useEffect(() => {
     if (postureStep !== "front" && postureStep !== "side" && postureStep !== "back") return;
     if (!postureVoiceEnabled || scanGuidance === "model-loading" || scanGuidance === "capturing") return;
-    const now = Date.now();
-    if (postureCorrectionActive) {
-      if (postureCueCandidateRef.current !== postureCoachCue) {
-        postureCueCandidateRef.current = postureCoachCue;
-        postureCueCandidateSinceRef.current = now;
-        return;
-      }
-      if (now - postureCueCandidateSinceRef.current < 1000 || now - postureLastVoiceAtRef.current < 3500) return;
-      if (postureCoachCue === postureLastVoiceCueRef.current && now - postureLastVoiceAtRef.current < 10000) return;
-      postureLastVoiceCueRef.current = postureCoachCue;
-      postureLastVoiceAtRef.current = now;
-      postureCorrectionUntilRef.current = now + 4000;
-      playPostureVoice(postureCoachCue);
+    if (scanGuidance === "hold" && !postureCorrectionActive) {
+      postureCueCandidateRef.current = "";
       return;
     }
-    postureCueCandidateRef.current = "";
-    if (postureCoachCue === postureLastVoiceCueRef.current || now - postureLastVoiceAtRef.current < 6500) return;
+    const now = Date.now();
+    if (postureCueCandidateRef.current !== postureCoachCue) {
+      postureCueCandidateRef.current = postureCoachCue;
+      postureCueCandidateSinceRef.current = now;
+      return;
+    }
+    if (now - postureCueCandidateSinceRef.current < 1800 || now - postureLastVoiceAtRef.current < 8000) return;
+    if (postureCoachCue === postureLastVoiceCueRef.current && now - postureLastVoiceAtRef.current < 15000) return;
+    if (postureAudioRef.current && !postureAudioRef.current.paused && !postureAudioRef.current.ended) return;
     postureLastVoiceCueRef.current = postureCoachCue;
     postureLastVoiceAtRef.current = now;
     playPostureVoice(postureCoachCue);
@@ -1279,7 +1313,10 @@ function PostureScreen({
               ? {...rawAnalysis,...aggregatePostureAnalysisSnapshots(postureLiveSamplesRef.current),view:currentView}
               : null;
             drawPoseCanvas(canvasRef.current, { ...pose, keypoints: smoothedKeypoints }, selectedShen.color, smoothedAnalysis??undefined);
-            targetScoreRef.current = nextStatus === "aktif"&&smoothedAnalysis ? getPostureOverallScore(smoothedAnalysis) : 0;
+            const frameReady = evaluateWebPostureFrame(smoothedKeypoints, currentView, video.videoWidth, video.videoHeight);
+            const scoreReady = nextStatus === "aktif" && frameReady.bodyReady && frameReady.angleReady && frameReady.positionReady;
+            targetScoreRef.current = scoreReady && smoothedAnalysis ? getPostureOverallScore(smoothedAnalysis) : 0;
+            if (!scoreReady) setMovementScore(0);
           }
         } catch (error) {
           if (isCancelled() || isPostureDetectorAbort(error)) return;
@@ -1375,6 +1412,10 @@ function PostureScreen({
   }
 
   async function openPostureCamera() {
+    setPostureCaptureIssue("");
+    postureAnnouncedStepRef.current = null;
+    postureLastVoiceCueRef.current = "";
+    postureLastVoiceAtRef.current = 0;
     setViewingSavedReport(false);
     setPostureResult(null);
     setPostureCaptures({});
@@ -1415,9 +1456,16 @@ function PostureScreen({
       return;
     }
     const analysis = aggregatePostureAnalysisSnapshots(postureSampleAnalysesRef.current);
-    if (analysis.axisScore * .42 + analysis.shoulderScore * .32 + analysis.hipScore * .26 <= 50) { postureAutoCaptureLockRef.current = false; return; }
+    if (getPostureOverallScore(analysis) < 50) { postureAutoCaptureLockRef.current = false; return; }
     const capture = createPostureCapture(videoRef.current, keypoints, view, analysis, selectedShen.color);
-    if (!capture) return;
+    if (!capture || !isReliablePostureCapture(capture, view)) {
+      postureAutoCaptureLockRef.current = false;
+      postureStableSinceRef.current = null;
+      postureSampleAnalysesRef.current = [];
+      setAutoCaptureProgress(0);
+      setPostureCaptureIssue("Bu görünüm yeterince net ölçülemedi. Tam bedenin görünürken tekrar sabit kal.");
+      return;
+    }
 
     const nextCaptures = { ...postureCaptures, [view]: capture };
     setPostureCaptures(nextCaptures);
@@ -1441,6 +1489,12 @@ function PostureScreen({
 
       if (nextCaptures.front && nextCaptures.side && nextCaptures.back) {
         const report = buildPostureReport(nextCaptures as Record<PostureView, PostureAssessmentCapture>, latestPostureReport);
+        if (!report) {
+          setPostureCaptures({ ...nextCaptures, back: undefined });
+          setPostureCaptureIssue("Ölçüm güveni yetersiz. Arka görünümü yeniden çekelim.");
+          setPostureStep("back");
+          return;
+        }
         setViewingSavedReport(false);
         setPostureResult(report);
         shutdownPostureCamera();
@@ -1501,7 +1555,7 @@ function PostureScreen({
       movementScore={movementScore}
       autoCaptureProgress={autoCaptureProgress}
       scanGuidance={scanGuidance}
-      coachCue={postureCoachCue}
+      coachCue={postureCaptureIssue || postureCoachCue}
       frameReadiness={postureFrameReadiness}
       onCapture={captureCurrentPosture}
       onClose={resetPostureAssessment}

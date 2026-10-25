@@ -12,7 +12,7 @@ import {colors,radii} from '../constants/theme';
 import {getShen} from '../data/fiveShen';
 import {analyzeWithAppleVision3D,isAppleVision3DAvailable} from '../services/pose/AppleVisionPose3D';
 import {MediaPipePoseBridge,MediaPipePoseBridgeRef,PoseLandmark} from '../services/pose/MediaPipePoseBridge';
-import {aggregatePostureCaptures,createPostureCapture,evaluatePoseFrame,getLandmarkMovement,getPostureCorrectionCue,getPostureMeasurementConfidence,isLandmarkVisible,toPostureNarrativeCapture,type PostureCorrectionCue} from '../services/pose/PostureMetrics';
+import {aggregatePostureCaptures,createPostureCapture,evaluatePoseFrame,getLandmarkMovement,getPostureCorrectionCue,getPostureMeasurementConfidence,isLandmarkVisible,isReliablePostureCapture,toPostureNarrativeCapture,type PostureCorrectionCue} from '../services/pose/PostureMetrics';
 import {useApp} from '../store/AppStore';
 import {PostureCapture,PostureReport,PostureView} from '../types';
 import {buildPostureNarrative} from '../../../packages/posture-analysis';
@@ -96,7 +96,7 @@ export default function PostureSession(){
  const cueCandidateRef=useRef<PostureCorrectionCue|null>(null);
  const cueCandidateSinceRef=useRef(0);
  const lastCueAtRef=useRef(0);
- const correctionPendingUntilRef=useRef(0);
+ const orientationAtRef=useRef(0);
  const capturesRef=useRef<PostureCapture[]>([]);
  const speakingRef=useRef('');
  const draftPhotosRef=useRef<string[]>([]);
@@ -122,6 +122,7 @@ export default function PostureSession(){
  const playVoiceOnce=(key:'front'|'side'|'back'|'complete')=>{
   if(speakingRef.current===key)return;
   speakingRef.current=key;
+  if(key!=='complete')orientationAtRef.current=Date.now();
   const session=++voiceSessionRef.current;
   const player=voicePlayers[key];
   allVoicePlayers.filter(other=>other!==player).forEach(other=>safeMediaAction(()=>other.pause()));
@@ -132,7 +133,6 @@ export default function PostureSession(){
   const session=++voiceSessionRef.current;
   const player=correctionPlayers[cue];
   allVoicePlayers.filter(other=>other!==player).forEach(other=>safeMediaAction(()=>other.pause()));
-  correctionPendingUntilRef.current=Date.now()+4000;
   setAudioGuide(correctionCopy[cue]);
   void player.seekTo(0).then(()=>{if(voiceSessionRef.current===session)return player.play()}).catch(()=>{});
  };
@@ -180,7 +180,6 @@ export default function PostureSession(){
   setValidSampleCount(0);
   cueCandidateRef.current=null;
   cueCandidateSinceRef.current=0;
-  correctionPendingUntilRef.current=0;
   setCountdown(3);
   setScanState('model-loading');
   let timer:ReturnType<typeof setTimeout>|undefined;
@@ -237,16 +236,16 @@ export default function PostureSession(){
     setValidSampleCount(stableCapturesRef.current.length);
     holdStartedAtRef.current??=Date.now();
     const elapsed=Date.now()-holdStartedAtRef.current;
-    const cue=stableCapturesRef.current.length>=2?getPostureCorrectionCue(rollingCapture):null;
+    const cue=stableCapturesRef.current.length>=2&&rollingCapture.score<=50?getPostureCorrectionCue(rollingCapture):null;
     if(cue!==cueCandidateRef.current){cueCandidateRef.current=cue;cueCandidateSinceRef.current=Date.now()}
-    else if(cue&&Date.now()-cueCandidateSinceRef.current>=1000&&Date.now()-lastCueAtRef.current>=9000){
+    else if(cue&&Date.now()-cueCandidateSinceRef.current>=1800&&Date.now()-lastCueAtRef.current>=9000&&Date.now()-orientationAtRef.current>=6000){
      lastCueAtRef.current=Date.now();
      playCorrectionCue(cue);
     }
     if(!cue)setAudioGuide(null);
     setCountdown(Math.max(0,Math.ceil((1000-elapsed)/1000)));
     setScanState('hold');
-    if(elapsed<1000||stableCapturesRef.current.length<2||rollingCapture.score<=50||Date.now()<correctionPendingUntilRef.current){schedule();return}
+    if(elapsed<1000||stableCapturesRef.current.length<2||rollingCapture.score<=50){schedule();return}
 
     setScanState('capturing');
     const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
@@ -259,7 +258,6 @@ export default function PostureSession(){
     if(!savedFrame.uri)throw new Error('Fotoğraf dosyası alınamadı');
     const imageUri=await savePostureCapturePhoto(savedFrame.uri,view);
     if(scanSessionRef.current!==session){deletePostureCapturePhoto(imageUri);return}
-    draftPhotosRef.current.push(imageUri);
     const source=vision3D?'vision-3d+mediapipe-33' as const:'mediapipe-33' as const;
     const item={
      ...aggregatePostureCaptures(view,stableCapturesRef.current),
@@ -268,6 +266,17 @@ export default function PostureSession(){
      imageData:imageUri,
      landmarks:analysis.landmarks.map(point=>({x:point.x,y:point.y,z:point.z,visibility:point.visibility})),
     };
+    if(!isReliablePostureCapture(item)){
+     deletePostureCapturePhoto(imageUri);
+     holdStartedAtRef.current=null;
+     stableCapturesRef.current=[];
+     setLiveCapture(null);
+     setLiveScore(null);
+     setScanState('low-confidence');
+     schedule();
+     return;
+    }
+    draftPhotosRef.current.push(imageUri);
     const nextCaptures=[...capturesRef.current.filter(saved=>saved.view!==view),item];
     capturesRef.current=nextCaptures;
     setCaptures(nextCaptures);
@@ -278,12 +287,22 @@ export default function PostureSession(){
      return;
     }
 
+    const unreliableView=views.find(requiredView=>!nextCaptures.some(saved=>saved.view===requiredView&&isReliablePostureCapture(saved)));
+    if(unreliableView){
+     capturesRef.current=nextCaptures.filter(saved=>saved.view!==unreliableView);
+     setCaptures(capturesRef.current);
+     setScanState('low-confidence');
+     if(unreliableView!==view)setIndex(views.indexOf(unreliableView));
+     else{holdStartedAtRef.current=null;stableCapturesRef.current=[];schedule()}
+     return;
+    }
     setCameraReady(false);
     setLiveLandmarks([]);
-    const average=Math.round(nextCaptures.reduce((sum,saved)=>sum+saved.score,0)/Math.max(1,nextCaptures.length));
+    const average=Math.round(nextCaptures.reduce((sum,saved)=>sum+saved.score,0)/nextCaptures.length);
     const previous=postureReports[0];
-    const narrative=buildPostureNarrative(nextCaptures.map(toPostureNarrativeCapture),average,previous?.captures?.length?{score:previous.score,captures:previous.captures.map(toPostureNarrativeCapture)}:undefined);
-    setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,analysisSource:nextCaptures.some(saved=>saved.analysisSource==='vision-3d+mediapipe-33')?'vision-3d+mediapipe-33':'mediapipe-33',summary:narrative.summary,trendText:narrative.trendText,asymmetrySignal:narrative.weakestAverage<62?'yüksek':narrative.weakestAverage<78?'orta':'düşük'});
+    const previousReliable=previous?.observationVersion===2&&previous.captures.length===3&&previous.captures.every(isReliablePostureCapture);
+    const narrative=buildPostureNarrative(nextCaptures.map(toPostureNarrativeCapture),average,previousReliable?{score:previous.score,captures:previous.captures.map(toPostureNarrativeCapture)}:undefined);
+    setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,analysisSource:nextCaptures.some(saved=>saved.analysisSource==='vision-3d+mediapipe-33')?'vision-3d+mediapipe-33':'mediapipe-33',summary:narrative.summary,trendText:narrative.trendText,asymmetrySignal:'değerlendirilmedi',observationVersion:2});
     playVoiceOnce('complete');
     setPhase('review');
    }catch(error){

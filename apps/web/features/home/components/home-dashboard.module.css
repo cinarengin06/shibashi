@@ -84,7 +84,7 @@
 .shenChoice small,
 .shenChoiceActive small { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.stats { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stats { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .statCard { background: linear-gradient(145deg, rgba(23, 29, 25, .97), rgba(12, 19, 15, .98)); border: 1px solid rgba(255, 255, 255, .08); border-radius: var(--card-radius); min-height: 132px; padding: 16px 18px; position: relative; transition: border-color .6s ease, border-radius .65s ease, transform .6s ease; }
 .statCard:hover { border-color: color-mix(in srgb, var(--gold) 34%, transparent); transform: translateY(-2px); z-index: 8; }
 .statCard header { align-items: center; display: flex; gap: 8px; }
@@ -120,11 +120,22 @@
 .miniBars i { background: rgba(127, 180, 107, .18); border-radius: 3px 3px 0 0; display: block; min-height: 3px; width: 8px; }
 .miniBars span:nth-last-child(-n+3) i { background: var(--gold); }
 .miniBars small { color: var(--muted); font-size: 12px; margin-top: 3px; }
-.energyScore { align-items: center; border: 5px solid color-mix(in srgb, var(--gold) 25%, transparent); border-right-color: var(--gold); border-radius: 50%; display: flex; flex-direction: column; height: 68px; justify-content: center; width: 68px; }
+.energyRow { align-items:stretch; display:grid; gap:16px; margin-top:13px; }
+.energyOverview { align-items:center; display:flex; gap:14px; }
+.energyContext { display:grid; gap:4px; }
+.energyContext strong { color:var(--text); font-size:14px; font-weight:600; }
+.energyContext span { color:var(--muted); font-size:12px; }
+.energyScore { align-items: center; border: 5px solid color-mix(in srgb, var(--gold) 25%, transparent); border-right-color: var(--gold); border-radius: 50%; display: flex; flex-direction: column; flex:none; height:76px; justify-content: center; width:76px; }
 .energyScore strong { font-family: Manrope, sans-serif; font-size: 23px; font-weight: 500; line-height: 1; }
 .energyScore span { color: var(--muted); font-size: 12px; margin-top: 3px; }
-.miniTrend { align-items: flex-end; display: flex; gap: 4px; height: 48px; width: 55%; }
-.miniTrend span { background: linear-gradient(to top, color-mix(in srgb, var(--gold) 18%, transparent), var(--gold)); border-radius: 2px; flex: 1; min-height: 3px; opacity: .8; }
+.miniTrend { display:grid; gap:8px; grid-template-columns:repeat(7,minmax(0,1fr)); height:110px; width:100%; }
+.trendDay { align-items:center; display:grid; grid-template-rows:19px minmax(0,1fr) 19px; justify-items:center; min-width:0; }
+.trendDay strong { color:var(--text); font-size:12px; font-weight:700; }
+.trendDay small { color:var(--muted); font-size:11px; overflow:hidden; text-align:center; text-overflow:ellipsis; white-space:nowrap; width:100%; }
+.trendTrack { align-items:flex-end; align-self:stretch; background:linear-gradient(180deg,transparent,rgba(255,255,255,.025)); border-bottom:1px solid color-mix(in srgb,var(--gold) 30%,transparent); display:flex; justify-content:center; width:100%; }
+.trendTrack i { animation:energyBarRise .7s ease-out both; background:linear-gradient(to top,color-mix(in srgb,var(--gold) 35%,transparent),var(--gold)); border-radius:4px 4px 0 0; display:block; max-width:28px; min-height:3px; transform-origin:bottom; width:50%; }
+.trendDay:last-child .trendTrack i { box-shadow:0 0 14px color-mix(in srgb,var(--gold) 30%,transparent); }
+@keyframes energyBarRise { from { opacity:.3; transform:scaleY(.08); } to { opacity:1; transform:scaleY(1); } }
 
 .contentGrid { align-items: stretch; display: grid; gap: 12px; grid-template-columns: minmax(510px, 1.65fr) minmax(260px, 1fr); }
 .flowsPanel, .postureCard { background: var(--surface); border: 1px solid rgba(255, 255, 255, .08); border-radius: var(--card-radius); min-height: 248px; overflow: hidden; transition: border-radius .65s ease; }
@@ -162,11 +173,8 @@
 .postureCard .postureAnalysisButton { align-self: flex-start; background: transparent; border: 1px solid color-mix(in srgb, var(--gold) 46%, transparent); border-radius: var(--action-radius); color: var(--gold); font-size: 13px; letter-spacing: .06em; margin-top: auto; min-height: 40px; padding: 0 13px; text-transform: uppercase; transition: border-radius .65s ease, background .25s ease; }
 .postureCard .postureAnalysisButton:hover { background: color-mix(in srgb, var(--gold) 10%, transparent); }
 .postureCard small { color: var(--muted); display: block; font-size: 12px; margin-top: 10px; }
-.postureModels { align-items: end; display: flex; inset: 26px 0 4px 52%; overflow: hidden; position: absolute; }
-.postureModels img { filter: sepia(.22) hue-rotate(65deg); object-fit: contain; object-position: bottom; opacity: .72; position: relative !important; width: 46% !important; }
-.postureModels img:nth-child(1) { transform: scaleX(-1) rotateY(58deg) scale(.87); transform-origin: bottom; }
-.postureModels img:nth-child(2) { margin-left: -24%; z-index: 2; }
-.postureModels img:nth-child(3) { margin-left: -25%; transform: rotateY(58deg) scale(.87); transform-origin: bottom; }
+.postureModels { align-items: end; display: flex; inset: 26px 0 4px 52%; justify-content: center; overflow: hidden; position: absolute; }
+.postureModels img { filter: sepia(.22) hue-rotate(65deg); object-fit: contain; object-position: bottom; opacity: .72; position: relative !important; width: 76% !important; }
 
 .footer { align-items: center; color: rgba(167, 173, 166, .62); display: grid; font-size: 13px; grid-template-columns: 1fr auto 1fr; padding: 6px 2px 0; }
 .footer p { margin: 0; }
@@ -204,7 +212,7 @@
   .shenChoiceActive { flex: 0 0 150px; scroll-snap-align: start; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); order: 6; }
   .statCard { min-height: 140px; }
-  .stats .statCard:nth-child(4) { grid-column: 1 / -1; order: 4; }
+  .stats .statCard:last-child { grid-column: 1 / -1; order: 4; }
   .dayDots { display: none; }
   .contentGrid { display: contents; }
   .flowsPanel { order: 4; overflow: hidden; }
@@ -228,14 +236,20 @@
   .postureCard { grid-template-columns: 1fr 1fr; }
   .postureModels { left: 40%; }
 }
-.gameGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.gameGrid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); gap:12px; }
 .gameCard,.milestones { background:linear-gradient(145deg,color-mix(in srgb,var(--gold) 10%,#111a14),#101813); border:1px solid color-mix(in srgb,var(--gold) 25%,transparent); border-radius:var(--card-radius); padding:19px 21px; }
 .gameEyebrow { color:var(--gold); font-size:11px; font-weight:800; letter-spacing:.14em; }
 .gameCard h2,.milestones h2 { color:var(--text); font-family:var(--font-display),Georgia,serif; font-size:23px; font-weight:400; margin:10px 0 6px; }
 .gameCard p { color:var(--muted); font-size:14px; line-height:1.55; margin:0 0 13px; }
 .gameCard a { color:var(--gold); display:inline-block; font-size:13px; font-weight:700; margin-top:9px; text-decoration:none; }
+.featuredForm { display:grid; gap:16px; grid-template-columns:minmax(155px,38%) minmax(0,1fr); }
+.featuredFormImage { border-radius:var(--card-radius); min-height:175px; overflow:hidden; position:relative; }
+.featuredFormImage img { object-fit:cover; }
+.featuredFormCopy { align-self:center; min-width:0; }
+.gameCard a.featuredFormAction { background:var(--gold); border-radius:var(--action-radius); color:#101813; display:inline-flex; font-weight:800; padding:10px 15px; }
 .gameStatus { color:#a8dcb3; display:block; font-size:13px; }
 .formProgress { display:grid; grid-template-columns:repeat(18,minmax(0,1fr)); gap:4px; margin:14px 0; }
 .formProgress i { background:rgba(255,255,255,.12); border-radius:8px; height:9px; }
 .formProgress i.formDone { background:var(--gold); box-shadow:0 0 10px color-mix(in srgb,var(--gold) 45%,transparent); }
-@media(max-width:899px){.gameGrid{grid-template-columns:1fr;order:7}}
+@media(max-width:899px){.gameGrid{grid-template-columns:1fr;order:4}.featuredForm{grid-template-columns:minmax(120px,36%) minmax(0,1fr)}.stats{order:5}.flowsPanel{order:6}.postureCard{order:7}}
+@media(max-width:520px){.featuredForm{grid-template-columns:1fr}.featuredFormImage{min-height:180px}.stats{grid-template-columns:1fr}.stats .statCard:last-child{grid-column:auto}.dayDots{display:flex}}

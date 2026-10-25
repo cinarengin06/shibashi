@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ShenActivity } from "@/packages/shen-domain";
 import type { PracticeSnapshot } from "@/features/practice/types";
 import { HomeDashboard } from "./HomeDashboard";
@@ -7,6 +8,7 @@ import { isCapturedPracticePhoto } from "../utils/practice-photo";
 import { localDayKey, recentDates, recordedPractices } from "../lib/practice-stats";
 import type { HomeShenId } from "../types/home";
 import { localDateKey as gameDateKey, shenDailyCues } from "@/packages/gamification";
+import { loadCompletedMovements, movementCompletionEvent } from "@/lib/movement-completion";
 
 type PracticeRecord = PracticeSnapshot;
 
@@ -50,6 +52,7 @@ type Props = {
   shenActivities: ShenActivity[];
   shenOptions: readonly ShenOption[];
   userName: string;
+  userId?: string;
 };
 
 export function getPracticeStreak(practiceGallery: Array<Pick<PracticeRecord, "createdAt">>, activities: ShenActivity[]) {
@@ -126,7 +129,16 @@ export function DojoHomeScreen({
   shenActivities,
   shenOptions,
   userName,
+  userId,
 }: Props) {
+  const [completedMovementOrders, setCompletedMovementOrders] = useState<number[]>([]);
+  useEffect(() => {
+    const refresh = () => setCompletedMovementOrders(loadCompletedMovements(userId));
+    refresh();
+    window.addEventListener(movementCompletionEvent, refresh);
+    window.addEventListener("storage", refresh);
+    return () => { window.removeEventListener(movementCompletionEvent, refresh); window.removeEventListener("storage", refresh); };
+  }, [userId]);
   const sessions = recordedPractices(practiceGallery, shenActivities);
   const recentDays = recentDates();
   const practiceDays = sessions.map((session) => localDayKey(session.createdAt));
@@ -145,12 +157,14 @@ export function DojoHomeScreen({
   const experienceIntoLevel = experience % 240;
   const hasRecordedActivity = sessions.length > 0 || postureDays.some(Boolean);
   const formRecords = practiceGallery.filter((item) => isCapturedPracticePhoto(item.imageData)).map((item) => ({ order: item.movementId, date: item.createdAt }));
-  const completedForms = new Set(formRecords.map((item) => item.order)).size;
+  const completedOrders = new Set([...formRecords.map((item) => item.order), ...completedMovementOrders]);
+  const completedForms = completedOrders.size;
+  const nextFormOrder = Array.from({ length: 18 }, (_, index) => index + 1).find((order) => !completedOrders.has(order)) ?? 18;
   const dailyFormDone = formRecords.some((item) => gameDateKey(item.date) === gameDateKey(new Date()));
 
   return <HomeDashboard
-    gamification={{ dailyCue: shenDailyCues[selectedShen.id], dailyDone: dailyFormDone, completedForms }}
-    energy={{ score: hasRecordedActivity ? Math.round((activeDays.filter(Boolean).length / 7) * 100) : null, trend: activeDays.map((active) => active ? 100 : 0) }}
+    gamification={{ dailyCue: shenDailyCues[selectedShen.id], dailyDone: dailyFormDone, completedForms, nextFormOrder }}
+    energy={{ score: hasRecordedActivity ? Math.round((activeDays.filter(Boolean).length / 7) * 100) : null, trend: activeDays.map((active) => active ? 100 : 0), dayLabels: recentDays.map((day) => new Intl.DateTimeFormat("tr-TR", { weekday: "short" }).format(day)), dayDescriptions: recentDays.map((day) => new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", weekday: "long" }).format(day)) }}
     level={{ experience: experienceIntoLevel, level: 1 + Math.floor(experience / 240), nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
     onHistory={onJournal}
     onPosture={onPosture}

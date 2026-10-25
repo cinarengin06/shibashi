@@ -21,7 +21,7 @@ const menuItems = [
   { label: '18 Form', tab: 'moves', icon: 'fitness-outline', detail: 'Hocayla hareket et' },
   { label: 'Pratikler', tab: 'practice', icon: 'walk-outline', detail: 'Sana uygun rutinler' },
   { label: 'Postür', tab: 'posture', icon: 'body-outline', detail: 'Beden çizgini gör' },
-  { label: 'Beden Haritam', tab: 'journey', icon: 'map-outline', detail: 'Sekiz kapıyı keşfet' },
+  { label: '8 Kapı', tab: 'journey', icon: 'map-outline', detail: 'Sekiz kapıyı keşfet' },
   { label: 'Kayıtlarım', tab: 'journal', icon: 'book-outline', detail: 'Fotoğraf ve notların' },
   { label: 'Ayarlar', tab: 'profile', icon: 'settings-outline', detail: 'Tercihlerin' },
 ] as const;

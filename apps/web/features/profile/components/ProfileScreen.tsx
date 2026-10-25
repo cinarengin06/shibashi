@@ -11,7 +11,7 @@ type ProfileShen = {
   symbol: string;
 };
 type ProfilePostureReport = {
-  id: string; score: number; dateKey: string; summary: string; asymmetrySignal: string; trendText: string;
+  id: string; score: number; dateKey: string; summary: string; asymmetrySignal: string; trendText: string; observationVersion?: 2;
 };
 
 export function ProfileScreen({
@@ -193,21 +193,21 @@ function PostureHistoryCard({ reports }: { reports: ProfilePostureReport[] }) {
         <>
           <div className="posture-history-hero">
             <div>
-              <strong>{latestReport.score}</strong>
+              <strong>{latestReport.observationVersion === 2 ? latestReport.score : "—"}</strong>
               <span>genel hizalanma</span>
             </div>
             <div>
-              <span className="eyebrow">Son Sinyal</span>
-              <p>{latestReport.asymmetrySignal} asimetri · {latestReport.trendText}</p>
-              {previousReport ? <small>Önceki rapor: {previousReport.score}</small> : <small>İlk baz çizgin kaydedildi.</small>}
+              <span className="eyebrow">Son gözlem</span>
+              <p>{latestReport.observationVersion === 2 ? latestReport.trendText : "Bu eski kaydın ölçüm güveni doğrulanamıyor. Yeniden ölçüm yapabilirsin."}</p>
+              {previousReport?.observationVersion === 2 ? <small>Önceki rapor: {previousReport.score}</small> : null}
             </div>
           </div>
           <div className="posture-history-list">
             {reports.slice(0, 4).map((report) => (
               <article key={report.id}>
                 <span>{report.dateKey}</span>
-                <strong>{report.score}</strong>
-                <small>{report.summary}</small>
+                <strong>{report.observationVersion === 2 ? report.score : "—"}</strong>
+                <small>{report.observationVersion === 2 ? report.summary : "Ölçüm güveni doğrulanamıyor"}</small>
               </article>
             ))}
           </div>

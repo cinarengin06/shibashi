@@ -16,7 +16,7 @@ import type {
 import styles from "./home-dashboard.module.css";
 
 type HomeDashboardProps = {
-  gamification: { dailyCue: string; dailyDone: boolean; completedForms: number };
+  gamification: { dailyCue: string; dailyDone: boolean; completedForms: number; nextFormOrder: number };
   energy: HomeEnergySummary;
   level: HomeLevelSummary;
   onHistory: () => void;
@@ -42,11 +42,11 @@ export function HomeDashboard(props: HomeDashboardProps) {
     >
       <HomeHero {...props} />
       <ShenSelector activeShen={props.shen} onSelect={props.onSelectShen} options={props.shenOptions} />
-      <HomeStatsRow energy={props.energy} level={props.level} streak={props.streak} week={props.week} />
       <section className={styles.gameGrid} aria-label="Shibashi yolculuğun">
-        <article className={styles.gameCard}><span className={styles.gameEyebrow}>BUGÜNÜN SHEN GÖREVİ</span><h2>{props.gamification.dailyDone ? "Bugünkü adımın tamamlandı ✨" : "Bir formu bedeninde dene"}</h2><p>{props.gamification.dailyCue}</p><span className={styles.gameStatus}>{props.gamification.dailyDone ? "✓ Bugün form kaydın var" : "Fotoğrafın kaydedilince tamamlanır"}</span><Link href="/beden-hatlari">18 Form'a git →</Link></article>
+        <article className={`${styles.gameCard} ${styles.featuredForm}`}><div className={styles.featuredFormImage}><Image alt={`${props.gamification.nextFormOrder}. form videosundan kare`} fill sizes="(max-width: 899px) 100vw, 30vw" src={`/images/shibashi-new/${props.gamification.nextFormOrder}.jpg`} /></div><div className={styles.featuredFormCopy}><span className={styles.gameEyebrow}>BUGÜNÜN SHEN GÖREVİ · FORM {props.gamification.nextFormOrder}</span><h2>{props.gamification.dailyDone ? "Bugünkü adımın tamamlandı ✨" : "Bir formu bedeninde dene"}</h2><p>{props.gamification.dailyCue}</p><span className={styles.gameStatus}>{props.gamification.dailyDone ? "✓ Bugün form kaydın var" : "Fotoğrafın kaydedilince tamamlanır"}</span><Link className={styles.featuredFormAction} href={`/beden-hatlari?movementOrder=${props.gamification.nextFormOrder}`}>Pratik Yap →</Link></div></article>
         <article className={styles.gameCard}><span className={styles.gameEyebrow}>18 FORM YOLU</span><h2>{props.gamification.completedForms} / 18 form</h2><div className={styles.formProgress} aria-label={`${props.gamification.completedForms} form tamamlandı`}>{Array.from({ length:18 }, (_,index) => <i className={index < props.gamification.completedForms ? styles.formDone : undefined} key={index} />)}</div><p>Her formda hocayı izle, kamerayla dene, kaydını oluştur.</p><Link href="/beden-hatlari">Yolculuğa devam et →</Link></article>
       </section>
+      <HomeStatsRow energy={props.energy} streak={props.streak} week={props.week} />
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
         <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
         <PostureAnalysisCard onPosture={props.onPosture} reports={props.postureReports} />
@@ -61,7 +61,7 @@ export function HomeDashboard(props: HomeDashboardProps) {
   );
 }
 
-function HomeHero({ shen, shenOptions, userName }: HomeDashboardProps) {
+function HomeHero({ gamification, shen, shenOptions, userName }: HomeDashboardProps) {
   return (
     <article className={styles.hero}>
       <div aria-hidden="true" className={styles.heroWallpapers}>
@@ -82,7 +82,7 @@ function HomeHero({ shen, shenOptions, userName }: HomeDashboardProps) {
         <p className={styles.eyebrow}><span>Hoş geldin,</span> <strong>{userName || "Çınar"}</strong></p>
         <h1>{shen.heroTitle}</h1>
         <p className={styles.lead}>{shen.heroBody}</p>
-        <div className={styles.heroActions}><Link className={styles.primaryAction} href="/beden-hatlari"><span aria-hidden="true">▶</span> Pratiğe başla · 18 Form</Link></div>
+        <div className={styles.heroActions}><Link className={styles.primaryAction} href={`/beden-hatlari?movementOrder=${gamification.nextFormOrder}`}><span aria-hidden="true">▶</span> Pratiğe başla · 18 Form</Link></div>
       </div>
     </article>
   );
@@ -119,7 +119,7 @@ function ShenSelector({ activeShen, onSelect, options }: { activeShen: HomeShenS
   );
 }
 
-function HomeStatsRow({ energy, level, streak, week }: Pick<HomeDashboardProps, "energy" | "level" | "streak" | "week">) {
+function HomeStatsRow({ energy, streak, week }: Pick<HomeDashboardProps, "energy" | "streak" | "week">) {
   const calendarDayLabels = ["P", "S", "Ç", "P", "C", "C", "P"];
   const calendarDayNames = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
   return (
@@ -136,22 +136,17 @@ function HomeStatsRow({ energy, level, streak, week }: Pick<HomeDashboardProps, 
       </article>
 
       <article className={styles.statCard}>
-        <header><h2>Seviye</h2><StatInfo id="level-help" label="Seviye nasıl artar?">Kaydedilen her pratik oturumu 35 XP, her yansıma 15 XP kazandırır. Aynı oturumdaki üç fotoğraf bir kez sayılır. Her 240 XP yeni seviyedir.</StatInfo></header>
-        <div className={styles.levelRow}><div><strong>{level.level}</strong><span>Yolcu</span></div><span className={styles.levelSeal} aria-hidden="true">⌁</span></div>
-        <div className={styles.progress}><i style={{ width: `${level.progress}%` }} /></div>
-        <p>{level.experience} / {level.nextLevelExperience} XP</p>
-      </article>
-
-      <article className={styles.statCard}>
         <header><h2>Son 7 Gün</h2><StatInfo id="week-help" label="Son yedi gün neyi gösterir?">Son yedi günde kaydedilen pratik oturumlarını gösterir. Aynı oturumdaki fotoğraflar bir kez sayılır; çubuklar günlük oturum sayısıdır.</StatInfo></header>
         <div className={styles.weekRow}><div><strong>{week.practiceCount}</strong><span>pratik</span></div><MiniBars labels={week.dayLabels} values={week.dailyPractices} /></div>
         <p>{week.activeDays} aktif gün</p>
       </article>
 
       <article className={styles.statCard}>
-        <header><h2>Enerjin (Shen)</h2><StatInfo id="energy-help" label="Shen puanı nasıl hesaplanır?">Son yedi günde pratik veya postür kaydı bulunan günlerin oranıdır. Daha düzenli kayıt, daha yüksek devamlılık puanı oluşturur.</StatInfo></header>
-        <div className={styles.energyRow}><div className={styles.energyScore}><strong>{energy.score ?? "—"}</strong>{energy.score !== null ? <span>{energy.score >= 75 ? "İyi" : energy.score >= 50 ? "Dengeleniyor" : "İlgi istiyor"}</span> : null}</div><MiniTrend values={energy.trend} /></div>
-        <p>Son 7 gün</p>
+        <header><h2>Enerjin (Shen)</h2><StatInfo id="energy-help" label="Shen puanı nasıl hesaplanır?">Bu puan son yedi günde pratik veya postür kaydı bulunan günlerin oranıdır. Grafikte kayıt olan gün 100, kayıt olmayan gün 0 görünür.</StatInfo></header>
+        <div className={styles.energyRow}>
+          <div className={styles.energyOverview}><div className={styles.energyScore}><strong>{energy.score ?? "—"}</strong>{energy.score !== null ? <span>{energy.score >= 75 ? "İyi" : energy.score >= 50 ? "Dengeleniyor" : "İlgi istiyor"}</span> : null}</div><div className={styles.energyContext}><strong>Son 7 gün</strong><span>Kayıt yaptığın günlerin oranı</span></div></div>
+          <MiniTrend descriptions={energy.dayDescriptions} hasData={energy.score !== null} labels={energy.dayLabels} values={energy.trend} />
+        </div>
       </article>
     </section>
   );
@@ -166,15 +161,15 @@ function MiniBars({ labels, values }: { labels: string[]; values: number[] }) {
   return <div className={styles.miniBars} aria-label="Son yedi günün pratik sayıları">{values.map((value, index) => <span key={index}><i style={{ height: `${Math.max(value ? 20 : 6, (value / max) * 100)}%` }} /><small>{labels[index]}</small></span>)}</div>;
 }
 
-function MiniTrend({ values }: { values: number[] }) {
+function MiniTrend({ descriptions, hasData, labels, values }: { descriptions: string[]; hasData: boolean; labels: string[]; values: number[] }) {
   const safeValues = values.length ? values : Array(7).fill(0);
-  return <div className={styles.miniTrend} aria-label="Son yedi günün enerji eğilimi">{safeValues.map((value, index) => <span key={index} style={{ height: `${Math.max(6, value)}%` }} />)}</div>;
+  return <div className={styles.miniTrend} aria-label={`Son yedi günün kayıt ritmi: ${safeValues.map((value, index) => `${descriptions[index] ?? labels[index] ?? index + 1}: ${hasData ? value : "kayıt yok"}`).join(", ")}`} role="img">{safeValues.map((value, index) => <div className={styles.trendDay} key={index} title={`${descriptions[index] ?? ""} · ${hasData ? `${value} puan` : "Kayıt yok"}`}><strong>{hasData ? value : "—"}</strong><span className={styles.trendTrack}><i style={{ height: `${Math.max(7, value)}%` }} /></span><small>{labels[index]}</small></div>)}</div>;
 }
 
 function RecentPracticePhotos({ onHistory, photos }: { onHistory: () => void; photos: HomePracticePhoto[] }) {
   return (
     <section className={styles.flowsPanel}>
-      <header><h2>Son Hareketlerin</h2><button onClick={onHistory} type="button">Galeriyi aç <span aria-hidden="true">→</span></button></header>
+      <header><h2>Beden Görüntülerin</h2><button onClick={onHistory} type="button">Galeriyi aç <span aria-hidden="true">→</span></button></header>
       {photos.length ? <div className={styles.flowCards}>{photos.slice(0, 5).map((photo) => <button aria-label={`${photo.movementName} hareket fotoğrafını aç`} key={photo.id} onClick={onHistory} type="button"><span className={styles.flowImage}><Image alt={`${photo.movementName} sırasında çekilen fotoğrafın`} fill sizes="180px" src={photo.image} unoptimized /></span><small>%{photo.score}</small><strong>{photo.movementName}</strong><em>{new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short" }).format(new Date(photo.date))}</em></button>)}</div> : <div className={styles.practicePhotoEmpty}><span aria-hidden="true">◎</span><strong>Henüz hareket fotoğrafın yok</strong><p>Kamerayla tamamladığın hareketler burada birikir.</p></div>}
     </section>
   );
@@ -195,7 +190,7 @@ function PostureAnalysisCard({ onPosture, reports }: { onPosture: (reportId?: st
         </div> : <p>Duruşunu analiz et, farkı gör,<br />gelişimini takip et.</p>}
         <button className={styles.postureAnalysisButton} onClick={() => onPosture()} type="button">Yeni analiz</button>
       </div>
-      <div className={styles.postureModels} aria-hidden="true"><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /></div>
+      <div className={styles.postureModels} aria-hidden="true"><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /></div>
     </article>
   );
 }

@@ -42,6 +42,8 @@ export type HomeWeekSummary = {
 export type HomeEnergySummary = {
   score: number | null;
   trend: number[];
+  dayLabels: string[];
+  dayDescriptions: string[];
 };
 
 export type HomePostureSummary = {

@@ -22,7 +22,7 @@ export default function TabLayout() {
       <Tabs.Screen name="moves" options={{ title: "18 Form" }} />
       <Tabs.Screen name="posture" options={{ title: "Postür" }} />
       <Tabs.Screen name="practice" options={{ href: null, title: "Pratikler" }} />
-      <Tabs.Screen name="journey" options={{ title: "Beden Haritam" }} />
+      <Tabs.Screen name="journey" options={{ title: "8 Kapı" }} />
       <Tabs.Screen name="journal" options={{ title: "Kayıtlarım" }} />
       <Tabs.Screen name="profile" options={{ title: "Ayarlar" }} />
     </Tabs>

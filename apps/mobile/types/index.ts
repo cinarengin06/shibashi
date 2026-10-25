@@ -16,5 +16,5 @@ export interface DailyRecommendation{practiceId:string;reason:string}
 export type PostureView='front'|'side'|'back';
 export type PostureAnalysisSource='mediapipe-33'|'vision-3d+mediapipe-33';
 export interface PostureCapture{view:PostureView;score:number;shoulderScore:number;axisScore:number;hipScore:number;feedback:string;analysisSource?:PostureAnalysisSource;landmarkCount?:number;confidence?:number;bodyHeightMeters?:number;sampleCount?:number;measurements?:Record<string,number>;imageData?:string;landmarks?:Array<{x:number;y:number;z?:number;visibility?:number}>}
-export interface PostureReport{id:string;date:string;score:number;captures:PostureCapture[];summary:string;asymmetrySignal:string;trendText?:string;analysisSource?:PostureAnalysisSource}
+export interface PostureReport{id:string;date:string;score:number;captures:PostureCapture[];summary:string;asymmetrySignal:string;trendText?:string;analysisSource?:PostureAnalysisSource;observationVersion?:2}
 export interface LivingStory{id:string;order:number;title:string;subtitle:string;duration:number;movementId:string;quote:string;description:string;lifeConnection:string;steps:string[];ambience:string[];locked?:boolean}

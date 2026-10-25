@@ -115,7 +115,7 @@ function toAppPostureReport(record:SyncRecord):PostureReport|null{
   return{view,score:Math.round((Number(analysis?.axisScore??record.score)+Number(analysis?.shoulderScore??record.score)+Number(analysis?.hipScore??record.score))/3),shoulderScore:Number(analysis?.shoulderScore??record.score),axisScore:Number(analysis?.axisScore??record.score),hipScore:Number(analysis?.hipScore??record.score),feedback:String(analysis?.feedback??'Web ölçümü senkronize edildi.'),analysisSource:'mediapipe-33' as const,landmarkCount:33};
  });
  const createdAt=typeof record.createdAt==='string'?record.createdAt:typeof record.date==='string'?record.date:new Date().toISOString();
- return{id:record.id,date:createdAt,score:record.score,captures,summary:String(record.summary??'Web postür ölçümü senkronize edildi.'),asymmetrySignal:String(record.asymmetrySignal??'Postür hattı takipte.'),trendText:typeof record.trendText==='string'?record.trendText:undefined,analysisSource:'mediapipe-33'};
+ return{id:record.id,date:createdAt,score:record.score,captures,summary:String(record.summary??'Web postür ölçümü senkronize edildi.'),asymmetrySignal:String(record.asymmetrySignal??'değerlendirilmedi'),trendText:typeof record.trendText==='string'?record.trendText:undefined,analysisSource:'mediapipe-33',observationVersion:record.observationVersion===2?2:undefined};
 }
 
 async function persist(data:PersistedState){

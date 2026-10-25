@@ -61,6 +61,11 @@ export function getPostureMeasurementConfidence(points:PoseLandmark[],view:Postu
 
 export type PostureCorrectionCue='head'|'shoulder'|'axis'|'hip';
 
+export function isReliablePostureCapture(capture:PostureCapture):boolean{
+ return Boolean(capture.imageData) && (capture.sampleCount??0)>=2 && (capture.confidence??0)>=.55 &&
+  [capture.score,capture.shoulderScore,capture.axisScore,capture.hipScore].every(Number.isFinite);
+}
+
 export function getPostureCorrectionCue(capture:PostureCapture):PostureCorrectionCue|null{
  const regions:[PostureCorrectionCue,number][]=[
   [capture.view==='side'?'head':'shoulder',capture.shoulderScore],

@@ -10,7 +10,16 @@ import { recommendFormsForPosture } from "@/packages/posture-form-recommendation
 type PostureScanGuidance = "model-loading" | "find-body" | "wrong-angle" | "reposition" | "hold" | "capturing";
 type PostureShen = { color: string; dailyName: string };
 type PostureAssessmentCapture = { analysis: PostureAnalysisSnapshot; createdAt: string; imageData: string; view: PostureView };
-type PostureReport = { asymmetrySignal: "düşük" | "orta" | "yüksek"; captures: Record<PostureView, PostureAssessmentCapture>; createdAt: string; dateKey: string; flags: string[]; id: string; score: number; summary: string; timeLabel: string; trainerVisible?: boolean; trendText: string };
+type PostureReport = { observationVersion?: 2; asymmetrySignal: "değerlendirilmedi" | "düşük" | "orta" | "yüksek"; captures: Record<PostureView, PostureAssessmentCapture>; createdAt: string; dateKey: string; flags: string[]; id: string; score: number; summary: string; timeLabel: string; trainerVisible?: boolean; trendText: string };
+
+function hasReliablePostureResult(report: PostureReport): boolean {
+  return report.observationVersion === 2 && (["front", "side", "back"] as const).every((view) => {
+    const capture = report.captures?.[view];
+    return capture?.view === view && capture.imageData.startsWith("data:image/") &&
+      (capture.analysis.sampleCount ?? 0) >= 3 && capture.analysis.confidence >= 55 &&
+      [capture.analysis.axisScore, capture.analysis.shoulderScore, capture.analysis.hipScore].every(Number.isFinite);
+  });
+}
 
 
 
@@ -423,6 +432,9 @@ export function PostureResultDashboard({
   selectedShen: PostureShen;
 }) {
   const [activeView, setActiveView] = useState<PostureView>("front");
+  if (!hasReliablePostureResult(report)) {
+    return <section className="screen posture-assessment-screen posture-analysis-screen"><div className="posture-analysis-shell"><div className="posture-result-medical-note"><h1>Bu kaydın ölçüm güveni doğrulanamıyor.</h1><p>Bu kayıt için postür sonucu gösterilmiyor. Tam bedenin görünürken üç açıdan yeniden ölçüm yapabilirsin.</p><button className="posture-result-retake-button" onClick={onRetake} type="button">Yeniden ölç</button><button className="posture-result-retake-button" onClick={onClose} type="button">Geri dön</button></div></div></section>;
+  }
   const compositeAnalysis = getPostureReportCompositeAnalysis(report);
   const capture = report.captures[activeView];
   const viewAnalysis = {
@@ -483,8 +495,8 @@ export function PostureResultDashboard({
                 <span><i className="legend-fix" /> Düzelt {quality.fix}</span>
               </div>
               <div className="posture-result-confidence-badge">
-                <strong>Gerçek veri</strong>
-                <span>Genel güven %{confidence}</span>
+                <strong>Kamera noktaları</strong>
+                <span>Nokta görünürlüğü %{confidence}</span>
               </div>
             </div>
 
@@ -598,9 +610,9 @@ export function PostureSavedReportsGallery({
                 <div className="posture-saved-gallery-meta">
                   <span>
                     <strong>{report.dateKey}</strong>
-                    <small>{report.timeLabel} • {report.trendText}</small>
+                    <small>{report.timeLabel} • {hasReliablePostureResult(report) ? report.trendText : "Ölçüm güveni doğrulanamıyor"}</small>
                   </span>
-                  <b>{report.score}</b>
+                  <b>{hasReliablePostureResult(report) ? report.score : "—"}</b>
                 </div>
                 <span className="posture-saved-gallery-open">Analizi aç <i aria-hidden="true">›</i></span>
               </button>
@@ -614,7 +626,7 @@ export function PostureSavedReportsGallery({
                   />
                   <span>Eğitmene açık</span>
                 </label>
-                <button onClick={() => void handleShare(report)} type="button">Paylaş</button>
+                <button disabled={!hasReliablePostureResult(report)} onClick={() => void handleShare(report)} type="button">Paylaş</button>
                 <button className="posture-report-delete" disabled={!onDeleteReport} onClick={() => handleDelete(report)} type="button">Sil</button>
               </div>
               {actionMessage?.id === report.id ? <div className="posture-report-action-message">{actionMessage.text}</div> : null}
@@ -678,6 +690,7 @@ export function PostureScorePanel({
             <em>{ready ? `${metric.value}/100` : "--"}</em>
           </article>
         ))}
+        <p className="posture-metric-limits">Diz yumuşaklığı ve akış sürekliliği bu üç durağan görüntüden güvenilir biçimde ölçülmez.</p>
       </div> : null}
     </aside>
   );
@@ -893,14 +906,13 @@ export function evaluateWebPostureFrame(
   const ankleCenterY = anklePoints.reduce((sum, point) => sum + point.y, 0) / anklePoints.length;
   const bodyHeight = Math.max(1, Math.abs(ankleCenterY - shoulderCenterY));
   const shoulderWidthRatio = leftShoulder && rightShoulder ? Math.abs(leftShoulder.x - rightShoulder.x) / bodyHeight : 0;
-  const shoulderFacingRatio = leftShoulder && rightShoulder ? (leftShoulder.x - rightShoulder.x) / bodyHeight : 0;
   const faceNames = ["nose", "left_eye", "right_eye", "left_ear", "right_ear"];
   const faceConfidence = faceNames.reduce((sum, name) => sum + (byName.get(name)?.score ?? 0), 0) / faceNames.length;
   const angleReady =
     view === "side"
       ? shoulderWidthRatio < 0.19
       : view === "front"
-        ? shoulderFacingRatio >= 0.12 && faceConfidence >= 0.3
+        ? shoulderWidthRatio >= 0.12 && faceConfidence >= 0.3
         : true;
 
   const measurablePoints = keypoints.filter((point) => (point.score ?? 0) >= 0.35);

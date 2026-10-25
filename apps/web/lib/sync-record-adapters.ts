@@ -68,11 +68,12 @@ export function toWebPostureReport(record:SyncRecord):PostureReport|null {
  return{
   id:record.id,
   score,
+  observationVersion:record.observationVersion===2?2:undefined,
   createdAt:date,
   dateKey:formatSnapshotDate(new Date(date)),
   timeLabel:formatSnapshotTime(new Date(date)),
   captures:{front:captureFor("front"),side:captureFor("side"),back:captureFor("back")},
-  asymmetrySignal:score<62?"yüksek":score<78?"orta":"düşük",
+  asymmetrySignal:"değerlendirilmedi",
   flags:[],
   summary:String(record.summary??"App postür ölçümü senkronize edildi."),
   trendText:String(record.trendText??"App ile eşitlendi"),

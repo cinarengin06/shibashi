@@ -12,7 +12,8 @@ export type PostureAssessmentCapture = {
 };
 
 export type PostureReport = {
-  asymmetrySignal: "düşük" | "orta" | "yüksek";
+  observationVersion?: 2;
+  asymmetrySignal: "değerlendirilmedi" | "düşük" | "orta" | "yüksek";
   captures: Record<PostureView, PostureAssessmentCapture>;
   createdAt: string;
   dateKey: string;

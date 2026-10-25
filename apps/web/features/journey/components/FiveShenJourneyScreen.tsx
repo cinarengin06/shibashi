@@ -128,6 +128,7 @@ function HumanMap({
                 type="button"
               >
                 {index + 1}
+                <span className="neijing-hotspot-name">{neijingStages[index].title}</span>
               </button>
             </div>
           ))}
@@ -205,7 +206,7 @@ export function FiveShenJourneyWeb({
   userId?: string;
 }) {
   const [selected, setSelected] = useState<DomainShenId>(selectedShenId);
-  const [view, setView] = useState<"overview" | "map" | "journey" | "directions" | "guides" | "detail" | "notebook">("map");
+  const [view, setView] = useState<"map" | "journey" | "detail" | "notebook">("map");
   const [directionIndex, setDirectionIndex] = useState(0);
   const [reflectionText, setReflectionText] = useState("");
   const [feeling, setFeeling] = useState("");
@@ -270,69 +271,10 @@ export function FiveShenJourneyWeb({
       <section className="screen shen-journey-screen journey-framework-screen">
         <header className="shen-journey-header">
           <div><span className="eyebrow">Haritan · Sekiz beden kapısı</span><h1>Bedenindeki kapıları gör.</h1><p>Kapılara dokun; kapı bilgisini, ilgili videoları ve tamamlanma oranını gör. Altın halka en çok ilerlediğin kapıyı gösterir.</p></div>
-          <button className="secondary-action" onClick={() => setView("overview")} type="button">Kişisel pusulaya geç</button>
         </header>
         <HumanMap userId={userId} />
       </section>
     );
-  }
-
-  if (view === "overview") {
-    return (
-      <section className="screen shen-journey-screen journey-framework-screen">
-        <header className="journey-framework-hero">
-          <span className="eyebrow">Kişisel pusulan</span>
-          <h1>Önce halini tanı. Sonra yönünü seç. Rehberinle yürü.</h1>
-          <p>Üç kadim anlatı, üç ayrı soru. Terimleri bilmek zorunda değilsin; bugün ihtiyacın olan yerden başlayabilirsin.</p>
-        </header>
-        <div className="journey-framework-flow" aria-label="İç durumdan rehberliğe üç aşamalı yolculuk">
-          <button className="journey-framework-card journey-framework-card-map" onClick={() => setView("map")} style={{ "--journey-accent": profile.primaryColor } as CSSProperties} type="button">
-            <span className="journey-framework-number">00</span><span className="journey-framework-symbol">身</span>
-            <small>BEDEN HARİTAN</small><h2>8 Kapı</h2><p>Bedenimde şu an hangi kapı açık?</p>
-            <strong>Peng · Lü · Kao · Ji · Zhou · An · Lie · Cai</strong><em>Haritayı aç →</em>
-          </button>
-          <span className="journey-framework-connector" aria-hidden="true">→</span>
-          <button className="journey-framework-card journey-framework-card-shen" onClick={() => setView("journey")} style={{ "--journey-accent": profile.primaryColor } as CSSProperties} type="button">
-            <span className="journey-framework-number">01</span><span className="journey-framework-symbol">神</span>
-            <small>İÇ DÜNYA</small><h2>5 Shen</h2><p>Şu an içimde ne oluyor?</p>
-            <strong>{profile.name} · {profile.shortMeaning}</strong><em>Halini tanı →</em>
-          </button>
-          <span className="journey-framework-connector" aria-hidden="true">→</span>
-          <button className="journey-framework-card journey-framework-card-direction" onClick={() => setView("directions")} style={{ "--journey-accent": activeDirection.accent } as CSSProperties} type="button">
-            <span className="journey-framework-number">02</span><span className="journey-framework-symbol">{activeDirection.trigram}</span>
-            <small>YÖN VE EYLEM</small><h2>8 Yön · Bagua</h2><p>Bugün nereye yönelmeliyim?</p>
-            <strong>{activeDirection.title} · {activeDirection.module}</strong><em>Yönünü seç →</em>
-          </button>
-          <span className="journey-framework-connector" aria-hidden="true">→</span>
-          <button className="journey-framework-card journey-framework-card-guide" onClick={() => setView("guides")} type="button">
-            <span className="journey-framework-number">03</span><span className="journey-framework-symbol">八仙</span>
-            <small>HİKÂYE VE REHBERLİK</small><h2>8 Ölümsüz</h2><p>Bu yolda hangi ses bana iyi gelir?</p>
-            <strong>{journeyCoach.name} · {journeyCoach.role}</strong><em>Rehberini seç →</em>
-          </button>
-        </div>
-        <article className="journey-today-synthesis">
-          <div><span className="eyebrow">Bugünkü birleşimin</span><h2>{profile.name} iç dünyan · {activeDirection.title} yönün · {journeyCoach.name} rehberin</h2></div>
-          <button className="primary-action" onClick={() => onNavigate("lessons")} type="button">Bu birleşimle pratiğe başla →</button>
-        </article>
-        <p className="journey-framework-note">Bu üç gelenek tarihsel olarak bire bir eşleştirilmiş tek bir sistem değildir. Shibashi EFE onları iç durum, yön ve rehberlik katmanları olarak birlikte kullanır.</p>
-      </section>
-    );
-  }
-
-  if (view === "directions") {
-    return (
-      <section className="screen shen-journey-screen journey-framework-screen">
-        <header className="shen-journey-header"><div><span className="eyebrow">02 · Yön ve eylem</span><h1>8 Yön · Bagua</h1><p>Sekiz trigram, değişimin sekiz niteliğini anlatır. Bugün harekete geçmek istediğin yönü seç.</p></div><button className="secondary-action" onClick={() => setView("overview")} type="button">Pusulaya dön</button></header>
-        <div className="bagua-layout">
-          <div className="bagua-stage" style={{ "--bagua-accent": activeDirection.accent } as CSSProperties}><BaguaWheel activeDirection={activeDirection} activeIndex={directionIndex} recommendedIndex={recommendedDirectionIndex} onSelect={setDirectionIndex} /></div>
-          <aside className="bagua-insight-panel"><span className="eyebrow">Seçtiğin yön</span><h2>{activeDirection.trigram} {activeDirection.name} · {activeDirection.title}</h2><p>{activeDirection.cue}</p><div className="bagua-energy-strip"><div><span>İç durumun</span><strong>{profile.name}</strong></div><div><span>Çalışma alanın</span><strong>{activeDirection.module}</strong></div></div><button className="bagua-primary-action" onClick={() => onNavigate(activeDirection.tab)} type="button">{activeDirection.module} alanına geç <span>→</span></button><small className="journey-term-note">“8 Yön”, Bagua’nın sekiz trigramından gelir. Beden Haritası ise uygulamanın ayrı çalışma modelidir.</small></aside>
-        </div>
-      </section>
-    );
-  }
-
-  if (view === "guides") {
-    return <section className="screen shen-journey-screen journey-framework-screen"><header className="shen-journey-header"><div><span className="eyebrow">03 · Hikâye ve rehberlik</span><h1>8 Ölümsüz · Sekiz rehberlik tonu</h1><p>Daoist anlatıların sekiz efsanevi figüründen ilham alan rehberler, pratiğin dilini ve ritmini kişiselleştirir.</p></div><button className="secondary-action" onClick={() => setView("overview")} type="button">Pusulaya dön</button></header><JourneyGuideSelector onSelectCoach={onSelectCoach} selectedCoach={journeyCoach} selectedCoachId={selectedCoachId} /><p className="journey-framework-note">Bu karakterler tanı veya kader belirlemez; geleneksel anlatılardan uyarlanmış pratik eşlikçileridir.</p></section>;
   }
 
   if (view === "notebook") {
@@ -394,7 +336,7 @@ export function FiveShenJourneyWeb({
     <section className="screen shen-journey-screen">
       <header className="shen-journey-header">
         <div><span className="eyebrow">01 · İç dünya</span><h1>{userName || "Sen"}, şu an içinde ne oluyor?</h1><p>5 Shen, zihinsel ve duygusal işleyişini beş ayrı pencereden fark etmene yardım eder. {getShenRecommendation([...progresses])}</p></div>
-        <div className="journey-header-actions"><button className="secondary-action" onClick={() => setView("overview")} type="button">Pusulaya dön</button><button className="secondary-action" onClick={() => setView("notebook")} type="button">Ustanın Defteri</button></div>
+        <div className="journey-header-actions"><button className="secondary-action" onClick={() => setView("map")} type="button">8 Kapı'ya dön</button><button className="secondary-action" onClick={() => setView("notebook")} type="button">Ustanın Defteri</button></div>
       </header>
       <div className="shen-journey-rail">
         {shenProfiles.map((item) => {

@@ -11,7 +11,7 @@
 .topProgress b { font-size:12px; }
 .columns { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(340px,1fr); gap:24px; }
 .mainColumn { display:grid; align-content:start; gap:22px; min-width:0; }
-.hero { align-items:center; background:linear-gradient(100deg,rgba(244,247,242,.78),rgba(236,242,236,.42)),url('/images/shen-river-zhi.jpg') center/cover; border:1px solid #dbe6df; border-radius:18px; display:grid; gap:25px; grid-template-columns:minmax(0,1fr) 210px; min-height:295px; overflow:hidden; padding:32px; }
+.hero { --map-hero-image:url('/images/shen-home/hun-web.webp'); align-items:center; background:linear-gradient(100deg,rgba(244,247,242,.78),rgba(236,242,236,.42)),var(--map-hero-image) center/cover; border:1px solid #dbe6df; border-radius:18px; display:grid; gap:25px; grid-template-columns:minmax(0,1fr) 210px; min-height:295px; overflow:hidden; padding:32px; }
 .kicker { color:#528276; font-size:11px; font-weight:800; letter-spacing:.16em; }
 .hero h1 { color:var(--map-ink); font-size:clamp(28px,3vw,42px); margin:8px 0; }
 .hero p { color:#315f5b; line-height:1.55; max-width:380px; }
@@ -44,7 +44,11 @@
 .leaf,.kicker,.heroLink,.more { color:var(--shen-accent,#a9d977); }
 .topProgress div,.detailTrack,.dots span { background:rgba(255,255,255,.1); }
 .topProgress i,.detailTrack i,.dots .dotDone { background:var(--shen-accent,#a9d977); }
-.hero { background:linear-gradient(90deg,rgba(5,10,9,.94),rgba(5,10,9,.7) 55%,rgba(5,10,9,.35)),var(--shen-image) center/cover; border-color:var(--site-line,rgba(255,255,255,.12)); }
+:global(.shen-theme-shen) .hero { --map-hero-image:url('/images/shen-home/shen-fire-web.webp'); }
+:global(.shen-theme-yi) .hero { --map-hero-image:url('/images/shen-home/yi-web.webp'); }
+:global(.shen-theme-po) .hero { --map-hero-image:url('/images/shen-home/po-web.webp'); }
+:global(.shen-theme-zhi) .hero { --map-hero-image:url('/images/shen-home/zhi-web.webp'); }
+.hero { background:linear-gradient(90deg,rgba(5,10,9,.94),rgba(5,10,9,.7) 55%,rgba(5,10,9,.35)),var(--map-hero-image) center/cover; border-color:var(--site-line,rgba(255,255,255,.12)); }
 .hero h1,.hero p { color:var(--map-ink); }
 .heroRing { background:radial-gradient(closest-side,var(--site-surface,#171d19) 76%,transparent 78%),conic-gradient(var(--shen-accent,#a9d977) var(--progress),rgba(255,255,255,.12) 0); }
 .progressCard,.gatePanel,.note,.movementCard,.empty { background:var(--site-surface,#171d19); border-color:var(--site-line,rgba(255,255,255,.12)); box-shadow:0 20px 50px rgba(0,0,0,.22); color:var(--map-ink); }

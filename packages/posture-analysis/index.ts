@@ -66,23 +66,26 @@ export function buildPostureNarrative(
   });
   const weakest = [...regions].sort((first, second) => first.average - second.average)[0];
   const weakestScore = weakest.lowest?.[weakest.key] ?? weakest.average;
-  const viewLabel = weakest.lowest ? postureViewLabels[weakest.lowest.view] : "üç açı";
-  const rawMeasurement = weakest.key === "shoulderScore"
-    ? weakest.lowest?.shoulderTilt
-    : weakest.key === "hipScore"
-      ? weakest.lowest?.hipTilt
-      : weakest.lowest?.spineShift;
-  const measurement = typeof rawMeasurement === "number" && Number.isFinite(rawMeasurement)
-    ? Math.abs(rawMeasurement)
-    : undefined;
-  const measurementLabel = weakest.key === "axisScore" ? "eksen sapması" : "eğim";
-  const measurementDetail = measurement === undefined ? "" : `, ${measurementLabel} ${measurement.toFixed(1)}°`;
-  const summary = `${weakest.label[0].toLocaleUpperCase("tr-TR")}${weakest.label.slice(1)}: üç açı ortalaması ${weakest.average}/100; en düşük değer ${viewLabel} görünümünde ${weakestScore}/100${measurementDetail}.`;
-  const recommendation = weakest.key === "shoulderScore"
-    ? `${viewLabel[0].toLocaleUpperCase("tr-TR")}${viewLabel.slice(1)} görünümünde omuz hattı ${weakestScore}/100${measurement === undefined ? "" : ` ve ölçülen eğim ${measurement.toFixed(1)}°`}. Sonraki pratikte omuzlarını zorlamadan gevşet; karşılaştırma için kamera mesafeni ve duruşunu benzer tut.`
-    : weakest.key === "hipScore"
-      ? `${viewLabel[0].toLocaleUpperCase("tr-TR")}${viewLabel.slice(1)} görünümünde kalça dengesi ${weakestScore}/100${measurement === undefined ? "" : `; ölçülen eğim ${measurement.toFixed(1)}°`}. Ayaklarını kalça genişliğinde tutup ağırlığını iki ayağa dağıt, sonra aynı açıdan yeniden ölç.`
-      : `${viewLabel[0].toLocaleUpperCase("tr-TR")}${viewLabel.slice(1)} görünümünde merkez ekseni ${weakestScore}/100${measurement === undefined ? "" : `; ölçülen sapma ${measurement.toFixed(1)}°`}. Başını, gövdeni ve kalçanı rahatça aynı hatta getir; sonraki ölçümde aynı kamera konumunu kullan.`;
+  const observations = captures.flatMap((capture) => {
+    const viewLabel = postureViewLabels[capture.view];
+    if (capture.view === "side") {
+      return typeof capture.spineShift === "number" && Number.isFinite(capture.spineShift)
+        ? [{ viewLabel, line: "gövde hattının dikey çizgiyle hizasında", angle: Math.abs(capture.spineShift) }]
+        : [];
+    }
+    return [
+      { viewLabel, line: "omuz hizasında", angle: Math.abs(capture.shoulderTilt ?? Number.NaN) },
+      { viewLabel, line: "kalça hizasında", angle: Math.abs(capture.hipTilt ?? Number.NaN) },
+    ].filter((item) => Number.isFinite(item.angle));
+  });
+  const observation = observations.sort((first, second) => second.angle - first.angle)[0];
+  const viewSentence = observation ? `${observation.viewLabel[0].toLocaleUpperCase("tr-TR")}${observation.viewLabel.slice(1)} görüntüde` : "Bu çekimde";
+  const summary = observation && observation.angle >= 6
+    ? `${viewSentence} ${observation.line} fark gözlemlendi. Bu gözlem yalnızca bu çekime aittir.`
+    : "Bu çekimde omuz ve kalça noktaları izlendi. Tek kayıttan kalıcı bir sonuç çıkarılamaz.";
+  const recommendation = observation && observation.angle >= 6
+    ? `${viewSentence} görülen hizalama farkını karşılaştırmak için kamerayı ve beden konumunu benzer tutarak yeniden ölçebilirsin.`
+    : "Sonraki karşılaştırmada aynı kamera mesafesini ve üç görünümü kullanabilirsin.";
   const trendText = !previous?.captures?.length
     ? "İlk kayıt başlangıç çizgin. Sonraki ölçümde aynı üç açı ve kamera mesafesiyle değişimi karşılaştırabiliriz."
     : (() => {
@@ -130,7 +133,7 @@ export function getPostureReportCompositeAnalysis(report: PostureReportAnalysisS
   };
 }
 
-export function getPostureOverallScore(analysis: ReturnType<typeof analyzePosture>) {
+export function getPostureOverallScore(analysis: Pick<PostureAnalysisSnapshot, "axisScore" | "shoulderScore" | "hipScore">) {
   const values = [analysis.axisScore, analysis.shoulderScore, analysis.hipScore].filter((value) => value > 0);
   if (!values.length) return 0;
 
@@ -143,8 +146,8 @@ export function getPostureMetricList(analysis: ReturnType<typeof analyzePosture>
 
   return [
     { icon: "D", label: "Genel duruş", value: postureScore, measurement: "bileşik skor", confidence: analysis.confidence },
-    { icon: "O", label: "Omuz farkı", value: analysis.shoulderScore, measurement: `${Math.abs(analysis.shoulderTilt).toFixed(1)}°`, confidence: analysis.confidence },
-    { icon: "S", label: "Gövde ekseni", value: analysis.axisScore, measurement: `${Math.abs(analysis.spineShift).toFixed(1)}°`, confidence: analysis.confidence },
+    { icon: "O", label: "Omuz hizası", value: analysis.shoulderScore, measurement: `${Math.abs(analysis.shoulderTilt).toFixed(1)}°`, confidence: analysis.confidence },
+    { icon: "S", label: "Omurga hizası", value: analysis.axisScore, measurement: `${Math.abs(analysis.spineShift).toFixed(1)}°`, confidence: analysis.confidence },
     { icon: "K", label: "Kalça farkı", value: analysis.hipScore, measurement: `${Math.abs(analysis.hipTilt).toFixed(1)}°`, confidence: analysis.confidence },
     { icon: "G", label: "Denge bileşeni", value: balanceScore, measurement: "omuz · kalça · eksen", confidence: analysis.confidence },
   ];

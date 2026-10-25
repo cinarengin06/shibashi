@@ -48,8 +48,9 @@ export function getWebPostureMeasurementConfidence(keypoints: PoseKeypoint[], vi
     ? (total(left) >= total(right) ? left : right)
     : ["left_shoulder", "right_shoulder", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"];
   const confidences = measured.map((name) => byName.get(name)?.score ?? 0);
-  if (confidences.some((confidence) => confidence < 0.42)) return null;
-  const average = confidences.reduce((sum, confidence) => sum + confidence, 0) / confidences.length;
+  const reliable = confidences.filter((confidence) => confidence >= 0.42);
+  if (reliable.length < (view === "side" ? 4 : 6)) return null;
+  const average = reliable.reduce((sum, confidence) => sum + confidence, 0) / reliable.length;
   return average >= 0.55 ? average : null;
 }
 
@@ -167,20 +168,26 @@ export function getPoseStabilityDistance(previous: PoseKeypoint[], current: Pose
     if (!before || (before.score ?? 0) < 0.35) return [];
     return [Math.hypot(point.x - before.x, point.y - before.y)];
   });
-  if (distances.length < 6) return Number.POSITIVE_INFINITY;
-  return distances.reduce((sum, distance) => sum + distance, 0) / distances.length;
+  // In a side view only one limb chain may remain visible to the pose model.
+  if (distances.length < 4) return Number.POSITIVE_INFINITY;
+  const sorted = distances.sort((first, second) => first - second);
+  return sorted[Math.floor(sorted.length / 2)];
 }
 
-export function buildPostureReport(captures: Record<PostureView, PostureAssessmentCapture>, previous?: PostureReport): PostureReport {
+export function isReliablePostureCapture(capture: PostureAssessmentCapture | undefined, view: PostureView): boolean {
+  if (!capture || capture.view !== view || !capture.imageData.startsWith("data:image/")) return false;
+  const analysis = capture.analysis;
+  return (analysis.sampleCount ?? 0) >= 3 && analysis.confidence >= 55 &&
+    [analysis.axisScore, analysis.shoulderScore, analysis.hipScore, analysis.shoulderTilt, analysis.hipTilt, analysis.spineShift]
+      .every(Number.isFinite);
+}
+
+export function buildPostureReport(captures: Record<PostureView, PostureAssessmentCapture>, previous?: PostureReport): PostureReport | null {
+  if (!(["front", "side", "back"] as const).every((view) => isReliablePostureCapture(captures[view], view))) return null;
   const analyses = [captures.front.analysis, captures.side.analysis, captures.back.analysis];
   const score = Math.round(
     analyses.reduce((sum, analysis) => sum + analysis.axisScore + analysis.shoulderScore + analysis.hipScore, 0) / (analyses.length * 3),
   );
-  const strongestSignal = Math.max(
-    ...analyses.flatMap((analysis) => [Math.abs(analysis.shoulderTilt), Math.abs(analysis.hipTilt), Math.abs(analysis.spineShift)]),
-  );
-  const asymmetrySignal: PostureReport["asymmetrySignal"] =
-    strongestSignal > 15 || score < 62 ? "yüksek" : strongestSignal > 8 || score < 78 ? "orta" : "düşük";
   const flags = Array.from(new Set(analyses.flatMap((analysis) => analysis.flags))).slice(0, 6);
   const now = new Date();
   const narrativeCaptures = analyses.map((analysis) => ({
@@ -192,7 +199,8 @@ export function buildPostureReport(captures: Record<PostureView, PostureAssessme
     spineShift: analysis.spineShift,
     view: analysis.view as PostureView,
   })) satisfies PostureNarrativeCapture[];
-  const previousNarrative = previous ? {
+  const previousReliable = previous?.observationVersion === 2 && (["front", "side", "back"] as const).every((view) => isReliablePostureCapture(previous.captures[view], view));
+  const previousNarrative = previous && previousReliable ? {
     score: previous.score,
     captures: (["front", "side", "back"] as const).map((view) => ({
       axisScore: previous.captures[view].analysis.axisScore,
@@ -207,7 +215,8 @@ export function buildPostureReport(captures: Record<PostureView, PostureAssessme
   const { summary, trendText } = buildPostureNarrative(narrativeCaptures, score, previousNarrative);
 
   return {
-    asymmetrySignal,
+    observationVersion: 2,
+    asymmetrySignal: "değerlendirilmedi",
     captures,
     createdAt: now.toISOString(),
     dateKey: formatSnapshotDate(now),

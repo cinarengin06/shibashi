@@ -27,7 +27,7 @@ const menuItems = [
 ] as const;
 
 export function MobileMenuHeader({ onOpen }: { onOpen: () => void }) {
-  const { shen } = useShenExperience();
+  const { shen, soundEnabled, toggleSound } = useShenExperience();
   const theme = shenThemes[shen.id];
   const { profile } = useApp();
   const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
@@ -42,7 +42,7 @@ export function MobileMenuHeader({ onOpen }: { onOpen: () => void }) {
     <View style={styles.topBar}>
       <Pressable accessibilityRole="button" accessibilityLabel="Menüyü aç" onPress={onOpen} style={[styles.topButton, { borderColor: `${theme.button}88`, backgroundColor: visual.surfaceRaised }]}><Ionicons name="menu" size={26} color={theme.button} /></Pressable>
       <View style={styles.brand}><Image source={shenIcons[shen.id]} style={styles.brandIcon} /><Text style={[styles.brandTitle, { color: theme.button }]}>SHIBASHI EFE</Text></View>
-      <Pressable accessibilityRole="button" accessibilityLabel="Bildirimler" onPress={() => router.push('/notifications')} style={styles.topButton}><Ionicons name="notifications-outline" size={24} color={theme.button} />{unread > 0 && <View style={styles.unreadDot}/>}</Pressable>
+      <View style={styles.topActions}><Pressable accessibilityRole="button" accessibilityLabel={soundEnabled?'Müziği kapat':'Müziği aç'} onPress={toggleSound} style={styles.topButton}><Ionicons name={soundEnabled?'musical-notes':'musical-notes-outline'} size={22} color={theme.button}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Bildirimler" onPress={() => router.push('/notifications')} style={styles.topButton}><Ionicons name="notifications-outline" size={24} color={theme.button} />{unread > 0 && <View style={styles.unreadDot}/>}</Pressable></View>
     </View>
   </View>;
 }
@@ -96,6 +96,7 @@ export function MobileDrawer({ visible, onClose }: { visible: boolean; onClose: 
 const styles = StyleSheet.create({
   topSafe: { borderBottomWidth: StyleSheet.hairlineWidth },
   topBar: { height: 55, paddingHorizontal: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topActions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   topButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', borderRadius: 18 },
   brand: { alignItems: 'center', gap: 1 },
   brandIcon: { width: 21, height: 21, borderRadius: 11 },

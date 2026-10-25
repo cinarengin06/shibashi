@@ -568,6 +568,7 @@
 }
 
 .app-shell[data-visual-theme="jade-garden"] {
+  font-family: "Trebuchet MS", Arial, sans-serif;
   --theme-bg: #06100d;
   --theme-bg-secondary: #0b1a15;
   --theme-surface: #12241c;
@@ -580,6 +581,7 @@
 }
 
 .app-shell[data-visual-theme="moon-water"] {
+  font-family: "Avenir Next", Arial, sans-serif;
   --theme-bg: #070b14;
   --theme-bg-secondary: #0c1421;
   --theme-surface: #121e2d;
@@ -592,6 +594,7 @@
 }
 
 .app-shell[data-visual-theme="morning-light"] {
+  font-family: Georgia, serif;
   color-scheme: light;
   --theme-bg: #f7f3e9;
   --theme-bg-secondary: #f0ebdf;

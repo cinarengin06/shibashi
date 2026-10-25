@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { visualThemes, type VisualThemeId } from "@/packages/design-tokens";
 
 type ProfileShen = {
@@ -10,41 +10,39 @@ type ProfileShen = {
   color: string;
   symbol: string;
 };
-type ProfilePostureReport = {
-  id: string; score: number; dateKey: string; summary: string; asymmetrySignal: string; trendText: string; observationVersion?: 2;
-};
-
 export function ProfileScreen({
   authEmail,
   musicState,
   onRestartOnboarding,
-  onSelectShen,
   onSelectVisualTheme,
   onSignOut,
   onToggleMusic,
-  postureReports,
   selectedShen,
-  selectedShenId,
   visualThemeId,
   userName,
-  shens,
   googleAuthEnabled,
 }: {
   authEmail?: string;
   musicState: "açık" | "kapalı";
   onRestartOnboarding: () => void;
-  onSelectShen: (shen: ProfileShen["id"]) => void;
   onSelectVisualTheme: (theme: VisualThemeId) => void;
   onSignOut?: () => void;
   onToggleMusic: () => void;
-  postureReports: ProfilePostureReport[];
   selectedShen: ProfileShen;
-  selectedShenId: ProfileShen["id"];
   visualThemeId: VisualThemeId;
   userName: string;
-  shens: readonly ProfileShen[];
   googleAuthEnabled: boolean;
 }) {
+  const [cameraStatus, setCameraStatus] = useState("İzin durumu kontrol edilmedi");
+  const requestCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      stream.getTracks().forEach((track) => track.stop());
+      setCameraStatus("Kamera izni verildi");
+    } catch {
+      setCameraStatus("Kamera izni verilmedi. Tarayıcı ayarlarından açabilirsin.");
+    }
+  };
   return (
     <section className="screen profile-screen-simple">
       <div className="profile-intro">
@@ -89,47 +87,22 @@ export function ProfileScreen({
           <button onClick={onRestartOnboarding} type="button">
             <span aria-hidden="true">?</span>
             <div>
-              <strong>Başlangıç rehberi</strong>
+              <strong>Başlangıç Rehberini yeniden başlatmak istiyorum</strong>
               <small>Tanıtım ve ilk kurulum ekranlarını yeniden aç.</small>
             </div>
             <b>Aç</b>
           </button>
         </div>
       </div>
-      <div className="glass-card profile-shen-settings">
-        <div className="section-heading" style={{ margin: 0 }}>
-          <div>
-            <span className="eyebrow">5 Shen Profili</span>
-            <h2>Günlük modunu seç</h2>
-          </div>
-          <span>{selectedShen.name}</span>
-        </div>
-        <p>Bu seçim uygulamanın atmosferini, önerilerini ve müzik dünyasını değiştirir.</p>
-        <div className="profile-shen-grid">
-          {shens.map((shen) => (
-            <button
-              className={selectedShenId === shen.id ? "profile-shen-active" : ""}
-              key={shen.id}
-              onClick={() => onSelectShen(shen.id)}
-              style={{ "--shen-card-accent": shen.color } as CSSProperties}
-              type="button"
-            >
-              <span>{shen.symbol}</span>
-              <strong>{shen.dailyName.replace(" Modu", "")}</strong>
-              <small>{shen.name}</small>
-            </button>
-          ))}
-        </div>
-      </div>
       <div className="glass-card profile-theme-settings">
         <div className="section-heading" style={{ margin: 0 }}>
           <div>
             <span className="eyebrow">Görünüm</span>
-            <h2>Uygulama temanı seç</h2>
+            <h2>Temanı seç</h2>
           </div>
           <span>{visualThemes[visualThemeId].name}</span>
         </div>
-        <p>Tema bütün sayfaların zeminini, kartlarını, navigasyonunu ve ışık karakterini değiştirir. Günlük Shen rengin ayrı olarak yaşamaya devam eder.</p>
+        <p>Renkler ve yazı karakteri seçtiğin temaya göre değişir.</p>
         <div className="profile-theme-grid" role="radiogroup" aria-label="Uygulama teması">
           {Object.values(visualThemes).map((theme) => (
             <button
@@ -148,75 +121,12 @@ export function ProfileScreen({
           ))}
         </div>
       </div>
-      <PostureHistoryCard reports={postureReports} />
-      <div className="profile-settings-list">
-        <div className="list-item teacher-badge">
-          <div className="list-icon">T</div>
-          <div>
-            <div className="item-title">Öğretmen Modu</div>
-            <div className="item-subtitle">Videoları, ödevleri ve AI özetlerini paylaş.</div>
-          </div>
-        </div>
-        <div className="list-item">
-          <div className="list-icon">⌁</div>
-          <div>
-            <div className="item-title">Sağlık izinleri</div>
-            <div className="item-subtitle">HRV, uyku ve toparlanma henüz bağlı değil.</div>
-          </div>
-        </div>
-        <div className="list-item">
-          <div className="list-icon">✦</div>
-          <div>
-            <div className="item-title">Premium yol</div>
-            <div className="item-subtitle">Gelişmiş AI analizi ve hikaye bölümleri.</div>
-          </div>
-        </div>
+      <div className="glass-card profile-quick-settings">
+        <div className="section-heading"><div><span className="eyebrow">İzinler</span><h2>Kameraya izin ver</h2></div></div>
+        <p>Postür ve Form uyum pratikleri sırasında kameraya erişim iznini onaylıyorum.</p>
+        <button className="secondary-action" onClick={() => void requestCamera()} type="button">Kamera iznini kontrol et</button>
+        <p role="status">{cameraStatus}</p>
       </div>
     </section>
-  );
-}
-
-function PostureHistoryCard({ reports }: { reports: ProfilePostureReport[] }) {
-  const latestReport = reports[0];
-  const previousReport = reports[1];
-
-  return (
-    <div className="glass-card profile-posture-card">
-      <div className="section-heading" style={{ margin: "0 0 12px" }}>
-        <div>
-          <span className="eyebrow">Postür Geçmişi</span>
-          <h2>{latestReport ? "Beden hattı takipte" : "İlk postür raporu bekleniyor"}</h2>
-        </div>
-        <span>{reports.length ? `${reports.length} kayıt` : "0 kayıt"}</span>
-      </div>
-      {latestReport ? (
-        <>
-          <div className="posture-history-hero">
-            <div>
-              <strong>{latestReport.observationVersion === 2 ? latestReport.score : "—"}</strong>
-              <span>genel hizalanma</span>
-            </div>
-            <div>
-              <span className="eyebrow">Son gözlem</span>
-              <p>{latestReport.observationVersion === 2 ? latestReport.trendText : "Bu eski kaydın ölçüm güveni doğrulanamıyor. Yeniden ölçüm yapabilirsin."}</p>
-              {previousReport?.observationVersion === 2 ? <small>Önceki rapor: {previousReport.score}</small> : null}
-            </div>
-          </div>
-          <div className="posture-history-list">
-            {reports.slice(0, 4).map((report) => (
-              <article key={report.id}>
-                <span>{report.dateKey}</span>
-                <strong>{report.observationVersion === 2 ? report.score : "—"}</strong>
-                <small>{report.observationVersion === 2 ? report.summary : "Ölçüm güveni doğrulanamıyor"}</small>
-              </article>
-            ))}
-          </div>
-        </>
-      ) : (
-        <div className="empty-gallery">
-          Pratik ekranından Postür ölçümünü başlatınca ön, yan ve arka kayıtlar burada tarihsel gelişim olarak saklanacak.
-        </div>
-      )}
-    </div>
   );
 }

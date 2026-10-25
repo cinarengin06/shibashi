@@ -713,15 +713,15 @@ export default function RitimKapisiOS() {
           <DojoHomeScreen
             homeCopy={shenTodayCopy}
             onJournal={() => setActiveTab("journal")}
-                        onPosture={(reportId) => {
+            onSelectShen={selectShen}
+            postureReports={postureReports}
+            onPosture={(reportId) => {
               setSelectedHomePostureReportId(reportId);
               setActiveTab("posture");
             }}
             onReset={() => void resetLocalExperience()}
-            onSelectShen={selectShen}
             practiceGallery={practiceGallery}
             postureCount={postureReports.length}
-            postureReports={postureReports}
             selectedShen={selectedShen}
             shenActivities={shenActivities}
             shenOptions={fiveShen}
@@ -776,16 +776,12 @@ export default function RitimKapisiOS() {
             authEmail={auth.user?.email}
             musicState={soundState}
             onRestartOnboarding={restartOnboarding}
-            onSelectShen={selectShen}
             onSelectVisualTheme={selectVisualTheme}
             onSignOut={auth.user ? () => void auth.signOut() : undefined}
             onToggleMusic={soundState === "açık" ? stopShenMusic : playSelectedShenMusic}
-            postureReports={postureReports}
             selectedShen={selectedShen}
-            selectedShenId={selectedShenId}
             visualThemeId={visualThemeId}
             userName={userName}
-            shens={fiveShen}
             googleAuthEnabled={WEB_GOOGLE_AUTH_UI_ENABLED}
           />
         ) : null}

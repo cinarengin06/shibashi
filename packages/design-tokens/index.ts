@@ -175,8 +175,8 @@ export const visualThemes = {
 
 export type VisualThemeId = keyof typeof visualThemes;
 
-export function normalizeVisualThemeId(value: string | null | undefined): "ink-night" | "morning-light" {
-  return value === "morning-light" ? "morning-light" : "ink-night";
+export function normalizeVisualThemeId(value: string | null | undefined): VisualThemeId {
+  return value && value in visualThemes ? value as VisualThemeId : "ink-night";
 }
 
 function blendHex(first: string, second: string, secondWeight: number) {

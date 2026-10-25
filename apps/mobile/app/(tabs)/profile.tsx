@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -10,7 +11,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { FiveShenSelector } from "../../components/FiveShenSelector";
 import {
   Card,
   Eyebrow,
@@ -25,7 +25,7 @@ import { getShen } from "../../data/fiveShen";
 import { signOut } from "../../services/auth/SupabaseAuth";
 import { useApp } from "../../store/AppStore";
 import { useShenExperience } from "../../store/ShenExperience";
-import { getShenVisualTheme } from "../../../../packages/design-tokens";
+import { getShenVisualTheme, visualThemes, type VisualThemeId } from "../../../../packages/design-tokens";
 
 export default function Profile() {
   const {
@@ -45,6 +45,7 @@ export default function Profile() {
   const shen = getShen(profile.selectedShenId);
   const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const [pairCode, setPairCode] = useState("");
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const connect = async () => {
     const success = await setSyncCode(pairCode);
     if (success) setPairCode("");
@@ -70,11 +71,6 @@ export default function Profile() {
       );
     }
   };
-  const rows = [
-    ["camera-outline", "Kamera ayarları"],
-    ["shield-checkmark-outline", "Gizlilik"],
-    ["information-circle-outline", "Shibashi hakkında"],
-  ] as const;
   return (
     <Screen>
       <View style={p.head}>
@@ -221,40 +217,9 @@ export default function Profile() {
           </View>
         </Card>
       </Section>
-      <Section
-        title="Sana iyi gelen dünya"
-        action="Günlük atmosferini belirler"
-      >
-        <FiveShenSelector
-          selected={profile.selectedShenId}
-          onSelect={(selectedShenId) => saveProfile({ selectedShenId })}
-        />
-        <Pressable onPress={() => router.push(`/shen/${shen.id}`)}>
-          <Card style={[p.shenCard, { borderColor: `${shen.color}66` }]}>
-            <View
-              style={[p.shenSymbol, { backgroundColor: `${shen.color}18` }]}
-            >
-              <Text style={{ color: shen.color, fontSize: 27 }}>
-                {shen.symbol}
-              </Text>
-            </View>
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text style={[p.shenMode, { color: shen.color }]}>
-                {shen.dailyName.toUpperCase()}
-              </Text>
-              <Text style={[p.shenTitle,{color:visual.text}]}>{shen.label}</Text>
-              <Text style={[p.muted,{color:visual.textSecondary}]}>{shen.note}</Text>
-              <Text style={[p.term, { color: shen.color }]}>
-                Geleneksel adı: {shen.name} Shen · {shen.organ}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" color={shen.color} size={20} />
-          </Card>
-        </Pressable>
-      </Section>
-      <Section title="Görünüm" action="Renkler ve şekiller seçili Shen’e uyar">
+      <Section title="Temanı seç" action="Renk ve yazı karakteri temaya uyar">
         <View style={p.themeGrid}>
-          {(['ink-night', 'morning-light'] as const).map((mode) => {
+          {(Object.keys(visualThemes) as VisualThemeId[]).map((mode) => {
             const theme = getShenVisualTheme(profile.selectedShenId, mode);
             const active = visual.id === mode;
             return (
@@ -277,8 +242,8 @@ export default function Profile() {
                   <View style={[p.themeSwatch, { backgroundColor: shen.color }]} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[p.themeName, { color: theme.text }]}>{mode === 'morning-light' ? 'Açık' : 'Koyu'}</Text>
-                  <Text style={[p.themeDescription, { color: theme.textSecondary }]}>Renkler {shen.name} Shen’e uyarlanır.</Text>
+                  <Text style={[p.themeName, { color: theme.text }]}>{theme.name}</Text>
+                  <Text style={[p.themeDescription, { color: theme.textSecondary }]}>{theme.description}</Text>
                 </View>
                 <Ionicons name={active ? "checkmark-circle" : "ellipse-outline"} color={active ? shen.color : theme.textSecondary} size={23} />
               </Pressable>
@@ -296,7 +261,7 @@ export default function Profile() {
                 size={21}
               />
               <View>
-                <Text style={[p.text,{color:visual.text}]}>Arka plan müziği</Text>
+                <Text style={[p.text,{color:visual.text}]}>Müzik</Text>
                 <Text style={[p.muted,{color:visual.textSecondary}]}>
                   {playing
                     ? `${shen.dailyName} müziği çalıyor`
@@ -347,19 +312,16 @@ export default function Profile() {
                 color={shen.color}
                 size={21}
               />
-              <Text style={[p.text,{color:visual.text}]}>Giriş ve rehberi yeniden aç</Text>
+              <Text style={[p.text,{color:visual.text}]}>Başlangıç Rehberini yeniden başlatmak istiyorum</Text>
             </View>
             <Ionicons name="chevron-forward" color={colors.muted} />
           </Pressable>
-          {rows.map(([icon, label]) => (
-            <Pressable key={label} style={p.row}>
-              <View style={p.rowLabel}>
-                <Ionicons name={icon} color={shen.color} size={21} />
-                <Text style={[p.text,{color:visual.text}]}>{label}</Text>
-              </View>
-              <Ionicons name="chevron-forward" color={colors.muted} />
-            </Pressable>
-          ))}
+          <Pressable onPress={() => void requestCameraPermission()} style={p.row} accessibilityRole="button">
+            <View style={p.rowLabel}>
+              <Ionicons name="camera-outline" color={shen.color} size={21} />
+              <View style={{ flex: 1 }}><Text style={[p.text,{color:visual.text}]}>Kameraya izin ver</Text><Text style={[p.muted,{color:visual.textSecondary}]}>Postür ve Form uyum pratikleri sırasında kameraya erişim iznini onaylıyorum.</Text><Text style={[p.muted,{color:cameraPermission?.granted?shen.color:visual.textSecondary}]}>{cameraPermission?.granted?'Kamera izni verildi':'İzin istemek için dokun'}</Text></View>
+            </View>
+          </Pressable>
         </Card>
       </Section>
       <Pressable

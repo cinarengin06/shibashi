@@ -60,9 +60,9 @@ export function ShenBackdrop({opacity=1,borderRadius=0}:{opacity?:number;borderR
 
 export function Eyebrow({children}:PropsWithChildren){const{shen}=useShenExperience();return <Text style={[s.eyebrow,{color:shen.color}]}>{children}</Text>}
 const profileIsLight=(id:string)=>id==='morning-light';
-export function Title({children}:PropsWithChildren){const{shen}=useShenExperience();const personality=shenThemes[shen.id];const visual=useVisualPalette();return <Text style={[s.title,{color:visual.text,fontFamily:personality.headingWeight==='600'?fonts.displayStrong:personality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular,letterSpacing:shen.id==='zhi'?.4:shen.id==='yi'?-.35:shen.id==='shen'?.6:0}]}>{children}</Text>}
+export function Title({children}:PropsWithChildren){const{shen}=useShenExperience();const personality=shenThemes[shen.id];const visual=useVisualPalette();return <Text style={[s.title,{color:visual.text,fontFamily:visual.id==='morning-light'?'serif':visual.id==='moon-water'?'monospace':personality.headingWeight==='600'?fonts.displayStrong:personality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular,letterSpacing:shen.id==='zhi'?.4:shen.id==='yi'?-.35:shen.id==='shen'?.6:0}]}>{children}</Text>}
 export function Section({title,action,children}:{title:string;action?:string;children:React.ReactNode}){
- const visual=useVisualPalette();return <View style={s.section}><View style={s.sectionHead}><Text style={[s.sectionTitle,{color:visual.text}]}>{title}</Text>{action&&<Text style={s.action}>{action}</Text>}</View>{children}</View>;
+ const visual=useVisualPalette();return <View style={s.section}><View style={s.sectionHead}><Text style={[s.sectionTitle,{color:visual.text,fontFamily:visual.id==='morning-light'?'serif':visual.id==='moon-water'?'monospace':fonts.displayStrong}]}>{title}</Text>{action&&<Text style={s.action}>{action}</Text>}</View>{children}</View>;
 }
 export function Card({children,style}:{children:React.ReactNode;style?:StyleProp<ViewStyle>}){
  const{shen}=useShenExperience();const personality=shenThemes[shen.id];

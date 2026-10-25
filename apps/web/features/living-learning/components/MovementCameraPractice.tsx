@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import type { PoseLandmarker, PoseLandmarkerResult } from "@mediapipe/tasks-vision";
 import type { PracticeSnapshot } from "@/features/practice/types";
 import { formatSnapshotDate, formatSnapshotTime } from "@/lib/local-history-storage";
@@ -326,7 +327,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
             setCameraMessage(result.fullBody ? "Hocanın o anki hareketine eşlik et." : result.visible ? "Canlı skor kısmi kadrajdan geliyor; tamamlamak için ayakların da görünsün." : "Bedenini kamerada göstermek için biraz geri çekil.");
           }
 
-          drawMovementSkeleton(canvasRef.current, video, result.visible ? userPose : [], result.fullBody ? result.jointScores : {}, thresholdRef.current);
+          drawMovementSkeleton(canvasRef.current, video, userPose, result.jointScores, thresholdRef.current);
           if (!compact && result.visible) drawUserReferenceMarkers(canvasRef.current, video, userMarkers, teacherMarkers, result.jointScores, thresholdRef.current);
 
           if (qualified && photoCount < 3 && !photoPending && now - lastPhotoAt >= photoIntervalMs) {
@@ -393,7 +394,8 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
     cameraMessage.startsWith("Canlı skor kısmi kadrajdan")
   );
 
-  if (compact) return (
+  if (compact) return (<>
+    {teacherVideoRef?.current?.parentElement ? createPortal(<div className={styles.teacherLiveScore} style={{ "--score-color": scoreColor } as CSSProperties}><span>CANLI UYUM</span><strong aria-live="polite">{score === null ? "—" : `%${score}`}</strong></div>, teacherVideoRef.current.parentElement) : null}
     <div className={styles.miniCamera} onPointerCancel={endMiniGesture} onPointerMove={moveMiniGesture} onPointerUp={endMiniGesture} ref={miniRef} style={miniGeometry ? { left: miniGeometry.left, top: miniGeometry.top, width: miniGeometry.width, height: miniGeometry.height } : undefined}>
       <video aria-label="Kamera görüntün" autoPlay className={styles.movementCameraVideo} muted playsInline ref={videoRef} />
       <canvas aria-hidden="true" className={styles.movementPoseCanvas} ref={canvasRef} />
@@ -404,11 +406,8 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
       {showFramingWarning ? <div className={styles.miniCameraNotice}>Tam bedenin görünsün; biraz geri çekil.</div> : null}
       {celebration ? <div className={styles.miniCameraSaved} aria-live="polite">{celebration.emoji} Fotoğraf kaydedildi</div> : null}
       {targetReached ? <div className={styles.miniCameraSuccess} role="status">✓ Harikasın! Hedef uyuma ulaştın.</div> : null}
-      <div className={styles.miniCameraScore} style={{ "--score-color": scoreColor } as CSSProperties}>
-        <span>CANLI UYUM</span><strong aria-live="polite">{score === null ? "—" : `%${score}`}</strong>
-      </div>
       {(["nw", "ne", "sw", "se"] as const).map((corner) => <button aria-label={`Kamera penceresini ${corner} köşesinden boyutlandır`} className={`${styles.miniResizeHandle} ${styles[`miniResize${corner.toUpperCase()}`]}`} key={corner} onPointerDown={(event) => beginMiniGesture(event, corner)} type="button" />)}
-    </div>
+    </div></>
   );
 
   return (

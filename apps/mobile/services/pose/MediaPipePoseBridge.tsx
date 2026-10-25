@@ -4,7 +4,7 @@ import {WebView,WebViewMessageEvent} from 'react-native-webview';
 
 export type PoseLandmark={x:number;y:number;z:number;visibility:number};
 export type PoseAnalysis={landmarks:PoseLandmark[];confidence:number;imageWidth:number;imageHeight:number};
-export type MediaPipePoseBridgeRef={analyze:(base64:string)=>Promise<PoseAnalysis>;ready:boolean};
+export type MediaPipePoseBridgeRef={analyze:(base64:string)=>Promise<PoseAnalysis>;ready:boolean;error:string};
 
 const html=String.raw`<!doctype html>
 <html><body><script type="module">
@@ -14,7 +14,7 @@ const send=(value)=>window.ReactNativeWebView.postMessage(JSON.stringify(value))
 try {
   const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm");
   landmarker=await PoseLandmarker.createFromOptions(vision,{
-    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",delegate:"GPU"},
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task",delegate:"CPU"},
     runningMode:"IMAGE",numPoses:1,minPoseDetectionConfidence:.65,minPosePresenceConfidence:.65,minTrackingConfidence:.65
   });
   send({type:"ready"});
@@ -45,6 +45,7 @@ export const MediaPipePoseBridge=forwardRef<MediaPipePoseBridgeRef>(function Med
  const[loadError,setLoadError]=useState('');
  useImperativeHandle(ref,()=>({
   ready,
+  error:loadError,
   analyze:(base64:string)=>new Promise((resolve,reject)=>{
    if(loadError){reject(new Error(loadError));return}
    if(!ready){reject(new Error('MediaPipe modeli henüz hazır değil'));return}

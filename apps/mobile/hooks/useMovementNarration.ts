@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { shibashiNarrations } from '../data/shibashiMedia';
 import { safeMediaAction } from '../services/safeMediaAction';
 
-export function useMovementNarration(order: number, video: VideoPlayer) {
+export function useMovementNarration(order: number, video: VideoPlayer, enabled = true) {
   const narration = useAudioPlayer(shibashiNarrations[order], { downloadFirst: true });
 
   useEffect(() => {
@@ -14,14 +14,14 @@ export function useMovementNarration(order: number, video: VideoPlayer) {
     const restart = () => {
       try {
         void narration.seekTo(0).then(() => {
-          if (!disposed && video.playing) {
+          if (!disposed && enabled && video.playing) {
             safeMediaAction(() => narration.play());
           }
         }).catch(() => {});
       } catch {}
     };
     const resume = () => {
-      if (disposed) return;
+      if (disposed || !enabled) return;
       try {
         const status = narration.currentStatus;
         if (!status) return;
@@ -37,10 +37,10 @@ export function useMovementNarration(order: number, video: VideoPlayer) {
       video.timeUpdateEventInterval = 0.25;
     } catch {}
     const playingSubscription = video.addListener('playingChange', ({ isPlaying }) => {
-      if (isPlaying) resume(); else pause();
+      if (isPlaying && enabled) resume(); else pause();
     });
     const timeSubscription = video.addListener('timeUpdate', ({ currentTime }) => {
-      if (disposed) return;
+      if (disposed || !enabled) return;
       if (currentTime + 0.7 < lastVideoTime) {
         try {
           const endedNaturally = video.duration > 0 && lastVideoTime >= video.duration - 1;
@@ -49,11 +49,11 @@ export function useMovementNarration(order: number, video: VideoPlayer) {
       }
       lastVideoTime = currentTime;
     });
-    if (video.playing) resume();
+    if (video.playing && enabled) resume(); else pause();
     return () => {
       disposed = true;
       playingSubscription.remove();
       timeSubscription.remove();
     };
-  }, [narration, video]);
+  }, [narration, video, enabled]);
 }

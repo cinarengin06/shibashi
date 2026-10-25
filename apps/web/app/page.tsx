@@ -1140,10 +1140,12 @@ function PostureScreen({
     const sample = toPostureAnalysisSnapshot(analyzePosture(keypoints, 0, selectedShen.id, postureStep));
     sample.confidence = Math.round(measurementConfidence * 100);
     postureSampleAnalysesRef.current = [...postureSampleAnalysesRef.current.slice(-119), sample];
-    const progress = Math.min(100, ((Date.now() - postureStableSinceRef.current) / 2000) * 100);
+    const progress = Math.min(100, ((Date.now() - postureStableSinceRef.current) / 1000) * 100);
     setAutoCaptureProgress(progress);
 
     if (progress >= 100 && !postureAutoCaptureLockRef.current) {
+      const sampleScore = aggregatePostureAnalysisSnapshots(postureSampleAnalysesRef.current);
+      if (postureSampleAnalysesRef.current.length < 3 || sampleScore.axisScore * .42 + sampleScore.shoulderScore * .32 + sampleScore.hipScore * .26 <= 50) return;
       if (postureVoiceEnabled && postureCorrectionActive &&
           (postureLastVoiceCueRef.current !== postureCoachCue || Date.now() < postureCorrectionUntilRef.current)) return;
       postureAutoCaptureLockRef.current = true;
@@ -1198,6 +1200,12 @@ function PostureScreen({
     const timer = window.setTimeout(() => setPostureStep("result"), 2600);
     return () => window.clearTimeout(timer);
   }, [postureResult, postureStep]);
+
+  useEffect(() => {
+    if (postureStep === "result" && postureResult && !viewingSavedReport && postureVoiceEnabled) {
+      playPostureVoice("Analiz tamamlandı. Üç görünüm hazır.");
+    }
+  }, [postureResult?.id, postureStep]);
 
   async function startPostureMoveNetLoop(isCancelled: () => boolean) {
     const video = videoRef.current;
@@ -1400,13 +1408,14 @@ function PostureScreen({
       setAutoCaptureProgress(0);
       return;
     }
-    if (postureSampleAnalysesRef.current.length < 4) {
+    if (postureSampleAnalysesRef.current.length < 3) {
       postureAutoCaptureLockRef.current = false;
       postureStableSinceRef.current = null;
       setAutoCaptureProgress(0);
       return;
     }
     const analysis = aggregatePostureAnalysisSnapshots(postureSampleAnalysesRef.current);
+    if (analysis.axisScore * .42 + analysis.shoulderScore * .32 + analysis.hipScore * .26 <= 50) { postureAutoCaptureLockRef.current = false; return; }
     const capture = createPostureCapture(videoRef.current, keypoints, view, analysis, selectedShen.color);
     if (!capture) return;
 
@@ -1434,8 +1443,8 @@ function PostureScreen({
         const report = buildPostureReport(nextCaptures as Record<PostureView, PostureAssessmentCapture>, latestPostureReport);
         setViewingSavedReport(false);
         setPostureResult(report);
-        setPostureStep("processing");
         shutdownPostureCamera();
+        setPostureStep("result");
       }
     }, 1400);
   }

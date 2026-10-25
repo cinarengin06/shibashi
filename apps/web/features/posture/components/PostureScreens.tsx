@@ -137,7 +137,7 @@ export function PostureAutoCaptureScreen({
             : scanGuidance === "capturing"
               ? "Görünüm kaydedildi"
               : coachCue;
-  const secondsLeft = Math.max(1, Math.ceil(((100 - autoCaptureProgress) / 100) * 2));
+  const secondsLeft = Math.max(1, Math.ceil((100 - autoCaptureProgress) / 100));
   const angleSteps = [
     ["front", "Ön"],
     ["side", "Yan"],
@@ -185,7 +185,7 @@ export function PostureAutoCaptureScreen({
               <strong>{instruction}</strong>
               <span>
                 {scanGuidance === "hold"
-                  ? "Gerçek ölçüm sürüyor; iki saniye aynı duruşu koruyun"
+                  ? "Bir saniye sakin durun; skor %50 üzerindeyse fotoğraf çekilir"
                   : scanGuidance === "reposition"
                     ? "Kılavuz yeşile döndüğünde ölçüm başlayacak"
                   : scanGuidance === "wrong-angle"

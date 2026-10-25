@@ -2,6 +2,7 @@ import {Ionicons} from '@expo/vector-icons';
 import {setAudioModeAsync,useAudioPlayer} from 'expo-audio';
 import {CameraView,useCameraPermissions} from 'expo-camera';
 import {router} from 'expo-router';
+import * as Speech from 'expo-speech';
 import {useEffect,useRef,useState} from 'react';
 import {ActivityIndicator,BackHandler,Image,Platform,Pressable,ScrollView,StyleSheet,Text,View,type LayoutChangeEvent} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -68,7 +69,7 @@ export default function PostureSession(){
  const[result,setResult]=useState<PostureReport|null>(null);
  const[phase,setPhase]=useState<'scan'|'review'|'processing'>('scan');
  const[scanState,setScanState]=useState<ScanState>('model-loading');
- const[countdown,setCountdown]=useState(3);
+ const[countdown,setCountdown]=useState(1);
  const[liveLandmarks,setLiveLandmarks]=useState<PoseLandmark[]>([]);
  const[analysisImageSize,setAnalysisImageSize]=useState<FrameSize>({width:1,height:1});
  const[previewSize,setPreviewSize]=useState<FrameSize>({width:1,height:1});
@@ -106,7 +107,7 @@ export default function PostureSession(){
  const frontVoice=useAudioPlayer(postureVoice.front);
  const sideVoice=useAudioPlayer(postureVoice.side);
  const backVoice=useAudioPlayer(postureVoice.back);
- const completeVoice=useAudioPlayer(postureVoice.complete);
+ const completeVoice=useAudioPlayer(postureVoice.complete,{downloadFirst:true});
  const headVoice=useAudioPlayer(correctionVoice.head);
  const shoulderVoice=useAudioPlayer(correctionVoice.shoulder);
  const axisVoice=useAudioPlayer(correctionVoice.axis);
@@ -124,7 +125,7 @@ export default function PostureSession(){
   const session=++voiceSessionRef.current;
   const player=voicePlayers[key];
   allVoicePlayers.filter(other=>other!==player).forEach(other=>safeMediaAction(()=>other.pause()));
-  void player.seekTo(0).then(()=>{if(voiceSessionRef.current===session)return player.play()}).catch(()=>{});
+  void player.seekTo(0).then(()=>{if(voiceSessionRef.current===session)return player.play()}).catch(()=>{if(key==='complete'&&voiceSessionRef.current===session)Speech.speak('Analiz tamamlandı. Üç görünüm hazır.',{language:'tr-TR'});});
  };
 
  const playCorrectionCue=(cue:PostureCorrectionCue)=>{
@@ -207,18 +208,18 @@ export default function PostureSession(){
     if(!frame.bodyReady){
      holdStartedAtRef.current=null;previousLandmarksRef.current=[];stableCapturesRef.current=[];
      cueCandidateRef.current=null;setAudioGuide(null);setLiveCapture(null);
-     setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('find-body');schedule();return;
+     setLiveScore(null);setValidSampleCount(0);setCountdown(1);setScanState('find-body');schedule();return;
     }
     if(!frame.angleReady){
      holdStartedAtRef.current=null;previousLandmarksRef.current=analysis.landmarks;stableCapturesRef.current=[];
      cueCandidateRef.current=null;setAudioGuide(null);setLiveCapture(null);
-     setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('wrong-angle');schedule();return;
+     setLiveScore(null);setValidSampleCount(0);setCountdown(1);setScanState('wrong-angle');schedule();return;
     }
     const measurementConfidence=getPostureMeasurementConfidence(analysis.landmarks,view);
     if(measurementConfidence===null){
      holdStartedAtRef.current=null;previousLandmarksRef.current=[];stableCapturesRef.current=[];
      cueCandidateRef.current=null;setAudioGuide(null);setLiveCapture(null);
-     setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('low-confidence');schedule();return;
+     setLiveScore(null);setValidSampleCount(0);setCountdown(1);setScanState('low-confidence');schedule();return;
     }
     const movement=getLandmarkMovement(previousLandmarksRef.current,analysis.landmarks);
     previousLandmarksRef.current=analysis.landmarks;
@@ -226,7 +227,7 @@ export default function PostureSession(){
      holdStartedAtRef.current=Date.now();
      stableCapturesRef.current=[];
      cueCandidateRef.current=null;setLiveCapture(null);
-     setLiveScore(null);setValidSampleCount(0);setCountdown(3);setScanState('hold');schedule();return;
+     setLiveScore(null);setValidSampleCount(0);setCountdown(1);setScanState('hold');schedule();return;
     }
     const frameCapture=createPostureCapture(view,analysis.landmarks,measurementConfidence);
     stableCapturesRef.current=[...stableCapturesRef.current,frameCapture].slice(-12);
@@ -243,9 +244,9 @@ export default function PostureSession(){
      playCorrectionCue(cue);
     }
     if(!cue)setAudioGuide(null);
-    setCountdown(Math.max(0,Math.ceil((3000-elapsed)/1000)));
+    setCountdown(Math.max(0,Math.ceil((1000-elapsed)/1000)));
     setScanState('hold');
-    if(elapsed<3000||stableCapturesRef.current.length<4||Date.now()<correctionPendingUntilRef.current){schedule();return}
+    if(elapsed<1000||stableCapturesRef.current.length<2||rollingCapture.score<=50||Date.now()<correctionPendingUntilRef.current){schedule();return}
 
     setScanState('capturing');
     const vision3D=vision3DActive?await analyzeWithAppleVision3D(photo.base64).catch(()=>null):null;
@@ -284,7 +285,7 @@ export default function PostureSession(){
     const narrative=buildPostureNarrative(nextCaptures.map(toPostureNarrativeCapture),average,previous?.captures?.length?{score:previous.score,captures:previous.captures.map(toPostureNarrativeCapture)}:undefined);
     setResult({id:Date.now().toString(),date:new Date().toISOString(),score:average,captures:nextCaptures,analysisSource:nextCaptures.some(saved=>saved.analysisSource==='vision-3d+mediapipe-33')?'vision-3d+mediapipe-33':'mediapipe-33',summary:narrative.summary,trendText:narrative.trendText,asymmetrySignal:narrative.weakestAverage<62?'yüksek':narrative.weakestAverage<78?'orta':'düşük'});
     playVoiceOnce('complete');
-    setPhase('processing');
+    setPhase('review');
    }catch(error){
     captureInFlightRef.current=null;
     if(scanSessionRef.current!==session)return;
@@ -317,7 +318,7 @@ export default function PostureSession(){
    setSaving(false);
   }
  };
- const restart=()=>{voiceSessionRef.current+=1;allVoicePlayers.forEach(player=>safeMediaAction(()=>player.pause()));draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(3);setScanState('model-loading');setPhase('scan')};
+ const restart=()=>{voiceSessionRef.current+=1;allVoicePlayers.forEach(player=>safeMediaAction(()=>player.pause()));draftPhotosRef.current.forEach(deletePostureCapturePhoto);draftPhotosRef.current=[];capturesRef.current=[];speakingRef.current='';setIndex(0);setCaptures([]);setResult(null);setCountdown(1);setScanState('model-loading');setPhase('scan')};
 
  if(!permission)return <View style={styles.permission}/>;
  if(!permission.granted)return <SafeAreaView style={styles.permission}>
@@ -332,7 +333,8 @@ export default function PostureSession(){
 
  if(result)return <SafeAreaView style={styles.result}>
   <ScrollView contentContainerStyle={styles.resultContent}>
-   <View style={styles.resultTop}><Text style={[styles.resultLabel,{color:shen.color}]}>POSTÜR RAPORUN HAZIR</Text><Text style={styles.resultTitle}>Beden çizgin görünür oldu.</Text><Text style={styles.resultBody}>{result.summary}</Text><Text style={styles.resultTrend}>{result.trendText}</Text></View>
+   <View style={styles.resultTop}><Text style={[styles.resultLabel,{color:shen.color}]}>ANALİZ TAMAMLANDI</Text><Text style={styles.resultTitle}>Beden çizgin görünür oldu.</Text><Text style={styles.resultBody}>{result.summary}</Text><Text style={styles.resultTrend}>{result.trendText}</Text></View>
+   <View style={{flexDirection:'row',gap:8}} accessibilityLabel="Ön, yan ve arka fotoğrafların">{views.map(view=>{const item=result.captures.find(capture=>capture.view===view);return <View key={view} style={{flex:1,gap:5}}>{item?.imageData?<Image source={{uri:item.imageData}} style={{width:'100%',aspectRatio:3/4,borderRadius:10,backgroundColor:colors.ink}}/>:<View style={{width:'100%',aspectRatio:3/4,borderRadius:10,backgroundColor:colors.ink}}/>}<Text style={{color:colors.cream,textAlign:'center',fontWeight:'700'}}>{viewCopy[view].title}</Text></View>})}</View>
    <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text><Text style={styles.overallConfidence}>Genel güven %{getReportConfidence(result)}</Text></View>
    <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}>{item.imageData?<Image source={{uri:item.imageData}} style={styles.captureThumbnail}/>:<View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View>}<View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
    <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişiselleştirilmiş Öneriler ve Notlar</Text><Text style={styles.insightBody}>{getReportRecommendation(result)}</Text></View></View>
@@ -366,7 +368,7 @@ export default function PostureSession(){
     <View style={styles.angleSteps}>{views.map((item)=><View key={item} style={[styles.angleStep,item===view&&styles.angleStepActive]}><Ionicons name={viewCopy[item].icon} color={item===view?colors.cream:colors.muted} size={17}/><Text style={styles.angleStepText}>{viewCopy[item].title.replace(' görünüm','')}</Text></View>)}</View>
    </View>
 
-   {tipVisible&&<View style={styles.tip}><Text style={styles.tipTitle}>Doğru ölçüm için</Text><Text style={styles.tipText}>Telefonu yaklaşık 1,5–2 metre uzağa koy. Başın ve ayakların aynı anda görünürken üç saniye hareketsiz dur.</Text></View>}
+   {tipVisible&&<View style={styles.tip}><Text style={styles.tipTitle}>Doğru ölçüm için</Text><Text style={styles.tipText}>Telefonu yaklaşık 1,5–2 metre uzağa koy. Başın ve ayakların aynı anda görünürken bir saniye hareketsiz dur.</Text></View>}
    <MediaPipePoseBridge ref={poseBridgeRef}/>
   </View>
  </SafeAreaView>;
@@ -435,7 +437,7 @@ function getScanDetail(state:ScanState,view:PostureView){
  if(state==='find-body')return'Başın, omuzların, kalçan, dizlerin ve ayakların birlikte görünmeli.';
  if(state==='wrong-angle')return`${viewCopy[view].title} henüz doğrulanmadı; doğru yöne geçince sayaç başlayacak.`;
  if(state==='low-confidence')return'Işığı artır veya bedenin kamerada daha net görünecek kadar yaklaş.';
- if(state==='hold')return'Üç saniye boyunca aynı duruşu koru.';
+ if(state==='hold')return'Bir saniye boyunca aynı duruşu koru; uyum %50 üzerindeyse çekim yapılır.';
  if(state==='capturing'||state==='turning')return'Gerçek MediaPipe ölçümü alındı.';
  return scanCopy[view].waiting;
 }

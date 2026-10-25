@@ -272,8 +272,8 @@ export function analyzePosture(keypoints: PoseKeypoint[], _movementScore: number
 
   const shoulderTilt = getSignedPairTilt(leftShoulder, rightShoulder);
   const hipTilt = getSignedPairTilt(leftHip, rightHip);
-  const shoulderScore = scoreAngularDeviation(Math.abs(shoulderTilt), 1.25, 12);
-  const hipScore = scoreAngularDeviation(Math.abs(hipTilt), 1.25, 10);
+  const shoulderScore = scoreAngularDeviation(Math.abs(shoulderTilt), 3, 18);
+  const hipScore = scoreAngularDeviation(Math.abs(hipTilt), 3, 16);
   const shoulderCenter = getMidpoint(leftShoulder, rightShoulder);
   const hipCenter = getMidpoint(leftHip, rightHip);
   const torsoTilt = shoulderCenter && hipCenter
@@ -283,7 +283,7 @@ export function analyzePosture(keypoints: PoseKeypoint[], _movementScore: number
     ? Math.atan2(nose.x - shoulderCenter.x, shoulderCenter.y - nose.y) * 180 / Math.PI
     : torsoTilt;
   const spineShift = Math.max(-30, Math.min(30, torsoTilt * 0.7 + headTilt * 0.3));
-  const axisScore = scoreAngularDeviation(Math.abs(spineShift), 1.25, 12);
+  const axisScore = scoreAngularDeviation(Math.abs(spineShift), 3, 18);
   const lean = Math.max(-10, Math.min(10, shoulderTilt / 2.1 + spineShift / 4.5));
   const fullBodyReady = [leftShoulder, rightShoulder, leftHip, rightHip, leftAnkle, rightAnkle].every((point) => isVisiblePosePoint(point));
   const confidence = getPoseMeasurementConfidence([nose, leftShoulder, rightShoulder, leftHip, rightHip, leftAnkle, rightAnkle]);
@@ -382,7 +382,7 @@ function analyzeSidePosture(byName: Map<string | undefined, PoseKeypoint>) {
 
 function getSignedPairTilt(left?: PoseKeypoint, right?: PoseKeypoint) {
   if (!isVisiblePosePoint(left) || !isVisiblePosePoint(right)) return 0;
-  return Math.atan2(right.y - left.y, right.x - left.x) * 180 / Math.PI;
+  return Math.atan2(right.y - left.y, Math.abs(right.x - left.x)) * 180 / Math.PI;
 }
 
 function scoreAngularDeviation(deviation: number, excellent: number, limit: number) {

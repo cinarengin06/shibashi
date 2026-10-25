@@ -1227,6 +1227,7 @@
 .miniCameraScore strong { color:var(--score-color,#f3eee5); font-size:30px; line-height:1; }
 .miniCameraNotice { position:absolute; z-index:3; inset:34% 7px auto; padding:9px; border-radius:9px; background:rgba(4,11,9,.88); color:white; font-size:11px; font-weight:750; line-height:1.4; text-align:center; }
 .miniCameraSaved { position:absolute; z-index:4; top:8px; left:8px; right:41px; padding:5px 7px; border-radius:8px; background:rgba(8,44,25,.9); color:#b7ffcc; font-size:10px; font-weight:900; }
+.miniCameraSuccess { position:absolute; z-index:5; left:8px; right:8px; bottom:49px; padding:8px; border:1px solid #77e49b; border-radius:9px; background:rgba(5,55,30,.94); color:#d7ffe4; text-align:center; font-size:12px; font-weight:900; }
 .cameraFrame { position:absolute; inset:9% 16%; border:1px solid rgba(248,240,219,.55); border-radius:40% 40% 25% 25%; pointer-events:none; }
 .cameraFrame span { position:absolute; width:22px; height:22px; border-color:#e3cd91; border-style:solid; }
 .cameraFrame span:nth-child(1) { top:-1px; left:-1px; border-width:2px 0 0 2px; border-radius:9px 0 0; }

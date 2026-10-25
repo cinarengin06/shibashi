@@ -20,12 +20,13 @@ type MiniGeometry = { left: number; top: number; width: number; height: number }
 type MiniGesture = { pointerId: number; mode: "move" | "nw" | "ne" | "sw" | "se"; startX: number; startY: number; start: MiniGeometry };
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
-export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete, onPhotoCaptured, compact = false, teacherVideoRef, onClose, targetScoreOverride }: {
+export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete, onTargetReached, onPhotoCaptured, compact = false, teacherVideoRef, onClose, targetScoreOverride }: {
   active: boolean;
   movementOrder: string;
   movementName: string;
   retryKey: number;
   onComplete: () => void;
+  onTargetReached?: () => void;
   onPhotoCaptured: (snapshot: PracticeSnapshot) => Promise<boolean>;
   compact?: boolean;
   teacherVideoRef?: RefObject<HTMLVideoElement | null>;
@@ -49,6 +50,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
   const [completed, setCompleted] = useState(false);
   const [capturedCount, setCapturedCount] = useState(0);
   const [celebration, setCelebration] = useState<{ emoji: string; text: string; count: number } | null>(null);
+  const [targetReached, setTargetReached] = useState(false);
 
   useLayoutEffect(() => {
     if (!compact) return;
@@ -144,6 +146,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
       return lastDetectionTimestamp;
     };
     let matchedSince = 0;
+    let targetReported = false;
     let completionStarted = false;
     let smoothedScore: number | null = null;
     let lastValidScoreAt = 0;
@@ -163,6 +166,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
     setCameraError("");
     setCameraMessage("Kamera ve hareket modeli hazırlanıyor.");
     setScore(null);
+    setTargetReached(false);
     setSecondsLeft(15);
     setCompleted(false);
     setCapturedCount(0);
@@ -308,9 +312,14 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
             }
           }
 
-          const qualified = result.fullBody && result.score !== null && smoothedScore !== null && smoothedScore >= thresholdRef.current;
+          const qualified = result.fullBody && result.score !== null && result.score >= thresholdRef.current && smoothedScore !== null && smoothedScore >= thresholdRef.current;
           if (qualified) {
             if (!matchedSince) matchedSince = now;
+            if (!targetReported && now - matchedSince >= 1_000) {
+              targetReported = true;
+              setTargetReached(true);
+              onTargetReached?.();
+            }
             setCameraMessage(photoCount < 3 ? `Hedefe ulaştın; ${3 - photoCount} fotoğraf daha çekilecek.` : passedTime ? "Hedef uyum yakalandı; hareket tamamlanıyor." : "Hedefe ulaştın; hareketi sürdür.");
           } else {
             matchedSince = 0;
@@ -373,7 +382,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
       stream?.getTracks().forEach((track) => track.stop());
       if (videoRef.current) videoRef.current.srcObject = null;
     };
-  }, [active, compact, movementOrder, movementName, onComplete, onPhotoCaptured, retryKey, teacherVideoRef]);
+  }, [active, compact, movementOrder, movementName, onComplete, onTargetReached, onPhotoCaptured, retryKey, teacherVideoRef]);
 
   if (!active) return null;
 
@@ -394,6 +403,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
       {!cameraReady && !cameraError ? <div className={styles.miniCameraNotice}>Kamera hazırlanıyor…</div> : null}
       {showFramingWarning ? <div className={styles.miniCameraNotice}>Tam bedenin görünsün; biraz geri çekil.</div> : null}
       {celebration ? <div className={styles.miniCameraSaved} aria-live="polite">{celebration.emoji} Fotoğraf kaydedildi</div> : null}
+      {targetReached ? <div className={styles.miniCameraSuccess} role="status">✓ Harikasın! Hedef uyuma ulaştın.</div> : null}
       <div className={styles.miniCameraScore} style={{ "--score-color": scoreColor } as CSSProperties}>
         <span>CANLI UYUM</span><strong aria-live="polite">{score === null ? "—" : `%${score}`}</strong>
       </div>

@@ -145,9 +145,9 @@ export function createPostureCapture(view:PostureView,points:PoseLandmark[],conf
  const shoulderCenter={x:(points[11].x+points[12].x)/2,y:(points[11].y+points[12].y)/2};
  const hipCenter={x:(points[23].x+points[24].x)/2,y:(points[23].y+points[24].y)/2};
  const axisTilt=Math.abs(Math.atan2(shoulderCenter.x-hipCenter.x,hipCenter.y-shoulderCenter.y)*180/Math.PI);
- const shoulderScore=scoreDeviation(shoulderTilt,1.25,12);
- const hipScore=scoreDeviation(hipTilt,1.25,10);
- const axisScore=scoreDeviation(axisTilt,1.25,12);
+ const shoulderScore=scoreDeviation(shoulderTilt,3,18);
+ const hipScore=scoreDeviation(hipTilt,3,16);
+ const axisScore=scoreDeviation(axisTilt,3,18);
  const balanceScore=scoreDeviation(kneeTilt,1.75,14);
  const score=Math.round(shoulderScore*.28+hipScore*.25+axisScore*.32+balanceScore*.15);
  return{

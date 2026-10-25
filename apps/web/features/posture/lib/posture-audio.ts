@@ -1,4 +1,5 @@
 const postureAudioByCue:Record<string,string>={
+  'Analiz tamamlandı. Üç görünüm hazır.':'postur-web-bitti',
   'Ön görünüm. Kameraya dön. Ayaklarını kalça genişliğinde aç ve kollarını rahat bırak.':'postur-web-on',
   'Şimdi sağ yanını kameraya dön. Başını doğal konumda tut ve kollarını rahat bırak.':'postur-web-yan',
   'Şimdi arkanı kameraya dön. Ağırlığını iki ayağına eşit dağıt ve doğal dur.':'postur-web-arka',

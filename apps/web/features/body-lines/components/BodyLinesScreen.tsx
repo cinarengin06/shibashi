@@ -139,6 +139,8 @@ export function BodyLinesScreen() {
   }, []);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [miniCameraOpen, setMiniCameraOpen] = useState(false);
+  const [narrationEnabled, setNarrationEnabled] = useState(true);
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const [targetScore, setTargetScore] = useState(70);
   const demoVideoRef = useRef<HTMLVideoElement>(null);
   const narrationRef = useRef<HTMLAudioElement>(null);
@@ -206,10 +208,10 @@ export function BodyLinesScreen() {
   const playNarration = useCallback((restart = false) => {
     const audio = narrationRef.current;
     const video = demoVideoRef.current;
-    if (!audio || !video) return;
+    if (!audio || !video || !narrationEnabled) return;
     if (restart || audio.ended || (video.currentTime < 0.3 && audio.currentTime > 0.5)) audio.currentTime = 0;
     void audio.play().catch(() => {});
-  }, []);
+  }, [narrationEnabled]);
   const playNarratedVideo = useCallback((restart = false) => {
     const video = demoVideoRef.current;
     if (!video) return;
@@ -220,6 +222,7 @@ export function BodyLinesScreen() {
   const chooseMovement = useCallback((order: number) => {
     demoVideoRef.current?.pause();
     narrationRef.current?.pause();
+    setVideoPlaying(false);
     lastDemoTimeRef.current = 0;
     setMovementOrder(order);
     setVideoUnavailable(false);
@@ -228,7 +231,6 @@ export function BodyLinesScreen() {
   const stepMovement = useCallback((step: number) => {
     chooseMovement(((movementOrder - 1 + step + 18) % 18) + 1);
   }, [chooseMovement, movementOrder]);
-  const keepCurrentMovement = useCallback(() => {}, []);
   const movementSteps = meridianLivingSteps[movementOrder - 1];
   const currentFormSteps = formSteps[movementOrder] ?? {};
   const completedHere = completedOrders.includes(movementOrder);
@@ -240,6 +242,10 @@ export function BodyLinesScreen() {
       setFormSteps(markFormStep(movementOrder, "completed", user?.id));
     } catch { /* Keep the action available if local storage cannot be written. */ }
   };
+  const completeCurrentFormRef = useRef(completeCurrentForm);
+  completeCurrentFormRef.current = completeCurrentForm;
+  const onTargetReached = useCallback(() => completeCurrentFormRef.current(), []);
+  const currentPhotos = photos.filter((photo) => photo.movementId === movementOrder);
 
   return (
     <main className={styles.page}>
@@ -255,13 +261,15 @@ export function BodyLinesScreen() {
           </ol>
           <div className={styles.formJourney} aria-label={`${movementOrder}. form yolculuğu`}>
             <strong>FORM YOLCULUĞUN</strong>
-            <button aria-pressed={Boolean(currentFormSteps.watched)} onClick={() => setFormSteps(markFormStep(movementOrder, "watched", user?.id))} type="button"><span>{currentFormSteps.watched ? "✓" : "○"}</span> Hocayı izledim</button>
-            <button aria-pressed={Boolean(currentFormSteps.attempted)} onClick={() => setFormSteps(markFormStep(movementOrder, "attempted", user?.id))} type="button"><span>{currentFormSteps.attempted ? "✓" : "○"}</span> Kamerayla denedim</button>
+            <div><span>{currentFormSteps.watched ? "✓" : "○"}</span> Hocayı izledim</div>
+            <div><span>{currentFormSteps.attempted ? "✓" : "○"}</span> Kamerayla denedim</div>
             <button aria-pressed={completedHere} onClick={completeCurrentForm} type="button"><span>{completedHere ? "✓" : "○"}</span> Formu tamamladım</button>
+            {!completedHere ? <small>Hedef uyuma ulaşırsan otomatik tamamlanır; istersen buradan işaretleyebilirsin.</small> : null}
           </div>
           <div className={styles.practiceActions}>
-            <button disabled={videoUnavailable} onClick={() => playNarratedVideo(true)} type="button">▶ Sesli videoyu oynat <span>↗</span></button>
-            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Küçük kamerayı kapat" : "📷 Kameramla uyumumu gör"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
+            <button disabled={videoUnavailable} onClick={() => { if (videoPlaying) { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } else playNarratedVideo(); }} type="button">{videoPlaying ? "Videoyu Durdur" : "Hareketi Başlat"} <span>{videoPlaying ? "■" : "▶"}</span></button>
+            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "Pratik Yap"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
+            <button aria-pressed={!narrationEnabled} onClick={() => { if (narrationEnabled) narrationRef.current?.pause(); else if (videoPlaying) void narrationRef.current?.play().catch(() => {}); setNarrationEnabled((enabled) => !enabled); }} type="button">{narrationEnabled ? "Sesli Yönergeleri Kapat" : "Sesli Yönergeleri Aç"}</button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
           </div>
           {miniCameraOpen ? <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={0} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score",String(value)); }} /><small>Bu değere ulaştığında üç fotoğraf kaydedilir.</small></label> : null}
@@ -300,8 +308,8 @@ export function BodyLinesScreen() {
                   loop
                   muted
                   onError={() => { narrationRef.current?.pause(); setVideoUnavailable(true); }}
-                  onPause={() => narrationRef.current?.pause()}
-                  onPlay={() => playNarration()}
+                  onPause={() => { setVideoPlaying(false); narrationRef.current?.pause(); }}
+                  onPlay={() => { setVideoPlaying(true); setFormSteps(markFormStep(movementOrder, "watched", user?.id)); playNarration(); }}
                   onTimeUpdate={(event) => {
                     const video = event.currentTarget;
                     const audio = narrationRef.current;
@@ -309,7 +317,7 @@ export function BodyLinesScreen() {
                       const naturalLoop = video.duration > 0 && lastDemoTimeRef.current >= video.duration - 1;
                       if (!naturalLoop || audio.ended) {
                         audio.currentTime = 0;
-                        if (!video.paused) void audio.play().catch(() => {});
+                        if (!video.paused && narrationEnabled) void audio.play().catch(() => {});
                       }
                     }
                     lastDemoTimeRef.current = video.currentTime;
@@ -324,7 +332,7 @@ export function BodyLinesScreen() {
               </div>
             <audio key={movement.order} preload="auto" ref={narrationRef} src={`/audio/shibashi-18/shibashi_${String(movement.order).padStart(2, "0")}.mp3`} />
             {videoUnavailable ? <span className={styles.videoUnavailable}>Video şu anda açılamıyor. Hareketi yeniden seçerek tekrar deneyebilirsin.</span> : null}
-            {miniCameraOpen ? <MovementCameraPractice active compact movementOrder={String(movement.order).padStart(2, "0")} movementName={movement.sourceTitle} retryKey={0} onClose={() => setMiniCameraOpen(false)} onComplete={keepCurrentMovement} onPhotoCaptured={savePhoto} teacherVideoRef={demoVideoRef} targetScoreOverride={targetScore} /> : null}
+            {miniCameraOpen ? <MovementCameraPractice active compact movementOrder={String(movement.order).padStart(2, "0")} movementName={movement.sourceTitle} retryKey={0} onClose={() => setMiniCameraOpen(false)} onComplete={onTargetReached} onTargetReached={onTargetReached} onPhotoCaptured={savePhoto} teacherVideoRef={demoVideoRef} targetScoreOverride={targetScore} /> : null}
           </div>
         </section>
         <MovementDetail movement={movement} />
@@ -335,6 +343,7 @@ export function BodyLinesScreen() {
           {meridianMovements.map((item) => <button aria-current={item.order === movementOrder ? "step" : undefined} aria-label={`${item.order}. form: ${item.sourceTitle}, ${completedOrders.includes(item.order) ? "tamamlandı" : formSteps[item.order]?.attempted ? "denendi" : formSteps[item.order]?.watched ? "izlendi" : "başlanmadı"}`} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/shibashi-new/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><b className={styles.tileProgress}>{completedOrders.includes(item.order) ? "✓ Tamamlandı" : formSteps[item.order]?.attempted ? "◉ Denendi" : formSteps[item.order]?.watched ? "◌ İzlendi" : ""}</b><strong>{item.sourceTitle}</strong></button>)}
         </div>
       </section>
+      <section className={styles.inlinePhotos} aria-label={`${movement.sourceTitle} fotoğraflarım`}><div className={styles.galleryHeader}><div><span className={styles.eyebrow}>HAREKET {String(movementOrder).padStart(2, "0")}</span><h2>Fotoğraflarım</h2><p>{movement.sourceTitle} için kaydedilen fotoğraflar</p></div></div>{currentPhotos.length ? <div className={styles.galleryGrid}>{currentPhotos.map((photo) => <button key={photo.id} onClick={() => { setSelectedPhoto(photo); setGalleryOpen(true); }} type="button"><img alt={`${photo.movementName} fotoğrafı`} loading="lazy" src={photo.imageData} /><span><strong>{photo.movementName}</strong><small>{photo.dateKey} · %{photo.score}</small></span></button>)}</div> : <p>Bu form için henüz fotoğraf yok. Pratikte hedef uyuma ulaştığında burada görünecek.</p>}</section>
       {galleryOpen ? <div className={styles.galleryBackdrop} onClick={() => { setGalleryOpen(false); setSelectedPhoto(null); }} role="presentation">
         <section aria-label="Fotoğraflarım" aria-modal="true" className={styles.galleryDialog} onClick={(event) => event.stopPropagation()} role="dialog">
           <div className={styles.galleryHeader}>

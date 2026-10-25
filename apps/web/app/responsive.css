@@ -259,3 +259,14 @@
   .device-mode-desktop .shen-journey-header h1 { font-size: clamp(2rem, 9vw, 3rem); }
   .device-mode-desktop .journey-framework-card { min-height: 250px; }
 }
+/* Keep the settings item aligned with every other desktop navigation item. */
+@media (min-width: 900px) {
+  .device-mode-desktop .device-shell .bottom-nav .nav-button:last-child {
+    border: 0;
+    border-radius: 0;
+    min-height: 80px;
+    padding: 0;
+  }
+}
+
+html { scrollbar-gutter: stable; }

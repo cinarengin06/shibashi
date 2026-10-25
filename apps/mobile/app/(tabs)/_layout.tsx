@@ -68,12 +68,12 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" options={{ title: "Odam" }} />
       <Tabs.Screen name="main-map" options={{ title: "Gelişim Haritam" }} />
-      <Tabs.Screen name="lessons" options={{ title: "Isınma Dersleri" }} />
+      <Tabs.Screen name="lessons" options={{ title: "Temel Dersler" }} />
       <Tabs.Screen name="moves" options={{ title: "18 Form" }} />
       <Tabs.Screen name="posture" options={{ title: "Postür" }} />
       <Tabs.Screen name="practice" options={{ href: null, title: "Pratikler" }} />
       <Tabs.Screen name="journey" options={{ title: "8 Kapı" }} />
-      <Tabs.Screen name="journal" options={{ title: "Kayıtlarım" }} />
+      <Tabs.Screen name="journal" options={{ title: "İstatistiklerim" }} />
       <Tabs.Screen name="profile" options={{ title: "Ayarlar" }} />
     </Tabs>
     <MobileDrawer visible={menuOpen} onClose={() => setMenuOpen(false)} />

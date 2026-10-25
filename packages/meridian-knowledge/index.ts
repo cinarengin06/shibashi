@@ -80,6 +80,7 @@ const data = rawData as MeridianKnowledgeData;
 export const meridianKnowledgeSource = data.source;
 export const meridianMovements = data.movements;
 export { meridianLivingSteps } from "./livingSteps";
+export { getMovementEnergyTag, movementEnergyTags, type MovementEnergyTag } from "./yinYang";
 export const acupoints = data.points;
 export const extraordinaryMeridians = data.extraordinaryMeridians;
 

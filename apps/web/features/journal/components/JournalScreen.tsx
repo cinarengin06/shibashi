@@ -159,7 +159,7 @@ export function JournalScreen({
     <section className="screen daily-journal-screen">
       <div className="daily-journal-hero">
         <div>
-          <span className="eyebrow">Kayıtlarım</span>
+          <span className="eyebrow">İstatistiklerim</span>
           <h1>Bugünün beden kaydı.</h1>
           <p>Pratiklerin, postür analizlerin ve günün yansıması tek bir akışta.</p>
         </div>

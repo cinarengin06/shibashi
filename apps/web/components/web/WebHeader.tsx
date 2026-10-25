@@ -12,11 +12,11 @@ type WebHeaderTab = "home" | "mainMap" | "lessons" | "practice" | "posture" | "j
 const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
   { id: "home", label: "Odam", href: "/" },
   { id: "mainMap", label: "Gelişim Haritam", href: "/ana-haritam" },
-  { id: "lessons", label: "Isınma Dersleri", href: "/?tab=lessons" },
+  { id: "lessons", label: "Temel Dersler", href: "/?tab=lessons" },
   { id: "bodyLines", label: "18 Form", href: "/beden-hatlari" },
   { id: "posture", label: "Postür", href: "/?tab=posture" },
   { id: "journey", label: "8 Kapı", href: "/?tab=journey" },
-  { id: "journal", label: "Kayıtlarım", href: "/?tab=journal" },
+  { id: "journal", label: "İstatistiklerim", href: "/?tab=journal" },
   { id: "profile", label: "Ayarlar", href: "/?tab=profile" },
 ];
 

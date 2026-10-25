@@ -5,8 +5,9 @@ import { MilestoneCelebration } from "@/features/home/components/MilestoneCelebr
 
 import NextImage from "next/image";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import type { CSSProperties, Dispatch, ReactNode, RefObject, SetStateAction } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { JournalScreen } from "@/features/journal/components/JournalScreen";
 import { ProfileScreen } from "@/features/profile/components/ProfileScreen";
 import { PremiumOnboarding } from "@/features/onboarding/components/PremiumOnboarding";
@@ -145,19 +146,20 @@ type CoachCueRequest = {
 const tabs: { id: TabId | "bodyLines" | "mainMap"; label: string; icon: string }[] = [
   { id: "home", label: "Odam", icon: "◉" },
   { id: "mainMap", label: "Gelişim Haritam", icon: "◌" },
-  { id: "lessons", label: "Isınma Dersleri", icon: "▶" },
+  { id: "lessons", label: "Temel Dersler", icon: "▶" },
   { id: "bodyLines", label: "18 Form", icon: "✦" },
   { id: "posture", label: "Postür", icon: "↕" },
   { id: "journey", label: "8 Kapı", icon: "☯" },
-  { id: "journal", label: "Kayıtlarım", icon: "◌" },
+  { id: "journal", label: "İstatistiklerim", icon: "◌" },
   { id: "profile", label: "Ayarlar", icon: "☰" },
 ];
 
 export default function RitimKapisiOS() {
+  const router = useRouter();
   const auth = useShibashiAuth();
   const [activeTab, setActiveTab] = useState<TabId>("home");
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const queryTab = new URLSearchParams(window.location.search).get("tab");
     if (queryTab && queryTab !== "bodyLines" && queryTab !== "mainMap" && tabs.some((tab) => tab.id === queryTab)) setActiveTab(queryTab as TabId);
   }, []);
@@ -374,7 +376,7 @@ export default function RitimKapisiOS() {
   },[syncReady,syncCode]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "auto" });
   }, [activeTab]);
 
   useEffect(() => {
@@ -799,7 +801,7 @@ export default function RitimKapisiOS() {
                 <button
                   className={`nav-button nav-tab-${tab.id} ${activeTab === tab.id ? "nav-button-active" : ""}`}
                   key={tab.id}
-                  onClick={() => tab.id === "bodyLines" ? window.location.assign("/beden-hatlari") : tab.id === "mainMap" ? window.location.assign("/ana-haritam") : setActiveTab(tab.id)}
+                  onClick={() => tab.id === "bodyLines" ? router.push("/beden-hatlari") : tab.id === "mainMap" ? router.push("/ana-haritam") : setActiveTab(tab.id)}
                   type="button"
                 >
                   <strong>{tab.icon}</strong>

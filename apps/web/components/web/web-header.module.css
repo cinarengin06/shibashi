@@ -8,11 +8,11 @@
   column-gap: clamp(12px, 1.6vw, 26px);
   grid-template-columns: max-content minmax(0, 1fr) max-content;
   height: 80px;
-  margin-inline: calc(50% - 50vw);
+  box-sizing: border-box;
   padding: 0 28px;
   position: sticky;
   top: 0;
-  width: 100vw;
+  width: 100%;
   z-index: 90;
 }
 

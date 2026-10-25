@@ -24,7 +24,7 @@ export default function WarmupLessons() {
   return <Screen style={styles.page}>
       {!isTab && <Pressable accessibilityRole="button" accessibilityLabel="Geri dön" onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" color={theme.button} size={22}/><Text style={[styles.backText, { color: theme.button }]}>Geri</Text></Pressable>}
       <Text style={[styles.eyebrow, { color: theme.button }]}>FORMDAN ÖNCE</Text>
-      <Text style={[styles.title, { color: theme.light }]}>Isınma Dersleri</Text>
+      <Text style={[styles.title, { color: theme.light }]}>Temel Dersler</Text>
       <Text style={styles.lead}>Bedenini hazırlamak için kısa bir ders seç. Videoyu açıp kendi hızında izle.</Text>
       {lessons.map(lesson => <View key={lesson.order} style={[styles.card, { backgroundColor: theme.surfaceRaised, borderColor: `${theme.primary}55` }, shenShape(profile.selectedShenId)]}>
         {playingId === lesson.videoId ? <View style={styles.playerWrap}>

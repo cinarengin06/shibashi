@@ -11,7 +11,7 @@ export function LessonVideosScreen() {
   return <section className={`screen ${styles.page}`} aria-labelledby="lesson-videos-title">
     <header className={styles.header}>
       <span className={styles.eyebrow}>SHIBASHI ÖNCESİ</span>
-      <h1 id="lesson-videos-title">Isınma Dersleri</h1>
+      <h1 id="lesson-videos-title">Temel Dersler</h1>
       <p>Üç temel dersi sırayla izle. Hazır hissettiğinde 18 Form&apos;a geç.</p>
     </header>
 

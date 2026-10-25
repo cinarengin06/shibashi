@@ -1,0 +1,323 @@
+SHIBASHI EFE — WEB VE MOBİL TÜM SESLİ METİNLER
+Kaynak: 24.10.2026 tarihindeki uygulama kodu. Bu belge kayıt/TTS hazırlığı içindir.
+Köşeli açıklamalar okunacak metnin parçası değildir.
+Not: Form adımları ekranda yazılıdır; mevcut 18 Form akışında otomatik seslendirilmez.
+Not: Hoca videolarının içindeki sesler MP4 içeriğidir; konuşma dökümü bu listede yoktur.
+
+========================================================================
+1. 18 FORM — EKRANDAKİ HAREKET YÖNERGELERİ (18 x 3 = 54 METİN)
+========================================================================
+
+01. Başlangıç Formu
+  1. Ayaklarını rahatça yere bas; dizlerini yumuşak bırak.
+  2. Nefes alırken iki kolunu öne ve yukarı kaldır.
+  3. Kollarını indir; omuzlarını gevşet ve ağırlığını ayaklarına bırak.
+
+02. Göğsün Genişletilmesi
+  1. Ayaklarını yere dengeli yerleştir.
+  2. Nefes alırken kollarını iki yana aç.
+  3. Kollarını yumuşakça öne getir.
+
+03. Gökkuşakları ile Dans Etmek
+  1. Dizlerini yumuşat; ellerini gövdenin önünde hazırla.
+  2. Ağırlığını bir yana taşırken kolunu geniş bir yayla kaldır.
+  3. Bakışını elinle izle ve diğer yana ak.
+
+04. Kolları Çevirmek
+  1. Ayaklarını sabitle, omuzlarını serbest bırak.
+  2. Kollarınla rahat bir daire çiz.
+  3. Daireyi ters yönde tamamla.
+
+05. Beli Kıvırma ve Kolları Sallama
+  1. Ayaklarını dengeli aç.
+  2. Gövdeni nazikçe bir yana döndür; kolların serbestçe sallansın.
+  3. Merkeze dön ve diğer yana tekrarla.
+
+06. Kayıkta Kürek Çekmek
+  1. Dizlerini yumuşat, sırtını uzun tut.
+  2. Kollarını kürek çeker gibi öne uzatıp kendine al.
+  3. Yumuşakça yüksel ve akışla tekrarla.
+
+07. Topu Tutmak
+  1. Ellerini görünmez bir top tutar gibi yuvarla.
+  2. Ağırlığını bir ayağına aktar.
+  3. Ellerinle birlikte diğer yana geç.
+
+08. Ay’ı Taşımak
+  1. Bir elini bel hizasında tut, diğerini yukarı uzat.
+  2. Yukarı uzarken boynunu sıkıştırma.
+  3. Kollarının yerini değiştir.
+
+09. Beli Kıvırma ve Elleri İtme
+  1. Ellerini göğüs önünde hazırla.
+  2. Yumuşakça dönüp avuçlarını öne it.
+  3. Merkeze gel ve yön değiştir.
+
+10. Bulutlarla Oynamak
+  1. Ellerini gövdenin önünde tut.
+  2. Ellerini bulut taşır gibi bir yana yuvarla.
+  3. Bakışınla birlikte diğer yana dön.
+
+11. Denizden Kaşıklamak
+  1. Kalçandan öne eğil, sırtını uzun tut.
+  2. Kollarınla aşağıdan yukarı bir yay çiz.
+  3. Yumuşakça yüksel.
+
+12. Dalgalarla Oynamak
+  1. Ayaklarını rahatça aç.
+  2. Ağırlığını öne ve arkaya küçükçe aktar.
+  3. Rahat ritmini sürdür.
+
+13. Kanatlarını Açmak
+  1. Ellerini göğüs önünde buluştur.
+  2. Kollarını iki yana aç.
+  3. Kollarını yeniden merkeze getir.
+
+14. Yumruklama
+  1. Ellerini bel hizasında hazırla.
+  2. Yumuşakça dönüp yumruğunu öne uzat.
+  3. Kolunu zorlamadan geri çek ve yön değiştir.
+
+15. Kaz Gibi Uçmak
+  1. Dizlerini yumuşak tut.
+  2. Kollarını hafifçe kaldırıp başının tepesini uzat.
+  3. Kollarını indir ve ayak tabanlarını hisset.
+
+16. Çıkrık Çevirme
+  1. Ayaklarını dengeli yerleştir, kollarını öne al.
+  2. Gövdenle geniş ve yumuşak bir daire çiz.
+  3. Daireyi diğer yönde tamamla.
+
+17. Topu Zıplatmak
+  1. Ağırlığını bir ayağına al.
+  2. Karşı elinle yumuşakça yaylan.
+  3. Taraf değiştir ve rahat kal.
+
+18. Avuç İçlerini Bastırma
+  1. Avuçlarını göğüs önünde buluştur.
+  2. Avuçlarını öne ve aşağı yumuşakça bastır.
+  3. Kollarını indir, merkezini hisset.
+
+========================================================================
+2. 18 FORM — ŞU ANDA GERÇEKTEN SESLENDİRİLEN ORTAK CÜMLELER (MOBİL)
+========================================================================
+form-hazir-ol: Hareketi sen de yapmaya hazır ol.
+form-basardi: Başardın, şimdi sıradakine geç.
+[Bu iki kayıt 18 formun hepsinde ortak kullanılır; forma özel 54 adım bugün okunmuyor.]
+
+========================================================================
+3. POSTÜR ANALİZİ — MOBİLDE SESLENDİRİLEN 4 CÜMLE
+========================================================================
+postur-mobil-on: Kameraya dön. Başın ve ayakların göründüğünde ölçüm başlayacak.
+postur-mobil-yan: Şimdi yana dön. Yan duruşun algılandığında üç saniye bekle.
+postur-mobil-arka: Şimdi arkaya dön. Arka görünüm algılandığında üç saniye bekle.
+postur-mobil-bitti: Bitti. Üç görünüm tamamlandı. Postür raporun hazırlanıyor.
+
+========================================================================
+4. POSTÜR ANALİZİ — WEBDE SESLENDİRİLEN 19 CÜMLE
+========================================================================
+postur-web-on: Ön görünüm. Kameraya dön. Ayaklarını kalça genişliğinde aç ve kollarını rahat bırak.
+postur-web-yan: Şimdi sağ yanını kameraya dön. Başını doğal konumda tut ve kollarını rahat bırak.
+postur-web-arka: Şimdi arkanı kameraya dön. Ağırlığını iki ayağına eşit dağıt ve doğal dur.
+postur-web-kadraj: Laptop ekranını sabitle. Başınla ayakların aynı karede görünene kadar biraz geri çekil.
+postur-web-ortada: Kadrajdaki beden kılavuzunun ortasında kal.
+postur-web-geri: Bir adım geri git.
+postur-web-yaklas: Kameraya yarım adım yaklaş.
+postur-web-saga-gec: Biraz sağa geç.
+postur-web-sola-gec: Biraz sola geç.
+postur-web-cene: Çeneni hafifçe geriye al. Başını omuzunun üzerinde tut.
+postur-web-dikey: Göğsünü kaldırmadan gövdeni dikey hatta getir.
+postur-web-kalca: Kalçanı ayak bileğinin üzerinde hizala.
+postur-web-sol-omuz: Sol omzunu biraz indir.
+postur-web-sag-omuz: Sağ omzunu biraz indir.
+postur-web-omuzlar: Omuzlarını aynı yüksekliğe getir.
+postur-web-agirlik: Ağırlığını iki ayağına eşit dağıt.
+postur-web-govde-sola: Gövdeni hafifçe sola taşı.
+postur-web-govde-saga: Gövdeni hafifçe sağa taşı.
+postur-web-dengeli: Duruşun dengeli. Nefesini değiştirmeden sabit kal.
+[Ayrıca ekranda varsayılan “Tam bedenini kadraja al.” metni var; normal web ses akışının ayrı bir sabit çağrısı değil.]
+
+========================================================================
+5. DİĞER MOBİL PRATİK — SESLİ ŞABLONLAR VE GERİ BİLDİRİMLER
+========================================================================
+Başlangıç: [Hareket adı]. Öğretmeni takip et ve nefesinle başla.
+Duraklatma: Pratik duraklatıldı.
+Sürdürme: Devam ediyoruz.
+Kadraj: Biraz geri çekil. Omuzların, kalçan, dizlerin ve ayakların kadrajda olsun.
+Uyumlu kol yolu: Kol yolun doğru yönde. Geçişi biraz daha yavaşlat.
+Kol yolunu düzeltme: Ellerin referans yoluna yaklaşırken omuzlarını yumuşak tut.
+Ağırlık aktarımı: Ağırlığı ön ayağa daha kademeli aktarabilirsin.
+Yedek metin: Akışını sakin biçimde sürdür.
+[Başlangıçtaki hareket adı dinamik gelir. Gerçek zamanlı geribildirimler duruma göre seçilir.]
+
+========================================================================
+6. SEKİZ REHBER — MOBİLDE SESLENDİRİLEBİLEN METİNLER (8 x 5 = 40)
+========================================================================
+
+He Xiangu
+  Giriş: Seni zorlamadan yanında yürüyebilirim. Bugün bedeninde açılmaya hazır olan küçük yeri birlikte bulalım.
+  Dağınıklık: Önce hiçbir şeyi düzeltmeye çalışma. Ayaklarının altındaki zemini hisset; sonra yalnızca bir nefeslik alan aç.
+  Cesaret: Yumuşaklık geri çekilmek değildir. Kökün sakin olduğunda hareketin daha cesur olabilir.
+  Yavaşlama: Bugün başarı, daha çok yapmak değil; bir hareketin içinde gerçekten kalabilmek.
+  Başlangıç: Avuçlarını bir lotus taşır gibi tut. İlk hareketi nefesin başlatsın, kolların değil.
+
+Han Xiangzi
+  Giriş: Her nefesin içinde henüz çalınmamış bir nota var. Bugün hareketini duymaya ne dersin?
+  Dağınıklık: Dağınıklık bütün notaları aynı anda çalmaktır. Birini seç ve ona yer aç.
+  Cesaret: Cesaret bazen tek bir temiz notayı sonuna kadar sürdürebilmektir.
+  Yavaşlama: Ritmi yarıya indir. Nefesin ve hareketin aynı cümlede buluşsun.
+  Başlangıç: Önce dinle. Sonra nefes verişinde kolların melodiyi takip etsin.
+
+Li Tieguai
+  Giriş: Kap çatlak olabilir; ama içindeki sıcaklık hâlâ işe yarar. Kusursuz olmayı bırak da başlayalım.
+  Dağınıklık: Bütün parçaları toplamana gerek yok. En yakındakini eline al; bugünlük o yeter.
+  Cesaret: Korku bacaklarını titretebilir. Yine de küçük bir adım atılır.
+  Yavaşlama: Yorgunsan dinlenerek çalış. Dinlenmek yolun dışı değil, yolun nefesidir.
+  Başlangıç: Omuzlarını indir, dizlerini kilitleme. Beden emirden çok dostluğu anlar.
+
+Lü Dongbin
+  Giriş: Dikkat kılıç gibidir: savrulursa yorar, doğru yönde tutulursa yolu açar.
+  Dağınıklık: Tek bir eksen seç: ayak, merkez ve bakış. Üçü aynı yönü bulduğunda zihin dağılmaz.
+  Cesaret: Cesaret sonuçtan emin olmak değil, hareketin ilkesine sadık kalmaktır.
+  Yavaşlama: Hızı azalt fakat dikkati azaltma. Yavaşlık ancak uyanıklıkla çalışır.
+  Başlangıç: Duruşunu kur, nefesi izle, gereksiz olanı bırak ve ilk harekete gir.
+
+Zhang Guolao
+  Giriş: Herkes ileri giderken ben bazen geriye bakarım. Belki cevap aceleyle geçtiğin yerdedir.
+  Dağınıklık: Yeni bir şey ekleme. Bugün önce bitir, sonra planla.
+  Cesaret: Korktuğun kapıya koşma. Arkasını dolaş; belki kapı sandığın şey duvardır.
+  Yavaşlama: Yavaşlamak yetmez. Nereye yetiştiğini de sor.
+  Başlangıç: İlk hareketi bildiğin gibi değil, ilk kez görüyormuş gibi yap.
+
+Lan Caihe
+  Giriş: Bugün hareketin düzgün görünmek zorunda değil. Canlı olsun; önce onu bulalım.
+  Dağınıklık: Bir dakika boyunca seçme. Bedenin hangi yöne sallanmak istiyorsa onu izle.
+  Cesaret: Oyun alanında hata, yeni bir yolun kapısıdır.
+  Yavaşlama: Bir çiçeğin açmasını hızlandıramazsın. Ama ona yer açabilirsin.
+  Başlangıç: Müziği duymasan da ritim var. Ayaklarından başlat.
+
+Cao Guojiu
+  Giriş: Pratik, kendine verdiğin sözü uygulanabilir bir biçime dönüştürmektir. Küçük ama net bir söz seçelim.
+  Dağınıklık: Görevleri üçe indir: hazırlan, uygula, kapat.
+  Cesaret: Kendini kanıtlamak zorunda değilsin. Değerlerine uygun bir sonraki adımı at.
+  Yavaşlama: Aynı saatte kısa çalışma, uzun fakat düzensiz çalışmadan daha güvenilirdir.
+  Başlangıç: Süreyi belirle, alanı hazırla ve başladığında yalnızca pratiğin içinde kal.
+
+Zhongli Quan
+  Giriş: Güç sertleşmek değildir. İyi bir ateş hem dönüştürür hem etrafındakileri ısıtır.
+  Dağınıklık: Merkezine dön. Nefesi karında topla, hareketi oradan bütün bedene dağıt.
+  Cesaret: Korkuyu kovalamayacağız. Sıcaklığı büyüteceğiz; gölge kendiliğinden küçülecek.
+  Yavaşlama: Ateş fazla yükselirse yemek yanar. Kıs, dinle, yeniden besle.
+  Başlangıç: Ayaklarını yere ver, göğsünü zorlamadan aç ve ilk nefeste bedenine yer aç.
+
+========================================================================
+7. SEKİZ REHBER — WEBDE SESLENDİRİLEBİLEN METİNLER (8 x 5 = 40)
+========================================================================
+
+He Xiangu
+  Giriş: Seni zorlamadan yanında yürüyebilirim. Bugün bedeninde açılmaya hazır olan küçük yeri bulalım.
+  Dağınıklık: Önce hiçbir şeyi düzeltme. Zemini hisset ve yalnızca bir nefeslik alan aç.
+  Cesaret: Yumuşaklık geri çekilmek değildir. Kökün sakinken hareketin cesur olabilir.
+  Yavaşlama: Bugün başarı, bir hareketin içinde gerçekten kalabilmek.
+  Başlangıç: İlk hareketi nefesin başlatsın, kolların değil.
+
+Han Xiangzi
+  Giriş: Her nefesin içinde henüz çalınmamış bir nota var. Bugün hareketini duymaya ne dersin?
+  Dağınıklık: Bütün notaları aynı anda çalma. Birini seç ve ona yer aç.
+  Cesaret: Cesaret bazen tek bir temiz notayı sonuna kadar sürdürebilmektir.
+  Yavaşlama: Ritmi yarıya indir; nefes ve hareket aynı cümlede buluşsun.
+  Başlangıç: Önce dinle, sonra kolların nefesi takip etsin.
+
+Li Tieguai
+  Giriş: Kusursuz olmayı bırak da başlayalım. Küçük bir adım bugün yeter.
+  Dağınıklık: Bütün parçaları toplama. En yakındakini eline al.
+  Cesaret: Korku bacaklarını titretebilir; yine de bir adım atılır.
+  Yavaşlama: Yorgunsan dinlenerek çalış. Dinlenmek yolun nefesidir.
+  Başlangıç: Omuzları indir, dizleri kilitleme; beden dostluğu anlar.
+
+Lü Dongbin
+  Giriş: Dikkat kılıç gibidir: savrulursa yorar, doğru tutulursa yolu açar.
+  Dağınıklık: Ayak, merkez ve bakış için tek eksen seç.
+  Cesaret: Cesaret sonuçtan emin olmak değil, ilkeye sadık kalmaktır.
+  Yavaşlama: Hızı azalt fakat dikkati azaltma.
+  Başlangıç: Duruşunu kur, nefesi izle ve gereksiz olanı bırak.
+
+Zhang Guolao
+  Giriş: Belki cevap, aceleyle geçtiğin yerdedir. Bir kez de tersinden bakalım.
+  Dağınıklık: Yeni bir şey ekleme. Önce bitir, sonra planla.
+  Cesaret: Kapıya koşma; arkasını dolaş ve gerçekten kapı mı bak.
+  Yavaşlama: Yavaşlamak yetmez. Nereye yetiştiğini de sor.
+  Başlangıç: İlk hareketi ilk kez görüyormuş gibi yap.
+
+Lan Caihe
+  Giriş: Hareketin düzgün görünmek zorunda değil. Önce canlı olanı bulalım.
+  Dağınıklık: Bir dakika seçme; bedenin gitmek istediği yönü izle.
+  Cesaret: Oyun alanında hata, yeni bir yolun kapısıdır.
+  Yavaşlama: Bir çiçeği hızlandıramazsın ama ona yer açabilirsin.
+  Başlangıç: Müziği duymasan da ritim var. Ayaklarından başlat.
+
+Cao Guojiu
+  Giriş: Bugün kendine küçük ama net bir söz verelim.
+  Dağınıklık: Görevleri üçe indir: hazırlan, uygula, kapat.
+  Cesaret: Kendini kanıtlama; değerlerine uygun bir sonraki adımı at.
+  Yavaşlama: Kısa ve düzenli çalışma iradeyi korur.
+  Başlangıç: Süreyi belirle, alanı hazırla ve pratiğin içinde kal.
+
+Zhongli Quan
+  Giriş: Güç sertleşmek değildir. İyi bir ateş hem dönüştürür hem ısıtır.
+  Dağınıklık: Merkezine dön; nefesi karında topla ve bedene dağıt.
+  Cesaret: Korkuyu kovalamak yerine sıcaklığı büyüt.
+  Yavaşlama: Ateşi kıs, dinle ve yeniden besle.
+  Başlangıç: Ayaklarını yere ver ve ilk nefeste bedenine yer aç.
+
+========================================================================
+8. MEVCUT SES DOSYALARI VE MÜZİKLER
+========================================================================
+Aşağıdaki dosyalar ses varlığıdır. Metin okuma cümleleriyle birebir eşleşmeleri doğrulanmadan yeni kayıtlara karıştırılmamalıdır.
+apps/mobile/assets/audio/posture/tai/back-3s.mp3
+apps/mobile/assets/audio/posture/tai/front-3s.mp3
+apps/mobile/assets/audio/posture/tai/side-3s.mp3
+apps/mobile/assets/shen/music/shen-music-hun.mp4
+apps/mobile/assets/shen/music/shen-music-po.mp4
+apps/mobile/assets/shen/music/shen-music-shen.mp4
+apps/mobile/assets/shen/music/shen-music-yi.mp4
+apps/mobile/assets/shen/music/shen-music-zhi.mp4
+apps/web/public/audio/coach/align 2.m4a
+apps/web/public/audio/coach/align.m4a
+apps/web/public/audio/coach/calibration 2.m4a
+apps/web/public/audio/coach/calibration.m4a
+apps/web/public/audio/coach/ok 2.m4a
+apps/web/public/audio/coach/ok.m4a
+apps/web/public/audio/coach/soft 2.m4a
+apps/web/public/audio/coach/soft.m4a
+apps/web/public/audio/coach/start 2.m4a
+apps/web/public/audio/coach/start.m4a
+apps/web/public/audio/coach/test 2.m4a
+apps/web/public/audio/coach/test.m4a
+apps/web/public/audio/coach/tr/align.m4a
+apps/web/public/audio/coach/tr/calibration.m4a
+apps/web/public/audio/coach/tr/ok.m4a
+apps/web/public/audio/coach/tr/soft.m4a
+apps/web/public/audio/coach/tr/start.m4a
+apps/web/public/audio/coach/tr/test.m4a
+apps/web/public/audio/posture/tai/back-3s.mp3
+apps/web/public/audio/posture/tai/front-3s.mp3
+apps/web/public/audio/posture/tai/side-3s.mp3
+apps/web/public/videos/shen-music-hun.mp4
+apps/web/public/videos/shen-music-po.mp4
+apps/web/public/videos/shen-music-shen.mp4
+apps/web/public/videos/shen-music-yi.mp4
+apps/web/public/videos/shen-music-zhi.mp4
+
+Not: “audio/posture/tai” altındaki 3 MP3 dosyası depoda var; güncel postür TTS akışı bunları çağırmıyor.
+Not: “audio/coach” altındaki M4A dosyaları depoda var; güncel web postür/rehber TTS çağrıları ayrı çalışıyor.
+Not: Mobil 18 form hoca videoları ve web karşılıkları MP4 olarak ayrı tutuluyor; video iç sesleri bu metin listesine dökülmedi.
+
+========================================================================
+9. KAYIT PLANLAMA ÖZETİ
+========================================================================
+Bugün seslendirilen sabit cümleler: 2 form + 4 mobil postür + 19 web postür + 7 diğer pratik = 32.
+Rehber seçenekleri: 40 mobil + 40 web = 80 ayrı metin (platformlar arasında benzer ama birebir aynı değil).
+18 formun ekranda yazan fakat şu an okunmayan yönergeleri: 54 metin.
+Dinamik başlangıç şablonu: 1 metin + hareket adı; kayıt için forma göre ayrı varyantlar gerekebilir.
+Aynı cümleleri tek dosya olarak paylaşmak ve web/mobili ortak metne geçirmek dosya sayısını azaltabilir.

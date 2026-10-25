@@ -8,6 +8,7 @@ import {
   meridianMovements,
   meridianTeachingMethod,
   meridianLivingSteps,
+  getMovementEnergyTag,
   type MeridianMovementKnowledge,
 } from "@/packages/meridian-knowledge";
 import { MovementCameraPractice } from "@/features/living-learning/components/MovementCameraPractice";
@@ -232,6 +233,7 @@ export function BodyLinesScreen() {
     chooseMovement(((movementOrder - 1 + step + 18) % 18) + 1);
   }, [chooseMovement, movementOrder]);
   const movementSteps = meridianLivingSteps[movementOrder - 1];
+  const energyTag = getMovementEnergyTag(movementOrder);
   const currentFormSteps = formSteps[movementOrder] ?? {};
   const completedHere = completedOrders.includes(movementOrder);
   const completeCurrentForm = () => {
@@ -286,7 +288,7 @@ export function BodyLinesScreen() {
             </button>
             <div>
               <span>HAREKET {String(movement.order).padStart(2, "0")}</span>
-              <strong>{movement.sourceTitle}</strong>
+              <div className={styles.stageTitleLine}><strong>{movement.sourceTitle}</strong><small className={energyTag.quality === "Yang" ? styles.yangTag : styles.yinTag} title="Hareketin baskın öğretim niteliği">{energyTag.quality} · {energyTag.action}</small></div>
             </div>
             <button
               aria-label="Sonraki hareket"
@@ -340,7 +342,7 @@ export function BodyLinesScreen() {
       <section className={styles.movementSelector} aria-label="18 hareket">
         <div className={styles.selectorHeading}><span className={styles.eyebrow}>HAREKET ŞERİDİ</span><strong>Şu an 18 hareketin {movementOrder}. hareketindesin.</strong><button onClick={() => stepMovement(1)} type="button">Sonraki harekete geç →</button></div>
         <div className={styles.movementTiles}>
-          {meridianMovements.map((item) => <button aria-current={item.order === movementOrder ? "step" : undefined} aria-label={`${item.order}. form: ${item.sourceTitle}, ${completedOrders.includes(item.order) ? "tamamlandı" : formSteps[item.order]?.attempted ? "denendi" : formSteps[item.order]?.watched ? "izlendi" : "başlanmadı"}`} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/shibashi-new/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><b className={styles.tileProgress}>{completedOrders.includes(item.order) ? "✓ Tamamlandı" : formSteps[item.order]?.attempted ? "◉ Denendi" : formSteps[item.order]?.watched ? "◌ İzlendi" : ""}</b><strong>{item.sourceTitle}</strong></button>)}
+          {meridianMovements.map((item) => { const tag = getMovementEnergyTag(item.order); return <button aria-current={item.order === movementOrder ? "step" : undefined} aria-label={`${item.order}. form: ${item.sourceTitle}, ${tag.quality}, ${tag.action}, ${completedOrders.includes(item.order) ? "tamamlandı" : formSteps[item.order]?.attempted ? "denendi" : formSteps[item.order]?.watched ? "izlendi" : "başlanmadı"}`} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/shibashi-new/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><b className={styles.tileProgress}>{completedOrders.includes(item.order) ? "✓ Tamamlandı" : formSteps[item.order]?.attempted ? "◉ Denendi" : formSteps[item.order]?.watched ? "◌ İzlendi" : ""}</b><strong>{item.sourceTitle}</strong><small className={`${styles.tileEnergy} ${tag.quality === "Yang" ? styles.yangTag : styles.yinTag}`}>{tag.quality} · {tag.action}</small></button>; })}
         </div>
       </section>
       <section className={styles.inlinePhotos} aria-label={`${movement.sourceTitle} fotoğraflarım`}><div className={styles.galleryHeader}><div><span className={styles.eyebrow}>HAREKET {String(movementOrder).padStart(2, "0")}</span><h2>Fotoğraflarım</h2><p>{movement.sourceTitle} için kaydedilen fotoğraflar</p></div></div>{currentPhotos.length ? <div className={styles.galleryGrid}>{currentPhotos.map((photo) => <button key={photo.id} onClick={() => { setSelectedPhoto(photo); setGalleryOpen(true); }} type="button"><img alt={`${photo.movementName} fotoğrafı`} loading="lazy" src={photo.imageData} /><span><strong>{photo.movementName}</strong><small>{photo.dateKey} · %{photo.score}</small></span></button>)}</div> : <p>Bu form için henüz fotoğraf yok. Pratikte hedef uyuma ulaştığında burada görünecek.</p>}</section>

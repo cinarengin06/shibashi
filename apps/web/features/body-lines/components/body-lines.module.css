@@ -147,6 +147,12 @@
   font-weight: 500;
   margin-top: 3px;
 }
+.stageTitleLine { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px 10px; }
+.stageTop .stageTitleLine strong { display:inline; margin-top:0; }
+.stageTitleLine small,
+.movementTiles .tileEnergy { border:1px solid currentColor; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:0; line-height:1.2; padding:5px 9px; }
+.yangTag { background:rgba(214,157,79,.16); color:#f6cf8a; }
+.yinTag { background:rgba(105,178,205,.16); color:#a7ddf1; }
 .visual {
   background: #080d0b;
   border: 1px solid rgba(215, 168, 88, 0.16);
@@ -377,7 +383,8 @@
 .movementTiles button:hover img, .movementTiles .movementTileActive img { opacity: .9; transform: scale(1.04); }
 .movementTiles button::after { background: linear-gradient(0deg,rgba(4,9,6,.94),transparent 80%); content: ""; inset: 0; position: absolute; }
 .movementTiles i { color: var(--gold); font-size: 11px; font-style: normal; left: 10px; position: absolute; top: 9px; z-index: 1; }
-.movementTiles strong { bottom: 10px; font-size: 12px; left: 10px; position: absolute; right: 10px; z-index: 1; }
+.movementTiles strong { bottom: 32px; font-size: 12px; left: 10px; position: absolute; right: 10px; z-index: 1; }
+.movementTiles .tileEnergy { bottom:6px; left:9px; position:absolute; z-index:2; padding:3px 6px; font-size:10px; }
 .movementTiles .movementTileActive { border-color: var(--line); }
 @media (max-width: 1120px) {
   .workspace {

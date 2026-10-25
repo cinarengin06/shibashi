@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getShenVisualTheme, shenThemes } from '../../../../packages/design-tokens';
-import { fonts } from '../../constants/theme';
+import { fonts, mobileThemeFont } from '../../constants/theme';
 import { shenShape } from '../../constants/shenDesign';
 import { shenBackgrounds } from '../../data/shenAssets';
 import { shenIcons } from '../../data/shenIcons';
@@ -41,7 +41,7 @@ export function MobileMenuHeader({ onOpen }: { onOpen: () => void }) {
   return <View style={[styles.topSafe, { paddingTop: insets.top, backgroundColor: visual.navigation, borderColor: visual.border }]}>
     <View style={styles.topBar}>
       <Pressable accessibilityRole="button" accessibilityLabel="Menüyü aç" onPress={onOpen} style={[styles.topButton, { borderColor: `${theme.button}88`, backgroundColor: visual.surfaceRaised }]}><Ionicons name="menu" size={26} color={theme.button} /></Pressable>
-      <View style={styles.brand}><Image source={shenIcons[shen.id]} style={styles.brandIcon} /><Text style={[styles.brandTitle, { color: theme.button }]}>SHIBASHI EFE</Text></View>
+      <View style={styles.brand}><Image source={shenIcons[shen.id]} style={styles.brandIcon} /><Text style={[styles.brandTitle, { color: visual.glow, fontFamily: mobileThemeFont(visual.id) }]}>SHIBASHI EFE</Text></View>
       <View style={styles.topActions}><Pressable accessibilityRole="button" accessibilityLabel={soundEnabled?'Müziği kapat':'Müziği aç'} onPress={toggleSound} style={styles.topButton}><Ionicons name={soundEnabled?'musical-notes':'musical-notes-outline'} size={22} color={theme.button}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Bildirimler" onPress={() => router.push('/notifications')} style={styles.topButton}><Ionicons name="notifications-outline" size={24} color={theme.button} />{unread > 0 && <View style={styles.unreadDot}/>}</Pressable></View>
     </View>
   </View>;
@@ -53,7 +53,7 @@ export function MobileDrawer({ visible, onClose }: { visible: boolean; onClose: 
   const { shen, soundEnabled, toggleSound } = useShenExperience();
   const theme = shenThemes[shen.id];
   const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
-  const light = visual.id === 'morning-light';
+  const light = visual.id === 'morning-light' || visual.id === 'terra-day';
   const { width } = useWindowDimensions();
   const drawerWidth = Math.min(354, width * .86);
   const slide = useRef(new Animated.Value(-drawerWidth)).current;
@@ -75,14 +75,14 @@ export function MobileDrawer({ visible, onClose }: { visible: boolean; onClose: 
           <ImageBackground source={shenBackgrounds[shen.id]} style={styles.drawerHero} resizeMode="cover">
             <LinearGradient colors={['rgba(3,9,8,.48)', theme.surface]} style={styles.drawerHeroShade}>
               <View style={styles.drawerHeader}><Image source={shenIcons[shen.id]} style={styles.drawerLogo} /><Pressable accessibilityLabel="Menüyü kapat" onPress={onClose} style={styles.close}><Ionicons name="close" size={23} color={theme.button}/></Pressable></View>
-              <Text style={[styles.drawerBrand, { color: theme.button }]}>SHIBASHI EFE</Text>
+              <Text style={[styles.drawerBrand, { color: visual.glow, fontFamily: mobileThemeFont(visual.id) }]}>SHIBASHI EFE</Text>
               <Text style={styles.drawerTagline}>Beden · Enerji · Zihin · Denge</Text>
             </LinearGradient>
           </ImageBackground>
           <ScrollView contentContainerStyle={styles.drawerContent} showsVerticalScrollIndicator={false}>
-            <Pressable accessibilityRole="button" onPress={() => go('profile')} style={[styles.profileCard, { borderColor: visual.border, backgroundColor: visual.surface }]}><Image source={shenIcons[shen.id]} style={styles.profileImage}/><View style={styles.profileCopy}><Text style={[styles.profileName,{color:visual.text}]}>{profile.name || 'Shibashi Yolcusu'}</Text><Text style={[styles.profileDetail,{color:visual.textSecondary}]}>{shen.name} Shen · Profilim</Text></View><Ionicons name="chevron-forward" size={19} color={theme.button}/></Pressable>
+            <Pressable accessibilityRole="button" onPress={() => go('profile')} style={[styles.profileCard, { borderColor: visual.border, backgroundColor: visual.surface }]}><Image source={shenIcons[shen.id]} style={styles.profileImage}/><View style={styles.profileCopy}><Text style={[styles.profileName,{color:visual.text,fontFamily:mobileThemeFont(visual.id)}]}>{profile.name || 'Shibashi Yolcusu'}</Text><Text style={[styles.profileDetail,{color:visual.textSecondary}]}>{shen.name} Shen · Profilim</Text></View><Ionicons name="chevron-forward" size={19} color={visual.glow}/></Pressable>
             {menuItems.map((item, index) => <Pressable key={item.tab} accessibilityRole="button" accessibilityLabel={item.label} onPress={() => go(item.tab)} style={[styles.menuCard, { borderColor: visual.border, backgroundColor: visual.surface }, (pathname === (item.tab === 'index' ? '/' : `/${item.tab}`) || pathname === `/(tabs)/${item.tab}`) && { borderColor: theme.button }]}>
-              <ImageBackground source={rowImages[index]} style={styles.rowImage} imageStyle={[styles.rowPhoto,light&&{opacity:.22}]}><LinearGradient colors={light?['rgba(255,252,245,.97)','rgba(255,252,245,.84)','rgba(255,252,245,.55)']:['rgba(4,9,8,.96)', 'rgba(4,9,8,.65)', 'rgba(4,9,8,.3)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.rowShade}><Ionicons name={item.icon} size={23} color={theme.button}/><View style={styles.rowCopy}><Text style={[styles.rowTitle,{color:visual.text}]}>{item.label}</Text><Text style={[styles.rowDetail,{color:visual.textSecondary}]}>{item.detail}</Text></View><Ionicons name="chevron-forward" size={17} color={theme.button}/></LinearGradient></ImageBackground>
+              <ImageBackground source={rowImages[index]} style={styles.rowImage} imageStyle={[styles.rowPhoto,light&&{opacity:.22}]}><LinearGradient colors={light?['rgba(255,252,245,.97)','rgba(255,252,245,.84)','rgba(255,252,245,.55)']:['rgba(4,9,8,.96)', 'rgba(4,9,8,.65)', 'rgba(4,9,8,.3)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.rowShade}><Ionicons name={item.icon} size={23} color={visual.glow}/><View style={styles.rowCopy}><Text style={[styles.rowTitle,{color:visual.text,fontFamily:mobileThemeFont(visual.id)}]}>{item.label}</Text><Text style={[styles.rowDetail,{color:visual.textSecondary}]}>{item.detail}</Text></View><Ionicons name="chevron-forward" size={17} color={visual.glow}/></LinearGradient></ImageBackground>
             </Pressable>)}
             <Pressable accessibilityRole="button" onPress={toggleSound} style={[styles.soundCard, { borderColor: visual.border }]}><Ionicons name={soundEnabled ? 'musical-notes' : 'musical-notes-outline'} size={20} color={theme.button}/><Text style={[styles.soundText,{color:visual.text}]}>Shen müziği {soundEnabled ? 'açık' : 'kapalı'}</Text><Ionicons name={soundEnabled ? 'toggle' : 'toggle-outline'} size={25} color={theme.button}/></Pressable>
             <Pressable accessibilityRole="button" onPress={() => { onClose(); router.push('/notifications'); }} style={styles.extraLink}><Ionicons name="notifications-outline" size={19} color={theme.button}/><Text style={[styles.extraText,{color:visual.text}]}>Bildirimler</Text></Pressable>

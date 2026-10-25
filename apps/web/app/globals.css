@@ -568,33 +568,60 @@
 }
 
 .app-shell[data-visual-theme="jade-garden"] {
-  font-family: "Trebuchet MS", Arial, sans-serif;
-  --theme-bg: #06100d;
-  --theme-bg-secondary: #0b1a15;
-  --theme-surface: #12241c;
-  --theme-surface-raised: #1a3127;
-  --theme-nav: #050d0a;
-  --theme-text: #f0f1e9;
-  --theme-muted: #a5b8ac;
-  --theme-border: rgba(153, 193, 169, .16);
-  --theme-glow: #79b397;
+  --font-sans: "Trebuchet MS", Arial, sans-serif;
+  --theme-bg: #071b16;
+  --theme-bg-secondary: #0d2a21;
+  --theme-surface: #164034;
+  --theme-surface-raised: #205446;
+  --theme-nav: #061610;
+  --theme-text: #f3f8ef;
+  --theme-muted: #b8d2c3;
+  --theme-border: rgba(153, 224, 187, .28);
+  --theme-glow: #85e0b2;
 }
 
 .app-shell[data-visual-theme="moon-water"] {
-  font-family: "Avenir Next", Arial, sans-serif;
-  --theme-bg: #070b14;
-  --theme-bg-secondary: #0c1421;
-  --theme-surface: #121e2d;
-  --theme-surface-raised: #1a2a3d;
-  --theme-nav: #050913;
-  --theme-text: #eef2f5;
-  --theme-muted: #a4b0bf;
-  --theme-border: rgba(151, 180, 207, .16);
-  --theme-glow: #86abc8;
+  --font-sans: Georgia, serif;
+  --theme-bg: #080f26;
+  --theme-bg-secondary: #101d39;
+  --theme-surface: #1b2c50;
+  --theme-surface-raised: #294169;
+  --theme-nav: #060b1d;
+  --theme-text: #f3f7ff;
+  --theme-muted: #b4c4e1;
+  --theme-border: rgba(153, 190, 247, .28);
+  --theme-glow: #8cc9ff;
+}
+
+.app-shell[data-visual-theme="lotus-dusk"] {
+  --font-sans: Georgia, serif;
+  --theme-bg: #1c1025;
+  --theme-bg-secondary: #2b1936;
+  --theme-surface: #392445;
+  --theme-surface-raised: #503159;
+  --theme-nav: #160c1f;
+  --theme-text: #faf0fa;
+  --theme-muted: #d5bed9;
+  --theme-border: rgba(225, 170, 232, .28);
+  --theme-glow: #dea7e9;
+}
+
+.app-shell[data-visual-theme="terra-day"] {
+  --font-sans: "Trebuchet MS", Arial, sans-serif;
+  color-scheme: light;
+  --theme-bg: #f6e6d8;
+  --theme-bg-secondary: #eed7c4;
+  --theme-surface: #fff5ec;
+  --theme-surface-raised: #e9c7ae;
+  --theme-nav: #fff1e5;
+  --theme-text: #382a24;
+  --theme-muted: #76584c;
+  --theme-border: rgba(136, 78, 54, .24);
+  --theme-glow: #cc6f52;
 }
 
 .app-shell[data-visual-theme="morning-light"] {
-  font-family: Georgia, serif;
+  --font-sans: Georgia, serif;
   color-scheme: light;
   --theme-bg: #f7f3e9;
   --theme-bg-secondary: #f0ebdf;
@@ -607,7 +634,7 @@
   --theme-glow: #b88b45;
 }
 
-.app-shell[data-visual-theme="morning-light"] :is(.glass-card, .profile-settings-list .list-item) {
+.app-shell:is([data-visual-theme="morning-light"], [data-visual-theme="terra-day"]) :is(.glass-card, .profile-settings-list .list-item) {
   box-shadow: 0 8px 28px rgba(42, 55, 43, .08);
 }
 
@@ -658,6 +685,8 @@
 .profile-theme-grid > button > i b:nth-child(2) { background: var(--theme-preview-surface); }
 .profile-theme-grid > button > i b:nth-child(3) { background: var(--theme-preview-glow); }
 .profile-theme-grid > button span { min-width: 0; }
+.profile-theme-grid > button :is(strong, small) { font-family: var(--theme-preview-font) !important; }
+.profile-theme-grid > button .profile-theme-sample { display:block; margin-top:8px; color:var(--theme-preview-glow); font-size:1.05rem; }
 .profile-theme-grid > button strong { display: block; font-size: 1rem; margin-bottom: 5px; }
 .profile-theme-grid > button small { color: color-mix(in srgb, var(--theme-text) 66%, transparent); display: block; font-size: .78rem; line-height: 1.4; }
 .profile-theme-grid > button em { color: var(--theme-preview-glow); font-size: 1rem; font-style: normal; }

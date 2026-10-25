@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import { visualThemes, type VisualThemeId } from "@/packages/design-tokens";
+import { visualThemes, visualThemeFonts, type VisualThemeId } from "@/packages/design-tokens";
 
 type ProfileShen = {
   id: "hun" | "shen" | "yi" | "po" | "zhi";
@@ -111,11 +111,11 @@ export function ProfileScreen({
               key={theme.id}
               onClick={() => onSelectVisualTheme(theme.id)}
               role="radio"
-              style={{"--theme-preview-bg":theme.background,"--theme-preview-surface":theme.surfaceRaised,"--theme-preview-glow":theme.glow} as CSSProperties}
+              style={{"--theme-preview-bg":theme.background,"--theme-preview-surface":theme.surfaceRaised,"--theme-preview-glow":theme.glow,"--theme-preview-font":visualThemeFonts[theme.id].web} as CSSProperties}
               type="button"
             >
               <i aria-hidden="true"><b/><b/><b/></i>
-              <span><strong>{theme.name}</strong><small>{theme.description}</small></span>
+              <span><strong>{theme.name}</strong><small>{theme.description}</small><small className="profile-theme-sample">Dengeyle başla · {visualThemeFonts[theme.id].label}</small></span>
               <em aria-hidden="true">{visualThemeId === theme.id ? "✓" : ""}</em>
             </button>
           ))}

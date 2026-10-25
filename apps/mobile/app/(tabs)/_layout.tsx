@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getShenVisualTheme, shenThemes } from "../../../../packages/design-tokens";
 import { MobileDrawer, MobileMenuHeader } from "../../components/navigation/MobileDrawer";
-import { fonts } from "../../constants/theme";
+import { fonts, mobileThemeFont } from "../../constants/theme";
 import { shenShape } from "../../constants/shenDesign";
 import { useApp } from "../../store/AppStore";
 import { useShenExperience } from "../../store/ShenExperience";
@@ -59,7 +59,7 @@ export default function TabLayout() {
             <View style={[styles.bottomIcon, shenShape(shen.id, "button"), selected && { backgroundColor: `${theme.button}25`, borderColor: `${theme.button}88` }]}>
               <Ionicons name={shenTabIcons[shen.id][item.route]} size={22} color={selected ? theme.button : visual.textSecondary} />
             </View>
-            <Text numberOfLines={2} style={[styles.bottomLabel, { color: selected ? theme.button : visual.textSecondary }, selected && styles.bottomLabelSelected]}>{item.label}</Text>
+            <Text numberOfLines={2} style={[styles.bottomLabel, { color: selected ? visual.glow : visual.textSecondary, fontFamily: mobileThemeFont(visual.id) }, selected && styles.bottomLabelSelected]}>{item.label}</Text>
             {selected ? <View style={[styles.activeDot, { backgroundColor: theme.button }]} /> : null}
           </Pressable>;
         })}

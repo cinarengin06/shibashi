@@ -168,12 +168,23 @@ export type SharedShenId = keyof typeof shenThemes;
 
 export const visualThemes = {
   "ink-night": {id:"ink-night",name:"Mürekkep Gecesi",shortName:"Mürekkep",description:"Siyah mürekkep, kömür yüzeyler ve sıcak altın ışık.",background:"#090C0D",backgroundSecondary:"#111619",surface:"#1B2125",surfaceRaised:"#252C31",navigation:"#070A0B",text:"#F2EEE7",textSecondary:"#A7ADA6",border:"rgba(232,222,205,0.13)",glow:"#C8A56A"},
-  "jade-garden": {id:"jade-garden",name:"Yeşim Bahçesi",shortName:"Yeşim",description:"Derin orman yeşili, yeşim taşları ve dingin krem tonları.",background:"#06100D",backgroundSecondary:"#0B1A15",surface:"#12241C",surfaceRaised:"#1A3127",navigation:"#050D0A",text:"#F0F1E9",textSecondary:"#A5B8AC",border:"rgba(153,193,169,0.16)",glow:"#79B397"},
-  "moon-water": {id:"moon-water",name:"Ay Suyu",shortName:"Ay Suyu",description:"Gece mavisi, ay ışığı ve su gibi sakin gümüş yüzeyler.",background:"#070B14",backgroundSecondary:"#0C1421",surface:"#121E2D",surfaceRaised:"#1A2A3D",navigation:"#050913",text:"#EEF2F5",textSecondary:"#A4B0BF",border:"rgba(151,180,207,0.16)",glow:"#86ABC8"},
+  "jade-garden": {id:"jade-garden",name:"Yeşim Bahçesi",shortName:"Yeşim",description:"Zümrüt yeşili, yeşim vurgular ve yumuşak sans yazı.",background:"#071B16",backgroundSecondary:"#0D2A21",surface:"#164034",surfaceRaised:"#205446",navigation:"#061610",text:"#F3F8EF",textSecondary:"#B8D2C3",border:"rgba(153,224,187,0.28)",glow:"#85E0B2"},
+  "moon-water": {id:"moon-water",name:"Ay Suyu",shortName:"Ay Suyu",description:"Gece mavisi, buz mavisi vurgular ve zarif serif yazı.",background:"#080F26",backgroundSecondary:"#101D39",surface:"#1B2C50",surfaceRaised:"#294169",navigation:"#060B1D",text:"#F3F7FF",textSecondary:"#B4C4E1",border:"rgba(153,190,247,0.28)",glow:"#8CC9FF"},
+  "lotus-dusk": {id:"lotus-dusk",name:"Lotus Alacakaranlığı",shortName:"Lotus",description:"Mürdüm ve lavanta, şiirsel serif başlıklar.",background:"#1C1025",backgroundSecondary:"#2B1936",surface:"#392445",surfaceRaised:"#503159",navigation:"#160C1F",text:"#FAF0FA",textSecondary:"#D5BED9",border:"rgba(225,170,232,0.28)",glow:"#DEA7E9"},
+  "terra-day": {id:"terra-day",name:"Toprak Günü",shortName:"Toprak",description:"Açık kil ve mercan tonları, sıcak ve okunaklı yazı.",background:"#F6E6D8",backgroundSecondary:"#EED7C4",surface:"#FFF5EC",surfaceRaised:"#E9C7AE",navigation:"#FFF1E5",text:"#382A24",textSecondary:"#76584C",border:"rgba(136,78,54,0.24)",glow:"#CC6F52"},
   "morning-light": {id:"morning-light",name:"Sabah Işığı · Açık",shortName:"Açık",description:"Sıcak fildişi zemin, açık taş kartlar ve Shen vurguları.",background:"#F7F3E9",backgroundSecondary:"#F0EBDF",surface:"#FFFCF5",surfaceRaised:"#EAE3D4",navigation:"#FFFDF8",text:"#202A25",textSecondary:"#58635A",border:"rgba(52,74,60,0.18)",glow:"#B88B45"},
 } as const;
 
 export type VisualThemeId = keyof typeof visualThemes;
+
+export const visualThemeFonts: Record<VisualThemeId, { label: string; web: string }> = {
+  "ink-night": { label: "Modern", web: "Arial, sans-serif" },
+  "jade-garden": { label: "Yumuşak", web: "'Trebuchet MS', sans-serif" },
+  "moon-water": { label: "Zarif", web: "Georgia, serif" },
+  "lotus-dusk": { label: "Klasik", web: "Georgia, serif" },
+  "terra-day": { label: "Sıcak", web: "'Trebuchet MS', sans-serif" },
+  "morning-light": { label: "Editoryal", web: "Georgia, serif" },
+};
 
 export function normalizeVisualThemeId(value: string | null | undefined): VisualThemeId {
   return value && value in visualThemes ? value as VisualThemeId : "ink-night";
@@ -188,16 +199,16 @@ export function getShenVisualTheme(shenId: SharedShenId, selectedMode: VisualThe
   const mode = normalizeVisualThemeId(selectedMode);
   const base = visualThemes[mode];
   const shen = shenThemes[shenId];
-  const light = mode === "morning-light";
+  const light = mode === "morning-light" || mode === "terra-day";
   const tint = light ? shen.primary : shen.surface;
   return {
     ...base,
-    background: blendHex(base.background, tint, light ? .08 : .46),
-    backgroundSecondary: blendHex(base.backgroundSecondary, tint, light ? .1 : .52),
-    surface: blendHex(base.surface, tint, light ? .075 : .61),
-    surfaceRaised: blendHex(base.surfaceRaised, light ? tint : shen.surfaceRaised, light ? .13 : .64),
-    navigation: blendHex(base.navigation, tint, light ? .06 : .34),
-    glow: shen.primary,
+    background: blendHex(base.background, tint, light ? .025 : .08),
+    backgroundSecondary: blendHex(base.backgroundSecondary, tint, light ? .04 : .1),
+    surface: blendHex(base.surface, tint, light ? .035 : .12),
+    surfaceRaised: blendHex(base.surfaceRaised, light ? tint : shen.surfaceRaised, light ? .045 : .13),
+    navigation: blendHex(base.navigation, tint, light ? .02 : .06),
+    glow: blendHex(base.glow, shen.primary, .16),
   };
 }
 

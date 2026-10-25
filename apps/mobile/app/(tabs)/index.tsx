@@ -9,7 +9,7 @@ import { Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text,
 import { getShenVisualTheme, shenThemes } from "../../../../packages/design-tokens";
 import { shenDailyCues } from "../../../../packages/gamification";
 import { Screen } from "../../components/ui";
-import { fonts } from "../../constants/theme";
+import { fonts, mobileThemeFont } from "../../constants/theme";
 import { shenMotifs, shenShape } from "../../constants/shenDesign";
 import { fiveShen } from "../../data/fiveShen";
 import { shenBackgrounds } from "../../data/shenAssets";
@@ -108,12 +108,12 @@ export default function Today() {
   };
 
   return <><Modal visible={shenQuestion >= 0} transparent animationType="fade"><View style={{ flex:1, backgroundColor:"rgba(2,12,10,.9)", justifyContent:"center", padding:24 }}><View style={{ backgroundColor:visual.surface, borderColor:theme.button, borderWidth:1, borderRadius:22, padding:24, gap:12 }}><Text style={{ color:theme.button, fontSize:13 }}>BEŞ SHEN GÜNLÜĞÜ · {shenQuestion + 1} / 3</Text><Text style={{ color:visual.text, fontSize:24, fontWeight:"700", marginBottom:8 }}>{dailyShenQuestions[Math.max(0,shenQuestion)]?.title}</Text>{dailyShenQuestions[Math.max(0,shenQuestion)]?.answers.map(answer => <Pressable key={answer.shen} accessibilityRole="button" onPress={() => { void answerDailyShen(answer.shen); }} style={{ backgroundColor:visual.surface, borderRadius:12, padding:15 }}><Text style={{ color:visual.text, fontSize:16 }}>{answer.label}</Text></Pressable>)}</View></View></Modal><Screen style={s.page}>
-    <View style={s.intro}><Text style={[s.eyebrow, { color: theme.button }]}>BUGÜNKÜ YOLCULUĞUN</Text><Text style={[s.greeting,{color:visual.text}]}>İyi ki buradasın, {profile.name || "Gezgin"}.</Text><Text style={[s.lead,{color:visual.textSecondary}]}>Bir nefes al. Bugün bedenin hangi ritimde?</Text></View>
+    <View style={s.intro}><Text style={[s.eyebrow, { color: visual.glow }]}>BUGÜNKÜ YOLCULUĞUN</Text><Text style={[s.greeting,{color:visual.text,fontFamily:mobileThemeFont(visual.id)}]}>İyi ki buradasın, {profile.name || "Gezgin"}.</Text><Text style={[s.lead,{color:visual.textSecondary}]}>Bir nefes al. Bugün bedenin hangi ritimde?</Text></View>
 
     <ImageBackground source={shenBackgrounds[shen.id]} resizeMode="cover" style={[s.hero, shenShape(shen.id)]}>
       <LinearGradient colors={["rgba(5,10,12,.04)", "rgba(5,10,12,.38)", "rgba(5,10,12,.94)"]} style={s.heroShade}>
         <Text style={[s.heroEyebrow, { color: theme.button }]}>{daily.label.toLocaleUpperCase("tr-TR")} · {shen.name.toLocaleUpperCase("tr-TR")}</Text>
-        <Text style={s.heroTitle}>{daily.title}</Text><Text style={s.heroCue}>{daily.cue}</Text>
+        <Text style={[s.heroTitle,{fontFamily:mobileThemeFont(visual.id)}]}>{daily.title}</Text><Text style={s.heroCue}>{daily.cue}</Text>
         <Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={[s.heroAction, { backgroundColor: theme.button }, shenShape(shen.id, 'button')]}><Ionicons name="play" color={theme.buttonInk} size={15} /><Text style={[s.heroActionText, { color: theme.buttonInk }]}>PRATİĞE DEVAM ET</Text></Pressable>
       </LinearGradient>
     </ImageBackground>
@@ -150,8 +150,7 @@ export default function Today() {
 }
 
 function StatTile({ label, value, unit, detail, progress, shenId, visual }: { label: string; value: string; unit: string; detail: string; progress?: number; shenId: ShenId; visual: ReturnType<typeof getShenVisualTheme> }) {
-  const theme = shenThemes[shenId];
-  return <View style={[s.stat, { backgroundColor: visual.surface, borderWidth:1, borderColor:visual.border }, shenShape(shenId)]}><Text style={[s.statLabel,{color:visual.textSecondary}]}>{label}</Text><Text style={[s.statValue, { color: theme.button }]}>{value}<Text style={[s.statUnit,{color:visual.text}]}> {unit}</Text></Text>{progress === undefined ? <Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text> : <><View style={s.track}><View style={[s.fill, { width: `${Math.max(0, Math.min(1, progress)) * 100}%`, backgroundColor: theme.button }]} /></View><Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text></>}</View>;
+  return <View style={[s.stat, { backgroundColor: visual.surface, borderWidth:1, borderColor:visual.border }, shenShape(shenId)]}><Text style={[s.statLabel,{color:visual.textSecondary}]}>{label}</Text><Text style={[s.statValue, { color: visual.glow,fontFamily:mobileThemeFont(visual.id) }]}>{value}<Text style={[s.statUnit,{color:visual.text}]}> {unit}</Text></Text>{progress === undefined ? <Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text> : <><View style={s.track}><View style={[s.fill, { width: `${Math.max(0, Math.min(1, progress)) * 100}%`, backgroundColor: visual.glow }]} /></View><Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text></>}</View>;
 }
 
 const s = StyleSheet.create({

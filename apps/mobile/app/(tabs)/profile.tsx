@@ -19,13 +19,13 @@ import {
   Section,
   Title,
 } from "../../components/ui";
-import { colors } from "../../constants/theme";
+import { colors, mobileThemeFont } from "../../constants/theme";
 import { GOOGLE_AUTH_UI_ENABLED } from "../../constants/features";
 import { getShen } from "../../data/fiveShen";
 import { signOut } from "../../services/auth/SupabaseAuth";
 import { useApp } from "../../store/AppStore";
 import { useShenExperience } from "../../store/ShenExperience";
-import { getShenVisualTheme, visualThemes, type VisualThemeId } from "../../../../packages/design-tokens";
+import { getShenVisualTheme, visualThemes, visualThemeFonts, type VisualThemeId } from "../../../../packages/design-tokens";
 
 export default function Profile() {
   const {
@@ -232,20 +232,21 @@ export default function Profile() {
                   p.themeChoice,
                   {
                     backgroundColor: theme.surface,
-                    borderColor: active ? shen.color : theme.border,
+                    borderColor: active ? theme.glow : theme.border,
                   },
                 ]}
               >
                 <View style={p.themeSwatches}>
                   <View style={[p.themeSwatch, { backgroundColor: theme.background }]} />
                   <View style={[p.themeSwatch, { backgroundColor: theme.surfaceRaised }]} />
-                  <View style={[p.themeSwatch, { backgroundColor: shen.color }]} />
+                  <View style={[p.themeSwatch, { backgroundColor: theme.glow }]} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[p.themeName, { color: theme.text }]}>{theme.name}</Text>
+                  <Text style={[p.themeName, { color: theme.text, fontFamily: mobileThemeFont(theme.id) }]}>{theme.name}</Text>
                   <Text style={[p.themeDescription, { color: theme.textSecondary }]}>{theme.description}</Text>
+                  <Text style={[p.themeDescription, { color: theme.glow, fontFamily: mobileThemeFont(theme.id), marginTop: 5 }]}>Dengeyle başla · {visualThemeFonts[theme.id].label}</Text>
                 </View>
-                <Ionicons name={active ? "checkmark-circle" : "ellipse-outline"} color={active ? shen.color : theme.textSecondary} size={23} />
+                <Ionicons name={active ? "checkmark-circle" : "ellipse-outline"} color={active ? theme.glow : theme.textSecondary} size={23} />
               </Pressable>
             );
           })}

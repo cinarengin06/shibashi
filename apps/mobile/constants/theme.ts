@@ -1,4 +1,15 @@
 import {palette,spacing as sharedSpacing,radii as sharedRadii} from '../../../packages/design-tokens';
+import type {VisualThemeId} from '../../../packages/design-tokens';
+import {Platform} from 'react-native';
+
+export const mobileThemeFont=(id:VisualThemeId):string=>{
+  if(id==='ink-night')return 'Inter_600SemiBold';
+  if(id==='jade-garden')return Platform.OS==='ios'?'AvenirNext-Medium':'sans-serif-medium';
+  if(id==='moon-water')return Platform.OS==='ios'?'Georgia':'serif';
+  if(id==='lotus-dusk')return Platform.OS==='ios'?'Baskerville':'serif';
+  if(id==='terra-day')return Platform.OS==='ios'?'AvenirNext-DemiBold':'sans-serif-condensed';
+  return Platform.OS==='ios'?'Georgia':'serif';
+};
 
 export const colors = {
   ink:palette.background, deep:palette.backgroundSecondary, surface:palette.card, surface2:palette.pressed,

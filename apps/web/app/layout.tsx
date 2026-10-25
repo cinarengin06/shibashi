@@ -37,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: `try{var s=localStorage.getItem('ritim-kapisi-selected-shen');var v=localStorage.getItem('shibashi-visual-theme');if(['hun','yi','po','zhi','shen'].includes(s)||['ink-night','jade-garden','moon-water'].includes(v)){document.documentElement.classList.add('theme-booting');document.documentElement.style.setProperty('--boot-bg',({hun:'#172019',yi:'#202120',po:'#221d19',zhi:'#121c23',shen:'#211c15'})[s]||'#211c15')}}catch(e){}` }} /></head>
+      <head><script dangerouslySetInnerHTML={{ __html: `try{var s=localStorage.getItem('ritim-kapisi-selected-shen');var v=localStorage.getItem('shibashi-visual-theme');var b={'ink-night':'#090c0d','jade-garden':'#071b16','moon-water':'#080f26','lotus-dusk':'#1c1025','terra-day':'#f6e6d8','morning-light':'#f7f3e9'};if(['hun','yi','po','zhi','shen'].includes(s)||b[v]){document.documentElement.classList.add('theme-booting');document.documentElement.style.setProperty('--boot-bg',b[v]||'#090c0d')}}catch(e){}` }} /></head>
       <body className={`${inter.variable} ${manrope.variable}`}><ShenThemeBoundary>{children}</ShenThemeBoundary></body>
     </html>
   );

@@ -4,7 +4,7 @@ import * as Haptics from 'expo-haptics';
 import React,{PropsWithChildren,useEffect,useRef} from 'react';
 import {Animated,Pressable,ScrollView,StyleProp,StyleSheet,Text,useWindowDimensions,View,ViewStyle} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {colors,fonts,radii,spacing,type} from '../constants/theme';
+import {colors,fonts,mobileThemeFont,radii,spacing,type} from '../constants/theme';
 import {fiveShen} from '../data/fiveShen';
 import {shenBackgrounds} from '../data/shenAssets';
 import {useShenExperience} from '../store/ShenExperience';
@@ -59,10 +59,10 @@ export function ShenBackdrop({opacity=1,borderRadius=0}:{opacity?:number;borderR
 }
 
 export function Eyebrow({children}:PropsWithChildren){const{shen}=useShenExperience();return <Text style={[s.eyebrow,{color:shen.color}]}>{children}</Text>}
-const profileIsLight=(id:string)=>id==='morning-light';
-export function Title({children}:PropsWithChildren){const{shen}=useShenExperience();const personality=shenThemes[shen.id];const visual=useVisualPalette();return <Text style={[s.title,{color:visual.text,fontFamily:visual.id==='morning-light'?'serif':visual.id==='moon-water'?'monospace':personality.headingWeight==='600'?fonts.displayStrong:personality.headingWeight==='500'?fonts.displayMedium:fonts.displayRegular,letterSpacing:shen.id==='zhi'?.4:shen.id==='yi'?-.35:shen.id==='shen'?.6:0}]}>{children}</Text>}
+const profileIsLight=(id:string)=>id==='morning-light'||id==='terra-day';
+export function Title({children}:PropsWithChildren){const{shen}=useShenExperience();const visual=useVisualPalette();return <Text style={[s.title,{color:visual.text,fontFamily:mobileThemeFont(visual.id),letterSpacing:shen.id==='zhi'?.4:shen.id==='yi'?-.35:shen.id==='shen'?.6:0}]}>{children}</Text>}
 export function Section({title,action,children}:{title:string;action?:string;children:React.ReactNode}){
- const visual=useVisualPalette();return <View style={s.section}><View style={s.sectionHead}><Text style={[s.sectionTitle,{color:visual.text,fontFamily:visual.id==='morning-light'?'serif':visual.id==='moon-water'?'monospace':fonts.displayStrong}]}>{title}</Text>{action&&<Text style={s.action}>{action}</Text>}</View>{children}</View>;
+ const visual=useVisualPalette();return <View style={s.section}><View style={s.sectionHead}><Text style={[s.sectionTitle,{color:visual.text,fontFamily:mobileThemeFont(visual.id)}]}>{title}</Text>{action&&<Text style={s.action}>{action}</Text>}</View>{children}</View>;
 }
 export function Card({children,style}:{children:React.ReactNode;style?:StyleProp<ViewStyle>}){
  const{shen}=useShenExperience();const personality=shenThemes[shen.id];
@@ -71,15 +71,16 @@ export function Card({children,style}:{children:React.ReactNode;style?:StyleProp
 export function PrimaryButton({label,onPress,icon='arrow-forward',disabled=false}:{label:string;onPress:()=>void;icon?:keyof typeof Ionicons.glyphMap;disabled?:boolean}){
  const{shen}=useShenExperience();
  const personality=shenThemes[shen.id];
+ const visual=useVisualPalette();
  return <Pressable disabled={disabled} onPress={()=>{Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);onPress()}} style={({pressed})=>[s.button,shenShape(shen.id,'button'),pressed&&s.buttonPressed,disabled&&s.buttonDisabled]}>
   <View style={[s.buttonInner,{backgroundColor:personality.button,borderColor:personality.light},shenShape(shen.id,'button')]}>
-   <Text style={[s.buttonText,{color:personality.buttonInk}]}>{label}</Text><Ionicons name={icon} size={20} color={personality.buttonInk}/>
+   <Text style={[s.buttonText,{color:personality.buttonInk,fontFamily:mobileThemeFont(visual.id)}]}>{label}</Text><Ionicons name={icon} size={20} color={personality.buttonInk}/>
   </View>
  </Pressable>;
 }
 export function Metric({label,value,color}:{label:string;value:string|number;color?:string}){
  const{shen}=useShenExperience();
- const visual=useVisualPalette();return <Card style={s.metric}><Text style={[s.metricValue,{color:color??shen.color}]}>{value}</Text><Text style={[s.muted,{color:visual.textSecondary}]}>{label}</Text></Card>;
+ const visual=useVisualPalette();return <Card style={s.metric}><Text style={[s.metricValue,{color:color??visual.glow,fontFamily:mobileThemeFont(visual.id)}]}>{value}</Text><Text style={[s.muted,{color:visual.textSecondary}]}>{label}</Text></Card>;
 }
 export function ProgressBar({value,color}:{value:number;color?:string}){
  const{shen}=useShenExperience();

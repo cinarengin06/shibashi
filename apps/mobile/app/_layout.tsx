@@ -69,7 +69,7 @@ function BootContent() {
   if (!ready) return null;
   return (
     <ShenExperienceProvider>
-      <StatusBar style={visualTheme.id === 'morning-light' ? 'dark' : 'light'} />
+      <StatusBar style={visualTheme.id === 'morning-light'||visualTheme.id === 'terra-day' ? 'dark' : 'light'} />
       <Stack
         screenOptions={{
           headerShown: false,

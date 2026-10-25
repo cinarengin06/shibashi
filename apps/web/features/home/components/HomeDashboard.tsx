@@ -16,7 +16,7 @@ import type {
 import styles from "./home-dashboard.module.css";
 
 type HomeDashboardProps = {
-  gamification: { dailyCue: string; dailyDone: boolean; completedForms: number; nextFormOrder: number };
+  gamification: { dailyCue: string; completedForms: number; nextFormOrder: number };
   energy: HomeEnergySummary;
   level: HomeLevelSummary;
   onHistory: () => void;
@@ -43,7 +43,7 @@ export function HomeDashboard(props: HomeDashboardProps) {
       <HomeHero {...props} />
       <ShenSelector activeShen={props.shen} onSelect={props.onSelectShen} options={props.shenOptions} />
       <section className={styles.gameGrid} aria-label="Shibashi yolculuğun">
-        <article className={`${styles.gameCard} ${styles.featuredForm}`}><div className={styles.featuredFormImage}><Image alt={`${props.gamification.nextFormOrder}. form videosundan kare`} fill sizes="(max-width: 899px) 100vw, 30vw" src={`/images/shibashi-new/${props.gamification.nextFormOrder}.jpg`} /></div><div className={styles.featuredFormCopy}><span className={styles.gameEyebrow}>BUGÜNÜN SHEN GÖREVİ · FORM {props.gamification.nextFormOrder}</span><h2>{props.gamification.dailyDone ? "Bugünkü adımın tamamlandı ✨" : "Bir formu bedeninde dene"}</h2><p>{props.gamification.dailyCue}</p><span className={styles.gameStatus}>{props.gamification.dailyDone ? "✓ Bugün form kaydın var" : "Fotoğrafın kaydedilince tamamlanır"}</span><Link className={styles.featuredFormAction} href={`/beden-hatlari?movementOrder=${props.gamification.nextFormOrder}`}>Pratik Yap →</Link></div></article>
+        <article className={`${styles.gameCard} ${styles.featuredForm}`}><Link aria-label={`${props.gamification.nextFormOrder}. formu aç`} className={styles.featuredFormImage} href={`/beden-hatlari?movementOrder=${props.gamification.nextFormOrder}`}><Image alt={`${props.gamification.nextFormOrder}. form videosundan kare`} fill sizes="(max-width: 899px) 100vw, 30vw" src={`/images/shibashi-new/${props.gamification.nextFormOrder}.jpg`} /><span aria-hidden="true" className={styles.featuredPlay}>▶</span></Link><div className={styles.featuredFormCopy}><span className={styles.gameEyebrow}>BUGÜNÜN SHEN GÖREVİ · FORM {props.gamification.nextFormOrder}</span><h2>Sıradaki Adım</h2><p>{props.gamification.dailyCue}</p><Link className={styles.featuredFormAction} href={`/beden-hatlari?movementOrder=${props.gamification.nextFormOrder}`}>Pratik Yap →</Link></div></article>
         <article className={styles.gameCard}><span className={styles.gameEyebrow}>18 FORM YOLU</span><h2>{props.gamification.completedForms} / 18 form</h2><div className={styles.formProgress} aria-label={`${props.gamification.completedForms} form tamamlandı`}>{Array.from({ length:18 }, (_,index) => <i className={index < props.gamification.completedForms ? styles.formDone : undefined} key={index} />)}</div><p>Her formda hocayı izle, kamerayla dene, kaydını oluştur.</p><Link href="/beden-hatlari">Yolculuğa devam et →</Link></article>
       </section>
       <HomeStatsRow energy={props.energy} streak={props.streak} week={props.week} />
@@ -144,8 +144,8 @@ function HomeStatsRow({ energy, streak, week }: Pick<HomeDashboardProps, "energy
       <article className={styles.statCard}>
         <header><h2>Enerjin (Shen)</h2><StatInfo id="energy-help" label="Shen puanı nasıl hesaplanır?">Bu puan son yedi günde pratik veya postür kaydı bulunan günlerin oranıdır. Grafikte kayıt olan gün 100, kayıt olmayan gün 0 görünür.</StatInfo></header>
         <div className={styles.energyRow}>
-          <div className={styles.energyOverview}><div className={styles.energyScore}><strong>{energy.score ?? "—"}</strong>{energy.score !== null ? <span>{energy.score >= 75 ? "İyi" : energy.score >= 50 ? "Dengeleniyor" : "İlgi istiyor"}</span> : null}</div><div className={styles.energyContext}><strong>Son 7 gün</strong><span>Kayıt yaptığın günlerin oranı</span></div></div>
-          <MiniTrend descriptions={energy.dayDescriptions} hasData={energy.score !== null} labels={energy.dayLabels} values={energy.trend} />
+          <div className={styles.energyOverview}><div className={styles.energyScore}><strong>{energy.score ?? "—"}</strong>{energy.score !== null ? <span>{energy.score >= 75 ? "İyi" : energy.score >= 50 ? "Dengeleniyor" : "İlgi istiyor"}</span> : null}</div></div>
+          <div className={styles.energyChart}><small>Son 7 gün</small><MiniTrend descriptions={energy.dayDescriptions} hasData={energy.score !== null} labels={energy.dayLabels} values={energy.trend} /></div>
         </div>
       </article>
     </section>

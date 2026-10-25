@@ -7,7 +7,7 @@ import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
 import { Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { getShenVisualTheme, shenThemes } from "../../../../packages/design-tokens";
-import { localDateKey, shenDailyCues } from "../../../../packages/gamification";
+import { shenDailyCues } from "../../../../packages/gamification";
 import { Screen } from "../../components/ui";
 import { fonts } from "../../constants/theme";
 import { shenMotifs, shenShape } from "../../constants/shenDesign";
@@ -79,7 +79,6 @@ export default function Today() {
   ].filter(order => Number.isInteger(order) && order >= 1 && order <= 18));
   const completedForms = completedFormOrders.size;
   const nextFormOrder = Array.from({length:18},(_,index)=>index+1).find(order=>!completedFormOrders.has(order)) ?? 18;
-  const dailyFormDone = photos.some(photo => localDateKey(photo.savedAt) === localDateKey(new Date()));
   useFocusEffect(useCallback(() => {
     let active = true;
     void loadShibashiPhotos().then((items) => { if (active) setPhotos(items); });
@@ -124,7 +123,7 @@ export default function Today() {
     </ScrollView>
 
     <View style={{ gap:12, marginBottom:20 }}>
-      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Image source={movementImages[nextFormOrder]} resizeMode="cover" style={{width:'100%',height:155,borderRadius:12}} /><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ · FORM {nextFormOrder}</Text><Text style={[s.gameTitle,{color:visual.text}]}>{dailyFormDone?'Bugünkü adımın tamamlandı ✨':'Bir formu bedeninde dene'}</Text><Text style={[s.gameBody,{color:visual.textSecondary}]}>{shenDailyCues[shen.id]}</Text><Text style={[s.gameStatus,{color:dailyFormDone?'#A8DCB3':theme.light}]}>{dailyFormDone?'✓ Bugün form kaydın var':'Fotoğrafın kaydedilince tamamlanır'}</Text><Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})}><Text style={[s.gameLink,{color:theme.button}]}>Pratik Yap →</Text></Pressable></View>
+      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Pressable accessibilityRole="button" accessibilityLabel={`${nextFormOrder}. formu aç`} onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={s.featuredFormImage}><Image source={movementImages[nextFormOrder]} resizeMode="cover" blurRadius={3} style={s.featuredFormPhoto} /><View style={s.featuredFormShade} /><View style={[s.featuredFormPlay,{backgroundColor:theme.button}]}><Ionicons name="play" color={theme.buttonInk} size={22} /></View></Pressable><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ · FORM {nextFormOrder}</Text><Text style={[s.gameTitle,{color:visual.text}]}>Sıradaki Adım</Text><Text style={[s.gameBody,{color:visual.textSecondary}]}>{shenDailyCues[shen.id]}</Text><Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})}><Text style={[s.gameLink,{color:theme.button}]}>Pratik Yap →</Text></Pressable></View>
       <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Text style={[s.gameEyebrow,{color:theme.button}]}>18 FORM YOLU</Text><Text style={[s.gameTitle,{color:visual.text}]}>{completedForms} / 18 form</Text><View style={s.formProgress}>{Array.from({length:18},(_,index)=><View key={index} style={[s.formProgressDot,{backgroundColor:completedFormOrders.has(index+1)?theme.button:`${theme.primary}35`}]}/>)}</View><Text style={[s.gameBody,{color:visual.textSecondary}]}>Hocayı izle, kamerayla dene, kaydını oluştur.</Text><Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')}><Text style={[s.gameLink,{color:theme.button}]}>Yolculuğa devam et →</Text></Pressable></View>
 
     </View>
@@ -211,6 +210,10 @@ const s = StyleSheet.create({
   postureSummary: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, marginTop: 21 },
   postureTitle: { color: "#F6F3EC", fontFamily: fonts.sansMedium, fontSize: 17, marginBottom: 4 },
   gameCard: { borderWidth:1, padding:17, gap:8 },
+  featuredFormImage: { height:155, borderRadius:12, overflow:'hidden', alignItems:'center', justifyContent:'center' },
+  featuredFormPhoto: { width:'100%', height:'100%', position:'absolute' },
+  featuredFormShade: { ...StyleSheet.absoluteFill, backgroundColor:'rgba(4,10,7,.28)' },
+  featuredFormPlay: { width:54, height:54, borderRadius:27, alignItems:'center', justifyContent:'center', paddingLeft:3, borderWidth:2, borderColor:'rgba(255,255,255,.65)' },
   gameEyebrow: { fontFamily:fonts.sansStrong, fontSize:10, letterSpacing:1.5 },
   gameTitle: { color:'#F6F3EC', fontFamily:fonts.displayMedium, fontSize:23, lineHeight:28 },
   gameBody: { color:'#BFC9CB', fontFamily:fonts.sans, fontSize:13, lineHeight:19 },

@@ -472,7 +472,10 @@ export function PostureResultDashboard({
         </header>
 
         <div className="posture-analysis-grid posture-result-grid">
-          <PostureScorePanel analysis={compositeAnalysis} compact confidence={confidence} ready score={report.score} selectedShen={selectedShen} />
+          <div className="posture-result-left-column">
+            <PostureScorePanel analysis={compositeAnalysis} compact confidence={confidence} ready score={report.score} selectedShen={selectedShen} />
+            <PostureInsightStrip analysis={compositeAnalysis} ready selectedShen={selectedShen} />
+          </div>
 
           <main className="posture-analysis-stage-card posture-result-stage-card">
             <div className="posture-stage-tabs" aria-label="Kayıt görünümü seçimi">
@@ -508,6 +511,7 @@ export function PostureResultDashboard({
                 </button>
               ))}
             </div>
+            <PostureFormSuggestions report={report} />
           </main>
 
           <div className="posture-result-feedback-stack">
@@ -520,7 +524,6 @@ export function PostureResultDashboard({
               selectedShen={selectedShen}
               view={activeView}
             />
-            <PostureFormSuggestions report={report} />
             <article className="posture-feedback-card posture-feedback-good">
               <span className="posture-feedback-title">Önceki ölçümle karşılaştırma</span>
               <p>{report.trendText}</p>
@@ -531,7 +534,6 @@ export function PostureResultDashboard({
           </div>
         </div>
 
-        <PostureInsightStrip analysis={compositeAnalysis} ready selectedShen={selectedShen} />
       </div>
     </section>
   );
@@ -543,7 +545,7 @@ function PostureFormSuggestions({ report }: { report: PostureReport }) {
   const recommendations = recommendFormsForPosture(Object.values(report.captures).map(capture => capture.analysis));
   if (!recommendations.length) return null;
   return <article className="posture-feedback-card" style={{ display: "grid", gap: 12 }}>
-    <span className="posture-feedback-title">Postürüne göre 18 Form</span>
+    <span className="posture-feedback-title">Postürün İçin Önerilen Formlar</span>
     <p>Ölçümünde öne çıkan beden hatları için hareket önerileri.</p>
     {recommendations.map(item => {
       const movement = meridianMovements.find(candidate => candidate.order === item.order);

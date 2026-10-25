@@ -13,7 +13,7 @@ export function PostureFormSuggestions({ captures, accent }: { captures: Posture
   const recommendations = recommendFormsForPosture(captures);
   if (!recommendations.length) return null;
   return <View style={styles.section}>
-    <Text style={[styles.heading, { color: visual.text }]}>POSTÜRÜNE GÖRE 18 FORM</Text>
+    <Text style={[styles.heading, { color: visual.text }]}>Postürün İçin Önerilen Formlar</Text>
     <Text style={[styles.intro, { color: visual.textSecondary }]}>Ölçümünde öne çıkan beden hatları için hareket önerileri.</Text>
     {recommendations.map(item => {
       const movement = meridianMovements.find(candidate => candidate.order === item.order);

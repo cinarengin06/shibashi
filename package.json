@@ -16,5 +16,12 @@
     "build:ios:preview": "cd apps/mobile && eas build --platform ios --profile preview",
     "build:android:production": "cd apps/mobile && eas build --platform android --profile production",
     "build:ios:production": "cd apps/mobile && eas build --platform ios --profile production"
+  },
+  "dependencies": {
+    "expo": "^58.0.19"
+  },
+  "devDependencies": {
+    "@types/react": "~19.3.0",
+    "typescript": "~6.0.3"
   }
 }

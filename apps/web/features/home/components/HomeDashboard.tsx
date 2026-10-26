@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import type { journeyRewards, yinYangSummary } from "@/packages/gamification";
 import type {
   HomeEnergySummary,
   HomeLevelSummary,
@@ -16,7 +17,7 @@ import type {
 import styles from "./home-dashboard.module.css";
 
 type HomeDashboardProps = {
-  gamification: { dailyCue: string; completedForms: number; nextFormOrder: number };
+  gamification: { dailyCue: string; completedForms: number; nextFormOrder: number; balance: ReturnType<typeof yinYangSummary>; rewards: ReturnType<typeof journeyRewards> };
   energy: HomeEnergySummary;
   level: HomeLevelSummary;
   onHistory: () => void;
@@ -47,6 +48,10 @@ export function HomeDashboard(props: HomeDashboardProps) {
         <article className={styles.gameCard}><span className={styles.gameEyebrow}>18 FORM YOLU</span><h2>{props.gamification.completedForms} / 18 form</h2><div className={styles.formProgress} aria-label={`${props.gamification.completedForms} form tamamlandı`}>{Array.from({ length:18 }, (_,index) => <i className={index < props.gamification.completedForms ? styles.formDone : undefined} key={index} />)}</div><p>Her formda hocayı izle, kamerayla dene, kaydını oluştur.</p><Link href="/beden-hatlari">Yolculuğa devam et →</Link></article>
       </section>
       <HomeStatsRow energy={props.energy} streak={props.streak} week={props.week} />
+      <section className={styles.journeyGrid} aria-label="Yin Yang ve bahçe ilerlemen">
+        <article className={styles.gameCard}><span className={styles.gameEyebrow}>YİN · YANG DENGESİ</span><h2>{props.gamification.balance.yin} Yin · {props.gamification.balance.yang} Yang</h2><p>{props.gamification.balance.total ? `Genel dağılım · %${Math.round(props.gamification.balance.yin/props.gamification.balance.total*100)} Yin, %${Math.round(props.gamification.balance.yang/props.gamification.balance.total*100)} Yang` : "Genel dağılım için ilk formunu tamamla."}</p><div className={styles.balanceTrack}><i style={{flex:Math.max(props.gamification.balance.yin,.01)}}/><i style={{flex:Math.max(props.gamification.balance.yang,.01)}}/></div><p>{props.gamification.balance.todayTotal ? `Bugün ${props.gamification.balance.todayTotal} form · %${props.gamification.balance.todayYinPercent} Yin, %${props.gamification.balance.todayYangPercent} Yang` : "Bugün henüz form kaydı yok."}</p><p>{props.gamification.balance.suggestion}</p><strong className={styles.xpScore}>{props.gamification.rewards.xp} XP <small>· Yolculuk puanın</small></strong></article>
+        <article className={styles.gameCard}><span className={styles.gameEyebrow}>KENDİ BAHÇEN</span><h2>Bahçen büyüyor</h2><p>Pratik yaptıkça yeni ayrıntılar belirir.</p><div className={styles.gardenScene}>{props.gamification.rewards.garden.filter(item=>item.unlocked).length ? props.gamification.rewards.garden.filter(item=>item.unlocked).map(item=><span key={item.id}><b aria-hidden="true">{item.icon}</b><small>{item.title}</small></span>) : <small>İlk formunu tamamlayınca ilk filiz belirecek.</small>}</div></article>
+      </section>
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
         <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
         <PostureAnalysisCard onPosture={props.onPosture} reports={props.postureReports} />

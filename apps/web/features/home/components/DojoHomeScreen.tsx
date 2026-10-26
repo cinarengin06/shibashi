@@ -7,8 +7,10 @@ import { HomeDashboard } from "./HomeDashboard";
 import { isCapturedPracticePhoto } from "../utils/practice-photo";
 import { localDayKey, recentDates, recordedPractices } from "../lib/practice-stats";
 import type { HomeShenId } from "../types/home";
-import { shenDailyCues } from "@/packages/gamification";
-import { loadCompletedMovements, movementCompletionEvent } from "@/lib/movement-completion";
+import { journeyRewards, shenDailyCues, yinYangSummary, type FormSteps, type JourneyRecord } from "@/packages/gamification";
+import { loadCompletedMovements, loadMovementCompletionRecords, movementCompletionEvent } from "@/lib/movement-completion";
+import { formStepsEvent, loadFormSteps } from "@/lib/form-steps";
+import { loadMovementPracticeRecords, markMovementPracticed } from "@/lib/movement-practice";
 
 type PracticeRecord = PracticeSnapshot;
 
@@ -132,13 +134,18 @@ export function DojoHomeScreen({
   userId,
 }: Props) {
   const [completedMovementOrders, setCompletedMovementOrders] = useState<number[]>([]);
+  const [completionRecords, setCompletionRecords] = useState<JourneyRecord[]>([]);
+  const [practiceRecords,setPracticeRecords]=useState<JourneyRecord[]>([]);
+  const [formSteps, setFormSteps] = useState<FormSteps>({});
   useEffect(() => {
-    const refresh = () => setCompletedMovementOrders(loadCompletedMovements(userId));
+    const refresh = () => { setCompletedMovementOrders(loadCompletedMovements(userId)); setCompletionRecords(loadMovementCompletionRecords(userId)); setFormSteps(loadFormSteps(userId)); };
     refresh();
     window.addEventListener(movementCompletionEvent, refresh);
+    window.addEventListener(formStepsEvent, refresh);
     window.addEventListener("storage", refresh);
-    return () => { window.removeEventListener(movementCompletionEvent, refresh); window.removeEventListener("storage", refresh); };
+    return () => { window.removeEventListener(movementCompletionEvent, refresh); window.removeEventListener(formStepsEvent, refresh); window.removeEventListener("storage", refresh); };
   }, [userId]);
+  useEffect(()=>{practiceGallery.filter(item=>isCapturedPracticePhoto(item.imageData)).forEach(item=>markMovementPracticed(item.movementId,userId,item.createdAt));setPracticeRecords(loadMovementPracticeRecords(userId))},[practiceGallery,userId]);
   const sessions = recordedPractices(practiceGallery, shenActivities);
   const recentDays = recentDates();
   const practiceDays = sessions.map((session) => localDayKey(session.createdAt));
@@ -159,10 +166,12 @@ export function DojoHomeScreen({
   const formRecords = practiceGallery.filter((item) => isCapturedPracticePhoto(item.imageData)).map((item) => ({ order: item.movementId, date: item.createdAt }));
   const completedOrders = new Set([...formRecords.map((item) => item.order), ...completedMovementOrders]);
   const completedForms = completedOrders.size;
+  const balance = yinYangSummary(completedOrders, [...completionRecords,...practiceRecords]);
+  const rewards = journeyRewards(completedOrders, [...completionRecords,...practiceRecords], formSteps, practiceRecords);
   const nextFormOrder = Array.from({ length: 18 }, (_, index) => index + 1).find((order) => !completedOrders.has(order)) ?? 1;
 
   return <HomeDashboard
-    gamification={{ dailyCue: shenDailyCues[selectedShen.id], completedForms, nextFormOrder }}
+    gamification={{ dailyCue: shenDailyCues[selectedShen.id], completedForms, nextFormOrder, balance, rewards }}
     energy={{ score: hasRecordedActivity ? Math.round((activeDays.filter(Boolean).length / 7) * 100) : null, trend: activeDays.map((active) => active ? 100 : 0), dayLabels: recentDays.map((day) => new Intl.DateTimeFormat("tr-TR", { weekday: "short" }).format(day)), dayDescriptions: recentDays.map((day) => new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", weekday: "long" }).format(day)) }}
     level={{ experience: experienceIntoLevel, level: 1 + Math.floor(experience / 240), nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
     onHistory={onJournal}

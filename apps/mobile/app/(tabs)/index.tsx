@@ -7,15 +7,17 @@ import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
 import { Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { getShenVisualTheme, shenThemes } from "../../../../packages/design-tokens";
-import { shenDailyCues } from "../../../../packages/gamification";
+import { journeyRewards, shenDailyCues, yinYangSummary, type FormSteps, type JourneyRecord } from "../../../../packages/gamification";
 import { Screen } from "../../components/ui";
 import { fonts, mobileThemeFont } from "../../constants/theme";
 import { shenMotifs, shenShape } from "../../constants/shenDesign";
 import { fiveShen } from "../../data/fiveShen";
 import { shenBackgrounds } from "../../data/shenAssets";
-import { movementImages } from "../../data/movementAssets";
+import { shibashiPosters } from "../../data/shibashiMedia";
 import { shenIcons } from "../../data/shenIcons";
-import { loadCompletedMovements } from "../../services/movementCompletion";
+import { loadCompletedMovements, loadMovementCompletionRecords } from "../../services/movementCompletion";
+import { loadFormSteps } from "../../services/formSteps";
+import { loadMovementPracticeRecords, markMovementPracticed } from "../../services/movementPractice";
 import { ensureSystemNotifications } from "../../services/notifications/NotificationInbox";
 import { loadShibashiPhotos, type ShibashiPhoto } from "../../services/shibashiPhotos";
 import { useApp } from "../../store/AppStore";
@@ -63,6 +65,9 @@ export default function Today() {
   }, [profile.onboardingDone]));
   const [photos, setPhotos] = useState<ShibashiPhoto[]>([]);
   const [completedMovementOrders, setCompletedMovementOrders] = useState<number[]>([]);
+  const [completionRecords, setCompletionRecords] = useState<JourneyRecord[]>([]);
+  const [practiceRecords,setPracticeRecords] = useState<JourneyRecord[]>([]);
+  const [formSteps, setFormSteps] = useState<FormSteps>({});
   const now = Date.now();
   const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
   const weekSessions = sessions.filter((item) => new Date(item.date).getTime() >= sevenDaysAgo);
@@ -71,18 +76,27 @@ export default function Today() {
   const energy = energyRecord?.value;
   const streak = practiceStreak(sessions);
   const lastReport = postureReports[0];
-  const formRecords = completedMovementOrders.map(order => ({ order, date:photos.find(photo => photo.order === order)?.savedAt ?? new Date().toISOString() }));
+  const formRecords = [
+    ...completionRecords,
+    ...practiceRecords,
+    ...sessions.map(session => ({ order: Number(session.practiceId.match(/^movement-(\d+)$/)?.[1]), date: session.date })),
+    ...shenActivities.filter(activity => activity.type === "practice" && activity.completed !== false).map(activity => ({ order: Number(activity.practiceId?.match(/^movement-(\d+)$/)?.[1]), date: activity.createdAt })),
+  ].filter(record => Number.isInteger(record.order) && record.order >= 1 && record.order <= 18);
   const completedFormOrders = new Set([
     ...completedMovementOrders,
     ...sessions.filter(session => session.postureScore >= 70).map(session => Number(session.practiceId.match(/^movement-(\d+)$/)?.[1])),
     ...shenActivities.filter(activity => activity.type === "practice" && activity.completed !== false).map(activity => Number(activity.practiceId?.match(/^movement-(\d+)$/)?.[1])),
   ].filter(order => Number.isInteger(order) && order >= 1 && order <= 18));
   const completedForms = completedFormOrders.size;
+  const balance = yinYangSummary(completedFormOrders, formRecords);
+  const rewards = journeyRewards(completedFormOrders, formRecords, formSteps, practiceRecords);
   const nextFormOrder = Array.from({length:18},(_,index)=>index+1).find(order=>!completedFormOrders.has(order)) ?? 1;
   useFocusEffect(useCallback(() => {
     let active = true;
-    void loadShibashiPhotos().then((items) => { if (active) setPhotos(items); });
+    void loadShibashiPhotos().then(async(items) => { if (active) setPhotos(items); for(const photo of items) { try { await markMovementPracticed(photo.order,profile.authUserId,photo.savedAt); } catch {} } if(active)setPracticeRecords(await loadMovementPracticeRecords(profile.authUserId)); });
     void loadCompletedMovements(profile.authUserId).then((orders) => { if (active) setCompletedMovementOrders(orders); });
+    void loadMovementCompletionRecords(profile.authUserId).then((records) => { if (active) setCompletionRecords(records); });
+    void loadFormSteps(profile.authUserId).then((steps) => { if (active) setFormSteps(steps); });
     void ensureSystemNotifications({
       hasPostureReport: postureReports.length > 0,
       hasSessionToday: sessions.some((item) => new Date(item.date).toDateString() === new Date().toDateString()),
@@ -123,7 +137,7 @@ export default function Today() {
     </ScrollView>
 
     <View style={{ gap:12, marginBottom:20 }}>
-      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Pressable accessibilityRole="button" accessibilityLabel={`${nextFormOrder}. formu aç`} onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={s.featuredFormImage}><Image source={movementImages[nextFormOrder]} resizeMode="cover" blurRadius={3} style={s.featuredFormPhoto} /><View style={s.featuredFormShade} /><View style={[s.featuredFormPlay,{backgroundColor:theme.button}]}><Ionicons name="play" color={theme.buttonInk} size={22} /></View></Pressable><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ · FORM {nextFormOrder}</Text><Text style={[s.gameTitle,{color:visual.text}]}>Sıradaki Adım</Text><Text style={[s.gameBody,{color:visual.textSecondary}]}>{shenDailyCues[shen.id]}</Text><Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})}><Text style={[s.gameLink,{color:theme.button}]}>Pratik Yap →</Text></Pressable></View>
+      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Pressable accessibilityRole="button" accessibilityLabel={`${nextFormOrder}. formu aç`} onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={s.featuredFormImage}><Image source={shibashiPosters[nextFormOrder]} resizeMode="cover" blurRadius={3} style={s.featuredFormPhoto} /><View style={s.featuredFormShade} /><View style={[s.featuredFormPlay,{backgroundColor:theme.button}]}><Ionicons name="play" color={theme.buttonInk} size={22} /></View></Pressable><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ · FORM {nextFormOrder}</Text><Text style={[s.gameTitle,{color:visual.text}]}>Sıradaki Adım</Text><Text style={[s.gameBody,{color:visual.textSecondary}]}>{shenDailyCues[shen.id]}</Text><Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})}><Text style={[s.gameLink,{color:theme.button}]}>Pratik Yap →</Text></Pressable></View>
       <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Text style={[s.gameEyebrow,{color:theme.button}]}>18 FORM YOLU</Text><Text style={[s.gameTitle,{color:visual.text}]}>{completedForms} / 18 form</Text><View style={s.formProgress}>{Array.from({length:18},(_,index)=><View key={index} style={[s.formProgressDot,{backgroundColor:completedFormOrders.has(index+1)?theme.button:`${theme.primary}35`}]}/>)}</View><Text style={[s.gameBody,{color:visual.textSecondary}]}>Hocayı izle, kamerayla dene, kaydını oluştur.</Text><Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')}><Text style={[s.gameLink,{color:theme.button}]}>Yolculuğa devam et →</Text></Pressable></View>
 
     </View>
@@ -132,6 +146,22 @@ export default function Today() {
       <StatTile label="♨ Seri" value={String(streak)} unit="gün" detail="Pratik günlerin" shenId={shen.id} visual={visual} />
       <StatTile label="Son 7 gün" value={String(weekSessions.length)} unit="pratik" detail={`${weekMinutes} dakika`} shenId={shen.id} visual={visual} />
       <ImageBackground source={shenBackgrounds[shen.id]} style={[s.stat, s.energyStat, { backgroundColor: visual.surface }, shenShape(shen.id)]}><View style={s.energyShade} /><Text style={s.statLabel}>Enerjin</Text><Text style={[s.statValue, { color: theme.button }]}>{energy ?? "—"}</Text><Text style={s.statDetail}>{energy === undefined ? "Kayıt bekliyor" : `${shen.name} Shen`}</Text><Text style={s.energyMotif}>{shenMotifs[shen.id]}</Text></ImageBackground>
+    </View>
+
+    <View style={[s.balanceCard,{backgroundColor:visual.surface,borderColor:visual.border},shenShape(shen.id)]}>
+      <Text style={[s.gameEyebrow,{color:theme.button}]}>YİN · YANG DENGESİ</Text>
+      <Text style={[s.balanceTitle,{color:visual.text}]}>{balance.yin} Yin · {balance.yang} Yang</Text>
+      <Text style={[s.balanceCopy,{color:visual.textSecondary}]}>{balance.total ? `Genel dağılım · %${Math.round(balance.yin/balance.total*100)} Yin, %${Math.round(balance.yang/balance.total*100)} Yang` : 'Genel dağılım için ilk formunu tamamla.'}</Text>
+      <View style={s.balanceTrack}><View style={[s.yinFill,{flex:Math.max(balance.yin,0.01)}]}/><View style={[s.yangFill,{flex:Math.max(balance.yang,0.01)}]}/></View>
+      <Text style={[s.balanceCopy,{color:visual.textSecondary}]}>{balance.todayTotal ? `Bugün ${balance.todayTotal} form · %${balance.todayYinPercent} Yin, %${balance.todayYangPercent} Yang` : 'Bugün henüz form kaydı yok.'}</Text>
+      <Text style={[s.balanceCopy,{color:theme.button}]}>{balance.suggestion}</Text>
+      <Text style={[s.balanceXp,{color:visual.text}]}>{rewards.xp} XP <Text style={{fontSize:12,fontWeight:'400',color:visual.textSecondary}}>· Yolculuk puanın</Text></Text>
+    </View>
+
+    <View style={[s.balanceCard,{backgroundColor:visual.surface,borderColor:visual.border},shenShape(shen.id)]}>
+      <Text style={[s.gameEyebrow,{color:theme.button}]}>KENDİ BAHÇEN</Text>
+      <Text style={[s.balanceCopy,{color:visual.textSecondary}]}>Pratik yaptıkça bahçene yeni ayrıntılar eklenir.</Text>
+      <ImageBackground source={shenBackgrounds[shen.id]} imageStyle={{borderRadius:14}} style={s.gardenScene}><View style={s.gardenShade}/>{rewards.garden.filter(item=>item.unlocked).length ? rewards.garden.filter(item=>item.unlocked).map(item=><View key={item.id} style={s.gardenItem}><Text style={s.gardenIcon}>{item.icon}</Text><Text style={[s.gardenLabel,{color:'#F5F2E7'}]}>{item.title}</Text></View>) : <Text style={[s.balanceCopy,{color:'#F5F2E7'}]}>İlk formunu tamamlayınca ilk filiz belirecek.</Text>}</ImageBackground>
     </View>
 
     <View style={s.sectionHeader}><Text style={[s.sectionTitle,{color:visual.text}]}>Bugün senin için</Text><Text style={[s.sectionHint, { color: theme.button }]}>Devam et →</Text></View>
@@ -220,4 +250,16 @@ const s = StyleSheet.create({
   gameLink: { fontFamily:fonts.sansStrong, fontSize:13, marginTop:4 },
   formProgress: { flexDirection:'row', gap:3, marginVertical:5 },
   formProgressDot: { flex:1, height:8, borderRadius:5 },
+  balanceCard: { borderWidth:1, padding:17, marginTop:12, gap:9 },
+  balanceTitle: { fontFamily:fonts.displayMedium, fontSize:22 },
+  balanceTrack: { flexDirection:'row', height:10, borderRadius:8, overflow:'hidden', backgroundColor:'rgba(255,255,255,.1)' },
+  yinFill: { backgroundColor:'#8CCFE3' },
+  yangFill: { backgroundColor:'#EAB776' },
+  balanceCopy: { fontFamily:fonts.sans, fontSize:12, lineHeight:18 },
+  balanceXp: { fontFamily:fonts.sansStrong, fontSize:20, marginTop:3 },
+  gardenScene: { minHeight:110, flexDirection:'row', flexWrap:'wrap', alignItems:'center', gap:9, padding:12, borderRadius:14, overflow:'hidden' },
+  gardenShade: { ...StyleSheet.absoluteFill, backgroundColor:'rgba(3,18,14,.7)' },
+  gardenItem: { minWidth:64, alignItems:'center', gap:3 },
+  gardenIcon: { fontSize:28 },
+  gardenLabel: { fontFamily:fonts.sansMedium, fontSize:10 },
 });

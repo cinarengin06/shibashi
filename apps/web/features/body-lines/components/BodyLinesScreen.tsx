@@ -17,6 +17,7 @@ import type { PracticeSnapshot } from "@/features/practice/types";
 import { deletePracticeSnapshotFromIndexedDb, loadPracticeSnapshotsFromIndexedDb, mergePracticeSnapshots, persistPracticeSnapshotsToLocalStorage, rememberDeletedPracticeSnapshot, savePracticeSnapshotToIndexedDb } from "@/lib/local-history-storage";
 import { isCapturedPracticePhoto } from "@/features/home/utils/practice-photo";
 import { loadCompletedMovements, markMovementCompleted } from "@/lib/movement-completion";
+import { markMovementPracticed } from "@/lib/movement-practice";
 import { loadFormSteps, markFormStep } from "@/lib/form-steps";
 import type { FormSteps } from "@/packages/gamification";
 import { useShibashiAuth } from "@/lib/supabase-auth";
@@ -176,6 +177,7 @@ export function BodyLinesScreen() {
   const savePhoto = useCallback(async (snapshot: PracticeSnapshot) => {
     const saved = await savePracticeSnapshotToIndexedDb(snapshot);
     if (!saved) { setPhotoSaveError(true); return false; }
+    markMovementPracticed(snapshot.movementId,user?.id,snapshot.createdAt);
     rememberPracticeSession(snapshot);
     setPhotoSaveError(false);
     setPhotos((current) => {
@@ -312,8 +314,10 @@ export function BodyLinesScreen() {
                   onError={() => { narrationRef.current?.pause(); setVideoUnavailable(true); }}
                   onPause={() => { setVideoPlaying(false); narrationRef.current?.pause(); }}
                   onPlay={() => { setVideoPlaying(true); setFormSteps(markFormStep(movementOrder, "watched", user?.id)); playNarration(); }}
+                  onEnded={() => { if (!currentFormSteps.videoCompleted) setFormSteps(markFormStep(movementOrder, "videoCompleted", user?.id)); }}
                   onTimeUpdate={(event) => {
                     const video = event.currentTarget;
+                    if (!currentFormSteps.videoCompleted && video.duration > 1 && video.currentTime >= video.duration - .6) setFormSteps(markFormStep(movementOrder, "videoCompleted", user?.id));
                     const audio = narrationRef.current;
                     if (audio && video.currentTime + 0.7 < lastDemoTimeRef.current) {
                       const naturalLoop = video.duration > 0 && lastDemoTimeRef.current >= video.duration - 1;

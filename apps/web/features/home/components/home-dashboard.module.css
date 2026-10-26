@@ -255,5 +255,16 @@
 .formProgress { display:grid; grid-template-columns:repeat(18,minmax(0,1fr)); gap:4px; margin:14px 0; }
 .formProgress i { background:rgba(255,255,255,.12); border-radius:8px; height:9px; }
 .formProgress i.formDone { background:var(--gold); box-shadow:0 0 10px color-mix(in srgb,var(--gold) 45%,transparent); }
-@media(max-width:899px){.gameGrid{grid-template-columns:1fr;order:4}.featuredForm{grid-template-columns:minmax(120px,36%) minmax(0,1fr)}.stats{order:5}.flowsPanel{order:6}.postureCard{order:7}}
+.journeyGrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0; }
+.balanceTrack { display:flex; height:11px; overflow:hidden; border-radius:9px; margin:13px 0; background:rgba(255,255,255,.12); }
+.balanceTrack i:first-child { background:#8ccfe3; }
+.balanceTrack i:last-child { background:#eab776; }
+.xpScore { color:var(--gold); font-size:23px; }
+.xpScore small { color:var(--muted); font-size:12px; font-weight:400; }
+.gardenScene { display:flex; flex-wrap:wrap; gap:11px; min-height:110px; padding:12px; border-radius:14px; background:linear-gradient(90deg,rgba(3,18,14,.83),rgba(3,18,14,.5)),var(--home-wallpaper) center/cover; }
+.gardenScene span { display:flex; flex-direction:column; align-items:center; min-width:65px; gap:4px; }
+.gardenScene b { font-size:30px; }
+.gardenScene small { color:var(--text); font-size:11px; }
+@media(max-width:680px){.journeyGrid{grid-template-columns:1fr}}
+@media(max-width:899px){.gameGrid{grid-template-columns:1fr;order:4}.featuredForm{grid-template-columns:minmax(120px,36%) minmax(0,1fr)}.stats{order:5}.journeyGrid{order:6}.flowsPanel{order:7}.postureCard{order:8}}
 @media(max-width:520px){.featuredForm{grid-template-columns:1fr}.featuredFormImage{min-height:180px}.stats{grid-template-columns:1fr}.stats .statCard:last-child{grid-column:auto}.dayDots{display:flex}}

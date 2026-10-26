@@ -29,11 +29,14 @@ export function evaluatePoseFrame(points:PoseLandmark[],view:PostureView):PoseFr
  const widthRatio=shoulderWidth/bodyHeight;
  const faceConfidence=[0,2,5,7,8].reduce((sum,index)=>sum+(points[index]?.visibility??0),0)/5;
  const anatomicalOrder=points[11].x-points[12].x;
+ // A frontal silhouette can also fit the old side limit (.42), while the
+ // previous back branch accepted every full-body frame. Require visible
+ // evidence of the requested orientation before scoring or saving a view.
  const angleReady=view==='side'
-  ?widthRatio<.42
+  ?widthRatio<.22
   :view==='front'
-   ?widthRatio>=.24&&faceConfidence>=.5&&anatomicalOrder>-.025
-   :true;
+   ?widthRatio>=.28&&faceConfidence>=.5&&anatomicalOrder>.04
+   :widthRatio>=.28&&faceConfidence<.35&&anatomicalOrder<-.04;
  return{bodyReady,angleReady};
 }
 

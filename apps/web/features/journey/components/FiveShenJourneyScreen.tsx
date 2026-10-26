@@ -31,6 +31,7 @@ import { usePreviewNarration } from "@/features/practice/lib/usePreviewNarration
 import { meridianMovements } from "@/packages/meridian-knowledge";
 import { loadCompletedMovements, movementCompletionEvent } from "@/lib/movement-completion";
 import { BODY_GATE_ORDER, gateGuidance, gateProgress, gates, movementGateWeights } from "@/packages/eight-gates";
+import { unlockMilestones } from "@/lib/milestones";
 
 type DomainShenId = (typeof shenProfiles)[number]["id"];
 function mostCompletedGate(progress: ReturnType<typeof gateProgress>) {
@@ -75,6 +76,7 @@ function HumanMap({
   }, [userId]);
 
   function selectStage(index: number) {
+    unlockMilestones(["gate-explorer"],userId);
     selectedManually.current = true;
     narration.stop();
     setActiveStageIndex(index);

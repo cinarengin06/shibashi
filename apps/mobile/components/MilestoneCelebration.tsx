@@ -4,6 +4,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { shenThemes } from '../../../packages/design-tokens';
 import { milestoneDefinitions, personalMilestones } from '../../../packages/gamification';
 import { loadShibashiPhotos, subscribeShibashiPhotos, type ShibashiPhoto } from '../services/shibashiPhotos';
+import { loadCompletedMovements, loadMovementCompletionRecords, subscribeMovementCompletion } from '../services/movementCompletion';
 import { unlockMilestones } from '../services/milestones';
 import { useApp } from '../store/AppStore';
 
@@ -11,16 +12,19 @@ export function MilestoneCelebration() {
   const { profile, postureReports } = useApp();
   const pathname = usePathname();
   const [photos, setPhotos] = useState<ShibashiPhoto[]>([]);
+  const [completedOrders,setCompletedOrders] = useState<number[]>([]);
+  const [completionRecords,setCompletionRecords] = useState<{order:number;date:string}[]>([]);
   const [pending, setPending] = useState<string[]>([]);
   const theme = shenThemes[profile.selectedShenId];
   useEffect(() => {
     let active = true;
-    const refresh = () => { void loadShibashiPhotos().then(items => { if (active) setPhotos(items); }); };
+    const refresh = () => { void loadShibashiPhotos().then(items => { if (active) setPhotos(items); }); void loadCompletedMovements(profile.authUserId).then(items=>{if(active)setCompletedOrders(items)}); void loadMovementCompletionRecords(profile.authUserId).then(items=>{if(active)setCompletionRecords(items)}); };
     refresh();
     const unsubscribe = subscribeShibashiPhotos(refresh);
-    return () => { active = false; unsubscribe(); };
-  }, [pathname]);
-  const earnedIds = personalMilestones(photos.map(item => ({ order:item.order, date:item.savedAt })), postureReports.length).filter(item => item.earned).map(item => item.id).join(',');
+    const unsubscribeCompletion=subscribeMovementCompletion(refresh);
+    return () => { active = false; unsubscribe(); unsubscribeCompletion(); };
+  }, [pathname,profile.authUserId]);
+  const earnedIds = personalMilestones([...photos.map(item => ({ order:item.order, date:item.savedAt })),...completedOrders.map(order=>({order,date:completionRecords.find(item=>item.order===order)?.date??''}))], postureReports.length).filter(item => item.earned).map(item => item.id).join(',');
   useEffect(() => {
     if (!profile.onboardingDone || !earnedIds) return;
     let active = true;

@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { milestoneDefinitions, personalMilestones, type FormRecord } from "@/packages/gamification";
 import { unlockMilestones } from "@/lib/milestones";
+import { loadCompletedMovements, loadMovementCompletionRecords, movementCompletionEvent } from "@/lib/movement-completion";
 import styles from "./milestone-celebration.module.css";
 
 export function MilestoneCelebration({ records, postureCount, userId }: { records: FormRecord[]; postureCount: number; userId?: string }) {
   const [pending, setPending] = useState<string[]>([]);
-  const earnedIds = personalMilestones(records, postureCount).filter((item) => item.earned).map((item) => item.id).join(",");
+  const [completed,setCompleted]=useState<FormRecord[]>([]);
+  useEffect(()=>{const refresh=()=>{const dated=loadMovementCompletionRecords(userId);setCompleted(loadCompletedMovements(userId).map(order=>({order,date:dated.find(item=>item.order===order)?.date??""})))};refresh();window.addEventListener(movementCompletionEvent,refresh);window.addEventListener('storage',refresh);return()=>{window.removeEventListener(movementCompletionEvent,refresh);window.removeEventListener('storage',refresh)}},[userId]);
+  const earnedIds = personalMilestones([...records,...completed], postureCount).filter((item) => item.earned).map((item) => item.id).join(",");
   useEffect(() => {
     const unlocked = unlockMilestones(earnedIds ? earnedIds.split(",") : [], userId);
     if (unlocked.length) setPending((current) => [...current, ...unlocked.map((item) => item.id)]);

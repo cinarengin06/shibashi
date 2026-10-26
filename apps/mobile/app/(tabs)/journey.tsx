@@ -10,6 +10,7 @@ import { meridianMovements } from "../../../../packages/meridian-knowledge";
 import { shibashiPosters } from "../../data/shibashiMedia";
 import { getShen } from "../../data/fiveShen";
 import { loadCompletedMovements } from "../../services/movementCompletion";
+import { unlockMilestones } from "../../services/milestones";
 import { useApp } from "../../store/AppStore";
 import { getShenVisualTheme } from "../../../../packages/design-tokens";
 
@@ -61,7 +62,7 @@ export default function Journey() {
     return () => { active = false; };
   }, [profile.authUserId, selectedManually, sessions, shenActivities]));
 
-  const selectGate = (index: number) => { setSelectedManually(true); setActiveIndex(index); };
+  const selectGate = (index: number) => { setSelectedManually(true); setActiveIndex(index); void unlockMilestones(['gate-explorer'],profile.authUserId); };
 
   return (
     <Screen>

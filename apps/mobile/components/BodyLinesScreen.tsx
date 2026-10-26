@@ -18,6 +18,7 @@ import { compareShibashiPose, referenceAt, type ReferenceMovement } from '../ser
 import { MediaPipePoseBridge, type MediaPipePoseBridgeRef, type PoseLandmark } from '../services/pose/MediaPipePoseBridge';
 import { deleteShibashiPhoto, loadShibashiPhotos, saveShibashiPhoto, type ShibashiPhoto } from '../services/shibashiPhotos';
 import { loadCompletedMovements, markMovementCompleted } from '../services/movementCompletion';
+import { markMovementPracticed } from '../services/movementPractice';
 import { loadFormSteps, markFormStep } from '../services/formSteps';
 import type { FormSteps } from '../../../packages/gamification';
 import referenceData from '../data/teacherPoseSamples.json';
@@ -125,6 +126,7 @@ function MovementStage({ order, completed, onComplete, onNext, onPhoto }: { orde
   useEffect(() => () => { if (targetSaveTimer.current) clearTimeout(targetSaveTimer.current); }, []);
   useEffect(() => () => { phaseRef.current='watch'; void Speech.stop(); if (celebrationTimer.current) clearTimeout(celebrationTimer.current); }, [player]);
   useEffect(() => { const listener = player.addListener('playingChange', ({isPlaying}) => { setVideoPlaying(isPlaying); if (isPlaying) void markFormStep(order,'watched',profile.authUserId).then(setFormSteps); }); return () => listener.remove(); }, [player,order,profile.authUserId]);
+  useEffect(() => { player.timeUpdateEventInterval = .5; const listener = player.addListener('timeUpdate', ({currentTime}) => { if (player.duration > 1 && currentTime >= player.duration - .6) void markFormStep(order,'videoCompleted',profile.authUserId).then(setFormSteps); }); return () => listener.remove(); }, [player,order,profile.authUserId]);
   const updateTarget = (next:number) => { const value = Math.max(minimumTarget,Math.min(100,Math.round(next/5)*5)); setTarget(value); targetRef.current = value; if (targetSaveTimer.current) clearTimeout(targetSaveTimer.current); targetSaveTimer.current=setTimeout(() => { void AsyncStorage.setItem(targetKey,String(targetRef.current)); },180); };
   const completeForm = () => { if (completed || completionRequestedRef.current) return; completionRequestedRef.current=true; void markMovementCompleted(order, profile.authUserId).then(() => { onComplete(order); void markFormStep(order,'completed',profile.authUserId).then(setFormSteps); void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); }).catch(() => { completionRequestedRef.current=false; setMessage('Tamamlama kaydedilemedi. Yeniden dene.'); }); };
   const speak = (text:string, done?:()=>void) => { void Speech.stop(); if (!narrationEnabled) { done?.(); return; } Speech.speak(text,{language:'tr-TR',rate:.86,onDone:done,onError:done}); };
@@ -198,6 +200,7 @@ function MovementStage({ order, completed, onComplete, onNext, onPhoto }: { orde
             const session = captureSession.current;
             void saveShibashiPhoto(capture.uri,order,movement.sourceTitle,comparison.score).then(photo => {
               onPhoto(photo);
+              void markMovementPracticed(order,profile.authUserId,photo.savedAt).catch(()=>{});
               if (session !== captureSession.current) return;
               photoCountRef.current++;
               setPhotoCount(photoCountRef.current); setCelebration(praise[photoCountRef.current-1]);

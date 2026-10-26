@@ -47,11 +47,11 @@ export function HomeDashboard(props: HomeDashboardProps) {
         <article className={`${styles.gameCard} ${styles.featuredForm}`}><Link aria-label={`${props.gamification.nextFormOrder}. formu aç`} className={styles.featuredFormImage} href={`/beden-hatlari?movementOrder=${props.gamification.nextFormOrder}`}><Image alt={`${props.gamification.nextFormOrder}. form videosundan kare`} fill sizes="(max-width: 899px) 100vw, 30vw" src={`/images/shibashi-new/${props.gamification.nextFormOrder}.jpg`} /><span aria-hidden="true" className={styles.featuredPlay}>▶</span></Link><div className={styles.featuredFormCopy}><span className={styles.gameEyebrow}>BUGÜNÜN SHEN GÖREVİ · FORM {props.gamification.nextFormOrder}</span><h2>Sıradaki Adım</h2><p>{props.gamification.dailyCue}</p><Link className={styles.featuredFormAction} href={`/beden-hatlari?movementOrder=${props.gamification.nextFormOrder}`}>Pratik Yap →</Link></div></article>
         <article className={styles.gameCard}><span className={styles.gameEyebrow}>18 FORM YOLU</span><h2>{props.gamification.completedForms} / 18 form</h2><div className={styles.formProgress} aria-label={`${props.gamification.completedForms} form tamamlandı`}>{Array.from({ length:18 }, (_,index) => <i className={index < props.gamification.completedForms ? styles.formDone : undefined} key={index} />)}</div><p>Her formda hocayı izle, kamerayla dene, kaydını oluştur.</p><Link href="/beden-hatlari">Yolculuğa devam et →</Link></article>
       </section>
-      <HomeStatsRow energy={props.energy} streak={props.streak} week={props.week} />
       <section className={styles.journeyGrid} aria-label="Yin Yang ve bahçe ilerlemen">
         <article className={styles.gameCard}><span className={styles.gameEyebrow}>YİN · YANG DENGESİ</span><h2>{props.gamification.balance.yin} Yin · {props.gamification.balance.yang} Yang</h2><p>{props.gamification.balance.total ? `Genel dağılım · %${Math.round(props.gamification.balance.yin/props.gamification.balance.total*100)} Yin, %${Math.round(props.gamification.balance.yang/props.gamification.balance.total*100)} Yang` : "Genel dağılım için ilk formunu tamamla."}</p><div className={styles.balanceTrack}><i style={{flex:Math.max(props.gamification.balance.yin,.01)}}/><i style={{flex:Math.max(props.gamification.balance.yang,.01)}}/></div><p>{props.gamification.balance.todayTotal ? `Bugün ${props.gamification.balance.todayTotal} form · %${props.gamification.balance.todayYinPercent} Yin, %${props.gamification.balance.todayYangPercent} Yang` : "Bugün henüz form kaydı yok."}</p><p>{props.gamification.balance.suggestion}</p><div className={styles.balanceLinks}><Link href="/beden-hatlari?status=completed&energy=Yin">Tamamlanan Yin →</Link><Link href="/beden-hatlari?status=completed&energy=Yang">Tamamlanan Yang →</Link></div><strong className={styles.xpScore}>{props.gamification.rewards.xp} XP <small>· Yolculuk puanın</small></strong></article>
         <article className={styles.gameCard}><span className={styles.gameEyebrow}>KENDİ BAHÇEN</span><h2>Bahçen büyüyor</h2><p>Pratik yaptıkça yeni ayrıntılar belirir.</p><div className={styles.gardenScene}>{props.gamification.rewards.garden.filter(item=>item.unlocked).length ? props.gamification.rewards.garden.filter(item=>item.unlocked).map(item=><span key={item.id}><b aria-hidden="true">{item.icon}</b><small>{item.title}</small></span>) : <small>İlk formunu tamamlayınca ilk filiz belirecek.</small>}</div></article>
       </section>
+      <HomeStatsRow energy={props.energy} streak={props.streak} week={props.week} />
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
         <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
         <PostureAnalysisCard onPosture={props.onPosture} reports={props.postureReports} />
@@ -130,6 +130,19 @@ function HomeStatsRow({ energy, streak, week }: Pick<HomeDashboardProps, "energy
   return (
     <section className={styles.stats} aria-label="Kısa ilerleme özeti">
       <article className={styles.statCard}>
+        <header><h2>Enerjin (Shen)</h2><StatInfo id="energy-help" label="Shen puanı nasıl hesaplanır?">Bu puan son yedi günde pratik veya postür kaydı bulunan günlerin oranıdır. Grafikte kayıt olan gün 100, kayıt olmayan gün 0 görünür.</StatInfo></header>
+        <div className={styles.energyRow}>
+          <div className={styles.energyOverview}><div className={styles.energyScore}><strong>{energy.score ?? "—"}</strong>{energy.score !== null ? <span>{energy.score >= 75 ? "İyi" : energy.score >= 50 ? "Dengeleniyor" : "İlgi istiyor"}</span> : null}</div></div>
+          <div className={styles.energyChart}><small>Son 7 gün</small><MiniTrend descriptions={energy.dayDescriptions} hasData={energy.score !== null} labels={energy.dayLabels} values={energy.trend} /></div>
+        </div>
+      </article>
+      <article className={styles.statCard}>
+        <header><h2>Son 7 Gün</h2><StatInfo id="week-help" label="Son yedi gün neyi gösterir?">Son yedi günde kaydedilen pratik oturumlarını gösterir. Aynı oturumdaki fotoğraflar bir kez sayılır; çubuklar günlük oturum sayısıdır.</StatInfo></header>
+        <div className={styles.weekRow}><div><strong>{week.practiceCount}</strong><span>pratik</span></div><MiniBars labels={week.dayLabels} values={week.dailyPractices} /></div>
+        <p>{week.activeDays} aktif gün</p>
+      </article>
+
+      <article className={styles.statCard}>
         <header><span>♨</span><h2>Seri</h2><StatInfo id="streak-help" label="Seri nasıl artar?">Bir günde en az bir pratik tamamlandığında o gün işaretlenir. Ardışık tamamlanan günler serini oluşturur. Günler her zaman Pazartesi’den Pazar’a aynı sırada gösterilir.</StatInfo></header>
         <div className={styles.streakValue}><strong>{streak.current}</strong><span>gün</span></div>
         <div className={styles.dayDots}>{calendarDayLabels.map((day, index) => {
@@ -140,19 +153,6 @@ function HomeStatsRow({ energy, streak, week }: Pick<HomeDashboardProps, "energy
         <p>En uzun seri: {streak.longest || "—"} gün</p>
       </article>
 
-      <article className={styles.statCard}>
-        <header><h2>Son 7 Gün</h2><StatInfo id="week-help" label="Son yedi gün neyi gösterir?">Son yedi günde kaydedilen pratik oturumlarını gösterir. Aynı oturumdaki fotoğraflar bir kez sayılır; çubuklar günlük oturum sayısıdır.</StatInfo></header>
-        <div className={styles.weekRow}><div><strong>{week.practiceCount}</strong><span>pratik</span></div><MiniBars labels={week.dayLabels} values={week.dailyPractices} /></div>
-        <p>{week.activeDays} aktif gün</p>
-      </article>
-
-      <article className={styles.statCard}>
-        <header><h2>Enerjin (Shen)</h2><StatInfo id="energy-help" label="Shen puanı nasıl hesaplanır?">Bu puan son yedi günde pratik veya postür kaydı bulunan günlerin oranıdır. Grafikte kayıt olan gün 100, kayıt olmayan gün 0 görünür.</StatInfo></header>
-        <div className={styles.energyRow}>
-          <div className={styles.energyOverview}><div className={styles.energyScore}><strong>{energy.score ?? "—"}</strong>{energy.score !== null ? <span>{energy.score >= 75 ? "İyi" : energy.score >= 50 ? "Dengeleniyor" : "İlgi istiyor"}</span> : null}</div></div>
-          <div className={styles.energyChart}><small>Son 7 gün</small><MiniTrend descriptions={energy.dayDescriptions} hasData={energy.score !== null} labels={energy.dayLabels} values={energy.trend} /></div>
-        </div>
-      </article>
     </section>
   );
 }

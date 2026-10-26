@@ -142,12 +142,6 @@ export default function Today() {
 
     </View>
 
-    <View style={s.stats}>
-      <StatTile label="♨ Seri" value={String(streak)} unit="gün" detail="Pratik günlerin" shenId={shen.id} visual={visual} />
-      <StatTile label="Son 7 gün" value={String(weekSessions.length)} unit="pratik" detail={`${weekMinutes} dakika`} shenId={shen.id} visual={visual} />
-      <ImageBackground source={shenBackgrounds[shen.id]} style={[s.stat, s.energyStat, { backgroundColor: visual.surface }, shenShape(shen.id)]}><View style={s.energyShade} /><Text style={s.statLabel}>Enerjin</Text><Text style={[s.statValue, { color: theme.button }]}>{energy ?? "—"}</Text><Text style={s.statDetail}>{energy === undefined ? "Kayıt bekliyor" : `${shen.name} Shen`}</Text><Text style={s.energyMotif}>{shenMotifs[shen.id]}</Text></ImageBackground>
-    </View>
-
     <View style={[s.balanceCard,{backgroundColor:visual.surface,borderColor:visual.border},shenShape(shen.id)]}>
       <Text style={[s.gameEyebrow,{color:theme.button}]}>YİN · YANG DENGESİ</Text>
       <Text style={[s.balanceTitle,{color:visual.text}]}>{balance.yin} Yin · {balance.yang} Yang</Text>
@@ -157,6 +151,12 @@ export default function Today() {
       <Text style={[s.balanceCopy,{color:theme.button}]}>{balance.suggestion}</Text>
       <View style={s.balanceLinks}><Pressable accessibilityRole="link" onPress={()=>router.push({pathname:'/body-lines',params:{status:'completed',energy:'Yin'}})} style={[s.balanceLink,{borderColor:'#8CCFE3'}]}><Text style={{color:'#9EDCF0',fontSize:12,fontWeight:'800'}}>Tamamlanan Yin →</Text></Pressable><Pressable accessibilityRole="link" onPress={()=>router.push({pathname:'/body-lines',params:{status:'completed',energy:'Yang'}})} style={[s.balanceLink,{borderColor:'#EAB776'}]}><Text style={{color:'#F2C785',fontSize:12,fontWeight:'800'}}>Tamamlanan Yang →</Text></Pressable></View>
       <Text style={[s.balanceXp,{color:visual.text}]}>{rewards.xp} XP <Text style={{fontSize:12,fontWeight:'400',color:visual.textSecondary}}>· Yolculuk puanın</Text></Text>
+    </View>
+
+    <View style={s.stats}>
+      <ImageBackground source={shenBackgrounds[shen.id]} style={[s.stat, s.energyStat, { backgroundColor: visual.surface }, shenShape(shen.id)]}><View style={s.energyShade} /><Text style={s.statLabel}>Enerjin</Text><Text style={[s.statValue, { color: theme.button }]}>{energy ?? "—"}</Text><Text style={s.statDetail}>{energy === undefined ? "Kayıt bekliyor" : `${shen.name} Shen`}</Text><Text style={s.energyMotif}>{shenMotifs[shen.id]}</Text></ImageBackground>
+      <StatTile label="Son 7 gün" value={String(weekSessions.length)} unit="pratik" detail={`${weekMinutes} dakika`} shenId={shen.id} visual={visual} />
+      <StatTile label="♨ Seri" value={String(streak)} unit="gün" detail="Pratik günlerin" shenId={shen.id} visual={visual} />
     </View>
 
     <View style={[s.balanceCard,{backgroundColor:visual.surface,borderColor:visual.border},shenShape(shen.id)]}>

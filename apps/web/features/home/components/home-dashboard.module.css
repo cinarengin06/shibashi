@@ -214,7 +214,6 @@
   .shenChoiceActive { flex: 0 0 150px; scroll-snap-align: start; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); order: 6; }
   .statCard { min-height: 140px; }
-  .stats .statCard:last-child { grid-column: 1 / -1; order: 4; }
   .dayDots { display: none; }
   .contentGrid { display: contents; }
   .flowsPanel { order: 4; overflow: hidden; }
@@ -268,5 +267,5 @@
 .gardenScene b { font-size:30px; }
 .gardenScene small { color:var(--text); font-size:11px; }
 @media(max-width:680px){.journeyGrid{grid-template-columns:1fr}}
-@media(max-width:899px){.gameGrid{grid-template-columns:1fr;order:4}.featuredForm{grid-template-columns:minmax(120px,36%) minmax(0,1fr)}.stats{order:5}.journeyGrid{order:6}.flowsPanel{order:7}.postureCard{order:8}}
+@media(max-width:899px){.gameGrid{grid-template-columns:1fr;order:4}.featuredForm{grid-template-columns:minmax(120px,36%) minmax(0,1fr)}.journeyGrid{order:5}.stats{order:6}.flowsPanel{order:7}.postureCard{order:8}}
 @media(max-width:520px){.featuredForm{grid-template-columns:1fr}.featuredFormImage{min-height:180px}.stats{grid-template-columns:1fr}.stats .statCard:last-child{grid-column:auto}.dayDots{display:flex}}

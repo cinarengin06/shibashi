@@ -69,7 +69,7 @@ export function HomeDashboard(props: HomeDashboardProps) {
   );
 }
 
-function HomeHero({ gamification, shen, shenOptions, userName }: HomeDashboardProps) {
+function HomeHero({ shen, shenOptions, userName }: HomeDashboardProps) {
   return (
     <article className={styles.hero}>
       <div aria-hidden="true" className={styles.heroWallpapers}>
@@ -90,7 +90,6 @@ function HomeHero({ gamification, shen, shenOptions, userName }: HomeDashboardPr
         <p className={styles.eyebrow}><span>Hoş geldin,</span> <strong>{userName || "Çınar"}</strong></p>
         <h1>{shen.heroTitle}</h1>
         <p className={styles.lead}>{shen.heroBody}</p>
-        <div className={styles.heroActions}><Link className={styles.primaryAction} href={`/beden-hatlari?movementOrder=${gamification.nextFormOrder}`}><span aria-hidden="true">▶</span> Pratiğe Devam Et</Link></div>
       </div>
     </article>
   );

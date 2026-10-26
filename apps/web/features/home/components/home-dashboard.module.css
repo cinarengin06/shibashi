@@ -255,13 +255,26 @@
 .formProgress i { background:rgba(255,255,255,.12); border-radius:8px; height:9px; }
 .formProgress i.formDone { background:var(--gold); box-shadow:0 0 10px color-mix(in srgb,var(--gold) 45%,transparent); }
 .journeyGrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:12px 0; }
-.balanceTrack { display:flex; height:11px; overflow:hidden; border-radius:9px; margin:13px 0; background:rgba(255,255,255,.12); }
-.balanceTrack i:first-child { background:#8ccfe3; }
-.balanceTrack i:last-child { background:#eab776; }
-.xpScore { color:var(--gold); font-size:23px; }
+.balanceCard { display:flex;flex-direction:column;justify-content:space-between; }
+.balanceContent { align-items:center;display:flex;gap:16px;justify-content:space-between;margin:4px 0; }
+.balanceCounts { display:grid;gap:12px; }
+.balanceCounts > div { align-items:baseline;display:flex;gap:7px;white-space:nowrap; }
+.balanceCounts strong { color:var(--text);font-family:var(--font-display),Georgia,serif;font-size:31px;font-weight:500;line-height:1; }
+.balanceCounts span { color:var(--muted);font-size:14px; }
+.todayBalance { color:var(--muted);font-size:11px;font-weight:600;white-space:nowrap; }
+.yinDot,.yangDot { align-self:center;border-radius:50%;display:inline-block;height:8px;width:8px; }
+.yinDot { background:#8ccfe3; }.yangDot { background:#eab776; }
+.balanceDonut { flex:none;height:150px;position:relative;width:150px; }
+.balanceDonut svg { display:block;height:100%;width:100%; }
+.balanceDonut circle { fill:none;stroke-width:15; }
+.donutTrack { stroke:rgba(255,255,255,.11); }
+.donutYin { stroke:#8ccfe3;transition:stroke-dasharray .6s ease; }
+.donutYang { stroke:#eab776;transition:stroke-dasharray .6s ease,stroke-dashoffset .6s ease; }
+.donutCenter { align-items:center;display:flex;flex-direction:column;font-size:12px;font-weight:800;gap:3px;inset:0;justify-content:center;position:absolute; }
+.donutCenter span:first-child { color:#9edcf0; }.donutCenter span:last-child { color:#f2c785; }
 .balanceLinks { display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px; }
 .gameCard .balanceLinks a { border:1px solid color-mix(in srgb,var(--gold) 48%,transparent);border-radius:11px;padding:8px 11px;margin:0;font-size:12px; }
-.xpScore small { color:var(--muted); font-size:12px; font-weight:400; }
+@media(max-width:420px){.balanceDonut{height:130px;width:130px}.balanceCounts strong{font-size:27px}}
 .gardenScene { display:flex; flex-wrap:wrap; gap:11px; min-height:110px; padding:12px; border-radius:14px; background:linear-gradient(90deg,rgba(3,18,14,.83),rgba(3,18,14,.5)),var(--home-wallpaper) center/cover; }
 .gardenScene span { display:flex; flex-direction:column; align-items:center; min-width:65px; gap:4px; }
 .gardenScene b { font-size:30px; }

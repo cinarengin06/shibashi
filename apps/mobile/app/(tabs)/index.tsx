@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
 import { Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Svg, { Circle } from "react-native-svg";
 import { getShenVisualTheme, shenThemes } from "../../../../packages/design-tokens";
 import { journeyRewards, shenDailyCues, yinYangSummary, type FormSteps, type JourneyRecord } from "../../../../packages/gamification";
 import { Screen } from "../../components/ui";
@@ -89,6 +90,8 @@ export default function Today() {
   ].filter(order => Number.isInteger(order) && order >= 1 && order <= 18));
   const completedForms = completedFormOrders.size;
   const balance = yinYangSummary(completedFormOrders, formRecords);
+  const yinPercent = balance.total ? Math.round(balance.yin / balance.total * 100) : 0;
+  const yangPercent = balance.total ? 100 - yinPercent : 0;
   const rewards = journeyRewards(completedFormOrders, formRecords, formSteps, practiceRecords);
   const nextFormOrder = Array.from({length:18},(_,index)=>index+1).find(order=>!completedFormOrders.has(order)) ?? 1;
   useFocusEffect(useCallback(() => {
@@ -144,13 +147,11 @@ export default function Today() {
 
     <View style={[s.balanceCard,{backgroundColor:visual.surface,borderColor:visual.border},shenShape(shen.id)]}>
       <Text style={[s.gameEyebrow,{color:theme.button}]}>YİN · YANG DENGESİ</Text>
-      <Text style={[s.balanceTitle,{color:visual.text}]}>{balance.yin} Yin · {balance.yang} Yang</Text>
-      <Text style={[s.balanceCopy,{color:visual.textSecondary}]}>{balance.total ? `Genel dağılım · %${Math.round(balance.yin/balance.total*100)} Yin, %${Math.round(balance.yang/balance.total*100)} Yang` : 'Genel dağılım için ilk formunu tamamla.'}</Text>
-      <View style={s.balanceTrack}><View style={[s.yinFill,{flex:Math.max(balance.yin,0.01)}]}/><View style={[s.yangFill,{flex:Math.max(balance.yang,0.01)}]}/></View>
-      <Text style={[s.balanceCopy,{color:visual.textSecondary}]}>{balance.todayTotal ? `Bugün ${balance.todayTotal} form · %${balance.todayYinPercent} Yin, %${balance.todayYangPercent} Yang` : 'Bugün henüz form kaydı yok.'}</Text>
-      <Text style={[s.balanceCopy,{color:theme.button}]}>{balance.suggestion}</Text>
-      <View style={s.balanceLinks}><Pressable accessibilityRole="link" onPress={()=>router.push({pathname:'/body-lines',params:{status:'completed',energy:'Yin'}})} style={[s.balanceLink,{borderColor:'#8CCFE3'}]}><Text style={{color:'#9EDCF0',fontSize:12,fontWeight:'800'}}>Tamamlanan Yin →</Text></Pressable><Pressable accessibilityRole="link" onPress={()=>router.push({pathname:'/body-lines',params:{status:'completed',energy:'Yang'}})} style={[s.balanceLink,{borderColor:'#EAB776'}]}><Text style={{color:'#F2C785',fontSize:12,fontWeight:'800'}}>Tamamlanan Yang →</Text></Pressable></View>
-      <Text style={[s.balanceXp,{color:visual.text}]}>{rewards.xp} XP <Text style={{fontSize:12,fontWeight:'400',color:visual.textSecondary}}>· Yolculuk puanın</Text></Text>
+      <View style={s.balanceOverview}>
+        <View style={s.balanceCounts}><View style={s.balanceCountRow}><View style={[s.balanceDot,{backgroundColor:'#8CCFE3'}]}/><Text style={[s.balanceNumber,{color:visual.text}]}>{balance.yin}</Text><Text style={[s.balanceName,{color:visual.textSecondary}]}>Yin</Text></View><View style={s.balanceCountRow}><View style={[s.balanceDot,{backgroundColor:'#EAB776'}]}/><Text style={[s.balanceNumber,{color:visual.text}]}>{balance.yang}</Text><Text style={[s.balanceName,{color:visual.textSecondary}]}>Yang</Text></View>{balance.todayTotal>0?<Text style={[s.balanceToday,{color:visual.textSecondary}]}>Bugün: {balance.todayYin} Yin · {balance.todayYang} Yang</Text>:null}</View>
+        <View accessible accessibilityLabel={`${balance.yin} Yin, yüzde ${yinPercent}; ${balance.yang} Yang, yüzde ${yangPercent}`} style={s.balanceDonut}><Svg width={138} height={138} viewBox="0 0 138 138"><Circle cx={69} cy={69} r={52} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth={14}/><Circle cx={69} cy={69} r={52} fill="none" stroke="#8CCFE3" strokeWidth={14} strokeDasharray={`${326.73*yinPercent/100} ${326.73*(100-yinPercent)/100}`} transform="rotate(-90 69 69)"/><Circle cx={69} cy={69} r={52} fill="none" stroke="#EAB776" strokeWidth={14} strokeDasharray={`${326.73*yangPercent/100} ${326.73*(100-yangPercent)/100}`} strokeDashoffset={-326.73*yinPercent/100} transform="rotate(-90 69 69)"/></Svg><View style={s.balanceDonutCenter}>{balance.total?<><Text style={s.balanceYinPercent}>Yin %{yinPercent}</Text><Text style={s.balanceYangPercent}>Yang %{yangPercent}</Text></>:<Text style={[s.balanceZero,{color:visual.textSecondary}]}>0 form</Text>}</View></View>
+      </View>
+      <View style={s.balanceLinks}><Pressable accessibilityRole="link" onPress={()=>router.push({pathname:'/body-lines',params:{status:'completed',energy:'Yin'}})} style={[s.balanceLink,{borderColor:'#8CCFE3'}]}><Text style={{color:'#9EDCF0',fontSize:12,fontWeight:'800'}}>Yin formlarım →</Text></Pressable><Pressable accessibilityRole="link" onPress={()=>router.push({pathname:'/body-lines',params:{status:'completed',energy:'Yang'}})} style={[s.balanceLink,{borderColor:'#EAB776'}]}><Text style={{color:'#F2C785',fontSize:12,fontWeight:'800'}}>Yang formlarım →</Text></Pressable></View>
     </View>
 
     <View style={s.stats}>
@@ -252,12 +253,19 @@ const s = StyleSheet.create({
   formProgress: { flexDirection:'row', gap:3, marginVertical:5 },
   formProgressDot: { flex:1, height:8, borderRadius:5 },
   balanceCard: { borderWidth:1, padding:17, marginTop:12, gap:9 },
-  balanceTitle: { fontFamily:fonts.displayMedium, fontSize:22 },
-  balanceTrack: { flexDirection:'row', height:10, borderRadius:8, overflow:'hidden', backgroundColor:'rgba(255,255,255,.1)' },
-  yinFill: { backgroundColor:'#8CCFE3' },
-  yangFill: { backgroundColor:'#EAB776' },
+  balanceOverview: { flexDirection:'row',alignItems:'center',justifyContent:'space-between' },
+  balanceCounts: { gap:13,flex:1 },
+  balanceCountRow: { flexDirection:'row',alignItems:'baseline',gap:7 },
+  balanceDot: { width:8,height:8,borderRadius:4,alignSelf:'center' },
+  balanceNumber: { fontFamily:fonts.displayMedium,fontSize:31,lineHeight:35 },
+  balanceName: { fontFamily:fonts.sans,fontSize:14 },
+  balanceToday: { fontFamily:fonts.sansMedium,fontSize:10 },
+  balanceDonut: { width:138,height:138,alignItems:'center',justifyContent:'center' },
+  balanceDonutCenter: { position:'absolute',alignItems:'center',justifyContent:'center',gap:3 },
+  balanceYinPercent: { color:'#9EDCF0',fontFamily:fonts.sansStrong,fontSize:11 },
+  balanceYangPercent: { color:'#F2C785',fontFamily:fonts.sansStrong,fontSize:11 },
+  balanceZero: { fontFamily:fonts.sansStrong,fontSize:11 },
   balanceCopy: { fontFamily:fonts.sans, fontSize:12, lineHeight:18 },
-  balanceXp: { fontFamily:fonts.sansStrong, fontSize:20, marginTop:3 },
   balanceLinks: { flexDirection:'row',gap:8,flexWrap:'wrap' },
   balanceLink: { borderWidth:1,borderRadius:12,paddingHorizontal:11,paddingVertical:9 },
   gardenScene: { minHeight:110, flexDirection:'row', flexWrap:'wrap', alignItems:'center', gap:9, padding:12, borderRadius:14, overflow:'hidden' },

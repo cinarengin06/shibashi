@@ -25,6 +25,8 @@ import referenceData from '../data/teacherPoseSamples.json';
 import { shenThemes } from '../../../packages/design-tokens';
 import { useApp } from '../store/AppStore';
 import { KeepAwakeWhileCamera } from './navigation/KeepAwakeWhileCamera';
+import { FormCatalogScreen } from './FormCatalogScreen';
+import { readFormCatalogFilters } from '../../../packages/form-catalog';
 
 const targetKey = 'shibashi-learning-target-score-v2';
 const minimumTarget = 50;
@@ -38,9 +40,13 @@ type Phase = 'watch' | 'mini' | 'framing' | 'cue' | 'playing' | 'result';
 export function BodyLinesScreen() {
   const {profile} = useApp();
   const theme = shenThemes[profile.selectedShenId];
-  const params = useLocalSearchParams<{ movementOrder?: string }>();
+  const params = useLocalSearchParams<{ movementOrder?: string; energy?: string; status?: string; organ?: string; gate?: string }>();
   const requested = Number(params.movementOrder);
+  const requestedValid=Number.isInteger(requested)&&requested>=1&&requested<=18;
   const [order, setOrder] = useState(Number.isInteger(requested) && requested >= 1 && requested <= 18 ? requested : 1);
+  const [mode,setMode]=useState<'catalog'|'detail'>(requestedValid?'detail':'catalog');
+  const [catalogFilters,setCatalogFilters]=useState(()=>readFormCatalogFilters(params));
+  useEffect(()=>setCatalogFilters(readFormCatalogFilters(params)),[params.energy,params.status,params.organ,params.gate]);
   const [switching, setSwitching] = useState(false);
   const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<ScrollView>(null);
@@ -51,7 +57,9 @@ export function BodyLinesScreen() {
   useEffect(() => { void loadShibashiPhotos().then(setPhotos); }, []);
   useEffect(() => { void loadCompletedMovements(profile.authUserId).then(setCompletedOrders); }, [profile.authUserId]);
   const choose = (next: number) => {
-    if (next === order || next < 1 || next > 18) return;
+    if (next < 1 || next > 18) return;
+    setMode('detail');
+    if (next === order) return;
     if (switchTimer.current) clearTimeout(switchTimer.current);
     setSwitching(true);
     scrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -59,15 +67,17 @@ export function BodyLinesScreen() {
     void Haptics.selectionAsync();
   };
   useEffect(() => {
-    if (Number.isInteger(requested) && requested >= 1 && requested <= 18) choose(requested);
+    if (requestedValid) choose(requested);
+    else setMode('catalog');
   }, [requested]);
   useEffect(() => () => { if (switchTimer.current) clearTimeout(switchTimer.current); }, []);
   const removePhoto = (photo: ShibashiPhoto) => Alert.alert('Fotoğrafı sil?', 'Bu fotoğraf cihazından kalıcı olarak silinecek.', [
     { text: 'Vazgeç', style: 'cancel' },
     { text: 'Sil', style: 'destructive', onPress: () => { void deleteShibashiPhoto(photo.id).then(items => { setPhotos(items); setSelected(null); }); } },
   ]);
+  if(mode==='catalog')return <FormCatalogScreen completedOrders={completedOrders} initialFilters={catalogFilters} onFiltersChange={setCatalogFilters} onSelect={choose} onBack={()=>router.replace('/(tabs)' )}/>;
   return <SafeAreaView style={[s.root,{backgroundColor:theme.surface}]} edges={[]}><ScrollView ref={scrollRef} contentContainerStyle={s.page} showsVerticalScrollIndicator={false}>
-    <View style={s.top}><Pressable accessibilityLabel="Odam'a dön" onPress={() => router.replace('/(tabs)')} style={s.icon}><Ionicons name="arrow-back" size={23} color={colors.cream}/></Pressable><Text style={s.topTitle}>18 Form</Text><Pressable accessibilityLabel="Fotoğraflarım" onPress={() => { void loadShibashiPhotos().then(setPhotos); }} style={s.icon}><Ionicons name="images-outline" size={22} color={colors.cream}/></Pressable></View>
+    <View style={s.top}><Pressable accessibilityLabel="18 Form kataloğuna dön" onPress={() => setMode('catalog')} style={s.icon}><Ionicons name="arrow-back" size={23} color={colors.cream}/></Pressable><Text style={s.topTitle}>18 Form</Text><Pressable accessibilityLabel="Fotoğraflarım" onPress={() => { void loadShibashiPhotos().then(setPhotos); }} style={s.icon}><Ionicons name="images-outline" size={22} color={colors.cream}/></Pressable></View>
     {!switching&&<MovementStage key={order} order={order} completed={completedOrders.includes(order)} onComplete={completed => setCompletedOrders(items => [...new Set([...items, completed])])} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>}
     <Text style={s.sectionTitle}>18 Form</Text>
     <View style={s.grid}>{meridianMovements.map(item => { const tag=getMovementEnergyTag(item.order); return <Pressable key={item.order} onPress={() => choose(item.order)} style={[s.tile, item.order === order && s.tileActive]} accessibilityLabel={`${item.order}. form: ${item.sourceTitle}, ${tag.quality}, ${tag.action}, ${completedOrders.includes(item.order)?'tamamlandı':'başlanmadı'}`} accessibilityState={{ selected: item.order === order }}><Image source={shibashiPosters[item.order]} style={s.tileImage}/><View style={s.tileShade}/><Text style={s.tileNumber}>{String(item.order).padStart(2,'0')}</Text>{completedOrders.includes(item.order) && <Text style={{ position:'absolute',right:6,top:6,color:'#A8DCB3',backgroundColor:'rgba(3,15,10,.85)',paddingHorizontal:5,paddingVertical:3,borderRadius:5,fontSize:10,fontWeight:'800' }}>✓ Tamamlandı</Text>}<Text numberOfLines={2} style={s.tileTitle}>{item.sourceTitle}</Text><Text numberOfLines={1} style={[s.tileEnergy,{color:tag.quality==='Yang'?'#F6CF8A':'#A7DDF1'}]}>{tag.quality} · {tag.action}</Text></Pressable>; })}</View>

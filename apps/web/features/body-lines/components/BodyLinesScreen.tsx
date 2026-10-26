@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   getMovementOrganVisuals,
   meridianClinicalBoundary,
@@ -23,6 +23,9 @@ import type { FormSteps } from "@/packages/gamification";
 import { useShibashiAuth } from "@/lib/supabase-auth";
 import { toDomainShenId, type ShenActivity } from "@/packages/shen-domain";
 import styles from "./body-lines.module.css";
+import { FormCatalogWeb } from "./FormCatalogWeb";
+import { readFormCatalogFilters } from "@/packages/form-catalog";
+import type { FormCatalogFilters } from "@/packages/form-catalog";
 
 function rememberPracticeSession(snapshot: PracticeSnapshot) {
   if (!snapshot.sessionId) return;
@@ -131,13 +134,21 @@ function InfoBlock({
 export function BodyLinesScreen() {
   const { ready: authReady, user } = useShibashiAuth();
   const [movementOrder, setMovementOrder] = useState(1);
+  const [mode,setMode]=useState<'catalog'|'detail'>('catalog');
+  const [catalogFilters,setCatalogFilters]=useState<FormCatalogFilters>(readFormCatalogFilters({}));
   const [formSteps, setFormSteps] = useState<FormSteps>({});
   const [completedOrders, setCompletedOrders] = useState<number[]>([]);
   useEffect(() => { setFormSteps(loadFormSteps(user?.id)); }, [user?.id]);
   useEffect(() => { setCompletedOrders(loadCompletedMovements(user?.id)); }, [user?.id]);
-  useEffect(() => {
-    const requested = Number(new URLSearchParams(window.location.search).get("movementOrder"));
-    if (Number.isInteger(requested) && requested >= 1 && requested <= 18) setMovementOrder(requested);
+  useLayoutEffect(() => {
+    const sync=()=>{
+      const params=new URLSearchParams(window.location.search);
+      const requested=Number(params.get('movementOrder'));
+      setCatalogFilters(readFormCatalogFilters({energy:params.get('energy'),status:params.get('status'),organ:params.get('organ'),gate:params.get('gate')}));
+      if(Number.isInteger(requested)&&requested>=1&&requested<=18){setMovementOrder(requested);setMode('detail')}
+      else setMode('catalog');
+    };
+    sync();window.addEventListener('popstate',sync);return()=>window.removeEventListener('popstate',sync);
   }, []);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [miniCameraOpen, setMiniCameraOpen] = useState(false);
@@ -251,8 +262,13 @@ export function BodyLinesScreen() {
   const onTargetReached = useCallback(() => completeCurrentFormRef.current(), []);
   const currentPhotos = photos.filter((photo) => photo.movementId === movementOrder);
 
+  const openMovement=(order:number)=>{chooseMovement(order);setMode('detail');const url=new URL(window.location.href);url.searchParams.set('movementOrder',String(order));window.history.pushState({},'',url)};
+  const openCatalog=()=>{demoVideoRef.current?.pause();narrationRef.current?.pause();setMiniCameraOpen(false);setMode('catalog');const url=new URL(window.location.href);url.searchParams.delete('movementOrder');window.history.pushState({},'',url)};
+  if(mode==='catalog')return <FormCatalogWeb completedOrders={completedOrders} filters={catalogFilters} onFiltersChange={setCatalogFilters} onSelect={openMovement}/>;
+
   return (
     <main className={styles.page}>
+      <button className={styles.catalogBack} onClick={openCatalog} type="button">← 18 Form kataloğuna dön</button>
       {authReady && !miniCameraOpen ? <MilestoneCelebration records={completedOrders.map((order) => ({ order, date: photos.find((item) => item.movementId === order)?.createdAt ?? new Date().toISOString() }))} postureCount={0} userId={user?.id} /> : null}
       <div className={styles.workspace}>
         <aside className={styles.rail} aria-label="Hareket adımları">

@@ -386,6 +386,7 @@
 .movementTiles strong { bottom: 32px; font-size: 12px; left: 10px; position: absolute; right: 10px; z-index: 1; }
 .movementTiles .tileEnergy { bottom:6px; left:9px; position:absolute; z-index:2; padding:3px 6px; font-size:10px; }
 .movementTiles .movementTileActive { border-color: var(--line); }
+.catalogBack{margin:0 0 14px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--site-accent) 35%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-accent) 9%,transparent);color:var(--site-accent);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
 @media (max-width: 1120px) {
   .workspace {
     grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.7fr);

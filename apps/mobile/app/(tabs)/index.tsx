@@ -155,6 +155,7 @@ export default function Today() {
       <View style={s.balanceTrack}><View style={[s.yinFill,{flex:Math.max(balance.yin,0.01)}]}/><View style={[s.yangFill,{flex:Math.max(balance.yang,0.01)}]}/></View>
       <Text style={[s.balanceCopy,{color:visual.textSecondary}]}>{balance.todayTotal ? `Bugün ${balance.todayTotal} form · %${balance.todayYinPercent} Yin, %${balance.todayYangPercent} Yang` : 'Bugün henüz form kaydı yok.'}</Text>
       <Text style={[s.balanceCopy,{color:theme.button}]}>{balance.suggestion}</Text>
+      <View style={s.balanceLinks}><Pressable accessibilityRole="link" onPress={()=>router.push({pathname:'/body-lines',params:{status:'completed',energy:'Yin'}})} style={[s.balanceLink,{borderColor:'#8CCFE3'}]}><Text style={{color:'#9EDCF0',fontSize:12,fontWeight:'800'}}>Tamamlanan Yin →</Text></Pressable><Pressable accessibilityRole="link" onPress={()=>router.push({pathname:'/body-lines',params:{status:'completed',energy:'Yang'}})} style={[s.balanceLink,{borderColor:'#EAB776'}]}><Text style={{color:'#F2C785',fontSize:12,fontWeight:'800'}}>Tamamlanan Yang →</Text></Pressable></View>
       <Text style={[s.balanceXp,{color:visual.text}]}>{rewards.xp} XP <Text style={{fontSize:12,fontWeight:'400',color:visual.textSecondary}}>· Yolculuk puanın</Text></Text>
     </View>
 
@@ -257,6 +258,8 @@ const s = StyleSheet.create({
   yangFill: { backgroundColor:'#EAB776' },
   balanceCopy: { fontFamily:fonts.sans, fontSize:12, lineHeight:18 },
   balanceXp: { fontFamily:fonts.sansStrong, fontSize:20, marginTop:3 },
+  balanceLinks: { flexDirection:'row',gap:8,flexWrap:'wrap' },
+  balanceLink: { borderWidth:1,borderRadius:12,paddingHorizontal:11,paddingVertical:9 },
   gardenScene: { minHeight:110, flexDirection:'row', flexWrap:'wrap', alignItems:'center', gap:9, padding:12, borderRadius:14, overflow:'hidden' },
   gardenShade: { ...StyleSheet.absoluteFill, backgroundColor:'rgba(3,18,14,.7)' },
   gardenItem: { minWidth:64, alignItems:'center', gap:3 },

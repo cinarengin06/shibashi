@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { fiveShen, type ShenId } from "@/features/home/data/shen";
 import { ShibashiBrandMark } from "./ShibashiBrandMark";
 import { WebNotificationBell } from "./WebNotificationBell";
+import { WebXpBadge } from "./WebXpBadge";
 import styles from "./web-header.module.css";
 
 type WebHeaderTab = "home" | "mainMap" | "lessons" | "practice" | "posture" | "journey" | "bodyLines" | "journal" | "profile";
@@ -78,6 +79,7 @@ export function WebHeader({ active }: { active: WebHeaderTab }) {
       </nav>
       <div aria-label="Kullanıcı özeti" className={styles.account}>
         <button aria-label={`Müziği ${musicPlaying ? "kapat" : "aç"}`} aria-pressed={musicPlaying} className={`${styles.iconButton} ${musicPlaying ? styles.playing : ""}`} onClick={toggleMusic} title={`Shen müziği ${musicPlaying ? "açık" : "kapalı"}`} type="button"><span aria-hidden="true">{musicPlaying ? "♪" : "♪̸"}</span></button>
+        <WebXpBadge />
         <WebNotificationBell />
         <Link className={styles.profile} href="/?tab=profile"><i>{userName.slice(0, 1).toLocaleUpperCase("tr-TR")}</i><span>{userName}</span><b>⌄</b></Link>
       </div>

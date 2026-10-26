@@ -15360,6 +15360,13 @@ button.progressive-step {
   position: relative;
 }
 .journal-statistics { display:grid; gap:12px; }
+.journal-xp-total { align-items:center;background:linear-gradient(105deg,color-mix(in srgb,var(--shen-accent) 20%,#101a14),#101713);border:1px solid color-mix(in srgb,var(--shen-accent) 44%,transparent);border-radius:18px;display:flex;gap:16px;padding:18px 22px; }
+.journal-xp-total > span { color:var(--shen-accent);font-size:42px;line-height:1; }
+.journal-xp-total > div { display:grid;gap:3px; }
+.journal-xp-total small { color:var(--shen-accent);font-size:10px;font-weight:800;letter-spacing:.14em; }
+.journal-xp-total strong { color:var(--site-text);font-size:30px;font-variant-numeric:tabular-nums;line-height:1.05; }
+.journal-xp-total em { color:var(--shen-accent);font-size:15px;font-style:normal; }
+.journal-xp-total p { color:var(--site-muted);font-size:12px;margin:0; }
 .journal-statistics .daily-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .daily-summary-grid .journal-stat-simple { min-height:96px; }
 .daily-summary-grid .journal-week-card { grid-column:1 / -1; min-height:182px; }

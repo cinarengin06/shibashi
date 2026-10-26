@@ -8,6 +8,7 @@ import type { PracticeSnapshot } from "@/features/practice/types";
 import { isReliablePostureCapture } from "@/features/posture/lib/posture-session";
 import type { PostureReport } from "@/features/posture/types";
 import type { ShenActivity } from "@/packages/shen-domain";
+import { useJourneyXp } from "@/lib/use-journey-xp";
 
 type JournalPracticeSnapshot = PracticeSnapshot;
 type JournalPostureReport = PostureReport;
@@ -48,6 +49,7 @@ export function JournalScreen({
   userId?: string;
 }) {
   const todayKey = formatSnapshotDate(new Date());
+  const totalXp = useJourneyXp(userId, gallery);
   const todaysPostureReports = postureReports.filter((item) => item.dateKey === todayKey);
   const practices = recordedPractices(gallery, activities);
   const todayPracticeCount = practices.filter((item) => localDayKey(item.createdAt) === localDayKey(new Date())).length;
@@ -170,6 +172,7 @@ export function JournalScreen({
       </div>
 
       <section className="journal-statistics" aria-label="Kayıt istatistiklerin">
+        <article className="journal-xp-total" aria-label={totalXp === null ? "Toplam yolculuk puanın yükleniyor" : `Toplam yolculuk puanın: ${totalXp} XP`}><span aria-hidden="true">✦</span><div><small>TOPLAM YOLCULUK PUANIN</small><strong>{totalXp ?? "—"} <em>XP</em></strong><p>Formların ve pratiklerinle biriken puan.</p></div></article>
         <div className="daily-summary-grid">
           {summaryStats.map((stat) => <article className="journal-stat-card journal-stat-simple" key={stat.label}>
             <span className="daily-summary-icon" aria-hidden="true">{stat.icon}</span>

@@ -36,6 +36,7 @@ import { PostureSavedReportsGallery, evaluateWebPostureFrame } from "@/features/
 import { ShibashiAuthGate } from "@/components/shibashi-auth-gate";
 import { ShibashiBrandMark } from "@/components/web/ShibashiBrandMark";
 import { WebNotificationBell } from "@/components/web/WebNotificationBell";
+import { WebXpBadge } from "@/components/web/WebXpBadge";
 import { CoachMeridianCard, MeridianExplorer, MovementMeridianCard, PersonalMeridianSuggestion, PracticeMeridianSummaryCard } from "@/components/meridian/MeridianKnowledge";
 import {getBrowserSyncCode,syncBrowserState} from "@/lib/shibashi-sync-client";
 import { useShibashiAuth } from "@/lib/supabase-auth";
@@ -811,6 +812,7 @@ export default function RitimKapisiOS() {
             </div>
             <div className="web-nav-account" aria-label="Kullanıcı özeti">
               <button aria-label={`Müziği ${soundState === "açık" ? "kapat" : "aç"}`} aria-pressed={soundState === "açık"} className={`web-nav-music ${soundState === "açık" ? "is-playing" : ""}`} onClick={toggleShenMusic} title={`Shen müziği ${soundState}`} type="button"><span aria-hidden="true">{soundState === "açık" ? "♪" : "♪̸"}</span></button>
+              <WebXpBadge gallery={practiceGallery} />
               <WebNotificationBell className="web-nav-bell" />
               <button className="web-nav-profile" onClick={() => setActiveTab("profile")} type="button"><i>{(userName || "Ç").slice(0, 1).toLocaleUpperCase("tr-TR")}</i><span>{userName || "Çınar"}</span><b>⌄</b></button>
             </div>

@@ -13,6 +13,7 @@ import { shibashiPosters } from '../../data/shibashiMedia';
 import { useApp } from '../../store/AppStore';
 import { useShenExperience } from '../../store/ShenExperience';
 import { loadNotificationInbox, unreadNotificationCount } from '../../services/notifications/NotificationInbox';
+import { useJourneyXp } from '../../hooks/useJourneyXp';
 
 const menuItems = [
   { label: 'Odam', tab: 'index', icon: 'home-outline', detail: 'Bugünkü yolculuğun' },
@@ -30,6 +31,7 @@ export function MobileMenuHeader({ onOpen }: { onOpen: () => void }) {
   const { shen, soundEnabled, toggleSound } = useShenExperience();
   const theme = shenThemes[shen.id];
   const { profile } = useApp();
+  const xp = useJourneyXp(profile.authUserId);
   const visual = getShenVisualTheme(profile.selectedShenId, profile.visualThemeId);
   const [unread, setUnread] = useState(0);
   const insets = useSafeAreaInsets();
@@ -42,7 +44,7 @@ export function MobileMenuHeader({ onOpen }: { onOpen: () => void }) {
     <View style={styles.topBar}>
       <Pressable accessibilityRole="button" accessibilityLabel="Menüyü aç" onPress={onOpen} style={[styles.topButton, { borderColor: `${theme.button}88`, backgroundColor: visual.surfaceRaised }]}><Ionicons name="menu" size={26} color={theme.button} /></Pressable>
       <View style={styles.brand}><Image source={shenIcons[shen.id]} style={styles.brandIcon} /><Text style={[styles.brandTitle, { color: visual.glow, fontFamily: mobileThemeFont(visual.id) }]}>SHIBASHI EFE</Text></View>
-      <View style={styles.topActions}><Pressable accessibilityRole="button" accessibilityLabel={soundEnabled?'Müziği kapat':'Müziği aç'} onPress={toggleSound} style={styles.topButton}><Ionicons name={soundEnabled?'musical-notes':'musical-notes-outline'} size={22} color={theme.button}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Bildirimler" onPress={() => router.push('/notifications')} style={styles.topButton}><Ionicons name="notifications-outline" size={24} color={theme.button} />{unread > 0 && <View style={styles.unreadDot}/>}</Pressable></View>
+      <View style={styles.topActions}><Pressable accessibilityRole="button" accessibilityLabel={soundEnabled?'Müziği kapat':'Müziği aç'} onPress={toggleSound} style={styles.topButton}><Ionicons name={soundEnabled?'musical-notes':'musical-notes-outline'} size={20} color={theme.button}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel={xp === null ? 'Yolculuk puanın yükleniyor. İstatistiklerime git' : `Toplam ${xp} XP. İstatistiklerime git`} onPress={() => router.push('/(tabs)/journal')} style={[styles.xpChip,{borderColor:`${theme.button}77`,backgroundColor:visual.surfaceRaised}]}><Text style={[styles.xpText,{color:theme.button}]}>✦ {xp ?? '—'} XP</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Bildirimler" onPress={() => router.push('/notifications')} style={styles.topButton}><Ionicons name="notifications-outline" size={21} color={theme.button} />{unread > 0 && <View style={styles.unreadDot}/>}</Pressable></View>
     </View>
   </View>;
 }
@@ -95,12 +97,14 @@ export function MobileDrawer({ visible, onClose }: { visible: boolean; onClose: 
 
 const styles = StyleSheet.create({
   topSafe: { borderBottomWidth: StyleSheet.hairlineWidth },
-  topBar: { height: 55, paddingHorizontal: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topBar: { height: 55, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   topActions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  topButton: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', borderRadius: 18 },
+  topButton: { width: 36, height: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'transparent', borderRadius: 15 },
+  xpChip: { height: 32, minWidth: 62, paddingHorizontal: 6, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  xpText: { fontFamily: fonts.sansStrong, fontSize: 10, fontVariant: ['tabular-nums'] },
   brand: { alignItems: 'center', gap: 1 },
   brandIcon: { width: 21, height: 21, borderRadius: 11 },
-  brandTitle: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 2.2 },
+  brandTitle: { fontFamily: fonts.sansStrong, fontSize: 10, letterSpacing: 1.3 },
   unreadDot: { position: 'absolute', top: 5, right: 6, width: 8, height: 8, borderRadius: 4, backgroundColor: '#E96B4C' },
   modal: { flex: 1, flexDirection: 'row', backgroundColor: 'rgba(0,0,0,.7)' },
   dismiss: { ...StyleSheet.absoluteFill },

@@ -82,7 +82,7 @@ export function buildPostureNarrative(
   const viewSentence = observation ? `${observation.viewLabel[0].toLocaleUpperCase("tr-TR")}${observation.viewLabel.slice(1)} görüntüde` : "Bu çekimde";
   const summary = observation && observation.angle >= 6
     ? `${viewSentence} ${observation.line} fark gözlemlendi. Bu gözlem yalnızca bu çekime aittir.`
-    : "Bu çekimde omuz ve kalça noktaları izlendi. Tek kayıttan kalıcı bir sonuç çıkarılamaz.";
+    : "Bu çekimde belirgin bir hizalama farkı gözlemlenmedi.";
   const recommendation = observation && observation.angle >= 6
     ? `${viewSentence} görülen hizalama farkını karşılaştırmak için kamerayı ve beden konumunu benzer tutarak yeniden ölçebilirsin.`
     : "Sonraki karşılaştırmada aynı kamera mesafesini ve üç görünümü kullanabilirsin.";

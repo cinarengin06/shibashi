@@ -352,16 +352,17 @@ export default function PostureSession(){
 
  if(result)return <SafeAreaView style={styles.result}>
   <ScrollView contentContainerStyle={styles.resultContent}>
-   <View style={styles.resultTop}><Text style={[styles.resultLabel,{color:shen.color}]}>ANALİZ TAMAMLANDI</Text><Text style={styles.resultTitle}>Beden çizgin görünür oldu.</Text><Text style={styles.resultBody}>{result.summary}</Text><Text style={styles.resultTrend}>{result.trendText}</Text></View>
+   <View style={styles.resultTop}><Text style={[styles.resultLabel,{color:shen.color}]}>ANALİZ TAMAMLANDI</Text><Text style={styles.resultTitle}>Beden çizgin görünür oldu.</Text><Text style={styles.resultBody}>{result.summary}</Text></View>
    <View style={{flexDirection:'row',gap:8}} accessibilityLabel="Ön, yan ve arka fotoğrafların">{views.map(view=>{const item=result.captures.find(capture=>capture.view===view);return <View key={view} style={{flex:1,gap:5}}>{item?.imageData?<Image source={{uri:item.imageData}} style={{width:'100%',aspectRatio:3/4,borderRadius:10,backgroundColor:colors.ink}}/>:<View style={{width:'100%',aspectRatio:3/4,borderRadius:10,backgroundColor:colors.ink}}/>}<Text style={{color:colors.cream,textAlign:'center',fontWeight:'700'}}>{viewCopy[view].title}</Text></View>})}</View>
    <PostureFormSuggestions captures={result.captures} accent={shen.color}/>
    <View style={[styles.overall,{borderColor:shen.color}]}><Text style={[styles.overallValue,{color:shen.color}]}>{result.score}</Text><Text style={styles.overallLabel}>GENEL POSTÜR</Text><Text style={styles.overallConfidence}>Genel güven %{getReportConfidence(result)}</Text></View>
    <PostureResultMetrics captures={result.captures} score={result.score} accent={shen.color}/>
    <View style={styles.captureList}>{result.captures.map(item=><View key={item.view} style={styles.captureRow}>{item.imageData?<Image source={{uri:item.imageData}} style={styles.captureThumbnail}/>:<View style={[styles.captureIcon,{backgroundColor:`${shen.color}18`}]}><Ionicons name={viewCopy[item.view].icon} color={shen.color} size={21}/></View>}<View style={styles.flex}><Text style={styles.captureTitle}>{viewCopy[item.view].title}</Text><Text style={styles.captureFeedback}>{item.feedback}</Text></View><Text style={[styles.captureScore,{color:shen.color}]}>{item.score}</Text></View>)}</View>
-   <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişiselleştirilmiş Öneriler ve Notlar</Text><Text style={styles.insightBody}>{getReportRecommendation(result)}</Text></View></View>
+   <View style={styles.insight}><Ionicons name="sparkles" color={shen.color} size={20}/><View style={styles.flex}><Text style={[styles.insightTitle,{color:shen.color}]}>Kişiselleştirilmiş Öneriler ve Notlar</Text><Text style={styles.insightBody}>{result.trendText || 'İlk kayıt başlangıç çizgin. Sonraki ölçümde değişimi karşılaştırabiliriz.'}</Text></View></View>
    <PrimaryButton label={saving?'Kaydediliyor…':'Analizi kaydet'} icon="checkmark" onPress={save}/>
    {saveError?<Text style={styles.saveError}>{saveError}</Text>:null}
    <Pressable onPress={restart} style={styles.retake}><Text style={styles.retakeText}>Yeniden çek</Text></Pressable>
+   <View style={styles.resultNotes}><Text style={styles.resultNote}>Öneriler kamera hizalama skorlarına dayanır; tıbbi değerlendirme değildir.</Text><Text style={styles.resultNote}>Bu bir medikal teşhis değildir. Belirgin ağrı, uyuşma veya skolyoz şüphesi varsa fizyoterapist ya da hekim değerlendirmesi gerekir.</Text></View>
   </ScrollView>
  </SafeAreaView>;
 
@@ -507,10 +508,6 @@ function getReportConfidence(report:PostureReport){
  return Math.round((report.captures.reduce((total,capture)=>total+(capture.confidence??0),0)/Math.max(1,report.captures.length))*100);
 }
 
-function getReportRecommendation(report:PostureReport){
- return buildPostureNarrative(report.captures.map(toPostureNarrativeCapture),report.score).recommendation;
-}
-
 function PostureResultMetrics({captures,score,accent}:{captures:PostureCapture[];score:number;accent:string}){
  const average=(key:'axisScore'|'shoulderScore'|'hipScore')=>Math.round(captures.reduce((total,capture)=>total+capture[key],0)/Math.max(1,captures.length));
  const metrics=[{label:'Omurga hizası',value:average('axisScore')},{label:'Omuz hizası',value:average('shoulderScore')},{label:'Kalça hizası',value:average('hipScore')},{label:'Genel duruş',value:score}];
@@ -643,7 +640,7 @@ const styles=StyleSheet.create({
  resultTop:{gap:7},
  resultLabel:{fontSize:16,fontWeight:'900',letterSpacing:1.4},
  resultTitle:{color:colors.cream,fontSize:28,fontWeight:'800'},
- resultBody:{color:colors.muted,fontSize:16,lineHeight:26},resultTrend:{color:colors.gold,fontSize:15,lineHeight:23},
+ resultBody:{color:colors.muted,fontSize:16,lineHeight:26},
  overall:{width:150,height:150,borderRadius:75,borderWidth:5,alignSelf:'center',alignItems:'center',justifyContent:'center',backgroundColor:colors.surface},
  overallValue:{fontSize:46,fontWeight:'900'},
  overallLabel:{color:colors.muted,fontSize:16,fontWeight:'900',letterSpacing:1},
@@ -658,6 +655,8 @@ const styles=StyleSheet.create({
  insight:{borderRadius:radii.md,backgroundColor:colors.surface,padding:13,flexDirection:'row',gap:10},
  insightTitle:{fontSize:16,fontWeight:'900'},
  insightBody:{color:colors.muted,fontSize:17,lineHeight:28,marginTop:3},
+ resultNotes:{borderTopWidth:1,borderTopColor:'rgba(255,255,255,.13)',paddingTop:12,gap:5,marginTop:8},
+ resultNote:{color:colors.muted,fontSize:11,lineHeight:16},
  retake:{height:44,alignItems:'center',justifyContent:'center'},
  retakeText:{color:colors.muted,fontWeight:'700'},
  saveError:{color:colors.danger,fontSize:15,lineHeight:22,textAlign:'center'},

@@ -4,7 +4,7 @@ import NextImage from "next/image";
 import type { CSSProperties, RefObject } from "react";
 import { useState } from "react";
 import { analyzePosture, getPostureCorrections, getPostureMetricList, getPostureQualityCounts, getPostureRecommendations, getPostureReportCompositeAnalysis, type PoseKeypoint, type PostureAnalysisSnapshot, type PostureView } from "@/packages/posture-analysis";
-import { meridianMovements } from "@/packages/meridian-knowledge";
+import { getMovementEnergyTag, meridianMovements } from "@/packages/meridian-knowledge";
 import { recommendFormsForPosture } from "@/packages/posture-form-recommendations";
 
 type PostureScanGuidance = "model-loading" | "find-body" | "wrong-angle" | "reposition" | "hold" | "capturing";
@@ -521,18 +521,14 @@ export function PostureResultDashboard({
               guidanceText={report.summary}
               ready
               resultMode
+              trendText={report.trendText}
               selectedShen={selectedShen}
               view={activeView}
             />
-            <article className="posture-feedback-card posture-feedback-good">
-              <span className="posture-feedback-title">Önceki ölçümle karşılaştırma</span>
-              <p>{report.trendText}</p>
-            </article>
-            <div className="posture-result-medical-note">
-              Bu bir medikal teşhis değildir. Belirgin ağrı, uyuşma veya skolyoz şüphesi varsa fizyoterapist ya da hekim değerlendirmesi gerekir.
-            </div>
           </div>
         </div>
+
+        <footer className="posture-result-notes"><p>Öneriler kamera hizalama skorlarına dayanır; tıbbi değerlendirme değildir.</p><p>Bu bir medikal teşhis değildir. Belirgin ağrı, uyuşma veya skolyoz şüphesi varsa fizyoterapist ya da hekim değerlendirmesi gerekir.</p></footer>
 
       </div>
     </section>
@@ -544,18 +540,17 @@ export function PostureResultDashboard({
 function PostureFormSuggestions({ report }: { report: PostureReport }) {
   const recommendations = recommendFormsForPosture(Object.values(report.captures).map(capture => capture.analysis));
   if (!recommendations.length) return null;
-  return <article className="posture-feedback-card" style={{ display: "grid", gap: 12 }}>
+  return <article className="posture-feedback-card posture-form-suggestions">
     <span className="posture-feedback-title">Postürün İçin Önerilen Formlar</span>
-    <p>Ölçümünde öne çıkan beden hatları için hareket önerileri.</p>
     {recommendations.map(item => {
       const movement = meridianMovements.find(candidate => candidate.order === item.order);
       if (!movement) return null;
-      return <a key={item.order} href={`/beden-hatlari?movementOrder=${item.order}`} style={{ display: "flex", alignItems: "center", gap: 12, padding: 10, borderRadius: 14, border: "1px solid rgba(211,178,112,.38)", color: "inherit", textDecoration: "none" }}>
-        <NextImage alt="" src={`/images/shibashi-new/${item.order}.jpg`} width={74} height={88} style={{ objectFit: "cover", borderRadius: 9 }} />
-        <span style={{ display: "grid", gap: 4, minWidth: 0 }}><small>{item.focus} · FORM {String(item.order).padStart(2, "0")}</small><strong>{movement.sourceTitle}</strong><small>{item.reason}</small><small>Videoyu 18 Form’da aç →</small></span>
+      const energy = getMovementEnergyTag(item.order).quality;
+      return <a aria-label={`${movement.sourceTitle}, ${energy} videosunu aç`} className="posture-form-suggestion" key={item.order} href={`/beden-hatlari?movementOrder=${item.order}`}>
+        <span className="posture-form-poster"><NextImage alt="" src={`/images/shibashi-new/${item.order}.jpg`} width={74} height={88} /><i aria-hidden="true">▶</i></span>
+        <span className="posture-form-copy"><strong>{movement.sourceTitle}</strong><small className={energy === "Yin" ? "posture-form-yin" : "posture-form-yang"}>{energy}</small></span>
       </a>;
     })}
-    <small>Öneriler kamera hizalama skorlarına dayanır; tıbbi değerlendirme değildir.</small>
   </article>;
 }
 
@@ -709,6 +704,7 @@ export function PostureFeedbackPanel({
   guidanceText,
   ready,
   resultMode = false,
+  trendText,
   selectedShen,
   view,
 }: {
@@ -717,6 +713,7 @@ export function PostureFeedbackPanel({
   guidanceText: string;
   ready: boolean;
   resultMode?: boolean;
+  trendText?: string;
   selectedShen: PostureShen;
   view: PostureView;
 }) {
@@ -727,7 +724,7 @@ export function PostureFeedbackPanel({
     <aside className="posture-feedback-column">
       <article className="posture-feedback-card posture-feedback-good">
         <span className="posture-feedback-title">{resultMode ? "Kişiselleştirilmiş Öneriler ve Notlar" : "Genel Geri Bildirim"}</span>
-        <p>{ready ? analysis.feedback : guidanceText}</p>
+        <p>{resultMode ? trendText || "İlk kayıt başlangıç çizgin. Sonraki ölçümde değişimi karşılaştırabiliriz." : ready ? analysis.feedback : guidanceText}</p>
       </article>
 
       <article className="posture-feedback-card posture-feedback-warning">

@@ -14976,6 +14976,9 @@ button.progressive-step {
   text-transform: uppercase;
 }
 
+.journal-posture-open { background:color-mix(in srgb,var(--shen-accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--shen-accent) 35%,transparent);border-radius:9px;color:var(--shen-accent);cursor:pointer;font:inherit;font-size:12px;font-weight:800;padding:9px 11px;white-space:nowrap; }
+.journal-posture-open:hover { background:color-mix(in srgb,var(--shen-accent) 20%,transparent); }
+
 .journal-posture-photos { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .journal-posture-photos button { display: grid; gap: 3px; width: 68px; padding: 0; border: 1px solid color-mix(in srgb, var(--shen-accent) 25%, transparent); border-radius: 9px; overflow: hidden; background: rgba(255,255,255,.04); color: var(--ink); cursor: pointer; }
 .journal-posture-photos button img { display: block; width: 100%; height: 78px; object-fit: cover; }

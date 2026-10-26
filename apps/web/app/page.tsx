@@ -145,12 +145,10 @@ type CoachCueRequest = {
 };
 
 const tabs: { id: TabId | "bodyLines" | "mainMap"; label: string; icon: string }[] = [
-  { id: "home", label: "Odam", icon: "◉" },
+  { id: "home", label: "Ana Sayfam", icon: "◉" },
   { id: "mainMap", label: "Gelişim Haritam", icon: "◌" },
-  { id: "lessons", label: "Temel Dersler", icon: "▶" },
   { id: "bodyLines", label: "18 Form", icon: "✦" },
   { id: "posture", label: "Postür", icon: "↕" },
-  { id: "journey", label: "8 Kapı", icon: "☯" },
   { id: "journal", label: "İstatistiklerim", icon: "◌" },
   { id: "profile", label: "Ayarlar", icon: "☰" },
 ];
@@ -162,8 +160,10 @@ export default function RitimKapisiOS() {
 
   useLayoutEffect(() => {
     const queryTab = new URLSearchParams(window.location.search).get("tab");
+    if (queryTab === "lessons") { router.replace("/beden-hatlari?section=preparation"); return; }
+    if (queryTab === "journey") { router.replace("/ana-haritam#sekiz-kapi"); return; }
     if (queryTab && queryTab !== "bodyLines" && queryTab !== "mainMap" && tabs.some((tab) => tab.id === queryTab)) setActiveTab(queryTab as TabId);
-  }, []);
+  }, [router]);
   const [introVideoVisible, setIntroVideoVisible] = useState(WEB_INTRO_VIDEO_ENABLED);
   const [selectedHomePostureReportId, setSelectedHomePostureReportId] = useState<string>();
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -767,6 +767,7 @@ export default function RitimKapisiOS() {
           <JournalScreen
             activities={shenActivities}
             gallery={practiceGallery}
+            onOpenPostureReport={(reportId) => { setSelectedHomePostureReportId(reportId); setActiveTab("posture"); }}
             onSetTrainerVisibility={setPracticeSnapshotTrainerVisibility}
             onDeleteSnapshots={deletePracticeSnapshots}
             postureReports={postureReports}

@@ -16,13 +16,11 @@ import { loadNotificationInbox, unreadNotificationCount } from '../../services/n
 import { useJourneyXp } from '../../hooks/useJourneyXp';
 
 const menuItems = [
-  { label: 'Odam', tab: 'index', icon: 'home-outline', detail: 'Bugünkü yolculuğun' },
-  { label: 'Gelişim Haritam', tab: 'main-map', icon: 'trending-up-outline', detail: 'Formlarında ilerle' },
-  { label: 'Temel Dersler', tab: 'lessons', icon: 'play-circle-outline', detail: 'Bedenini hazırla' },
-  { label: '18 Form', tab: 'moves', icon: 'fitness-outline', detail: 'Hocayla hareket et' },
+  { label: 'Ana Sayfam', tab: 'index', icon: 'home-outline', detail: 'Bugünkü yolculuğun' },
+  { label: 'Gelişim Haritam', tab: 'main-map', icon: 'trending-up-outline', detail: 'Formların ve 8 Kapı' },
+  { label: '18 Form', tab: 'moves', icon: 'fitness-outline', detail: 'Temel dersler ve formlar' },
   { label: 'Pratikler', tab: 'practice', icon: 'walk-outline', detail: 'Sana uygun rutinler' },
   { label: 'Postür', tab: 'posture', icon: 'body-outline', detail: 'Beden çizgini gör' },
-  { label: '8 Kapı', tab: 'journey', icon: 'map-outline', detail: 'Sekiz kapıyı keşfet' },
   { label: 'İstatistiklerim', tab: 'journal', icon: 'book-outline', detail: 'Fotoğraf ve notların' },
   { label: 'Ayarlar', tab: 'profile', icon: 'settings-outline', detail: 'Tercihlerin' },
 ] as const;

@@ -4,11 +4,11 @@ import { useState } from "react";
 import { warmupLessons } from "@/features/practice/data/movements";
 import styles from "./lesson-videos.module.css";
 
-export function LessonVideosScreen() {
+export function LessonVideosScreen({ embedded = false }: { embedded?: boolean } = {}) {
   const [selectedId, setSelectedId] = useState(warmupLessons[0].id);
   const selected = warmupLessons.find((lesson) => lesson.id === selectedId) ?? warmupLessons[0];
 
-  return <section className={`screen ${styles.page}`} aria-labelledby="lesson-videos-title">
+  return <section className={embedded ? styles.page : `screen ${styles.page}`} aria-labelledby="lesson-videos-title">
     <header className={styles.header}>
       <span className={styles.eyebrow}>SHIBASHI ÖNCESİ</span>
       <h1 id="lesson-videos-title">Temel Dersler</h1>

@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, usePathname } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { shenThemes } from '../../../packages/design-tokens';
-import { Screen } from '../components/ui';
 import { shenShape } from '../constants/shenDesign';
 import { fonts } from '../constants/theme';
 import { useApp } from '../store/AppStore';
@@ -17,13 +16,15 @@ const lessons = [
 ] as const;
 
 export default function WarmupLessons() {
-  const isTab = usePathname() === '/lessons';
+  return <Redirect href="/body-lines?section=preparation" />;
+}
+
+export function WarmupLessonsContent() {
   const { profile } = useApp();
   const theme = shenThemes[profile.selectedShenId];
   const [playingId, setPlayingId] = useState<string | null>(null);
   const toggleLesson = (videoId: string) => setPlayingId(current => current === videoId ? null : videoId);
-  return <Screen style={styles.page}>
-      {!isTab && <Pressable accessibilityRole="button" accessibilityLabel="Geri dön" onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" color={theme.button} size={22}/><Text style={[styles.backText, { color: theme.button }]}>Geri</Text></Pressable>}
+  return <View style={styles.embedded}>
       <Text style={[styles.eyebrow, { color: theme.button }]}>FORMDAN ÖNCE</Text>
       <Text style={[styles.title, { color: theme.light }]}>Temel Dersler</Text>
       <Text style={styles.lead}>Bedenini hazırlamak için kısa bir ders seç. Videoyu açıp kendi hızında izle.</Text>
@@ -51,9 +52,9 @@ export default function WarmupLessons() {
         <View style={[styles.breath, { borderColor: `${theme.primary}55` }]}><Ionicons name="water-outline" color={theme.button} size={17}/><Text style={styles.breathText}>{lesson.breath}</Text></View>
         <Pressable accessibilityRole="button" accessibilityLabel={`${lesson.title} videosunu ${playingId === lesson.videoId ? 'kapat' : 'aç'}`} onPress={() => toggleLesson(lesson.videoId)} style={[styles.action, { backgroundColor: theme.button }, shenShape(profile.selectedShenId, 'button')]}><Ionicons name={playingId === lesson.videoId ? 'close' : 'play'} color={theme.buttonInk} size={19}/><Text style={[styles.actionText, { color: theme.buttonInk }]}>{playingId === lesson.videoId ? 'Dersi kapat' : 'Dersi izle'}</Text></Pressable>
       </View>)}
-  </Screen>;
+  </View>;
 }
 
 const styles = StyleSheet.create({
-  page: { paddingHorizontal: 18, paddingBottom: 38, gap: 13 }, back: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 40, alignSelf: 'flex-start' }, backText: { fontFamily: fonts.sansStrong, fontSize: 14 }, eyebrow: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 1.6, marginTop: 10 }, title: { fontFamily: fonts.displayMedium, fontSize: 33, lineHeight: 39 }, lead: { color: '#A7ADA6', fontFamily: fonts.sans, fontSize: 15, lineHeight: 22, marginBottom: 8 }, card: { borderWidth: 1, padding: 18, gap: 10 }, posterWrap: { height: 160, borderRadius: 13, overflow: 'hidden', backgroundColor: '#0A1714' }, playerWrap: { aspectRatio: 16 / 9, borderRadius: 13, overflow: 'hidden', backgroundColor: '#050908' }, player: { flex: 1, backgroundColor: '#050908' }, poster: { flex: 1 }, posterShade: { flex: 1, backgroundColor: 'rgba(1,8,7,.22)', alignItems: 'center', justifyContent: 'center' }, playCircle: { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' }, cardTop: { flexDirection: 'row', alignItems: 'center', gap: 9 }, number: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }, numberText: { fontFamily: fonts.sansStrong, fontSize: 12 }, focus: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 1.2 }, cardTitle: { fontFamily: fonts.displayMedium, fontSize: 23 }, body: { color: '#D4D8D0', fontFamily: fonts.sans, fontSize: 14, lineHeight: 21 }, breath: { borderTopWidth: 1, paddingTop: 10, flexDirection: 'row', alignItems: 'center', gap: 7 }, breathText: { color: '#A7ADA6', fontFamily: fonts.sans, fontSize: 13, flex: 1 }, action: { minHeight: 48, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 5 }, actionText: { fontFamily: fonts.sansStrong, fontSize: 15 },
+  embedded: { gap: 13, paddingBottom: 20 }, eyebrow: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 1.6, marginTop: 10 }, title: { fontFamily: fonts.displayMedium, fontSize: 33, lineHeight: 39 }, lead: { color: '#A7ADA6', fontFamily: fonts.sans, fontSize: 15, lineHeight: 22, marginBottom: 8 }, card: { borderWidth: 1, padding: 18, gap: 10 }, posterWrap: { height: 160, borderRadius: 13, overflow: 'hidden', backgroundColor: '#0A1714' }, playerWrap: { aspectRatio: 16 / 9, borderRadius: 13, overflow: 'hidden', backgroundColor: '#050908' }, player: { flex: 1, backgroundColor: '#050908' }, poster: { flex: 1 }, posterShade: { flex: 1, backgroundColor: 'rgba(1,8,7,.22)', alignItems: 'center', justifyContent: 'center' }, playCircle: { width: 54, height: 54, borderRadius: 27, alignItems: 'center', justifyContent: 'center' }, cardTop: { flexDirection: 'row', alignItems: 'center', gap: 9 }, number: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }, numberText: { fontFamily: fonts.sansStrong, fontSize: 12 }, focus: { fontFamily: fonts.sansStrong, fontSize: 11, letterSpacing: 1.2 }, cardTitle: { fontFamily: fonts.displayMedium, fontSize: 23 }, body: { color: '#D4D8D0', fontFamily: fonts.sans, fontSize: 14, lineHeight: 21 }, breath: { borderTopWidth: 1, paddingTop: 10, flexDirection: 'row', alignItems: 'center', gap: 7 }, breathText: { color: '#A7ADA6', fontFamily: fonts.sans, fontSize: 13, flex: 1 }, action: { minHeight: 48, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 5 }, actionText: { fontFamily: fonts.sansStrong, fontSize: 15 },
 });

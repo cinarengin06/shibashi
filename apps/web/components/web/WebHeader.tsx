@@ -11,12 +11,10 @@ import styles from "./web-header.module.css";
 type WebHeaderTab = "home" | "mainMap" | "lessons" | "practice" | "posture" | "journey" | "bodyLines" | "journal" | "profile";
 
 const navigation: Array<{ id: WebHeaderTab; label: string; href: string }> = [
-  { id: "home", label: "Odam", href: "/" },
+  { id: "home", label: "Ana Sayfam", href: "/" },
   { id: "mainMap", label: "Gelişim Haritam", href: "/ana-haritam" },
-  { id: "lessons", label: "Temel Dersler", href: "/?tab=lessons" },
   { id: "bodyLines", label: "18 Form", href: "/beden-hatlari" },
   { id: "posture", label: "Postür", href: "/?tab=posture" },
-  { id: "journey", label: "8 Kapı", href: "/?tab=journey" },
   { id: "journal", label: "İstatistiklerim", href: "/?tab=journal" },
   { id: "profile", label: "Ayarlar", href: "/?tab=profile" },
 ];

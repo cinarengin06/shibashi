@@ -135,6 +135,7 @@ export function BodyLinesScreen() {
   const { ready: authReady, user } = useShibashiAuth();
   const [movementOrder, setMovementOrder] = useState(1);
   const [mode,setMode]=useState<'catalog'|'detail'>('catalog');
+  const [catalogSection,setCatalogSection]=useState<'preparation'|'forms'>('forms');
   const [catalogFilters,setCatalogFilters]=useState<FormCatalogFilters>(readFormCatalogFilters({}));
   const [formSteps, setFormSteps] = useState<FormSteps>({});
   const [completedOrders, setCompletedOrders] = useState<number[]>([]);
@@ -144,6 +145,7 @@ export function BodyLinesScreen() {
     const sync=()=>{
       const params=new URLSearchParams(window.location.search);
       const requested=Number(params.get('movementOrder'));
+      setCatalogSection(params.get('section')==='preparation'?'preparation':'forms');
       setCatalogFilters(readFormCatalogFilters({energy:params.get('energy'),status:params.get('status'),organ:params.get('organ'),gate:params.get('gate')}));
       if(Number.isInteger(requested)&&requested>=1&&requested<=18){setMovementOrder(requested);setMode('detail')}
       else setMode('catalog');
@@ -264,7 +266,8 @@ export function BodyLinesScreen() {
 
   const openMovement=(order:number)=>{chooseMovement(order);setMode('detail');const url=new URL(window.location.href);url.searchParams.set('movementOrder',String(order));window.history.pushState({},'',url)};
   const openCatalog=()=>{demoVideoRef.current?.pause();narrationRef.current?.pause();setMiniCameraOpen(false);setMode('catalog');const url=new URL(window.location.href);url.searchParams.delete('movementOrder');window.history.pushState({},'',url)};
-  if(mode==='catalog')return <FormCatalogWeb completedOrders={completedOrders} filters={catalogFilters} onFiltersChange={setCatalogFilters} onSelect={openMovement}/>;
+  const changeCatalogSection=(section:'preparation'|'forms')=>{setCatalogSection(section);const url=new URL(window.location.href);if(section==='preparation')url.searchParams.set('section','preparation');else url.searchParams.delete('section');window.history.replaceState({},'',url)};
+  if(mode==='catalog')return <FormCatalogWeb completedOrders={completedOrders} filters={catalogFilters} section={catalogSection} onSectionChange={changeCatalogSection} onFiltersChange={setCatalogFilters} onSelect={openMovement}/>;
 
   return (
     <main className={styles.page}>

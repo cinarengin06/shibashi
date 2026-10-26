@@ -12,20 +12,20 @@ import { useShenExperience } from "../../store/ShenExperience";
 import type { ShenId } from "../../types";
 
 const bottomTabs = [
-  { route: "index", label: "Odam" },
+  { route: "index", label: "Ana Sayfam" },
   { route: "moves", label: "18 Form" },
   { route: "posture", label: "Postür" },
-  { route: "journey", label: "8 Kapı" },
   { route: "main-map", label: "Gelişim Haritam" },
+  { route: "journal", label: "İstatistiklerim" },
 ] as const;
 type BottomTabRoute = (typeof bottomTabs)[number]["route"];
 
 const shenTabIcons: Record<ShenId, Record<BottomTabRoute, keyof typeof Ionicons.glyphMap>> = {
-  hun: { index: "leaf-outline", moves: "walk-outline", posture: "body-outline", journey: "trail-sign-outline", "main-map": "compass-outline" },
-  shen: { index: "flame-outline", moves: "sparkles-outline", posture: "accessibility-outline", journey: "sunny-outline", "main-map": "map-outline" },
-  yi: { index: "ellipse-outline", moves: "fitness-outline", posture: "body-outline", journey: "layers-outline", "main-map": "analytics-outline" },
-  po: { index: "moon-outline", moves: "hand-left-outline", posture: "body-outline", journey: "aperture-outline", "main-map": "navigate-outline" },
-  zhi: { index: "water-outline", moves: "pulse-outline", posture: "accessibility-outline", journey: "boat-outline", "main-map": "map-outline" },
+  hun: { index: "leaf-outline", moves: "walk-outline", posture: "body-outline", "main-map": "compass-outline", journal: "book-outline" },
+  shen: { index: "flame-outline", moves: "sparkles-outline", posture: "accessibility-outline", "main-map": "map-outline", journal: "trophy-outline" },
+  yi: { index: "ellipse-outline", moves: "fitness-outline", posture: "body-outline", "main-map": "analytics-outline", journal: "stats-chart-outline" },
+  po: { index: "moon-outline", moves: "hand-left-outline", posture: "body-outline", "main-map": "navigate-outline", journal: "journal-outline" },
+  zhi: { index: "water-outline", moves: "pulse-outline", posture: "accessibility-outline", "main-map": "map-outline", journal: "book-outline" },
 };
 
 export default function TabLayout() {
@@ -66,13 +66,13 @@ export default function TabLayout() {
       </View>}
       screenOptions={{ headerShown: false, tabBarHideOnKeyboard: true }}
     >
-      <Tabs.Screen name="index" options={{ title: "Odam" }} />
+      <Tabs.Screen name="index" options={{ title: "Ana Sayfam" }} />
       <Tabs.Screen name="main-map" options={{ title: "Gelişim Haritam" }} />
-      <Tabs.Screen name="lessons" options={{ title: "Temel Dersler" }} />
+      <Tabs.Screen name="lessons" options={{ href: null, title: "Temel Dersler" }} />
       <Tabs.Screen name="moves" options={{ title: "18 Form" }} />
       <Tabs.Screen name="posture" options={{ title: "Postür" }} />
       <Tabs.Screen name="practice" options={{ href: null, title: "Pratikler" }} />
-      <Tabs.Screen name="journey" options={{ title: "8 Kapı" }} />
+      <Tabs.Screen name="journey" options={{ href: null, title: "8 Kapı" }} />
       <Tabs.Screen name="journal" options={{ title: "İstatistiklerim" }} />
       <Tabs.Screen name="profile" options={{ title: "Ayarlar" }} />
     </Tabs>

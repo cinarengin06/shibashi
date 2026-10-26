@@ -40,7 +40,7 @@ type Phase = 'watch' | 'mini' | 'framing' | 'cue' | 'playing' | 'result';
 export function BodyLinesScreen() {
   const {profile} = useApp();
   const theme = shenThemes[profile.selectedShenId];
-  const params = useLocalSearchParams<{ movementOrder?: string; energy?: string; status?: string; organ?: string; gate?: string }>();
+  const params = useLocalSearchParams<{ movementOrder?: string; energy?: string; status?: string; organ?: string; gate?: string; section?: string }>();
   const requested = Number(params.movementOrder);
   const requestedValid=Number.isInteger(requested)&&requested>=1&&requested<=18;
   const [order, setOrder] = useState(Number.isInteger(requested) && requested >= 1 && requested <= 18 ? requested : 1);
@@ -75,7 +75,7 @@ export function BodyLinesScreen() {
     { text: 'Vazgeç', style: 'cancel' },
     { text: 'Sil', style: 'destructive', onPress: () => { void deleteShibashiPhoto(photo.id).then(items => { setPhotos(items); setSelected(null); }); } },
   ]);
-  if(mode==='catalog')return <FormCatalogScreen completedOrders={completedOrders} initialFilters={catalogFilters} onFiltersChange={setCatalogFilters} onSelect={choose} onBack={()=>router.replace('/(tabs)' )}/>;
+  if(mode==='catalog')return <FormCatalogScreen completedOrders={completedOrders} initialFilters={catalogFilters} initialSection={params.section==='preparation'?'preparation':'forms'} onFiltersChange={setCatalogFilters} onSelect={choose} onBack={()=>router.replace('/(tabs)' )}/>;
   return <SafeAreaView style={[s.root,{backgroundColor:theme.surface}]} edges={[]}><ScrollView ref={scrollRef} contentContainerStyle={s.page} showsVerticalScrollIndicator={false}>
     <View style={s.top}><Pressable accessibilityLabel="18 Form kataloğuna dön" onPress={() => setMode('catalog')} style={s.icon}><Ionicons name="arrow-back" size={23} color={colors.cream}/></Pressable><Text style={s.topTitle}>18 Form</Text><Pressable accessibilityLabel="Fotoğraflarım" onPress={() => { void loadShibashiPhotos().then(setPhotos); }} style={s.icon}><Ionicons name="images-outline" size={22} color={colors.cream}/></Pressable></View>
     {!switching&&<MovementStage key={order} order={order} completed={completedOrders.includes(order)} onComplete={completed => setCompletedOrders(items => [...new Set([...items, completed])])} onNext={() => choose(order % 18 + 1)} onPhoto={photo => setPhotos(items => [photo, ...items])}/>}

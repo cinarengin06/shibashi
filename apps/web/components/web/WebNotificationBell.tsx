@@ -60,7 +60,7 @@ function refreshNotifications(): WebNotification[] {
   const add = (item: Omit<WebNotification, "createdAt" | "read">) => {
     if (!byId.has(item.id)) byId.set(item.id, { ...item, createdAt: now.toISOString(), read: false });
   };
-  if (!hasPracticeToday) add({ id: `daily-practice-${todayKey}`, title: "Bugün kendine alan aç", body: "Beş sakin dakika bile ritmi yeniden kurabilir.", kind: "practice", href: "/?tab=lessons" });
+  if (!hasPracticeToday) add({ id: `daily-practice-${todayKey}`, title: "Bugün kendine alan aç", body: "Beş sakin dakika bile ritmi yeniden kurabilir.", kind: "practice", href: "/beden-hatlari?section=preparation" });
   if (!hasPostureReport) add({ id: "first-posture-analysis", title: "Beden aynan hazır", body: "İlk postür analizini kaydet; sonraki ölçümlerde değişimi izle.", kind: "posture", href: "/?tab=posture" });
   add({ id: "discover-living-learning", title: "Hareketleri keşfet", body: "18 hareketi videolarıyla birlikte kendi hızında öğren.", kind: "journey", href: "/beden-hatlari" });
   return persist([...byId.values()].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 60));

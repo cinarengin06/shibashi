@@ -35,6 +35,7 @@ export function JournalScreen({
   activities,
   gallery,
   onDeleteSnapshots,
+  onOpenPostureReport,
   onSetTrainerVisibility,
   postureReports,
   selectedShen,
@@ -43,6 +44,7 @@ export function JournalScreen({
   activities: ShenActivity[];
   gallery: JournalPracticeSnapshot[];
   onDeleteSnapshots: (snapshotIds: string[]) => void;
+  onOpenPostureReport: (reportId: string) => void;
   onSetTrainerVisibility: (snapshotId: string, trainerVisible: boolean) => void;
   postureReports: JournalPostureReport[];
   selectedShen: JournalShen;
@@ -69,7 +71,6 @@ export function JournalScreen({
     setSelectedSnapshotIds([]);
     setSelectionMode(false);
   };
-  const [selectedPosturePhoto, setSelectedPosturePhoto] = useState<{ imageData: string; label: string; dateKey: string } | null>(null);
   const [earnedMilestones, setEarnedMilestones] = useState<EarnedMilestone[]>([]);
   useEffect(() => {
     const refresh = () => setEarnedMilestones(loadEarnedMilestones(userId));
@@ -227,7 +228,7 @@ export function JournalScreen({
                 <article key={report.id}>
                   <div className="daily-posture-score">{report.observationVersion === 2 ? report.score : "—"}</div>
                   <div><strong>{report.dateKey}</strong><small>{report.observationVersion === 2 ? report.summary : "Bu kaydın ölçüm güveni doğrulanamıyor. Yeniden ölçüm yapabilirsin."}</small></div>
-                  <div className="journal-posture-photos">{(["front", "side", "back"] as const).map((view) => { const imageData = report.captures?.[view]?.imageData; const label = view === "front" ? "Ön" : view === "side" ? "Yan" : "Arka"; return isCapturedPracticePhoto(imageData) ? <button aria-label={`${report.dateKey} ${label} postür fotoğrafını aç`} key={view} onClick={() => setSelectedPosturePhoto({ imageData, label, dateKey: report.dateKey })} type="button"><img alt="" loading="lazy" src={imageData} /><small>{label}</small></button> : null; })}{!(["front", "side", "back"] as const).some((view) => isCapturedPracticePhoto(report.captures?.[view]?.imageData)) ? <small>Bu analizin fotoğrafları bu cihazda kayıtlı değil.</small> : null}</div>
+                  <button className="journal-posture-open" onClick={() => onOpenPostureReport(report.id)} type="button">Raporu Postür’de aç →</button>
                 </article>
               ))}
             </div>
@@ -284,7 +285,6 @@ export function JournalScreen({
           </div>
         </div>
       ) : null}
-      {selectedPosturePhoto ? <div aria-label="Postür fotoğrafı" aria-modal="true" className="snapshot-viewer" onClick={() => setSelectedPosturePhoto(null)} role="dialog"><div className="snapshot-viewer-card" onClick={(event) => event.stopPropagation()}><button aria-label="Fotoğrafı kapat" className="snapshot-viewer-close" onClick={() => setSelectedPosturePhoto(null)} type="button">×</button><div className="snapshot-viewer-image"><img src={selectedPosturePhoto.imageData} alt={`${selectedPosturePhoto.label} postür fotoğrafın`} /></div><div className="snapshot-viewer-copy"><span>POSTÜR FOTOĞRAFIN</span><h2>{selectedPosturePhoto.label} görünüm</h2><p>{selectedPosturePhoto.dateKey}</p></div></div></div> : null}
     </section>
   );
 }

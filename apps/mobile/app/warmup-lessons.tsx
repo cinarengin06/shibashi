@@ -8,11 +8,12 @@ import { Screen } from '../components/ui';
 import { shenShape } from '../constants/shenDesign';
 import { fonts } from '../constants/theme';
 import { useApp } from '../store/AppStore';
+import { shibashiPosters } from '../data/shibashiMedia';
 
 const lessons = [
-  { order: '01', title: 'Wuji: Temel Duruş', focus: 'Hizalanma', detail: 'Baş, omuz, pelvis, diz ve ayak tabanını zorlamadan aynı dikey bütünlükte buluştur.', breath: 'Burundan gelen doğal nefesi izle.', videoId: '9K2yhF0kh1g' },
-  { order: '02', title: 'Isınma: Eklemleri Aç', focus: 'Hareketlilik', detail: 'Kasları ısıt, eklem çevresini rahatlat ve ana forma nazikçe hazırlan.', breath: 'Açılırken nefes al, merkeze dönerken ver.', videoId: 'WmC0lMoFZnA' },
-  { order: '03', title: 'Pelvis, Kua ve Dan Tian', focus: 'Merkez', detail: 'Hareketi belden zorlamadan kalça kıvrımı ve alt karın merkezinden başlat.', breath: 'Merkez açılırken nefes al, yerleşirken ver.', videoId: 'eem4xQX8mfc' },
+  { order: '01', title: 'Wuji: Temel Duruş', focus: 'Hizalanma', detail: 'Baş, omuz, pelvis, diz ve ayak tabanını zorlamadan aynı dikey bütünlükte buluştur.', breath: 'Burundan gelen doğal nefesi izle.', videoId: '9K2yhF0kh1g', posterOrder: 1 },
+  { order: '02', title: 'Isınma: Eklemleri Aç', focus: 'Hareketlilik', detail: 'Kasları ısıt, eklem çevresini rahatlat ve ana forma nazikçe hazırlan.', breath: 'Açılırken nefes al, merkeze dönerken ver.', videoId: 'WmC0lMoFZnA', posterOrder: 4 },
+  { order: '03', title: 'Pelvis, Kua ve Dan Tian', focus: 'Merkez', detail: 'Hareketi belden zorlamadan kalça kıvrımı ve alt karın merkezinden başlat.', breath: 'Merkez açılırken nefes al, yerleşirken ver.', videoId: 'eem4xQX8mfc', posterOrder: 7 },
 ] as const;
 
 export default function WarmupLessons() {
@@ -40,7 +41,7 @@ export default function WarmupLessons() {
             onShouldStartLoadWithRequest={request => !/youtube\.com\/watch|youtu\.be\//.test(request.url)}
           />
         </View> : <Pressable accessibilityRole="button" accessibilityLabel={`${lesson.title} videosunu aç`} onPress={() => toggleLesson(lesson.videoId)} style={styles.posterWrap}>
-          <ImageBackground source={{ uri: `https://i.ytimg.com/vi/${lesson.videoId}/hqdefault.jpg` }} resizeMode="cover" style={styles.poster}>
+          <ImageBackground source={shibashiPosters[lesson.posterOrder]} resizeMode="cover" style={styles.poster}>
             <View style={styles.posterShade}><View style={[styles.playCircle, { backgroundColor: theme.button }]}><Ionicons name="play" color={theme.buttonInk} size={24}/></View></View>
           </ImageBackground>
         </Pressable>}

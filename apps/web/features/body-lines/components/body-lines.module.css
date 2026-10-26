@@ -386,6 +386,7 @@
 .movementTiles strong { bottom: 32px; font-size: 12px; left: 10px; position: absolute; right: 10px; z-index: 1; }
 .movementTiles .tileEnergy { bottom:6px; left:9px; position:absolute; z-index:2; padding:3px 6px; font-size:10px; }
 .movementTiles .movementTileActive { border-color: var(--line); }
+.movementTiles .tilePlay { align-items:center;background:var(--shen-accent,#d8b774);border:1px solid rgba(255,255,255,.72);border-radius:50%;color:#142017;display:flex;font-size:14px;height:36px;justify-content:center;left:50%;padding-left:2px;position:absolute;top:45%;transform:translate(-50%,-50%);width:36px;z-index:2; }
 .catalogBack{margin:0 0 14px;padding:10px 14px;border:1px solid color-mix(in srgb,var(--site-accent) 35%,transparent);border-radius:12px;background:color-mix(in srgb,var(--site-accent) 9%,transparent);color:var(--site-accent);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
 @media (max-width: 1120px) {
   .workspace {

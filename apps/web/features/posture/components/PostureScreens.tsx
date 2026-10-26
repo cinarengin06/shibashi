@@ -547,7 +547,7 @@ function PostureFormSuggestions({ report }: { report: PostureReport }) {
       if (!movement) return null;
       const energy = getMovementEnergyTag(item.order).quality;
       return <a aria-label={`${movement.sourceTitle}, ${energy} videosunu aç`} className="posture-form-suggestion" key={item.order} href={`/beden-hatlari?movementOrder=${item.order}`}>
-        <span className="posture-form-poster"><NextImage alt="" src={`/images/shibashi-new/${item.order}.jpg`} width={74} height={88} /><i aria-hidden="true">▶</i></span>
+        <span className="posture-form-poster"><NextImage alt="" src={`/images/form-scenes/${item.order}.jpg`} width={74} height={88} /><i aria-hidden="true">▶</i></span>
         <span className="posture-form-copy"><strong>{movement.sourceTitle}</strong><small className={energy === "Yin" ? "posture-form-yin" : "posture-form-yang"}>{energy}</small></span>
       </a>;
     })}

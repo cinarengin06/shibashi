@@ -413,7 +413,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
   return (
     <div className={styles.movementCameraSplit}>
       <div className={styles.movementTeacherPanel}>
-        <video aria-label={`${movementName} hoca videosu`} autoPlay controls key={movementOrder} loop muted playsInline poster={`/images/shibashi-new/${Number(movementOrder)}.jpg`} ref={teacherRef} src={`/videos/shibashi/${Number(movementOrder)}.mp4`} />
+        <video aria-label={`${movementName} hoca videosu`} autoPlay controls key={movementOrder} loop muted playsInline poster={`/images/form-scenes/${Number(movementOrder)}.jpg`} ref={teacherRef} src={`/videos/shibashi/${Number(movementOrder)}.mp4`} />
         <span className={styles.practicePanelBadge}>HOCA</span>
         <span className={styles.practicePanelCaption}>Hareketi izle ve eşlik et</span>
       </div>

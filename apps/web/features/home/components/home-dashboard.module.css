@@ -246,8 +246,8 @@
 .featuredForm { display:grid; gap:16px; grid-template-columns:minmax(155px,38%) minmax(0,1fr); }
 .gameCard a.featuredFormImage { border:1px solid color-mix(in srgb,var(--gold) 38%,transparent); border-radius:var(--card-radius); box-shadow:inset 0 0 35px rgba(0,0,0,.24),0 14px 34px rgba(0,0,0,.24); display:block; margin:0; min-height:175px; overflow:hidden; position:relative; }
 .featuredFormImage::after { background:linear-gradient(0deg,rgba(4,10,7,.42),rgba(4,10,7,.13)); content:""; inset:0; position:absolute; }
-.featuredFormImage img { filter:blur(2.5px) brightness(.76); object-fit:cover; transform:scale(1.04); transition:filter .35s ease,transform .35s ease; }
-.featuredFormImage:hover img { filter:blur(1.2px) brightness(.88); transform:scale(1.08); }
+.featuredFormImage img { filter:brightness(.76); object-fit:cover; transform:scale(1.04); transition:filter .35s ease,transform .35s ease; }
+.featuredFormImage:hover img { filter:brightness(.88); transform:scale(1.08); }
 .featuredPlay { align-items:center; background:color-mix(in srgb,var(--gold) 88%,white); border:1px solid rgba(255,255,255,.65); border-radius:50%; box-shadow:0 0 0 7px rgba(222,192,126,.15),0 8px 25px rgba(0,0,0,.42); color:#132016; display:flex; font-size:19px; height:54px; justify-content:center; left:50%; padding-left:3px; position:absolute; top:50%; transform:translate(-50%,-50%); width:54px; z-index:1; }
 .featuredFormCopy { align-self:center; min-width:0; }
 .gameCard a.featuredFormAction { background:var(--gold); border-radius:var(--action-radius); color:#101813; display:inline-flex; font-weight:800; padding:10px 15px; }

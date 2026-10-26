@@ -53,6 +53,7 @@
 .heroRing { background:radial-gradient(closest-side,var(--site-surface,#171d19) 76%,transparent 78%),conic-gradient(var(--shen-accent,#a9d977) var(--progress),rgba(255,255,255,.12) 0); }
 .progressCard,.gatePanel,.note,.movementCard,.empty { background:var(--site-surface,#171d19); border-color:var(--site-line,rgba(255,255,255,.12)); box-shadow:0 20px 50px rgba(0,0,0,.22); color:var(--map-ink); }
 .movementCard:hover { border-color:var(--shen-accent,#a9d977); }
+.posterPlay { align-items:center;background:var(--shen-accent,#d8b774);border:1px solid rgba(255,255,255,.72);border-radius:50%;color:#142017;display:flex;font-size:16px;font-style:normal;height:40px;justify-content:center;left:50%;padding-left:2px;position:absolute;top:50%;transform:translate(-50%,-50%);width:40px; }
 .halo { background:radial-gradient(circle,color-mix(in srgb,var(--shen-accent,#a9d977) 15%,transparent),transparent 70%); }
 .gateCircle { background:radial-gradient(closest-side,var(--site-surface-raised,#252c31) 77%,transparent 79%),conic-gradient(var(--shen-accent,#a9d977) var(--gate-progress),rgba(255,255,255,.13) 0); }
 .gateSelected .gateCircle { box-shadow:0 0 0 3px color-mix(in srgb,var(--shen-accent,#a9d977) 45%,transparent); }

@@ -84,3 +84,22 @@
 .relatedCard > strong,.relatedCard > a { margin-inline:10px; }
 .relatedCard > strong { color:var(--map-ink); font-size:12px; line-height:1.35; }
 .relatedCard > a { color:var(--map-green); font-size:11px; font-weight:700; text-decoration:none; }
+.gateMap { height:560px; }
+.gateMap .halo { display:none; }
+.gateMap .bodyImage,.gateMap .bodyMarkers { height:520px; top:50%; width:290px; }
+.gateMap .bodyImage { border-radius:18px; box-shadow:0 16px 45px rgba(0,0,0,.35); mask-image:none; object-fit:cover; }
+.gateMap .gate { z-index:3; }
+.gateMap .gate0,.gateMap .gate2,.gateMap .gate4,.gateMap .gate6 { left:0; right:auto; transform:none; }
+.gateMap .gate1,.gateMap .gate3,.gateMap .gate5,.gateMap .gate7 { left:auto; right:0; transform:none; }
+.gateMap .gate0,.gateMap .gate1 { top:2%; bottom:auto; }
+.gateMap .gate2,.gateMap .gate3 { top:27%; bottom:auto; }
+.gateMap .gate4,.gateMap .gate5 { top:52%; bottom:auto; }
+.gateMap .gate6,.gateMap .gate7 { top:77%; bottom:auto; }
+@media (max-width:650px) {
+  .gateMap { height:485px; }
+  .gateMap .bodyImage,.gateMap .bodyMarkers { height:424px; width:236px; }
+}
+@media (max-width:390px) {
+  .gateMap { height:445px; }
+  .gateMap .bodyImage,.gateMap .bodyMarkers { height:386px; width:215px; }
+}

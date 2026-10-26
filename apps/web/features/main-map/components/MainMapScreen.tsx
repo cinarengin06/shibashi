@@ -23,14 +23,14 @@ const gateOrganCues: Record<GateId, string> = {
 };
 
 const gateOrganPositions: Record<GateId, { organ: string; x: number; y: number }> = {
-  peng: { organ: "Akciğerler", x: 43, y: 31 },
-  lu: { organ: "Mide", x: 59, y: 46 },
-  kao: { organ: "Karaciğer", x: 37, y: 44 },
-  ji: { organ: "Kalın bağırsak", x: 60, y: 55 },
-  zhou: { organ: "Safra kesesi", x: 37, y: 52 },
-  an: { organ: "Böbrekler", x: 42, y: 59 },
-  lie: { organ: "Kalp çevresi", x: 57, y: 34 },
-  cai: { organ: "Mesane", x: 53, y: 66 },
+  peng: { organ: "Akciğerler", x: 52, y: 82 },
+  lu: { organ: "Mide", x: 76, y: 79 },
+  kao: { organ: "Karaciğer", x: 54, y: 65 },
+  ji: { organ: "Kalın bağırsak", x: 68, y: 49 },
+  zhou: { organ: "Safra kesesi", x: 33, y: 46 },
+  an: { organ: "Böbrekler", x: 55, y: 31 },
+  lie: { organ: "Kalp çevresi", x: 54, y: 10 },
+  cai: { organ: "Mesane", x: 29, y: 69 },
 };
 
 type GateArrow = { x1: number; y1: number; x2: number; y2: number; width: number; height: number };
@@ -78,7 +78,7 @@ function GateBodyMap({ progress, selectedGate, onSelect }: {
 
   return <div className={styles.gateMap} ref={mapRef}>
     <div className={styles.halo} />
-    <Image alt="8 Kapı beden haritası referans görseli" className={styles.bodyImage} height={320} priority src="/images/body-map-eight-gates-3d-v2.jpg" width={180} />
+    <Image alt="Sekiz kapılı iç dünya beden haritası" className={styles.bodyImage} height={832} priority src="/images/neijing-map.jpg" width={464} />
     {arrow ? <svg aria-hidden="true" className={styles.gateArrow} preserveAspectRatio="none" viewBox={`0 0 ${arrow.width} ${arrow.height}`}>
       <defs><marker id="selected-gate-arrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0 0 8 4 0 8" /></marker></defs>
       <path d={`M ${arrow.x1} ${arrow.y1} L ${arrow.x2} ${arrow.y2}`} markerEnd="url(#selected-gate-arrow)" />

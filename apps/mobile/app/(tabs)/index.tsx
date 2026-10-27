@@ -145,12 +145,13 @@ export default function Today() {
     </ScrollView>
 
     <View style={{ gap:12, marginBottom:20 }}>
-      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Pressable accessibilityRole="button" accessibilityLabel={`${nextFormOrder}. formu aç`} onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={s.featuredFormImage}><Image source={shibashiPosters[nextFormOrder]} resizeMode="cover" style={s.featuredFormPhoto} /><View style={s.featuredFormShade} /><View style={[s.featuredFormPlay,{backgroundColor:theme.button}]}><Ionicons name="play" color={theme.buttonInk} size={22} /></View></Pressable><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ · FORM {nextFormOrder}</Text><Text style={[s.gameTitle,{color:visual.text}]}>Sıradaki Adım</Text><Text style={[s.gameBody,{color:visual.textSecondary}]}>{shenDailyCues[shen.id]}</Text><FormMetaTags order={nextFormOrder} compact/><Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})}><Text style={[s.gameLink,{color:theme.button}]}>Pratik Yap →</Text></Pressable></View>
-      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Text style={[s.gameEyebrow,{color:theme.button}]}>18 FORM YOLU</Text><Text style={[s.gameTitle,{color:visual.text}]}>{completedForms} / 18 form</Text><View style={s.formProgress}>{Array.from({length:18},(_,index)=><View key={index} style={[s.formProgressDot,{backgroundColor:completedFormOrders.has(index+1)?theme.button:`${theme.primary}35`}]}/>)}</View><Text style={[s.gameBody,{color:visual.textSecondary}]}>Hocayı izle, kamerayla dene, kaydını oluştur.</Text><Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')}><Text style={[s.gameLink,{color:theme.button}]}>Yolculuğa devam et →</Text></Pressable></View>
+      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><ShenCardBackdrop shenId={shen.id} /><Pressable accessibilityRole="button" accessibilityLabel={`${nextFormOrder}. formu aç`} onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={s.featuredFormImage}><Image source={shibashiPosters[nextFormOrder]} resizeMode="cover" style={s.featuredFormPhoto} /><View style={s.featuredFormShade} /><View style={[s.featuredFormPlay,{backgroundColor:theme.button}]}><Ionicons name="play" color={theme.buttonInk} size={22} /></View></Pressable><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ · FORM {nextFormOrder}</Text><Text style={[s.gameTitle,{color:visual.text}]}>Sıradaki Adım</Text><Text style={[s.gameBody,{color:visual.textSecondary}]}>{shenDailyCues[shen.id]}</Text><FormMetaTags order={nextFormOrder} compact/><Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})}><Text style={[s.gameLink,{color:theme.button}]}>Pratik Yap →</Text></Pressable></View>
+      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><ShenCardBackdrop shenId={shen.id} /><Text style={[s.gameEyebrow,{color:theme.button}]}>18 FORM YOLU</Text><Text style={[s.gameTitle,{color:visual.text}]}>{completedForms} / 18 form</Text><View style={s.formProgress}>{Array.from({length:18},(_,index)=><View key={index} style={[s.formProgressDot,{backgroundColor:completedFormOrders.has(index+1)?theme.button:`${theme.primary}35`}]}/>)}</View><Text style={[s.gameBody,{color:visual.textSecondary}]}>Hocayı izle, kamerayla dene, kaydını oluştur.</Text><Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')}><Text style={[s.gameLink,{color:theme.button}]}>Yolculuğa devam et →</Text></Pressable></View>
 
     </View>
 
     <View style={[s.balanceCard,{backgroundColor:visual.surface,borderColor:visual.border},shenShape(shen.id)]}>
+      <ShenCardBackdrop shenId={shen.id} />
       <Text style={[s.gameEyebrow,{color:theme.button}]}>YİN · YANG DENGESİ</Text>
       <View style={s.balanceOverview}>
         <View style={s.balanceCounts}><View style={s.balanceCountRow}><View style={[s.balanceDot,{backgroundColor:'#8CCFE3'}]}/><Text style={[s.balanceNumber,{color:visual.text}]}>{balance.yin}</Text><Text style={[s.balanceName,{color:visual.textSecondary}]}>Yin</Text></View><View style={s.balanceCountRow}><View style={[s.balanceDot,{backgroundColor:'#EAB776'}]}/><Text style={[s.balanceNumber,{color:visual.text}]}>{balance.yang}</Text><Text style={[s.balanceName,{color:visual.textSecondary}]}>Yang</Text></View>{balance.todayTotal>0?<Text style={[s.balanceToday,{color:visual.textSecondary}]}>Bugün: {balance.todayYin} Yin · {balance.todayYang} Yang</Text>:null}</View>
@@ -166,27 +167,33 @@ export default function Today() {
     </View>
 
     <View style={[s.balanceCard,{backgroundColor:visual.surface,borderColor:visual.border},shenShape(shen.id)]}>
+      <ShenCardBackdrop shenId={shen.id} />
       <Text style={[s.gameEyebrow,{color:theme.button}]}>KENDİ BAHÇEN</Text>
       <Text style={[s.balanceCopy,{color:visual.textSecondary}]}>Pratik yaptıkça bahçene yeni ayrıntılar eklenir.</Text>
       <ImageBackground source={shenBackgrounds[shen.id]} imageStyle={{borderRadius:14}} style={s.gardenScene}><View style={s.gardenShade}/>{rewards.garden.filter(item=>item.unlocked).length ? rewards.garden.filter(item=>item.unlocked).map(item=><View key={item.id} style={s.gardenItem}><Text style={s.gardenIcon}>{item.icon}</Text><Text style={[s.gardenLabel,{color:'#F5F2E7'}]}>{item.title}</Text></View>) : <Text style={[s.balanceCopy,{color:'#F5F2E7'}]}>İlk formunu tamamlayınca ilk filiz belirecek.</Text>}</ImageBackground>
     </View>
 
     <Pressable accessibilityRole="button" accessibilityLabel={`Beden Yolculuğun. Şu an ${activeBodyGateNumber}. kapıdasın: ${activeBodyGate.name}. Gelişim Haritamı aç.`} onPress={() => router.push('/(tabs)/main-map')} style={[s.bodyJourneyCard, { backgroundColor: visual.surface, borderColor: visual.border }, shenShape(shen.id)]}>
+      <ShenCardBackdrop shenId={shen.id} />
       <View style={s.bodyJourneyHeading}><View><Text style={[s.sectionTitle,{color:visual.text}]}>Beden Yolculuğun · {activeBodyGateNumber}. Kapıdasın</Text><Text style={[s.bodyJourneyGate,{color:theme.button}]}>{activeBodyGate.name} · %{activeBodyGate.percent}</Text></View><Ionicons name="arrow-forward-circle" color={theme.button} size={28}/></View>
       <View pointerEvents="none" importantForAccessibility="no-hide-descendants"><HomeBodyJourneyMap progress={bodyGateProgress} activeGate={activeBodyGate.id} accent={theme.button}/></View>
       <Text style={[s.bodyJourneyAction,{color:theme.button}]}>Gelişim Haritama git →</Text>
     </Pressable>
 
-    <Pressable onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.postureSummary, { backgroundColor: visual.surface }, shenShape(shen.id)]}><View><Text style={s.statLabel}>POSTÜR ANALİZİ</Text><Text style={[s.postureTitle,{color:visual.text}]}>{lastReport ? "Son analizine dön" : "Beden çizgini keşfet"}</Text><Text style={[s.quickSubtitle,{color:visual.textSecondary}]}>{lastReport ? `Son ölçüm: ${lastReport.score} puan` : "Ön, yan ve arka görünüm"}</Text></View><Ionicons name="arrow-forward" color={theme.button} size={22} /></Pressable>
+    <Pressable onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.postureSummary, { backgroundColor: visual.surface }, shenShape(shen.id)]}><ShenCardBackdrop shenId={shen.id} /><View><Text style={s.statLabel}>POSTÜR ANALİZİ</Text><Text style={[s.postureTitle,{color:visual.text}]}>{lastReport ? "Son analizine dön" : "Beden çizgini keşfet"}</Text><Text style={[s.quickSubtitle,{color:visual.textSecondary}]}>{lastReport ? `Son ölçüm: ${lastReport.score} puan` : "Ön, yan ve arka görünüm"}</Text></View><Ionicons name="arrow-forward" color={theme.button} size={22} /></Pressable>
 
     <View style={s.sectionHeader}><Text style={[s.sectionTitle,{color:visual.text}]}>Form Uyum Görüntülerin</Text><Pressable onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint, { color: theme.button }]}>Fotoğraflarım →</Text></Pressable></View>
-    {photos.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photos}>{photos.slice(0,5).map((item) => <Pressable key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.photoCard, shenShape(shen.id)]}><Image source={{ uri: item.uri }} style={s.photo} /><LinearGradient colors={["transparent", "rgba(5,9,10,.9)"]} style={s.photoShade}><Text numberOfLines={1} style={s.photoTitle}>{item.name}</Text><Text style={[s.photoScore, { color: theme.button }]}>%{item.score}</Text></LinearGradient></Pressable>)}</ScrollView> : <View style={[s.emptyCard, { backgroundColor: visual.surface }, shenShape(shen.id)]}><Ionicons name="images-outline" color={theme.button} size={24} /><Text style={[s.emptyText,{color:visual.textSecondary}]}>İlk hareket fotoğrafın burada görünecek.</Text></View>}
+    {photos.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photos}>{photos.slice(0,5).map((item) => <Pressable key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.photoCard, shenShape(shen.id)]}><Image source={{ uri: item.uri }} style={s.photo} /><LinearGradient colors={["transparent", "rgba(5,9,10,.9)"]} style={s.photoShade}><Text numberOfLines={1} style={s.photoTitle}>{item.name}</Text><Text style={[s.photoScore, { color: theme.button }]}>%{item.score}</Text></LinearGradient></Pressable>)}</ScrollView> : <View style={[s.emptyCard, { backgroundColor: visual.surface }, shenShape(shen.id)]}><ShenCardBackdrop shenId={shen.id} /><Ionicons name="images-outline" color={theme.button} size={24} /><Text style={[s.emptyText,{color:visual.textSecondary}]}>İlk hareket fotoğrafın burada görünecek.</Text></View>}
 
   </Screen></>;
 }
 
 function StatTile({ label, value, unit, detail, progress, shenId, visual }: { label: string; value: string; unit: string; detail: string; progress?: number; shenId: ShenId; visual: ReturnType<typeof getShenVisualTheme> }) {
-  return <View style={[s.stat, { backgroundColor: visual.surface, borderWidth:1, borderColor:visual.border }, shenShape(shenId)]}><Text style={[s.statLabel,{color:visual.textSecondary}]}>{label}</Text><Text style={[s.statValue, { color: visual.glow,fontFamily:mobileThemeFont(visual.id) }]}>{value}<Text style={[s.statUnit,{color:visual.text}]}> {unit}</Text></Text>{progress === undefined ? <Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text> : <><View style={s.track}><View style={[s.fill, { width: `${Math.max(0, Math.min(1, progress)) * 100}%`, backgroundColor: visual.glow }]} /></View><Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text></>}</View>;
+  return <View style={[s.stat, { backgroundColor: visual.surface, borderWidth:1, borderColor:visual.border }, shenShape(shenId)]}><ShenCardBackdrop shenId={shenId} /><Text style={[s.statLabel,{color:visual.textSecondary}]}>{label}</Text><Text style={[s.statValue, { color: visual.glow,fontFamily:mobileThemeFont(visual.id) }]}>{value}<Text style={[s.statUnit,{color:visual.text}]}> {unit}</Text></Text>{progress === undefined ? <Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text> : <><View style={s.track}><View style={[s.fill, { width: `${Math.max(0, Math.min(1, progress)) * 100}%`, backgroundColor: visual.glow }]} /></View><Text style={[s.statDetail,{color:visual.textSecondary}]}>{detail}</Text></>}</View>;
+}
+
+function ShenCardBackdrop({ shenId }: { shenId: ShenId }) {
+  return <ImageBackground pointerEvents="none" source={shenBackgrounds[shenId]} imageStyle={s.cardBackdropImage} style={StyleSheet.absoluteFill} />;
 }
 
 const s = StyleSheet.create({
@@ -241,11 +248,11 @@ const s = StyleSheet.create({
   photoShade: { position: "absolute", left: 0, right: 0, bottom: 0, padding: 10, paddingTop: 30 },
   photoTitle: { color: "#F6F3EC", fontFamily: fonts.sansMedium, fontSize: 11 },
   photoScore: { fontFamily: fonts.sansStrong, fontSize: 12, marginTop: 3 },
-  emptyCard: { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, padding: 15 },
+  emptyCard: { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, padding: 15, overflow: 'hidden' },
   emptyText: { color: "#BFC9CB", fontFamily: fonts.sans, fontSize: 12 },
-  postureSummary: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, marginTop: 21 },
+  postureSummary: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, marginTop: 21, overflow: 'hidden' },
   postureTitle: { color: "#F6F3EC", fontFamily: fonts.sansMedium, fontSize: 17, marginBottom: 4 },
-  gameCard: { borderWidth:1, padding:17, gap:8 },
+  gameCard: { borderWidth:1, padding:17, gap:8, overflow:'hidden' },
   featuredFormImage: { height:155, borderRadius:12, overflow:'hidden', alignItems:'center', justifyContent:'center' },
   featuredFormPhoto: { width:'100%', height:'100%', position:'absolute' },
   featuredFormShade: { ...StyleSheet.absoluteFill, backgroundColor:'rgba(4,10,7,.28)' },
@@ -257,7 +264,8 @@ const s = StyleSheet.create({
   gameLink: { fontFamily:fonts.sansStrong, fontSize:13, marginTop:4 },
   formProgress: { flexDirection:'row', gap:3, marginVertical:5 },
   formProgressDot: { flex:1, height:8, borderRadius:5 },
-  balanceCard: { borderWidth:1, padding:17, marginTop:12, gap:9 },
+  balanceCard: { borderWidth:1, padding:17, marginTop:12, gap:9, overflow:'hidden' },
+  cardBackdropImage: { opacity: 0.13 },
   balanceOverview: { flexDirection:'row',alignItems:'center',justifyContent:'space-between' },
   balanceCounts: { gap:13,flex:1 },
   balanceCountRow: { flexDirection:'row',alignItems:'baseline',gap:7 },

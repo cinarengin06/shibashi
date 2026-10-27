@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bedenindeki Yolculuğun · Web tasarım önizlemesi</title>
+  <style>
+    :root { color-scheme:dark; --gold:#dfb96e; --text:#f5f1e9; --muted:#aaa9a3; --line:#ffffff23; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(circle at 80% 2%,#243028 0,transparent 42%),#0a0d0c; color:var(--text); font-family:Inter,Manrope,Arial,sans-serif; }
+    .top { align-items:center; border-bottom:1px solid #ffffff18; display:flex; gap:26px; height:74px; padding:0 max(24px,calc((100vw - 1240px)/2)); }
+    .brand { color:var(--gold); font-size:18px; font-weight:800; letter-spacing:.28em; white-space:nowrap; }
+    nav { color:#b9b8b2; display:flex; gap:30px; font-size:13px; font-weight:700; margin:auto; }
+    .pill { border:1px solid #d6ae6280; border-radius:12px; color:var(--gold); font-size:13px; font-weight:800; padding:10px 15px; white-space:nowrap; }
+    main { margin:46px auto; max-width:1240px; padding:0 24px; }
+    .preview { color:var(--gold); font-size:11px; font-weight:900; letter-spacing:.18em; margin:0 0 13px; }
+    h1 { font-size:34px; margin:0 0 11px; }
+    .intro { color:var(--muted); font-size:14px; margin:0 0 28px; }
+    .grid { display:grid; gap:16px; grid-template-columns:1.32fr 1fr; }
+    .card { background:linear-gradient(145deg,#1b211d,#151a17); border:1px solid var(--line); border-radius:24px; overflow:hidden; }
+    .photos { min-height:540px; padding:25px; }
+    .photos-head { align-items:center; display:flex; justify-content:space-between; }
+    .photos h2,.journey h2 { font-size:23px; margin:0; }
+    .photos-head span { color:var(--gold); font-size:13px; font-weight:700; }
+    .photo-empty { align-items:center; border:1px dashed #ffffff2c; border-radius:18px; color:var(--muted); display:flex; flex-direction:column; gap:10px; height:440px; justify-content:center; margin-top:22px; }
+    .photo-empty b { color:#d5bd8b; font-size:44px; font-weight:400; }
+    .journey { display:block; min-height:540px; padding:23px 24px 18px; position:relative; text-decoration:none; transition:border-color .2s,transform .2s; }
+    .journey:hover { border-color:var(--gold); transform:translateY(-2px); }
+    .journey-top { align-items:start; display:flex; justify-content:space-between; gap:12px; position:relative; z-index:2; }
+    .eyebrow { color:var(--gold); display:block; font-size:10px; font-weight:900; letter-spacing:.15em; margin-bottom:8px; }
+    .journey h2 { color:var(--text); }
+    .current { align-items:center; background:#dfb96e1e; border:1px solid #dfb96e77; border-radius:999px; color:#f1d697; display:inline-flex; font-size:13px; font-weight:800; margin-top:12px; padding:8px 11px; }
+    .arrow { align-items:center; border:1px solid #dfb96e9c; border-radius:50%; color:var(--gold); display:flex; font-size:25px; height:40px; justify-content:center; width:40px; }
+    .map { height:395px; margin:13px auto 0; max-width:440px; position:relative; }
+    .map img { border-radius:17px; filter:saturate(.88) brightness(.82); height:390px; left:50%; object-fit:cover; position:absolute; top:0; transform:translateX(-50%); width:218px; }
+    .map::after { background:linear-gradient(to top,#151a17 0,transparent 24%); content:""; inset:0; pointer-events:none; position:absolute; }
+    .gate { align-items:center; background:#151d1ad9; border:2px solid #ffffff42; border-radius:50%; color:#ece6da; display:flex; font-size:15px; font-weight:850; height:39px; justify-content:center; position:absolute; width:39px; z-index:2; }
+    .gate.active { background:var(--gold); border-color:#fff4cd; box-shadow:0 0 0 5px #dfb96e38,0 0 25px #dfb96e9c; color:#122018; }
+    .g1 { left:10%; top:73%; }.g2 { right:10%; top:73%; }.g3 { left:10%; top:49%; }.g4 { right:10%; top:49%; }.g5 { left:10%; top:25%; }.g6 { right:10%; top:25%; }.g7 { left:10%; top:2%; }.g8 { right:10%; top:2%; }
+    .pin { align-items:center; background:var(--gold); border:3px solid #fdf0c5; border-radius:50%; box-shadow:0 0 0 7px #dfb96e40,0 0 25px #dfb96e; color:#131a15; display:flex; font-size:14px; font-weight:900; height:34px; justify-content:center; left:62%; position:absolute; top:47%; width:34px; z-index:3; }
+    .connector { border-top:2px dashed var(--gold); left:64%; position:absolute; top:51%; transform:rotate(-18deg); transform-origin:left center; width:23%; z-index:2; }
+    .journey-foot { align-items:center; border-top:1px solid #ffffff20; color:var(--gold); display:flex; font-size:13px; font-weight:800; justify-content:space-between; padding-top:14px; position:relative; z-index:3; }
+    .journey-foot small { color:var(--muted); font-size:11px; font-weight:500; }
+    @media(max-width:800px) { nav { display:none; }.top { height:65px; }.grid { grid-template-columns:1fr; }.journey { order:-1; }.photos { min-height:250px; }.photo-empty { height:150px; } }
+  </style>
+</head>
+<body>
+  <header class="top"><span class="brand">◯ SHIBASHI EFE</span><nav><span>Ana Sayfam</span><span>Gelişim Haritam</span><span>18 Form</span><span>İstatistiklerim</span></nav><span class="pill">✦ 65 XP</span></header>
+  <main><p class="preview">WEB ANA SAYFA · TASARIM ÖNİZLEMESİ</p><h1>Yolculuğun, tek bakışta</h1><p class="intro">Onay sonrası mevcut Postür kartının yerini bu harita alacak. Kapı ve ilerleme bilgisi canlı veriden gelecektir.</p>
+    <div class="grid">
+      <section class="card photos"><div class="photos-head"><h2>Beden Görüntülerin</h2><span>Galeriyi aç →</span></div><div class="photo-empty"><b>◎</b><strong>Hareket fotoğrafların burada</strong><small>Mevcut galeri kartı yerini koruyor</small></div></section>
+      <a class="card journey" href="/ana-haritam" aria-label="Bedenindeki Yolculuğun, örnek 4. kapı Kalp Tapınağı; Gelişim Haritam'a git"><div class="journey-top"><div><span class="eyebrow">SEKİZ KAPI · GELİŞİM HARİTAM</span><h2>Bedenindeki Yolculuğun</h2><span class="current">✦ 4. kapıdasın · Kalp Tapınağı</span></div><span class="arrow">↗</span></div><div class="map" aria-hidden="true"><img src="/images/neijing-map.jpg" alt="" /><span class="gate g1">1</span><span class="gate g2">2</span><span class="gate g3">3</span><span class="gate g4 active">4</span><span class="gate g5">5</span><span class="gate g6">6</span><span class="gate g7">7</span><span class="gate g8">8</span><span class="pin">4</span><span class="connector"></span></div><div class="journey-foot"><span>Haritanı aç →</span><small>Diğer kapıları orada incele</small></div></a>
+    </div>
+  </main>
+</body>
+</html>

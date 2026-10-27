@@ -8,9 +8,11 @@ import { useCallback, useState } from "react";
 import { Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { getShenVisualTheme, shenThemes } from "../../../../packages/design-tokens";
+import { BODY_GATE_ORDER, gateProgress } from "../../../../packages/eight-gates";
 import { journeyRewards, shenDailyCues, yinYangSummary, type FormSteps, type JourneyRecord } from "../../../../packages/gamification";
 import { Screen } from "../../components/ui";
 import { FormMetaTags } from "../../components/FormMetaTags";
+import { GateBodyMap } from "../../components/GateBodyMap";
 import { fonts, mobileThemeFont } from "../../constants/theme";
 import { shenMotifs, shenShape } from "../../constants/shenDesign";
 import { fiveShen } from "../../data/fiveShen";
@@ -90,6 +92,9 @@ export default function Today() {
     ...shenActivities.filter(activity => activity.type === "practice" && activity.completed !== false).map(activity => Number(activity.practiceId?.match(/^movement-(\d+)$/)?.[1])),
   ].filter(order => Number.isInteger(order) && order >= 1 && order <= 18));
   const completedForms = completedFormOrders.size;
+  const bodyGateProgress = gateProgress(completedFormOrders);
+  const activeBodyGate = bodyGateProgress.reduce((best, gate) => gate.percent > best.percent || (gate.percent === best.percent && gate.completedCount > best.completedCount) ? gate : best, bodyGateProgress[0]);
+  const activeBodyGateNumber = BODY_GATE_ORDER.indexOf(activeBodyGate.id) + 1;
   const balance = yinYangSummary(completedFormOrders, formRecords);
   const yinPercent = balance.total ? Math.round(balance.yin / balance.total * 100) : 0;
   const yangPercent = balance.total ? 100 - yinPercent : 0;
@@ -166,13 +171,11 @@ export default function Today() {
       <ImageBackground source={shenBackgrounds[shen.id]} imageStyle={{borderRadius:14}} style={s.gardenScene}><View style={s.gardenShade}/>{rewards.garden.filter(item=>item.unlocked).length ? rewards.garden.filter(item=>item.unlocked).map(item=><View key={item.id} style={s.gardenItem}><Text style={s.gardenIcon}>{item.icon}</Text><Text style={[s.gardenLabel,{color:'#F5F2E7'}]}>{item.title}</Text></View>) : <Text style={[s.balanceCopy,{color:'#F5F2E7'}]}>İlk formunu tamamlayınca ilk filiz belirecek.</Text>}</ImageBackground>
     </View>
 
-    <View style={s.sectionHeader}><Text style={[s.sectionTitle,{color:visual.text}]}>Bugün senin için</Text><Text style={[s.sectionHint, { color: theme.button }]}>Devam et →</Text></View>
-    <View style={s.quickActions}>
-      <Pressable accessibilityRole="button" onPress={() => router.push("/body-lines")} style={[s.quick, { backgroundColor: theme.button }, shenShape(shen.id)]}><Ionicons name="arrow-forward" color={theme.buttonInk} size={25} /><View><Text style={[s.quickTitle, { color: theme.buttonInk }]}>18 Form</Text><Text style={[s.quickSubtitle, { color: theme.buttonInk }]}>Hoca videosuyla öğren</Text></View></Pressable>
-      <Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.quick, { backgroundColor: visual.surface }, shenShape(shen.id)]}><Ionicons name="body-outline" color={theme.button} size={27} /><View><Text style={[s.quickTitle,{color:visual.text}]}>Postür</Text><Text style={[s.quickSubtitle,{color:visual.textSecondary}]}>Bedenini tanı</Text></View></Pressable>
-    </View>
-    <Pressable accessibilityRole="button" onPress={() => router.push('/body-lines?section=preparation' as Href)} style={[s.postureSummary, { backgroundColor: visual.surface, marginTop: 10 }, shenShape(shen.id)]}><View><Text style={[s.statLabel, { color: theme.button }]}>FORMDAN ÖNCE</Text><Text style={[s.postureTitle,{color:visual.text}]}>Temel Dersler</Text><Text style={[s.quickSubtitle,{color:visual.textSecondary}]}>Wuji · Eklemler · Merkez</Text></View><Ionicons name="play-circle-outline" color={theme.button} size={25} /></Pressable>
-    <Pressable accessibilityRole="button" onPress={() => router.push('/(tabs)/main-map?section=gates' as Href)} style={[s.postureSummary, { backgroundColor: visual.surface, marginTop: 10 }, shenShape(shen.id)]}><View><Text style={[s.statLabel, { color: theme.button }]}>SEKİZ KAPI</Text><Text style={[s.postureTitle,{color:visual.text}]}>8 Kapı</Text><Text style={[s.quickSubtitle,{color:visual.textSecondary}]}>Kapıları ve ilgili formları keşfet</Text></View><Ionicons name="compass-outline" color={theme.button} size={25} /></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Bedenindeki Yolculuğun. Şu an ${activeBodyGateNumber}. kapıdasın: ${activeBodyGate.name}. Gelişim Haritamı aç.`} onPress={() => router.push('/(tabs)/main-map')} style={[s.bodyJourneyCard, { backgroundColor: visual.surface, borderColor: visual.border }, shenShape(shen.id)]}>
+      <View style={s.bodyJourneyHeading}><View><Text style={[s.sectionTitle,{color:visual.text}]}>Bedenindeki Yolculuğun</Text><Text style={[s.bodyJourneyGate,{color:theme.button}]}>{activeBodyGateNumber}. kapıdasın · {activeBodyGate.name}</Text></View><Ionicons name="arrow-forward-circle" color={theme.button} size={28}/></View>
+      <View pointerEvents="none" importantForAccessibility="no-hide-descendants"><GateBodyMap progress={bodyGateProgress} selectedGate={activeBodyGate.id} onSelect={() => {}} accent={theme.button} ink="#F4F2EA"/></View>
+      <Text style={[s.bodyJourneyAction,{color:theme.button}]}>Gelişim Haritama git →</Text>
+    </Pressable>
 
     <View style={s.sectionHeader}><Text style={[s.sectionTitle,{color:visual.text}]}>Beden Görüntülerin</Text><Pressable onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint, { color: theme.button }]}>Fotoğraflarım →</Text></Pressable></View>
     {photos.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photos}>{photos.slice(0,5).map((item) => <Pressable key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.photoCard, shenShape(shen.id)]}><Image source={{ uri: item.uri }} style={s.photo} /><LinearGradient colors={["transparent", "rgba(5,9,10,.9)"]} style={s.photoShade}><Text numberOfLines={1} style={s.photoTitle}>{item.name}</Text><Text style={[s.photoScore, { color: theme.button }]}>%{item.score}</Text></LinearGradient></Pressable>)}</ScrollView> : <View style={[s.emptyCard, { backgroundColor: visual.surface }, shenShape(shen.id)]}><Ionicons name="images-outline" color={theme.button} size={24} /><Text style={[s.emptyText,{color:visual.textSecondary}]}>İlk hareket fotoğrafın burada görünecek.</Text></View>}
@@ -187,6 +190,10 @@ function StatTile({ label, value, unit, detail, progress, shenId, visual }: { la
 
 const s = StyleSheet.create({
   page: { gap: 0, paddingHorizontal: 18, paddingBottom: 34 },
+  bodyJourneyCard: { borderWidth: 1, borderRadius: 20, overflow: 'hidden', padding: 12, marginTop: 22, marginBottom: 7 },
+  bodyJourneyHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, paddingHorizontal: 6, paddingTop: 5, paddingBottom: 12 },
+  bodyJourneyGate: { fontFamily: fonts.sansStrong, fontSize: 13, marginTop: 5 },
+  bodyJourneyAction: { fontFamily: fonts.sansStrong, fontSize: 13, textAlign: 'right', paddingHorizontal: 8, paddingTop: 12, paddingBottom: 5 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 5, marginBottom: 25 },
   brand: { flexDirection: "row", alignItems: "center", gap: 7 },
   brandRing: { fontSize: 29, lineHeight: 30 },
@@ -226,9 +233,6 @@ const s = StyleSheet.create({
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 20, marginBottom: 10 },
   sectionTitle: { color: "#F6F3EC", fontFamily: fonts.displayMedium, fontSize: 20 },
   sectionHint: { fontFamily: fonts.sansMedium, fontSize: 11 },
-  quickActions: { flexDirection: "row", gap: 9 },
-  quick: { flex: 1, minHeight: 115, padding: 15, justifyContent: "space-between" },
-  quickTitle: { color: "#F6F3EC", fontFamily: fonts.sansStrong, fontSize: 15, marginBottom: 3 },
   quickSubtitle: { color: "#BFC9CB", fontFamily: fonts.sans, fontSize: 11 },
   photos: { gap: 9, paddingRight: 5 },
   photoCard: { width: 133, height: 172, overflow: "hidden" },

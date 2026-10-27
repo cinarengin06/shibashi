@@ -49,13 +49,15 @@ export function GateBodyMap({ progress, selectedGate, onSelect, accent, ink }: {
   const arrowY = endY - dy * 24;
   const sourceX = startX + dx * 15;
   const sourceY = startY + dy * 15;
-  const bend = Math.min(18, distance * .09);
-  const controlX = (sourceX + arrowX) / 2 - dy * bend;
-  const controlY = (sourceY + arrowY) / 2 + dx * bend;
-  const tipDistance = Math.hypot(arrowX - controlX, arrowY - controlY) || 1;
-  const tipDx = (arrowX - controlX) / tipDistance;
-  const tipDy = (arrowY - controlY) / tipDistance;
-  const arrowPath = `M ${sourceX} ${sourceY} Q ${controlX} ${controlY} ${arrowX} ${arrowY}`;
+  const side = endX < startX ? -1 : 1;
+  const control1X = sourceX + side * Math.min(60, Math.abs(arrowX - sourceX) * .65);
+  const control1Y = sourceY;
+  const control2X = arrowX - side * 20;
+  const control2Y = arrowY + Math.sign(sourceY - arrowY) * Math.min(30, Math.abs(sourceY - arrowY) * .3);
+  const tipDistance = Math.hypot(arrowX - control2X, arrowY - control2Y) || 1;
+  const tipDx = (arrowX - control2X) / tipDistance;
+  const tipDy = (arrowY - control2Y) / tipDistance;
+  const arrowPath = `M ${sourceX} ${sourceY} C ${control1X} ${control1Y} ${control2X} ${control2Y} ${arrowX} ${arrowY}`;
 
   return <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={[s.map, { height: width ? height : 570 }]}>
     {width > 0 && <>

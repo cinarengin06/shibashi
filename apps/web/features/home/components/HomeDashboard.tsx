@@ -10,6 +10,7 @@ import type {
   HomeEnergySummary,
   HomeLevelSummary,
   HomePracticePhoto,
+  HomePostureSummary,
   HomeShenId,
   HomeShenSummary,
   HomeStreakSummary,
@@ -26,6 +27,7 @@ type HomeDashboardProps = {
   onReset: () => void;
   onSelectShen: (shenId: HomeShenId) => void;
   postureCount: number;
+  postureReports: HomePostureSummary[];
   practicePhotos: HomePracticePhoto[];
   shen: HomeShenSummary;
   shenOptions: HomeShenSummary[];
@@ -56,8 +58,9 @@ export function HomeDashboard(props: HomeDashboardProps) {
       </section>
       <HomeStatsRow energy={props.energy} streak={props.streak} week={props.week} />
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
-        <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
         <HomeBodyJourneyCard completedOrders={props.gamification.completedOrders} />
+        <PostureAnalysisCard onPosture={props.onPosture} reports={props.postureReports} />
+        <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
       </section>
       <footer className={styles.footer}>
         <span>© 2026 Shibashi EFE</span>
@@ -176,10 +179,23 @@ function MiniTrend({ descriptions, hasData, labels, values }: { descriptions: st
 function RecentPracticePhotos({ onHistory, photos }: { onHistory: () => void; photos: HomePracticePhoto[] }) {
   return (
     <section className={styles.flowsPanel}>
-      <header><h2>Beden Görüntülerin</h2><button onClick={onHistory} type="button">Galeriyi aç <span aria-hidden="true">→</span></button></header>
+      <header><h2>Form Uyum Görüntülerin</h2><button onClick={onHistory} type="button">Galeriyi aç <span aria-hidden="true">→</span></button></header>
       {photos.length ? <div className={styles.flowCards}>{photos.slice(0, 5).map((photo) => <button aria-label={`${photo.movementName} hareket fotoğrafını aç`} key={photo.id} onClick={onHistory} type="button"><span className={styles.flowImage}><Image alt={`${photo.movementName} sırasında çekilen fotoğrafın`} fill sizes="180px" src={photo.image} unoptimized /></span><small>%{photo.score}</small><strong>{photo.movementName}</strong><em>{new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short" }).format(new Date(photo.date))}</em></button>)}</div> : <div className={styles.practicePhotoEmpty}><span aria-hidden="true">◎</span><strong>Henüz hareket fotoğrafın yok</strong><p>Kamerayla tamamladığın hareketler burada birikir.</p></div>}
     </section>
   );
+}
+
+function PostureAnalysisCard({ onPosture, reports }: { onPosture: (reportId?: string) => void; reports: HomePostureSummary[] }) {
+  const latest = reports[0];
+  return <article className={styles.postureCard}>
+    <div className={styles.postureContent}>
+      <span className={styles.gameEyebrow}>BEDENİNİ TANI</span>
+      <h2>Postür Analizi</h2>
+      <p>{latest ? `Son analiz: ${latest.score} puan` : "Beden çizgini ön, yan ve arka görünümde keşfet."}</p>
+      <button className={styles.postureAnalysisButton} onClick={() => onPosture(latest?.id)} type="button">{latest ? "Son analizi gör" : "Analize başla"} →</button>
+    </div>
+    <div className={styles.postureModels} aria-hidden="true"><Image alt="" fill sizes="350px" src="/images/posture/posture-back-translucent.png" /></div>
+  </article>;
 }
 
 const homeGatePlaces = [

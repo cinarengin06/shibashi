@@ -177,10 +177,11 @@ export default function Today() {
       <Text style={[s.bodyJourneyAction,{color:theme.button}]}>Gelişim Haritama git →</Text>
     </Pressable>
 
-    <View style={s.sectionHeader}><Text style={[s.sectionTitle,{color:visual.text}]}>Beden Görüntülerin</Text><Pressable onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint, { color: theme.button }]}>Fotoğraflarım →</Text></Pressable></View>
+    <Pressable onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.postureSummary, { backgroundColor: visual.surface }, shenShape(shen.id)]}><View><Text style={s.statLabel}>POSTÜR ANALİZİ</Text><Text style={[s.postureTitle,{color:visual.text}]}>{lastReport ? "Son analizine dön" : "Beden çizgini keşfet"}</Text><Text style={[s.quickSubtitle,{color:visual.textSecondary}]}>{lastReport ? `Son ölçüm: ${lastReport.score} puan` : "Ön, yan ve arka görünüm"}</Text></View><Ionicons name="arrow-forward" color={theme.button} size={22} /></Pressable>
+
+    <View style={s.sectionHeader}><Text style={[s.sectionTitle,{color:visual.text}]}>Form Uyum Görüntülerin</Text><Pressable onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint, { color: theme.button }]}>Fotoğraflarım →</Text></Pressable></View>
     {photos.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photos}>{photos.slice(0,5).map((item) => <Pressable key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.photoCard, shenShape(shen.id)]}><Image source={{ uri: item.uri }} style={s.photo} /><LinearGradient colors={["transparent", "rgba(5,9,10,.9)"]} style={s.photoShade}><Text numberOfLines={1} style={s.photoTitle}>{item.name}</Text><Text style={[s.photoScore, { color: theme.button }]}>%{item.score}</Text></LinearGradient></Pressable>)}</ScrollView> : <View style={[s.emptyCard, { backgroundColor: visual.surface }, shenShape(shen.id)]}><Ionicons name="images-outline" color={theme.button} size={24} /><Text style={[s.emptyText,{color:visual.textSecondary}]}>İlk hareket fotoğrafın burada görünecek.</Text></View>}
 
-    <Pressable onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.postureSummary, { backgroundColor: visual.surface }, shenShape(shen.id)]}><View><Text style={s.statLabel}>POSTÜR ANALİZİ</Text><Text style={[s.postureTitle,{color:visual.text}]}>{lastReport ? "Son analizine dön" : "Beden çizgini keşfet"}</Text><Text style={[s.quickSubtitle,{color:visual.textSecondary}]}>{lastReport ? `Son ölçüm: ${lastReport.score} puan` : "Ön, yan ve arka görünüm"}</Text></View><Ionicons name="arrow-forward" color={theme.button} size={22} /></Pressable>
   </Screen></>;
 }
 

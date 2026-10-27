@@ -179,6 +179,7 @@ export function DojoHomeScreen({
     onReset={onReset}
     onSelectShen={onSelectShen}
     postureCount={postureCount}
+    postureReports={postureReports.map((report) => ({ date: report.createdAt, id: report.id, score: report.score, summary: report.summary }))}
     practicePhotos={practicePhotos}
     shen={toHomeShen(selectedShen, homeCopy[selectedShen.id], "Bugünün odağı")}
     shenOptions={shenOptions.map((shen) => toHomeShen(shen, homeCopy[shen.id], shen.dailyName))}

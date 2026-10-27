@@ -274,7 +274,17 @@
 @media(max-width:680px){.journeyGrid{grid-template-columns:1fr}}
 @media(max-width:899px){.gameGrid{grid-template-columns:1fr;order:4}.featuredForm{grid-template-columns:minmax(120px,36%) minmax(0,1fr)}.journeyGrid{order:5}.stats{order:6}.flowsPanel{order:7}.postureCard{order:8}}
 
-.contentGrid { align-items: start; grid-template-columns: minmax(0, 1.45fr) minmax(320px, .8fr); }
+.contentGrid { align-items: stretch; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.contentGrid > * { min-width: 0; }
+.contentGrid .flowsPanel,.contentGrid .postureCard { min-height: 100%; }
+.contentGrid .flowCards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.contentGrid .postureCard { display: flex; flex-direction: column; grid-column: auto; min-height: 0; }
+.contentGrid .postureContent { flex: 1; }
+.contentGrid .postureContent h2 { margin-top: 9px; }
+.contentGrid .postureCard p { max-width: 220px; }
+.contentGrid .postureModels { inset: 122px 0 78px; opacity: .72; }
+.contentGrid .postureModels img { height: 100% !important; object-position: bottom; width: 100% !important; }
+.contentGrid .postureAnalysisButton { position: relative; z-index: 3; }
 .bodyJourneyCard { background: linear-gradient(145deg,#1b211d,#111714); border: 1px solid color-mix(in srgb,var(--gold) 26%,transparent); border-radius: var(--card-radius); color: var(--text); display: block; overflow: hidden; padding: 16px; text-decoration: none; transition: border-color .25s ease, transform .25s ease; }
 .bodyJourneyCard:hover { border-color: var(--gold); transform: translateY(-2px); }
 .bodyJourneyCard:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
@@ -290,7 +300,7 @@
 .bodyJourneyGateMarker small { color: var(--gold); font-size: 11px; font-weight: 800; margin-top: 3px; text-shadow: 0 2px 8px #000; }
 .bodyJourneyGateActive b { background: var(--gold); box-shadow: 0 0 0 4px color-mix(in srgb,var(--gold) 30%,transparent),0 0 20px color-mix(in srgb,var(--gold) 60%,transparent); color: #172018; }
 .bodyJourneyFooter { align-items: center; border-top: 1px solid rgba(255,255,255,.12); color: var(--gold); display: flex; font-size: 13px; font-weight: 800; justify-content: space-between; margin-top: 14px; padding: 13px 3px 2px; }
-@media (max-width: 1180px) { .contentGrid { grid-template-columns: minmax(0,1fr) minmax(320px,.9fr); } }
-@media (max-width: 899px) { .bodyJourneyCard { order: 7; } .flowsPanel { order: 8; } }
+@media (max-width: 1000px) and (min-width: 900px) { .contentGrid { grid-template-columns: repeat(2,minmax(0,1fr)); } .contentGrid .flowsPanel { grid-column: 1 / -1; min-height: 250px; } }
+@media (max-width: 899px) { .bodyJourneyCard { order: 7; } .postureCard { order: 8; } .flowsPanel { order: 9; } .contentGrid .postureCard { min-height: 260px; } .contentGrid .flowsPanel { min-height: 240px; } .contentGrid .postureModels { inset: 18px 10px 18px 46%; } }
 @media (max-width: 520px) { .bodyJourneyCard { padding: 12px; } .bodyJourneyGateMarker b { height: 45px; width: 45px; } }
 @media(max-width:520px){.featuredForm{grid-template-columns:1fr}.featuredFormImage{min-height:180px}.stats{grid-template-columns:1fr}.stats .statCard:last-child{grid-column:auto}.dayDots{display:flex}}

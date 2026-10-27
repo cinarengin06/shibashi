@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {makeRedirectUri} from 'expo-auth-session';
-import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import * as WebBrowser from 'expo-web-browser';
 import {createClient,processLock} from '@supabase/supabase-js';
 import {AppState,Platform} from 'react-native';
@@ -37,10 +36,12 @@ export const mobileAuthRedirectUrl=makeRedirectUri({
 
 async function createSessionFromUrl(url:string){
  if(!supabaseAuth)throw new Error('Supabase Auth yapılandırılmadı.');
- const{params,errorCode}=QueryParams.getQueryParams(url);
+ const parsed=new URL(url);
+ const params=new URLSearchParams(parsed.hash.startsWith('#')?parsed.hash.slice(1):parsed.search);
+ const errorCode=params.get('error')??params.get('error_code');
  if(errorCode)throw new Error(errorCode);
- const accessToken=params.access_token;
- const refreshToken=params.refresh_token;
+ const accessToken=params.get('access_token');
+ const refreshToken=params.get('refresh_token');
  if(!accessToken||!refreshToken)throw new Error('Google oturumu tamamlanamadı.');
  const{data,error}=await supabaseAuth.auth.setSession({
   access_token:accessToken,

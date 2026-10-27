@@ -50,7 +50,7 @@ export function BodyLinesScreen() {
   useEffect(()=>setCatalogFilters(readFormCatalogFilters(params)),[params.energy,params.status,params.organ,params.gate]);
   const [switching, setSwitching] = useState(false);
   const switchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const [photos, setPhotos] = useState<ShibashiPhoto[]>([]);
   const [completedOrders, setCompletedOrders] = useState<number[]>([]);
   const [selected, setSelected] = useState<ShibashiPhoto | null>(null);

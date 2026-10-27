@@ -2,6 +2,15 @@ import {forwardRef,useImperativeHandle,useRef,useState} from 'react';
 import {StyleSheet,View} from 'react-native';
 import {WebView,WebViewMessageEvent} from 'react-native-webview';
 
+// WebView 14's platform union currently resolves to `never` with RN 0.88 types.
+const BridgeWebView=WebView as unknown as React.ComponentType<{
+ ref:React.Ref<WebView>;
+ source:{html:string};
+ javaScriptEnabled:boolean;
+ onMessage:(event:WebViewMessageEvent)=>void;
+ originWhitelist:string[];
+}>;
+
 export type PoseLandmark={x:number;y:number;z:number;visibility:number};
 export type PoseAnalysis={landmarks:PoseLandmark[];confidence:number;imageWidth:number;imageHeight:number};
 export type MediaPipePoseBridgeRef={analyze:(base64:string)=>Promise<PoseAnalysis>;ready:boolean;error:string};
@@ -72,7 +81,7 @@ export const MediaPipePoseBridge=forwardRef<MediaPipePoseBridgeRef>(function Med
    request.resolve({landmarks:message.landmarks,confidence,imageWidth:message.imageWidth??1,imageHeight:message.imageHeight??1});
   }else request.reject(new Error(message.message||'Poz algılanamadı'));
  };
- return <View pointerEvents="none" style={styles.hidden}><WebView ref={webRef} source={{html}} javaScriptEnabled onMessage={onMessage} originWhitelist={['*']}/></View>;
+ return <View pointerEvents="none" style={styles.hidden}><BridgeWebView ref={webRef} source={{html}} javaScriptEnabled onMessage={onMessage} originWhitelist={['*']}/></View>;
 });
 
 const styles=StyleSheet.create({hidden:{position:'absolute',width:1,height:1,opacity:.01,left:-10,top:-10}});

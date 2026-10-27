@@ -225,7 +225,7 @@ function MoodSlider({
   right: string;
   value: number;
 }) {
-  const track = useRef<View>(null);
+  const track = useRef<React.ComponentRef<typeof View>>(null);
   const update = (pageX: number) => {
     track.current?.measureInWindow((x, _y, width) => {
       const next = Math.round(

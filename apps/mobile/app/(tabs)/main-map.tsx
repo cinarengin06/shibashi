@@ -15,7 +15,7 @@ import { useApp } from '../../store/AppStore';
 
 export default function MainMap() {
   const { section } = useLocalSearchParams<{ section?: string }>();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const gateSectionY = useRef<number | null>(null);
   const { profile, sessions, shenActivities } = useApp();
   const theme = shenThemes[profile.selectedShenId];

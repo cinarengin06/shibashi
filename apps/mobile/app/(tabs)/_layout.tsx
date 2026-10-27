@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { router, Tabs, type Href } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,7 +39,7 @@ export default function TabLayout() {
     <View style={{ flex: 1, backgroundColor: visual.background }}>
     <MobileMenuHeader onOpen={() => setMenuOpen(true)} />
     <Tabs
-      tabBar={({ state, navigation }) => <View style={[styles.bottomBar, { backgroundColor: visual.navigation, borderTopColor: visual.border, paddingBottom: Math.max(insets.bottom, 7) }]} accessibilityRole="tablist">
+      tabBar={({ state }) => <View style={[styles.bottomBar, { backgroundColor: visual.navigation, borderTopColor: visual.border, paddingBottom: Math.max(insets.bottom, 7) }]} accessibilityRole="tablist">
         {bottomTabs.map((item) => {
           const routeIndex = state.routes.findIndex((route) => route.name === item.route);
           const route = state.routes[routeIndex];
@@ -51,8 +51,7 @@ export default function TabLayout() {
             key={item.route}
             onPress={() => {
               if (!route || selected) return;
-              const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-              if (!event.defaultPrevented) navigation.navigate(item.route);
+              router.navigate(item.route === "index" ? "/" : `/(tabs)/${item.route}` as Href);
             }}
             style={styles.bottomItem}
           >

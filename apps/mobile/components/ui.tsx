@@ -15,7 +15,7 @@ import {getShenVisualTheme} from '../../../packages/design-tokens';
 
 function useVisualPalette(){const{profile}=useApp();return getShenVisualTheme(profile.selectedShenId,profile.visualThemeId)}
 
-export function Screen({children,scroll=true,style,scrollRef}:{children:React.ReactNode;scroll?:boolean;style?:StyleProp<ViewStyle>;scrollRef?:React.Ref<ScrollView>}){
+export function Screen({children,scroll=true,style,scrollRef}:{children:React.ReactNode;scroll?:boolean;style?:StyleProp<ViewStyle>;scrollRef?:React.Ref<React.ComponentRef<typeof ScrollView>>}){
  const inTabs=useSegments()[0]==='(tabs)';
  const{width}=useWindowDimensions();
  const{shen}=useShenExperience();

@@ -7,24 +7,24 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "android": { "image": "sdk-57" },
-      "ios": { "image": "sdk-57" }
+      "android": { "image": "sdk-58" },
+      "ios": { "image": "sdk-58" }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk",
-        "image": "sdk-57"
+        "image": "sdk-58"
       },
-      "ios": { "image": "sdk-57" }
+      "ios": { "image": "sdk-58" }
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle",
-        "image": "sdk-57"
+        "image": "sdk-58"
       },
-      "ios": { "image": "sdk-57" }
+      "ios": { "image": "sdk-58" }
     }
   }
 }

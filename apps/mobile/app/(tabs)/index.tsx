@@ -180,10 +180,17 @@ export default function Today() {
       <Text style={[s.bodyJourneyAction,{color:theme.button}]}>Gelişim Haritama git →</Text>
     </Pressable>
 
-    <Pressable onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.postureSummary, { backgroundColor: visual.surface }, shenShape(shen.id)]}><ShenCardBackdrop shenId={shen.id} /><View><Text style={s.statLabel}>POSTÜR ANALİZİ</Text><Text style={[s.postureTitle,{color:visual.text}]}>{lastReport ? "Son analizine dön" : "Beden çizgini keşfet"}</Text><Text style={[s.quickSubtitle,{color:visual.textSecondary}]}>{lastReport ? `Son ölçüm: ${lastReport.score} puan` : "Ön, yan ve arka görünüm"}</Text></View><Ionicons name="arrow-forward" color={theme.button} size={22} /></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel="Postür Analizi sayfasını aç" onPress={() => router.push("/(tabs)/posture" as Href)} style={[s.postureSummary, { backgroundColor: visual.surface, borderColor: visual.border }, shenShape(shen.id)]}>
+      <ShenCardBackdrop shenId={shen.id} />
+      <View style={s.postureContent}><Text style={[s.gameEyebrow,{color:theme.button}]}>BEDENİNİ TANI</Text><Text style={[s.postureTitle,{color:visual.text}]}>Postür Analizi</Text><Text style={[s.postureCopy,{color:visual.textSecondary}]}>{lastReport ? `Son analiz: ${lastReport.score} puan` : "Beden çizgini ön, yan ve arka görünümde keşfet."}</Text><View style={[s.cardAction,{borderColor:theme.button}]}><Text style={[s.cardActionText,{color:theme.button}]}>{lastReport ? "Son analizi gör" : "Analize başla"} →</Text></View></View>
+      <Image accessibilityIgnoresInvertColors source={require('../../assets/posture/posture-back-translucent.png')} resizeMode="contain" style={s.postureFigure} />
+    </Pressable>
 
-    <View style={s.sectionHeader}><Text style={[s.sectionTitle,{color:visual.text}]}>Form Uyum Görüntülerin</Text><Pressable onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint, { color: theme.button }]}>Fotoğraflarım →</Text></Pressable></View>
-    {photos.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photos}>{photos.slice(0,5).map((item) => <Pressable key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.photoCard, shenShape(shen.id)]}><Image source={{ uri: item.uri }} style={s.photo} /><LinearGradient colors={["transparent", "rgba(5,9,10,.9)"]} style={s.photoShade}><Text numberOfLines={1} style={s.photoTitle}>{item.name}</Text><Text style={[s.photoScore, { color: theme.button }]}>%{item.score}</Text></LinearGradient></Pressable>)}</ScrollView> : <View style={[s.emptyCard, { backgroundColor: visual.surface }, shenShape(shen.id)]}><ShenCardBackdrop shenId={shen.id} /><Ionicons name="images-outline" color={theme.button} size={24} /><Text style={[s.emptyText,{color:visual.textSecondary}]}>İlk hareket fotoğrafın burada görünecek.</Text></View>}
+    <View style={[s.galleryPanel,{backgroundColor:visual.surface,borderColor:visual.border},shenShape(shen.id)]}>
+      <ShenCardBackdrop shenId={shen.id} />
+      <View style={s.galleryHeading}><Text style={[s.sectionTitle,{color:visual.text}]}>Form Uyum Görüntülerin</Text><Pressable accessibilityRole="button" onPress={() => router.push("/(tabs)/journal")}><Text style={[s.sectionHint,{color:theme.button}]}>Galeriyi aç →</Text></Pressable></View>
+      {photos.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photos}>{photos.slice(0,5).map((item) => <Pressable key={item.id} onPress={() => router.push("/(tabs)/journal")} style={[s.photoCard, shenShape(shen.id)]}><Image source={{ uri: item.uri }} style={s.photo} /><LinearGradient colors={["transparent", "rgba(5,9,10,.9)"]} style={s.photoShade}><Text numberOfLines={1} style={s.photoTitle}>{item.name}</Text><Text style={[s.photoScore, { color: theme.button }]}>%{item.score}</Text></LinearGradient></Pressable>)}</ScrollView> : <View style={s.emptyCard}><Ionicons name="images-outline" color={theme.button} size={28} /><Text style={[s.emptyText,{color:visual.textSecondary}]}>Henüz hareket fotoğrafın yok. Kamerayla tamamladığın hareketler burada birikir.</Text></View>}
+    </View>
 
   </Screen></>;
 }
@@ -248,10 +255,17 @@ const s = StyleSheet.create({
   photoShade: { position: "absolute", left: 0, right: 0, bottom: 0, padding: 10, paddingTop: 30 },
   photoTitle: { color: "#F6F3EC", fontFamily: fonts.sansMedium, fontSize: 11 },
   photoScore: { fontFamily: fonts.sansStrong, fontSize: 12, marginTop: 3 },
-  emptyCard: { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, padding: 15, overflow: 'hidden' },
-  emptyText: { color: "#BFC9CB", fontFamily: fonts.sans, fontSize: 12 },
-  postureSummary: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16, marginTop: 21, overflow: 'hidden' },
-  postureTitle: { color: "#F6F3EC", fontFamily: fonts.sansMedium, fontSize: 17, marginBottom: 4 },
+  galleryPanel: { borderWidth: 1, borderRadius: 20, overflow: 'hidden', padding: 16, marginTop: 12, minHeight: 230 },
+  galleryHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 15 },
+  emptyCard: { flex: 1, minHeight: 150, alignItems: "center", justifyContent: 'center', gap: 10, padding: 15 },
+  emptyText: { color: "#BFC9CB", fontFamily: fonts.sans, fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  postureSummary: { borderWidth: 1, borderRadius: 20, overflow: 'hidden', padding: 16, marginTop: 12, minHeight: 230, flexDirection: 'row', alignItems: 'stretch' },
+  postureContent: { width: '57%', alignItems: 'flex-start', justifyContent: 'space-between', zIndex: 1 },
+  postureFigure: { position: 'absolute', width: '48%', height: 205, right: 3, bottom: 0, opacity: .78 },
+  postureTitle: { color: "#F6F3EC", fontFamily: fonts.displayMedium, fontSize: 21, marginTop: 8 },
+  postureCopy: { fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  cardAction: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 9, marginTop: 18 },
+  cardActionText: { fontFamily: fonts.sansStrong, fontSize: 11 },
   gameCard: { borderWidth:1, padding:17, gap:8, overflow:'hidden' },
   featuredFormImage: { height:155, borderRadius:12, overflow:'hidden', alignItems:'center', justifyContent:'center' },
   featuredFormPhoto: { width:'100%', height:'100%', position:'absolute' },

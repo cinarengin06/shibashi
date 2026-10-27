@@ -12,7 +12,7 @@ import { BODY_GATE_ORDER, gateProgress } from "../../../../packages/eight-gates"
 import { journeyRewards, shenDailyCues, yinYangSummary, type FormSteps, type JourneyRecord } from "../../../../packages/gamification";
 import { Screen } from "../../components/ui";
 import { FormMetaTags } from "../../components/FormMetaTags";
-import { GateBodyMap } from "../../components/GateBodyMap";
+import { HomeBodyJourneyMap } from "../../components/HomeBodyJourneyMap";
 import { fonts, mobileThemeFont } from "../../constants/theme";
 import { shenMotifs, shenShape } from "../../constants/shenDesign";
 import { fiveShen } from "../../data/fiveShen";
@@ -171,9 +171,9 @@ export default function Today() {
       <ImageBackground source={shenBackgrounds[shen.id]} imageStyle={{borderRadius:14}} style={s.gardenScene}><View style={s.gardenShade}/>{rewards.garden.filter(item=>item.unlocked).length ? rewards.garden.filter(item=>item.unlocked).map(item=><View key={item.id} style={s.gardenItem}><Text style={s.gardenIcon}>{item.icon}</Text><Text style={[s.gardenLabel,{color:'#F5F2E7'}]}>{item.title}</Text></View>) : <Text style={[s.balanceCopy,{color:'#F5F2E7'}]}>İlk formunu tamamlayınca ilk filiz belirecek.</Text>}</ImageBackground>
     </View>
 
-    <Pressable accessibilityRole="button" accessibilityLabel={`Bedenindeki Yolculuğun. Şu an ${activeBodyGateNumber}. kapıdasın: ${activeBodyGate.name}. Gelişim Haritamı aç.`} onPress={() => router.push('/(tabs)/main-map')} style={[s.bodyJourneyCard, { backgroundColor: visual.surface, borderColor: visual.border }, shenShape(shen.id)]}>
-      <View style={s.bodyJourneyHeading}><View><Text style={[s.sectionTitle,{color:visual.text}]}>Bedenindeki Yolculuğun</Text><Text style={[s.bodyJourneyGate,{color:theme.button}]}>{activeBodyGateNumber}. kapıdasın · {activeBodyGate.name}</Text></View><Ionicons name="arrow-forward-circle" color={theme.button} size={28}/></View>
-      <View pointerEvents="none" importantForAccessibility="no-hide-descendants"><GateBodyMap progress={bodyGateProgress} selectedGate={activeBodyGate.id} onSelect={() => {}} accent={theme.button} ink="#F4F2EA"/></View>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Beden Yolculuğun. Şu an ${activeBodyGateNumber}. kapıdasın: ${activeBodyGate.name}. Gelişim Haritamı aç.`} onPress={() => router.push('/(tabs)/main-map')} style={[s.bodyJourneyCard, { backgroundColor: visual.surface, borderColor: visual.border }, shenShape(shen.id)]}>
+      <View style={s.bodyJourneyHeading}><View><Text style={[s.sectionTitle,{color:visual.text}]}>Beden Yolculuğun · {activeBodyGateNumber}. Kapıdasın</Text><Text style={[s.bodyJourneyGate,{color:theme.button}]}>{activeBodyGate.name} · %{activeBodyGate.percent}</Text></View><Ionicons name="arrow-forward-circle" color={theme.button} size={28}/></View>
+      <View pointerEvents="none" importantForAccessibility="no-hide-descendants"><HomeBodyJourneyMap progress={bodyGateProgress} activeGate={activeBodyGate.id} accent={theme.button}/></View>
       <Text style={[s.bodyJourneyAction,{color:theme.button}]}>Gelişim Haritama git →</Text>
     </Pressable>
 

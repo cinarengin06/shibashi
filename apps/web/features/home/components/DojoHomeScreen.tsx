@@ -171,7 +171,7 @@ export function DojoHomeScreen({
   const nextFormOrder = Array.from({ length: 18 }, (_, index) => index + 1).find((order) => !completedOrders.has(order)) ?? 1;
 
   return <HomeDashboard
-    gamification={{ dailyCue: shenDailyCues[selectedShen.id], completedForms, nextFormOrder, balance, rewards }}
+    gamification={{ dailyCue: shenDailyCues[selectedShen.id], completedForms, completedOrders: completedMovementOrders, nextFormOrder, balance, rewards }}
     energy={{ score: hasRecordedActivity ? Math.round((activeDays.filter(Boolean).length / 7) * 100) : null, trend: activeDays.map((active) => active ? 100 : 0), dayLabels: recentDays.map((day) => new Intl.DateTimeFormat("tr-TR", { weekday: "short" }).format(day)), dayDescriptions: recentDays.map((day) => new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", weekday: "long" }).format(day)) }}
     level={{ experience: experienceIntoLevel, level: 1 + Math.floor(experience / 240), nextLevelExperience: 240, progress: Math.round((experienceIntoLevel / 240) * 100) }}
     onHistory={onJournal}
@@ -179,7 +179,6 @@ export function DojoHomeScreen({
     onReset={onReset}
     onSelectShen={onSelectShen}
     postureCount={postureCount}
-    postureReports={postureReports.map((report) => ({ date: report.createdAt, id: report.id, score: report.score, summary: report.summary }))}
     practicePhotos={practicePhotos}
     shen={toHomeShen(selectedShen, homeCopy[selectedShen.id], "Bugünün odağı")}
     shenOptions={shenOptions.map((shen) => toHomeShen(shen, homeCopy[shen.id], shen.dailyName))}

@@ -5,11 +5,11 @@ import Link from "next/link";
 import { FormMetaTags } from "@/components/web/FormMetaTags";
 import type { CSSProperties } from "react";
 import type { journeyRewards, yinYangSummary } from "@/packages/gamification";
+import { BODY_GATE_ORDER, gateProgress } from "@/packages/eight-gates";
 import type {
   HomeEnergySummary,
   HomeLevelSummary,
   HomePracticePhoto,
-  HomePostureSummary,
   HomeShenId,
   HomeShenSummary,
   HomeStreakSummary,
@@ -18,7 +18,7 @@ import type {
 import styles from "./home-dashboard.module.css";
 
 type HomeDashboardProps = {
-  gamification: { dailyCue: string; completedForms: number; nextFormOrder: number; balance: ReturnType<typeof yinYangSummary>; rewards: ReturnType<typeof journeyRewards> };
+  gamification: { dailyCue: string; completedForms: number; completedOrders: number[]; nextFormOrder: number; balance: ReturnType<typeof yinYangSummary>; rewards: ReturnType<typeof journeyRewards> };
   energy: HomeEnergySummary;
   level: HomeLevelSummary;
   onHistory: () => void;
@@ -26,7 +26,6 @@ type HomeDashboardProps = {
   onReset: () => void;
   onSelectShen: (shenId: HomeShenId) => void;
   postureCount: number;
-  postureReports: HomePostureSummary[];
   practicePhotos: HomePracticePhoto[];
   shen: HomeShenSummary;
   shenOptions: HomeShenSummary[];
@@ -58,7 +57,7 @@ export function HomeDashboard(props: HomeDashboardProps) {
       <HomeStatsRow energy={props.energy} streak={props.streak} week={props.week} />
       <section className={styles.contentGrid} aria-label="Bugünün Shibashi özeti">
         <RecentPracticePhotos onHistory={props.onHistory} photos={props.practicePhotos} />
-        <PostureAnalysisCard onPosture={props.onPosture} reports={props.postureReports} />
+        <HomeBodyJourneyCard completedOrders={props.gamification.completedOrders} />
       </section>
       <footer className={styles.footer}>
         <span>© 2026 Shibashi EFE</span>
@@ -183,22 +182,26 @@ function RecentPracticePhotos({ onHistory, photos }: { onHistory: () => void; ph
   );
 }
 
-function PostureAnalysisCard({ onPosture, reports }: { onPosture: (reportId?: string) => void; reports: HomePostureSummary[] }) {
-  const recentReports = reports.slice(0, 3);
-  return (
-    <article className={styles.postureCard}>
-      <div className={styles.postureContent}>
-        <h2>Postür</h2>
-        {recentReports.length ? <div className={styles.postureHistory}>
-          {recentReports.map((report) => <button aria-label={`${report.score} puanlı postür analizini aç`} key={report.id} onClick={() => onPosture(report.id)} type="button">
-            <strong>{report.score}</strong>
-            <span><b>{new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "short", year: "numeric" }).format(new Date(report.date))}</b><small>{report.summary}</small></span>
-            <em>İlgili analize git <i aria-hidden="true">→</i></em>
-          </button>)}
-        </div> : <p>Duruşunu analiz et, farkı gör,<br />gelişimini takip et.</p>}
-        <button className={styles.postureAnalysisButton} onClick={() => onPosture()} type="button">Yeni analiz</button>
-      </div>
-      <div className={styles.postureModels} aria-hidden="true"><Image alt="" fill sizes="280px" src="/images/posture/posture-back-translucent.png" /></div>
-    </article>
-  );
+const homeGatePlaces = [
+  { x: 50, y: 2 }, { x: 81, y: 24 }, { x: 19, y: 24 }, { x: 83, y: 49 },
+  { x: 17, y: 49 }, { x: 81, y: 72 }, { x: 19, y: 72 }, { x: 50, y: 84 },
+] as const;
+
+function HomeBodyJourneyCard({ completedOrders }: { completedOrders: number[] }) {
+  const progress = gateProgress(completedOrders);
+  const activeGate = progress.reduce((best, gate) => gate.percent > best.percent || (gate.percent === best.percent && gate.completedCount > best.completedCount) ? gate : best, progress[0]);
+  const activeNumber = BODY_GATE_ORDER.indexOf(activeGate.id) + 1;
+
+  return <Link className={styles.bodyJourneyCard} href="/ana-haritam" aria-label={`Beden Yolculuğun. ${activeNumber}. kapıdasın: ${activeGate.name}. Gelişim Haritamı aç.`}>
+    <header className={styles.bodyJourneyHeader}><div><h2>Beden Yolculuğun · {activeNumber}. Kapıdasın</h2><span>{activeGate.name} · %{activeGate.percent}</span></div><span className={styles.bodyJourneyArrow} aria-hidden="true">↗</span></header>
+    <div className={styles.bodyJourneyMap} aria-hidden="true">
+      <Image alt="" fill sizes="(max-width: 899px) 90vw, 420px" src="/images/body-map-eight-gates-3d-v2.jpg" />
+      {BODY_GATE_ORDER.map((id, index) => {
+        const gate = progress.find((item) => item.id === id);
+        const place = homeGatePlaces[index];
+        return <span className={`${styles.bodyJourneyGateMarker} ${id === activeGate.id ? styles.bodyJourneyGateActive : ""}`} key={id} style={{ left: `${place.x}%`, top: `${place.y}%` }}><b>{index + 1}</b><strong>{gate?.name}</strong><small>%{gate?.percent ?? 0}</small></span>;
+      })}
+    </div>
+    <footer className={styles.bodyJourneyFooter}>Gelişim Haritama git <span aria-hidden="true">→</span></footer>
+  </Link>;
 }

@@ -36,13 +36,15 @@ export function evaluatePoseFrame(points:PoseLandmark[],view:PostureView):PoseFr
   ?widthRatio<.22
   :view==='front'
    ?widthRatio>=.28&&faceConfidence>=.5&&anatomicalOrder>.04
-   :widthRatio>=.28&&faceConfidence<.35&&anatomicalOrder<-.04;
+   :widthRatio>=.28&&anatomicalOrder<-.025;
  return{bodyReady,angleReady};
 }
 
-export function getLandmarkMovement(previous:PoseLandmark[],current:PoseLandmark[]){
+export function getLandmarkMovement(previous:PoseLandmark[],current:PoseLandmark[],view:PostureView){
  if(previous.length<33||current.length<33)return Number.POSITIVE_INFINITY;
- const indexes=[0,11,12,23,24,25,26,27,28];
+ const indexes=(view==='back'?[11,12,23,24,25,26,27,28]:[0,11,12,23,24,25,26,27,28])
+  .filter(index=>isLandmarkVisible(previous[index],.3)&&isLandmarkVisible(current[index],.3));
+ if(indexes.length<(view==='side'?4:6))return Number.POSITIVE_INFINITY;
  return indexes.reduce((sum,index)=>{
   const first=previous[index],second=current[index];
   return sum+Math.hypot(first.x-second.x,first.y-second.y);
@@ -57,7 +59,7 @@ export function getPostureMeasurementConfidence(points:PoseLandmark[],view:Postu
  const total=(set:number[])=>set.reduce((sum,item)=>sum+(points[item]?.visibility??0),0);
  const indexes=view==='side'?(total(left)>=total(right)?left:right):[11,12,23,24,25,26,27,28];
  const values=indexes.map(index=>points[index]?.visibility??0);
- if(values.some(value=>value<.42))return null;
+ if(values.some((value,index)=>value<(view==='back'&&index>=6?.3:.42)))return null;
  const confidence=values.reduce((sum,value)=>sum+value,0)/values.length;
  return confidence>=.55?confidence:null;
 }

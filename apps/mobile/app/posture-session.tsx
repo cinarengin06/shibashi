@@ -220,7 +220,7 @@ export default function PostureSession(){
      cueCandidateRef.current=null;setAudioGuide(null);setLiveCapture(null);
      setLiveScore(null);setValidSampleCount(0);setCountdown(1);setScanState('low-confidence');schedule();return;
     }
-    const movement=getLandmarkMovement(previousLandmarksRef.current,analysis.landmarks);
+    const movement=getLandmarkMovement(previousLandmarksRef.current,analysis.landmarks,view);
     previousLandmarksRef.current=analysis.landmarks;
     if(movement>.026){
      holdStartedAtRef.current=Date.now();

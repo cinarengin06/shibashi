@@ -96,10 +96,20 @@
 .gateMap .gate2,.gateMap .gate3 { top:27%; bottom:auto; }
 .gateMap .gate4,.gateMap .gate5 { top:52%; bottom:auto; }
 .gateMap .gate6,.gateMap .gate7 { top:77%; bottom:auto; }
+.page { padding-top:18px; }
+.gateHeader h1 { color:var(--map-ink);font-size:clamp(24px,2.5vw,34px);margin:0 0 5px; }
+.activeGateBanner { align-items:center;background:color-mix(in srgb,var(--shen-accent,#a9d977) 13%,var(--site-surface-raised,#252c31));border:1px solid color-mix(in srgb,var(--shen-accent,#a9d977) 60%,transparent);border-radius:16px;display:flex;flex-wrap:wrap;gap:8px 18px;grid-column:1 / -1;padding:16px 20px; }
+.activeGateBanner span { color:var(--shen-accent,#a9d977);font-size:10px;font-weight:900;letter-spacing:.16em; }
+.activeGateBanner strong { color:var(--map-ink);font-size:clamp(20px,2vw,28px); }
+.activeGateBanner small { color:var(--map-soft);font-size:12px;margin-left:auto; }
+.gateMap { grid-row:3 / span 2; }
+.gateDetail { grid-row:3; }
+.relatedSection { grid-row:4; }
 @media (max-width:650px) {
   .gateMap { height:485px; }
   .gateMap .bodyImage,.gateMap .bodyMarkers { height:424px; width:236px; }
 }
+@media (max-width:800px) { .gateMap,.gateDetail,.relatedSection { grid-row:auto; }.activeGateBanner small { flex-basis:100%;margin-left:0; } }
 @media (max-width:390px) {
   .gateMap { height:445px; }
   .gateMap .bodyImage,.gateMap .bodyMarkers { height:386px; width:215px; }

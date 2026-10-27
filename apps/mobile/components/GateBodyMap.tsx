@@ -76,7 +76,7 @@ export function GateBodyMap({ progress, selectedGate, onSelect, accent, ink }: {
 }
 
 const s = StyleSheet.create({
-  map: { position: 'relative', overflow: 'hidden', borderRadius: 18, backgroundColor: '#06111B' },
+  map: { position: 'relative', width: '100%', overflow: 'hidden', borderRadius: 18, backgroundColor: '#06111B' },
   shade: { position: 'absolute', backgroundColor: 'rgba(0, 9, 15, .18)' },
   organ: { position: 'absolute', width: 30, height: 30, borderRadius: 15, borderWidth: 2, alignItems: 'center', justifyContent: 'center', zIndex: 2 },
   organNumber: { fontSize: 13, fontWeight: '900' },

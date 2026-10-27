@@ -22,9 +22,9 @@ export const spacing={xs:sharedSpacing.x1,sm:sharedSpacing.x2,md:sharedSpacing.x
 export const radii={sm:12,md:sharedRadii.control,lg:sharedRadii.cardLarge,pill:sharedRadii.round};
 export const type={
   display:48,
-  h1:38,
-  h2:30,
-  h3:24,
+  h1:30,
+  h2:22,
+  h3:19,
   body:18,
   bodyCompact:16,
   button:17,

@@ -102,7 +102,7 @@ const s=StyleSheet.create({
  content:{alignSelf:'center',gap:spacing.lg,maxWidth:'100%',overflow:'hidden',paddingHorizontal:spacing.lg,width:'100%'},
  section:{gap:12},
  eyebrow:{color:colors.gold,fontFamily:fonts.sansBold,fontSize:type.label,letterSpacing:1.2,textTransform:'uppercase'},
- title:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:type.h1,lineHeight:41,letterSpacing:-.35},
+ title:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:type.h1,lineHeight:36,letterSpacing:-.35},
  sectionHead:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},
  sectionTitle:{color:colors.cream,fontFamily:fonts.displayStrong,fontSize:type.h2,letterSpacing:-.2},
  action:{color:colors.gold,fontFamily:fonts.sansStrong,fontSize:type.label},

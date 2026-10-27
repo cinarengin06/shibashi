@@ -445,9 +445,9 @@
    same Inter voice and a predictable, readable hierarchy.
    -------------------------------------------------------------------------- */
 :root {
-  --type-page-title: clamp(2.2rem, 4vw, 3.8rem);
-  --type-section-title: clamp(1.65rem, 2.5vw, 2.4rem);
-  --type-card-title: 1.2rem;
+  --type-page-title: clamp(1.9rem, 2.6vw, 2.6rem);
+  --type-section-title: clamp(1.3rem, 1.7vw, 1.7rem);
+  --type-card-title: 1.1rem;
   --type-body: 1rem;
   --type-body-compact: 0.9375rem;
   --type-label: 0.875rem;
@@ -515,9 +515,9 @@
 
 @media (max-width: 899px) {
   :root {
-    --type-page-title: clamp(2rem, 9vw, 2.75rem);
-    --type-section-title: clamp(1.5rem, 6vw, 2rem);
-    --type-card-title: 1.12rem;
+    --type-page-title: clamp(1.8rem, 7vw, 2.2rem);
+    --type-section-title: clamp(1.2rem, 5vw, 1.5rem);
+    --type-card-title: 1.05rem;
     --type-body: 1rem;
     --type-body-compact: 0.9375rem;
     --type-label: 0.875rem;
@@ -14848,9 +14848,9 @@ button.progressive-step {
 
 .daily-journal-hero h1 {
   margin: 5px 0 8px;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 0.98;
-  letter-spacing: -0.06em;
+  font-size: var(--type-page-title);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
 }
 
 .daily-journal-hero p {
@@ -15188,7 +15188,7 @@ button.progressive-step {
   padding: 18px;
 }
 
-.phone-mode .daily-journal-hero h1 { font-size: 2rem; }
+.phone-mode .daily-journal-hero h1 { font-size: var(--type-page-title); }
 .phone-mode .daily-journal-date { min-width: 62px; padding: 9px; align-self: flex-start; }
 .phone-mode .daily-journal-date strong { font-size: 1.55rem; }
 .phone-mode .daily-summary-grid { grid-template-columns: 1fr; }

@@ -81,8 +81,9 @@ function GateBodyMap({ progress, selectedGate, onSelect }: {
     <div className={styles.halo} />
     <Image alt="Sekiz kapılı iç dünya beden haritası" className={styles.bodyImage} height={832} priority src="/images/neijing-map.jpg" width={464} />
     {arrow ? <svg aria-hidden="true" className={styles.gateArrow} preserveAspectRatio="none" viewBox={`0 0 ${arrow.width} ${arrow.height}`}>
-      <defs><marker id="selected-gate-arrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0 0 8 4 0 8" /></marker></defs>
-      <path d={`M ${arrow.x1} ${arrow.y1} L ${arrow.x2} ${arrow.y2}`} markerEnd="url(#selected-gate-arrow)" />
+      <defs><marker id="selected-gate-arrow" markerHeight="12" markerWidth="12" orient="auto" refX="10" refY="6"><path d="M0 0 12 6 0 12" /></marker></defs>
+      <path className={styles.gateArrowUnderlay} d={`M ${arrow.x1} ${arrow.y1} L ${arrow.x2} ${arrow.y2}`} />
+      <path className={styles.gateArrowLine} d={`M ${arrow.x1} ${arrow.y1} L ${arrow.x2} ${arrow.y2}`} markerEnd="url(#selected-gate-arrow)" />
     </svg> : null}
     <div className={styles.bodyMarkers}>
       {arrangement.map((id, index) => <button

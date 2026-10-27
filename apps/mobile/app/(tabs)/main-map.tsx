@@ -1,24 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { getShenVisualTheme, shenThemes } from '../../../../packages/design-tokens';
-import { BODY_GATE_ORDER, gateGuidance, gateProgress, movementGateWeights, type GateId } from '../../../../packages/eight-gates';
+import { gateGuidance, gateProgress, movementGateWeights, type GateId } from '../../../../packages/eight-gates';
 import { meridianMovements } from '../../../../packages/meridian-knowledge';
 import { FormSceneThumb } from '../../components/FormSceneThumb';
 import { FormMetaTags } from '../../components/FormMetaTags';
+import { GateBodyMap } from '../../components/GateBodyMap';
 import { Screen } from '../../components/ui';
 import { loadCompletedMovements } from '../../services/movementCompletion';
 import { unlockMilestones } from '../../services/milestones';
 import { useApp } from '../../store/AppStore';
-
-const order = BODY_GATE_ORDER;
-const positions = [
-  { left: '41%', top: '1%' }, { left: '73%', top: '17%' },
-  { left: '8%', top: '17%' }, { left: '78%', top: '42%' },
-  { left: '2%', top: '42%' }, { left: '73%', top: '70%' },
-  { left: '8%', top: '70%' }, { left: '41%', top: '80%' },
-] as const;
 
 export default function MainMap() {
   const { section } = useLocalSearchParams<{ section?: string }>();
@@ -52,9 +45,9 @@ export default function MainMap() {
     {cards.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.cards}>{cards.map((movement)=><Pressable key={movement.order} onPress={()=>router.push(`/body-lines?movementOrder=${movement.order}`)} style={[s.moveCard,{backgroundColor:visual.surface,borderColor:visual.border}]}><FormSceneThumb order={movement.order} width={148} height={110} accent={theme.button}/><Text style={s.moveNumber}>{String(movement.order).padStart(2,'0')}</Text><Text numberOfLines={2} style={[s.moveTitle,{color:visual.text}]}>{movement.sourceTitle}</Text><View style={{paddingHorizontal:8}}><FormMetaTags order={movement.order} compact/></View><Text style={[s.done,{color:accent}]}>✓ Tamamlandı</Text></Pressable>)}</ScrollView> : <View style={[s.empty,{backgroundColor:visual.surface}]}><Text style={[s.muted,{color:visual.textSecondary}]}>İlk hareketi tamamladığında burada görünecek.</Text><Pressable onPress={()=>router.push('/body-lines')}><Text style={[s.link,{color:accent}]}>İlk harekete başla →</Text></Pressable></View>}
 
     <View style={s.sectionHead} onLayout={(event) => { gateSectionY.current = event.nativeEvent.layout.y; if (section === 'gates') requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: gateSectionY.current ?? 0, animated: true })); }}><Text style={[s.sectionTitle,{color:visual.text}]}>8 Kapı Beden Haritan</Text></View><Text style={[s.muted,{color:visual.textSecondary}]}>Kapılar, tamamladığın hareketlerin sembolik katkısını gösterir.</Text>
-    <View style={[s.map,{borderColor:visual.border}]}><Image source={require('../../assets/journey/body-map-eight-gates-3d-v2.jpg')} resizeMode="contain" style={s.mapImage} accessibilityLabel="Organları gösteren sekiz kapılı beden haritası"/><View style={s.mapShade}/>{order.map((id,index)=>{const gate=progress.find((item)=>item.id===id)!;return <Pressable key={id} accessibilityRole="button" accessibilityLabel={`${gate.name}, yüzde ${gate.percent}`} accessibilityState={{selected:selected.id===id}} onPress={()=>{setSelectedId(id);void unlockMilestones(['gate-explorer'],profile.authUserId)}} style={[s.gate,positions[index]]}><View style={[s.gateCircle,{borderColor:selected.id===id?theme.button:theme.light,borderWidth:selected.id===id?3:2,backgroundColor:selected.id===id?theme.button:'#0b1714'}]}><Text style={[s.gateSymbol,{color:selected.id===id?theme.buttonInk:theme.light}]}>{index+1}</Text></View><Text style={s.gateName}>{gate.name}</Text><Text style={[s.gatePercent,{color:theme.button}]}>%{gate.percent}</Text></Pressable>})}</View>
-    <View style={[s.detail,{backgroundColor:visual.surface,borderColor:visual.border}]}><Text style={[s.kicker,{color:theme.button}]}>SEÇİLİ KAPI · {gateGuidance[selected.id].focus.toLocaleUpperCase('tr-TR')}</Text><Text style={[s.detailTitle,{color:visual.text}]}>{selected.name} · %{selected.percent}</Text><Text style={[s.muted,{color:visual.textSecondary}]}>{gateGuidance[selected.id].outcome}</Text><View style={s.track}><View style={[s.trackFill,{width:`${selected.percent}%`,backgroundColor:theme.button}]}/></View><Text style={[s.muted,{color:visual.textSecondary}]}>{selected.completedCount} / {selected.mappedCount} ilgili hareket tamamlandı</Text></View>
-    <View style={s.sectionHead}><Text style={[s.sectionTitle,{color:visual.text}]}>İlgili videolar aşağıda</Text><Text style={[s.link,{color:theme.button}]}>{related.length} form</Text></View>
+    <GateBodyMap progress={progress} selectedGate={selected.id} onSelect={(id)=>{setSelectedId(id);void unlockMilestones(['gate-explorer'],profile.authUserId)}} accent={theme.button} ink={visual.text}/>
+    <View style={[s.detail,{backgroundColor:visual.surface,borderColor:visual.border}]}><Text style={[s.kicker,{color:theme.button}]}>SEÇİLİ KAPI · {gateGuidance[selected.id].focus.toLocaleUpperCase('tr-TR')}</Text><Text style={[s.detailTitle,{color:visual.text}]}>{selected.name} · %{selected.percent}</Text><Text style={[s.muted,{color:visual.textSecondary}]}>{selected.cue}</Text><Text style={[s.muted,{color:visual.textSecondary}]}>{gateGuidance[selected.id].outcome}</Text><View style={s.track}><View style={[s.trackFill,{width:`${selected.percent}%`,backgroundColor:theme.button}]}/></View><Text style={[s.muted,{color:visual.textSecondary}]}>{selected.completedCount} / {selected.mappedCount} ilgili hareket tamamlandı</Text></View>
+    <View style={s.sectionHead}><Text style={[s.sectionTitle,{color:visual.text}]}>{selected.name} · İlgili Hareketler</Text><Text style={[s.link,{color:theme.button}]}>{related.length} form</Text></View>
     {related.map(movement=><Pressable key={movement.order} accessibilityRole="button" onPress={()=>router.push(`/body-lines?movementOrder=${movement.order}`)} style={[s.related,{backgroundColor:visual.surface,borderColor:visual.border}]}><FormSceneThumb order={movement.order} width={64} height={68} accent={theme.button}/><View style={{flex:1}}><Text style={[s.kicker,{color:theme.button}]}>FORM {String(movement.order).padStart(2,'0')}</Text><Text style={[s.relatedTitle,{color:visual.text}]}>{movement.sourceTitle}</Text><FormMetaTags order={movement.order} compact/><Text style={[s.muted,{color:completedOrders.includes(movement.order)?'#A8DCB3':'#AAB9B4'}]}>{completedOrders.includes(movement.order)?'✓ Tamamlandı':'18 Form’da izle'}</Text></View></Pressable>)}
     <Text style={[s.disclaimer,{color:visual.textSecondary}]}>Bu yüzdeler yalnızca Shibashi hareket tamamlama katkısını gösterir; bedensel durum veya Taijiquan ustalığı ölçümü değildir.</Text>
   </Screen>;

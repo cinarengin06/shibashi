@@ -6,6 +6,7 @@ import { recommendFormsForPosture, type PostureRegionScores } from '../../../pac
 import { getShenVisualTheme } from '../../../packages/design-tokens';
 import { shibashiPosters } from '../data/shibashiMedia';
 import { useApp } from '../store/AppStore';
+import { FormMetaTags } from './FormMetaTags';
 
 export function PostureFormSuggestions({ captures, accent }: { captures: PostureRegionScores[]; accent: string }) {
   const { profile } = useApp();
@@ -20,7 +21,7 @@ export function PostureFormSuggestions({ captures, accent }: { captures: Posture
       const energy = getMovementEnergyTag(item.order).quality;
       return <Pressable key={item.order} accessibilityRole="button" accessibilityLabel={`${movement.sourceTitle}, ${energy} videosunu aç`} onPress={() => router.push({ pathname: '/body-lines', params: { movementOrder: item.order } })} style={[styles.card, { borderColor: `${accent}66`, backgroundColor: visual.surface }]}>
         <View style={styles.posterWrap}><Image source={shibashiPosters[item.order]} style={styles.poster} /><View style={[styles.play,{backgroundColor:accent}]}><Ionicons name="play" size={17} color="#142017"/></View></View>
-        <View style={styles.copy}><Text style={[styles.title, { color: visual.text }]}>{movement.sourceTitle}</Text><Text style={[styles.energy, { color: energy === 'Yin' ? '#9EDCF0' : '#F2C785' }]}>{energy}</Text></View>
+        <View style={styles.copy}><Text style={[styles.title, { color: visual.text }]}>{movement.sourceTitle}</Text><FormMetaTags order={item.order} compact/></View>
       </Pressable>;
     })}
   </View>;

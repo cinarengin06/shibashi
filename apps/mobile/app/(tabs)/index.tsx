@@ -10,6 +10,7 @@ import Svg, { Circle } from "react-native-svg";
 import { getShenVisualTheme, shenThemes } from "../../../../packages/design-tokens";
 import { journeyRewards, shenDailyCues, yinYangSummary, type FormSteps, type JourneyRecord } from "../../../../packages/gamification";
 import { Screen } from "../../components/ui";
+import { FormMetaTags } from "../../components/FormMetaTags";
 import { fonts, mobileThemeFont } from "../../constants/theme";
 import { shenMotifs, shenShape } from "../../constants/shenDesign";
 import { fiveShen } from "../../data/fiveShen";
@@ -131,7 +132,6 @@ export default function Today() {
       <LinearGradient colors={["rgba(5,10,12,.04)", "rgba(5,10,12,.38)", "rgba(5,10,12,.94)"]} style={s.heroShade}>
         <Text style={[s.heroEyebrow, { color: theme.button }]}>{daily.label.toLocaleUpperCase("tr-TR")} · {shen.name.toLocaleUpperCase("tr-TR")}</Text>
         <Text style={[s.heroTitle,{fontFamily:mobileThemeFont(visual.id)}]}>{daily.title}</Text><Text style={s.heroCue}>{daily.cue}</Text>
-        <Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={[s.heroAction, { backgroundColor: theme.button }, shenShape(shen.id, 'button')]}><Ionicons name="play" color={theme.buttonInk} size={15} /><Text style={[s.heroActionText, { color: theme.buttonInk }]}>PRATİĞE DEVAM ET</Text></Pressable>
       </LinearGradient>
     </ImageBackground>
 
@@ -140,7 +140,7 @@ export default function Today() {
     </ScrollView>
 
     <View style={{ gap:12, marginBottom:20 }}>
-      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Pressable accessibilityRole="button" accessibilityLabel={`${nextFormOrder}. formu aç`} onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={s.featuredFormImage}><Image source={shibashiPosters[nextFormOrder]} resizeMode="cover" style={s.featuredFormPhoto} /><View style={s.featuredFormShade} /><View style={[s.featuredFormPlay,{backgroundColor:theme.button}]}><Ionicons name="play" color={theme.buttonInk} size={22} /></View></Pressable><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ · FORM {nextFormOrder}</Text><Text style={[s.gameTitle,{color:visual.text}]}>Sıradaki Adım</Text><Text style={[s.gameBody,{color:visual.textSecondary}]}>{shenDailyCues[shen.id]}</Text><Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})}><Text style={[s.gameLink,{color:theme.button}]}>Pratik Yap →</Text></Pressable></View>
+      <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Pressable accessibilityRole="button" accessibilityLabel={`${nextFormOrder}. formu aç`} onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})} style={s.featuredFormImage}><Image source={shibashiPosters[nextFormOrder]} resizeMode="cover" style={s.featuredFormPhoto} /><View style={s.featuredFormShade} /><View style={[s.featuredFormPlay,{backgroundColor:theme.button}]}><Ionicons name="play" color={theme.buttonInk} size={22} /></View></Pressable><Text style={[s.gameEyebrow,{color:theme.button}]}>BUGÜNÜN SHEN GÖREVİ · FORM {nextFormOrder}</Text><Text style={[s.gameTitle,{color:visual.text}]}>Sıradaki Adım</Text><Text style={[s.gameBody,{color:visual.textSecondary}]}>{shenDailyCues[shen.id]}</Text><FormMetaTags order={nextFormOrder} compact/><Pressable accessibilityRole="button" onPress={() => router.push({pathname:'/body-lines',params:{movementOrder:nextFormOrder}})}><Text style={[s.gameLink,{color:theme.button}]}>Pratik Yap →</Text></Pressable></View>
       <View style={[s.gameCard,{backgroundColor:visual.surface,borderColor:`${theme.primary}55`},shenShape(shen.id)]}><Text style={[s.gameEyebrow,{color:theme.button}]}>18 FORM YOLU</Text><Text style={[s.gameTitle,{color:visual.text}]}>{completedForms} / 18 form</Text><View style={s.formProgress}>{Array.from({length:18},(_,index)=><View key={index} style={[s.formProgressDot,{backgroundColor:completedFormOrders.has(index+1)?theme.button:`${theme.primary}35`}]}/>)}</View><Text style={[s.gameBody,{color:visual.textSecondary}]}>Hocayı izle, kamerayla dene, kaydını oluştur.</Text><Pressable accessibilityRole="button" onPress={() => router.push('/body-lines')}><Text style={[s.gameLink,{color:theme.button}]}>Yolculuğa devam et →</Text></Pressable></View>
 
     </View>

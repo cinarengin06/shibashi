@@ -24,6 +24,7 @@ import { useShibashiAuth } from "@/lib/supabase-auth";
 import { toDomainShenId, type ShenActivity } from "@/packages/shen-domain";
 import styles from "./body-lines.module.css";
 import { FormCatalogWeb } from "./FormCatalogWeb";
+import { FormMetaTags } from "@/components/web/FormMetaTags";
 import { readFormCatalogFilters } from "@/packages/form-catalog";
 import type { FormCatalogFilters } from "@/packages/form-catalog";
 
@@ -326,6 +327,7 @@ export function BodyLinesScreen() {
                 ) : (
                 <video
                   aria-label={`${movement.sourceTitle} hoca videosu`}
+                  autoPlay
                   controls
                   key={movement.order}
                   loop
@@ -365,7 +367,7 @@ export function BodyLinesScreen() {
       <section className={styles.movementSelector} aria-label="18 hareket">
         <div className={styles.selectorHeading}><span className={styles.eyebrow}>HAREKET ŞERİDİ</span><strong>Şu an 18 hareketin {movementOrder}. hareketindesin.</strong><button onClick={() => stepMovement(1)} type="button">Sonraki harekete geç →</button></div>
         <div className={styles.movementTiles}>
-          {meridianMovements.map((item) => { const tag = getMovementEnergyTag(item.order); return <button aria-current={item.order === movementOrder ? "step" : undefined} aria-label={`${item.order}. form: ${item.sourceTitle}, ${tag.quality}, ${tag.action}, ${completedOrders.includes(item.order) ? "tamamlandı" : formSteps[item.order]?.attempted ? "denendi" : formSteps[item.order]?.watched ? "izlendi" : "başlanmadı"}`} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/form-scenes/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><span aria-hidden="true" className={styles.tilePlay}>▶</span><b className={styles.tileProgress}>{completedOrders.includes(item.order) ? "✓ Tamamlandı" : formSteps[item.order]?.attempted ? "◉ Denendi" : formSteps[item.order]?.watched ? "◌ İzlendi" : ""}</b><strong>{item.sourceTitle}</strong><small className={`${styles.tileEnergy} ${tag.quality === "Yang" ? styles.yangTag : styles.yinTag}`}>{tag.quality} · {tag.action}</small></button>; })}
+          {meridianMovements.map((item) => { const tag = getMovementEnergyTag(item.order); return <button aria-current={item.order === movementOrder ? "step" : undefined} aria-label={`${item.order}. form: ${item.sourceTitle}, ${tag.quality}, ${tag.action}, ${completedOrders.includes(item.order) ? "tamamlandı" : formSteps[item.order]?.attempted ? "denendi" : formSteps[item.order]?.watched ? "izlendi" : "başlanmadı"}`} className={item.order === movementOrder ? styles.movementTileActive : undefined} key={item.movementId} onClick={() => chooseMovement(item.order)} type="button"><Image alt="" aria-hidden="true" fill sizes="180px" src={`/images/form-scenes/${item.order}.jpg`} /><i>{String(item.order).padStart(2, "0")}</i><span aria-hidden="true" className={styles.tilePlay}>▶</span><b className={styles.tileProgress}>{completedOrders.includes(item.order) ? "✓ Tamamlandı" : formSteps[item.order]?.attempted ? "◉ Denendi" : formSteps[item.order]?.watched ? "◌ İzlendi" : ""}</b><strong>{item.sourceTitle}</strong><span className={styles.tileMeta}><FormMetaTags order={item.order} compact/></span></button>; })}
         </div>
       </section>
       <section className={styles.inlinePhotos} aria-label={`${movement.sourceTitle} fotoğraflarım`}><div className={styles.galleryHeader}><div><span className={styles.eyebrow}>HAREKET {String(movementOrder).padStart(2, "0")}</span><h2>Fotoğraflarım</h2><p>{movement.sourceTitle} için kaydedilen fotoğraflar</p></div></div>{currentPhotos.length ? <div className={styles.galleryGrid}>{currentPhotos.map((photo) => <button key={photo.id} onClick={() => { setSelectedPhoto(photo); setGalleryOpen(true); }} type="button"><img alt={`${photo.movementName} fotoğrafı`} loading="lazy" src={photo.imageData} /><span><strong>{photo.movementName}</strong><small>{photo.dateKey} · %{photo.score}</small></span></button>)}</div> : <p>Bu form için henüz fotoğraf yok. Pratikte hedef uyuma ulaştığında burada görünecek.</p>}</section>

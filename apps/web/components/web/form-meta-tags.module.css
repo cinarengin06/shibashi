@@ -1,0 +1,5 @@
+.tags { display:flex; flex-wrap:wrap; gap:5px; line-height:1.25; }
+.tags span { background:rgba(183,202,177,.12); border:1px solid rgba(207,221,196,.22); border-radius:999px; color:var(--site-text-muted,#d6ded3); display:inline-block; font-size:10px; font-weight:750; max-width:100%; overflow:hidden; padding:5px 8px; text-overflow:ellipsis; white-space:nowrap; }
+.tags .yin { background:rgba(106,187,216,.16); border-color:rgba(142,214,235,.45); color:#b5e5f1; }
+.tags .yang { background:rgba(230,176,95,.16); border-color:rgba(248,207,138,.45); color:#f6d7a2; }
+.compact span { font-size:9px; padding:4px 6px; }

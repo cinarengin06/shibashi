@@ -378,12 +378,13 @@
 .selectorHeading > strong { color: rgba(243,238,229,.75); font-size: 13px; font-weight: 600; }
 .selectorHeading button { background: transparent; border: 0; color: var(--gold); cursor: pointer; font: inherit; font-size: 12px; margin-left: auto; }
 .movementTiles { display: grid; gap: 10px; grid-auto-columns: 174px; grid-auto-flow: column; overflow-x: auto; overscroll-behavior-x: contain; padding: 3px 2px 12px; scroll-snap-type: x mandatory; }
-.movementTiles button { aspect-ratio: 1.15; background: #080d0b; border: 1px solid rgba(255,255,255,.1); border-radius: 15px; color: var(--site-text); cursor: pointer; overflow: hidden; position: relative; scroll-snap-align: start; text-align: left; }
+.movementTiles button { aspect-ratio: .9; background: #080d0b; border: 1px solid rgba(255,255,255,.1); border-radius: 15px; color: var(--site-text); cursor: pointer; overflow: hidden; position: relative; scroll-snap-align: start; text-align: left; }
 .movementTiles img { object-fit: cover; opacity: .65; transition: opacity .2s ease, transform .5s ease; }
 .movementTiles button:hover img, .movementTiles .movementTileActive img { opacity: .9; transform: scale(1.04); }
 .movementTiles button::after { background: linear-gradient(0deg,rgba(4,9,6,.94),transparent 80%); content: ""; inset: 0; position: absolute; }
 .movementTiles i { color: var(--gold); font-size: 11px; font-style: normal; left: 10px; position: absolute; top: 9px; z-index: 1; }
-.movementTiles strong { bottom: 32px; font-size: 12px; left: 10px; position: absolute; right: 10px; z-index: 1; }
+.movementTiles strong { bottom: 76px; font-size: 12px; left: 10px; position: absolute; right: 10px; z-index: 1; }
+.movementTiles .tileMeta { bottom:7px; left:8px; position:absolute; right:8px; z-index:2; }
 .movementTiles .tileEnergy { bottom:6px; left:9px; position:absolute; z-index:2; padding:3px 6px; font-size:10px; }
 .movementTiles .movementTileActive { border-color: var(--line); }
 .movementTiles .tilePlay { align-items:center;background:var(--shen-accent,#d8b774);border:1px solid rgba(255,255,255,.72);border-radius:50%;color:#142017;display:flex;font-size:14px;height:36px;justify-content:center;left:50%;padding-left:2px;position:absolute;top:45%;transform:translate(-50%,-50%);width:36px;z-index:2; }

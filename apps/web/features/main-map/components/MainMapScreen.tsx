@@ -34,7 +34,7 @@ const gateOrganPositions: Record<GateId, { organ: string; x: number; y: number }
   cai: { organ: "Mesane", x: 29, y: 69 },
 };
 
-type GateArrow = { x1: number; y1: number; x2: number; y2: number; width: number; height: number };
+type GateArrow = { x1: number; y1: number; x2: number; y2: number; cx: number; cy: number; width: number; height: number };
 
 function GateBodyMap({ progress, selectedGate, onSelect }: {
   progress: ReturnType<typeof gateProgress>;
@@ -61,11 +61,15 @@ function GateBodyMap({ progress, selectedGate, onSelect }: {
       const distance = Math.hypot(targetX - startX, targetY - startY) || 1;
       const dx = (targetX - startX) / distance;
       const dy = (targetY - startY) / distance;
+      const x1 = startX + dx * 13;
+      const y1 = startY + dy * 13;
+      const x2 = targetX - dx * (to.width / 2 + 3);
+      const y2 = targetY - dy * (to.height / 2 + 3);
+      const bend = Math.min(20, distance * .09);
       setArrow({
-        x1: startX + dx * 13,
-        y1: startY + dy * 13,
-        x2: targetX - dx * (to.width / 2 + 3),
-        y2: targetY - dy * (to.height / 2 + 3),
+        x1, y1, x2, y2,
+        cx: (x1 + x2) / 2 - dy * bend,
+        cy: (y1 + y2) / 2 + dx * bend,
         width: bounds.width,
         height: bounds.height,
       });
@@ -81,9 +85,9 @@ function GateBodyMap({ progress, selectedGate, onSelect }: {
     <div className={styles.halo} />
     <Image alt="Sekiz kapılı iç dünya beden haritası" className={styles.bodyImage} height={832} priority src="/images/neijing-map.jpg" width={464} />
     {arrow ? <svg aria-hidden="true" className={styles.gateArrow} preserveAspectRatio="none" viewBox={`0 0 ${arrow.width} ${arrow.height}`}>
-      <defs><marker id="selected-gate-arrow" markerHeight="12" markerWidth="12" orient="auto" refX="10" refY="6"><path d="M0 0 12 6 0 12" /></marker></defs>
-      <path className={styles.gateArrowUnderlay} d={`M ${arrow.x1} ${arrow.y1} L ${arrow.x2} ${arrow.y2}`} />
-      <path className={styles.gateArrowLine} d={`M ${arrow.x1} ${arrow.y1} L ${arrow.x2} ${arrow.y2}`} markerEnd="url(#selected-gate-arrow)" />
+      <defs><marker id="selected-gate-arrow" markerHeight="7" markerWidth="7" orient="auto" refX="6" refY="3.5"><path d="M0 0 7 3.5 0 7" /></marker></defs>
+      <path className={styles.gateArrowUnderlay} d={`M ${arrow.x1} ${arrow.y1} Q ${arrow.cx} ${arrow.cy} ${arrow.x2} ${arrow.y2}`} />
+      <path className={styles.gateArrowLine} d={`M ${arrow.x1} ${arrow.y1} Q ${arrow.cx} ${arrow.cy} ${arrow.x2} ${arrow.y2}`} markerEnd="url(#selected-gate-arrow)" />
     </svg> : null}
     <div className={styles.bodyMarkers}>
       {arrangement.map((id, index) => <button

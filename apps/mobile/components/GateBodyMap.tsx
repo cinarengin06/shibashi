@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Line, Polygon } from 'react-native-svg';
+import Svg, { Circle, Path, Polygon } from 'react-native-svg';
 import { BODY_GATE_ORDER, gateProgress, gates, type GateId } from '../../../packages/eight-gates';
 
 const imageRatio = 832 / 464;
@@ -47,16 +47,24 @@ export function GateBodyMap({ progress, selectedGate, onSelect, accent, ink }: {
   const dy = (endY - startY) / distance;
   const arrowX = endX - dx * 24;
   const arrowY = endY - dy * 24;
+  const sourceX = startX + dx * 15;
+  const sourceY = startY + dy * 15;
+  const bend = Math.min(18, distance * .09);
+  const controlX = (sourceX + arrowX) / 2 - dy * bend;
+  const controlY = (sourceY + arrowY) / 2 + dx * bend;
+  const tipDistance = Math.hypot(arrowX - controlX, arrowY - controlY) || 1;
+  const tipDx = (arrowX - controlX) / tipDistance;
+  const tipDy = (arrowY - controlY) / tipDistance;
+  const arrowPath = `M ${sourceX} ${sourceY} Q ${controlX} ${controlY} ${arrowX} ${arrowY}`;
 
   return <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)} style={[s.map, { height: width ? height : 570 }]}>
     {width > 0 && <>
       <Image source={require('../assets/journey/neijing-map.jpg')} resizeMode="stretch" style={{ position: 'absolute', left: imageLeft, top: imageTop, width: imageWidth, height: imageHeight }} accessibilityLabel="Sekiz kapılı iç dünya beden haritası" />
       <View pointerEvents="none" style={[s.shade, { left: imageLeft, top: imageTop, width: imageWidth, height: imageHeight }]} />
       <Svg pointerEvents="none" width={width} height={height} style={StyleSheet.absoluteFill}>
-        <Line x1={startX + dx * 15} y1={startY + dy * 15} x2={arrowX} y2={arrowY} stroke="#061014" strokeWidth={9} strokeLinecap="round" />
-        <Line x1={startX + dx * 15} y1={startY + dy * 15} x2={arrowX} y2={arrowY} stroke={accent} strokeWidth={4.5} strokeDasharray="10 5" strokeLinecap="round" />
-        <Polygon points={`${arrowX},${arrowY} ${arrowX - dx * 15 - dy * 8},${arrowY - dy * 15 + dx * 8} ${arrowX - dx * 15 + dy * 8},${arrowY - dy * 15 - dx * 8}`} fill="#061014" stroke="#061014" strokeWidth={3} />
-        <Polygon points={`${arrowX},${arrowY} ${arrowX - dx * 13 - dy * 6},${arrowY - dy * 13 + dx * 6} ${arrowX - dx * 13 + dy * 6},${arrowY - dy * 13 - dx * 6}`} fill={accent} />
+        <Path d={arrowPath} stroke="rgba(0,8,10,.72)" strokeWidth={5} strokeLinecap="round" fill="none" />
+        <Path d={arrowPath} stroke={accent} strokeWidth={2.4} strokeLinecap="round" fill="none" />
+        <Polygon points={`${arrowX},${arrowY} ${arrowX - tipDx * 8 - tipDy * 4},${arrowY - tipDy * 8 + tipDx * 4} ${arrowX - tipDx * 8 + tipDy * 4},${arrowY - tipDy * 8 - tipDx * 4}`} fill={accent} />
       </Svg>
       {BODY_GATE_ORDER.map((id, index) => {
         const point = organs[id];
@@ -69,8 +77,8 @@ export function GateBodyMap({ progress, selectedGate, onSelect, accent, ink }: {
         const place = ringPlaces[index];
         const active = selectedGate === id;
         const cy = 43 + place.row * ((height - 86) / 3);
-        return <Pressable key={`ring-${id}`} accessibilityRole="button" accessibilityLabel={`${index + 1}. ${gate.name}, ${organs[id].name}, yüzde ${gate.percent}`} accessibilityState={{ selected: active }} onPress={() => onSelect(id)} style={[s.ringGate, active && s.activeRingGate, { left: place.side === 'left' ? 0 : width - 85, top: cy - 38, borderColor: active ? accent : 'transparent' }]}>
-          <View style={[s.circleWrap, active && s.activeCircle]}><Svg width={52} height={52} style={StyleSheet.absoluteFill}><Circle cx={26} cy={26} r={23} stroke={active ? '#FFF3D0' : '#496465'} strokeWidth={active ? 4 : 3} fill={active ? accent : '#081717'} /><Circle cx={26} cy={26} r={23} stroke={active ? '#FFF' : accent} strokeWidth={3} fill="none" strokeDasharray={`${2 * Math.PI * 23}`} strokeDashoffset={2 * Math.PI * 23 * (1 - gate.percent / 100)} rotation={-90} origin="26, 26" /></Svg><Text style={[s.symbol, { color: active ? '#061913' : '#C7DFD9' }]}>{gates[id].symbol}</Text><Text style={[s.badge, { backgroundColor: active ? '#FFF3D0' : '#265764', color: active ? '#061913' : '#fff' }]}>{index + 1}</Text></View>
+        return <Pressable key={`ring-${id}`} accessibilityRole="button" accessibilityLabel={`${index + 1}. ${gate.name}, ${organs[id].name}, yüzde ${gate.percent}`} accessibilityState={{ selected: active }} onPress={() => onSelect(id)} style={[s.ringGate, { left: place.side === 'left' ? 0 : width - 85, top: cy - 38 }]}>
+          <View style={[s.circleWrap, active && s.activeCircle]}><Svg width={52} height={52} style={StyleSheet.absoluteFill}><Circle cx={26} cy={26} r={23} stroke={active ? accent : '#496465'} strokeWidth={active ? 3 : 2} fill="#0C1C1C" /><Circle cx={26} cy={26} r={23} stroke={accent} strokeWidth={2.5} fill="none" strokeDasharray={`${2 * Math.PI * 23}`} strokeDashoffset={2 * Math.PI * 23 * (1 - gate.percent / 100)} rotation={-90} origin="26, 26" /></Svg><Text style={[s.symbol, { color: active ? accent : '#C7DFD9' }]}>{gates[id].symbol}</Text><Text style={[s.badge, { backgroundColor: active ? accent : '#265764', color: active ? '#061913' : '#fff' }]}>{index + 1}</Text></View>
           <Text numberOfLines={2} style={[s.name, { color: active ? accent : ink }]}>{gate.name}</Text><Text style={[s.percent, { color: accent }]}>%{gate.percent}</Text>
         </Pressable>;
       })}
@@ -85,9 +93,8 @@ const s = StyleSheet.create({
   activeOrgan: { shadowColor: '#F7D789', shadowOpacity: .9, shadowRadius: 12, elevation: 8, zIndex: 3 },
   organNumber: { fontSize: 13, fontWeight: '900' },
   ringGate: { position: 'absolute', width: 85, minHeight: 76, alignItems: 'center', zIndex: 3 },
-  activeRingGate: { backgroundColor: 'rgba(6,19,19,.92)', borderWidth: 1.5, borderRadius: 14, elevation: 8 },
   circleWrap: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
-  activeCircle: { shadowColor: '#F7D789', shadowOpacity: .9, shadowRadius: 12, elevation: 8 },
+  activeCircle: { borderRadius: 26, shadowColor: '#F7D789', shadowOpacity: .45, shadowRadius: 9, elevation: 4 },
   symbol: { fontSize: 23, fontWeight: '700' },
   badge: { position: 'absolute', right: -3, bottom: -1, width: 18, height: 18, borderRadius: 9, overflow: 'hidden', textAlign: 'center', fontSize: 10, lineHeight: 18, fontWeight: '900' },
   name: { fontSize: 10, fontWeight: '800', textAlign: 'center', lineHeight: 12, marginTop: 3 },

@@ -267,7 +267,7 @@
 .balanceLinks { display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px; }
 .gameCard .balanceLinks a { border:1px solid color-mix(in srgb,var(--gold) 48%,transparent);border-radius:11px;padding:8px 11px;margin:0;font-size:12px; }
 @media(max-width:420px){.balanceDonut{height:130px;width:130px}.balanceCounts strong{font-size:27px}}
-.gardenScene { display:flex; flex-wrap:wrap; gap:11px; min-height:110px; padding:12px; border-radius:14px; background:linear-gradient(90deg,rgba(3,18,14,.83),rgba(3,18,14,.5)),var(--home-wallpaper) center/cover; }
+.gardenScene { display:flex; flex-wrap:wrap; gap:11px; min-height:110px; padding:12px; border-radius:14px; background:linear-gradient(90deg,rgba(3,18,14,.88),rgba(3,18,14,.68)),url('/images/living-learning/garden-gate.png') center/cover; }
 .gardenScene span { display:flex; flex-direction:column; align-items:center; min-width:65px; gap:4px; }
 .gardenScene b { font-size:30px; }
 .gardenScene small { color:var(--text); font-size:11px; }
@@ -305,10 +305,19 @@
 @media (max-width: 520px) { .bodyJourneyCard { padding: 12px; } .bodyJourneyGateMarker b { height: 45px; width: 45px; } }
 @media(max-width:520px){.featuredForm{grid-template-columns:1fr}.featuredFormImage{min-height:180px}.stats{grid-template-columns:1fr}.stats .statCard:last-child{grid-column:auto}.dayDots{display:flex}}
 
-/* Keep the selected Shen landscape faintly visible behind the home cards. */
+/* Each card has its own quiet motif; the selected Shen still supplies the accent. */
 .gameCard,.statCard,.flowsPanel,.postureCard,.bodyJourneyCard {
-  background-image:linear-gradient(135deg,rgba(7,17,18,.88),rgba(7,15,17,.94)),var(--home-wallpaper);
+  background-image:linear-gradient(110deg,rgba(7,17,18,.96),rgba(7,17,18,.89)),var(--card-art);
   background-position:center;
   background-size:cover;
 }
-.featuredForm { background-image:linear-gradient(120deg,rgba(7,17,18,.83),rgba(7,15,17,.91)),var(--home-wallpaper); }
+.featuredForm { --card-art:url('/images/form-scenes/1.jpg'); }
+.gameGrid > .gameCard:not(.featuredForm) { --card-art:url('/images/inner-gate-path.png'); }
+.balanceCard { --card-art:repeating-radial-gradient(circle at 82% 65%,transparent 0 22px,rgba(127,187,184,.2) 23px 24px,transparent 25px 40px),radial-gradient(circle at 70% 35%,rgba(219,169,104,.22),transparent 45%); }
+.journeyGrid > .gameCard:last-child { --card-art:url('/images/living-learning/garden-gate.png'); }
+.stats > .statCard:first-child { --card-art:url('/images/shen-home/shen-fire-web.webp'); }
+.stats > .statCard:nth-child(2) { --card-art:repeating-radial-gradient(circle at 76% 60%,transparent 0 19px,rgba(141,190,181,.18) 20px 21px,transparent 22px 36px); }
+.stats > .statCard:last-child { --card-art:url('/images/shen-home/hun-web.webp'); }
+.bodyJourneyCard { --card-art:repeating-radial-gradient(circle at 75% 58%,transparent 0 28px,rgba(205,176,110,.16) 29px 30px,transparent 31px 50px); }
+.postureCard { --card-art:repeating-linear-gradient(0deg,transparent 0 37px,rgba(153,189,180,.13) 38px 39px,transparent 40px 72px); }
+.flowsPanel { --card-art:url('/images/shen-river-zhi.jpg'); }

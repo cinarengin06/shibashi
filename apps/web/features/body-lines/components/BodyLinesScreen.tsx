@@ -157,7 +157,7 @@ export function BodyLinesScreen() {
   const [miniCameraOpen, setMiniCameraOpen] = useState(false);
   const [narrationEnabled, setNarrationEnabled] = useState(true);
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [targetScore, setTargetScore] = useState(70);
+  const [targetScore, setTargetScore] = useState(25);
   const demoVideoRef = useRef<HTMLVideoElement>(null);
   const narrationRef = useRef<HTMLAudioElement>(null);
   useLayoutEffect(() => {
@@ -175,6 +175,7 @@ export function BodyLinesScreen() {
     };
   }, []);
   const lastDemoTimeRef = useRef(0);
+  const playbackCountRef = useRef(1);
   const [photos, setPhotos] = useState<PracticeSnapshot[]>([]);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<PracticeSnapshot | null>(null);
@@ -183,9 +184,9 @@ export function BodyLinesScreen() {
   const [photoDeleteBusy, setPhotoDeleteBusy] = useState(false);
   const [photoDeleteError, setPhotoDeleteError] = useState(false);
   useEffect(() => {
-    const stored = window.localStorage.getItem("shibashi-learning-target-score");
+    const stored = window.localStorage.getItem("shibashi-learning-target-score-v2");
     const saved = Number(stored);
-    if (stored !== null && saved >= 0 && saved <= 100 && saved % 5 === 0) setTargetScore(saved);
+    if (stored !== null && saved >= 25 && saved <= 100 && saved % 5 === 0) setTargetScore(saved);
   }, []);
   useEffect(() => {
     let cancelled = false;
@@ -239,8 +240,9 @@ export function BodyLinesScreen() {
   const playNarration = useCallback((restart = false) => {
     const audio = narrationRef.current;
     const video = demoVideoRef.current;
-    if (!audio || !video || !narrationEnabled) return;
-    if (restart || audio.ended || (video.currentTime < 0.3 && audio.currentTime > 0.5)) audio.currentTime = 0;
+    if (!audio || !video || !narrationEnabled || playbackCountRef.current % 2 === 0) return;
+    if (restart) audio.currentTime = 0;
+    else if (audio.ended) return;
     void audio.play().catch(() => {});
   }, [narrationEnabled]);
   const playNarratedVideo = useCallback((restart = false) => {
@@ -255,6 +257,7 @@ export function BodyLinesScreen() {
     narrationRef.current?.pause();
     setVideoPlaying(false);
     lastDemoTimeRef.current = 0;
+    playbackCountRef.current = 1;
     setMovementOrder(order);
     setVideoUnavailable(false);
     setMiniCameraOpen(false);
@@ -306,11 +309,11 @@ export function BodyLinesScreen() {
           </div>
           <div className={styles.practiceActions}>
             {videoPlaying && <button onClick={() => { demoVideoRef.current?.pause(); narrationRef.current?.pause(); }} type="button">Videoyu Durdur <span>■</span></button>}
-            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "Pratik Yap"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
-            <button aria-pressed={!narrationEnabled} onClick={() => { if (narrationEnabled) narrationRef.current?.pause(); else if (videoPlaying) void narrationRef.current?.play().catch(() => {}); setNarrationEnabled((enabled) => !enabled); }} type="button">{narrationEnabled ? "Sesli Yönergeleri Kapat" : "Sesli Yönergeleri Aç"}</button>
+            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "Kameranı Aç ve Başla"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
+            <button aria-pressed={!narrationEnabled} onClick={() => { if (narrationEnabled) narrationRef.current?.pause(); else if (videoPlaying && playbackCountRef.current % 2 === 1 && !narrationRef.current?.ended) void narrationRef.current?.play().catch(() => {}); setNarrationEnabled((enabled) => !enabled); }} type="button">{narrationEnabled ? "Sesli Yönergeleri Kapat" : "Sesli Yönergeleri Aç"}</button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
           </div>
-          {miniCameraOpen ? <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={0} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score",String(value)); }} /><small>Bu değere ulaştığında üç fotoğraf kaydedilir.</small></label> : null}
+          {miniCameraOpen ? <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={25} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score-v2",String(value)); }} /><small>Bu değere ulaştığında üç fotoğraf kaydedilir.</small></label> : null}
           {photoSaveError ? <small className={styles.saveError} role="alert">Fotoğraf saklanamadı. Tarayıcı depolamasını kontrol et.</small> : null}
         </aside>
         <section className={styles.stage}>
@@ -355,10 +358,9 @@ export function BodyLinesScreen() {
                     const audio = narrationRef.current;
                     if (audio && video.currentTime + 0.7 < lastDemoTimeRef.current) {
                       const naturalLoop = video.duration > 0 && lastDemoTimeRef.current >= video.duration - 1;
-                      if (!naturalLoop || audio.ended) {
-                        audio.currentTime = 0;
-                        if (!video.paused && narrationEnabled) void audio.play().catch(() => {});
-                      }
+                      audio.pause();
+                      if (naturalLoop) playbackCountRef.current += 1;
+                      if (naturalLoop && playbackCountRef.current % 2 === 1 && !video.paused) playNarration(true);
                     }
                     lastDemoTimeRef.current = video.currentTime;
                   }}

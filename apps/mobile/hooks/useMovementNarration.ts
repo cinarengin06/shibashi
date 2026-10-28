@@ -1,11 +1,12 @@
 import { useAudioPlayer } from 'expo-audio';
 import type { VideoPlayer } from 'expo-video';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { shibashiNarrations } from '../data/shibashiMedia';
 import { safeMediaAction } from '../services/safeMediaAction';
 
 export function useMovementNarration(order: number, video: VideoPlayer, enabled = true) {
   const narration = useAudioPlayer(shibashiNarrations[order], { downloadFirst: true });
+  const playbackCount = useRef(1);
 
   useEffect(() => {
     let disposed = false;
@@ -14,20 +15,19 @@ export function useMovementNarration(order: number, video: VideoPlayer, enabled 
     const restart = () => {
       try {
         void narration.seekTo(0).then(() => {
-          if (!disposed && enabled && video.playing) {
+          if (!disposed && enabled && video.playing && playbackCount.current % 2 === 1) {
             safeMediaAction(() => narration.play());
           }
         }).catch(() => {});
       } catch {}
     };
     const resume = () => {
-      if (disposed || !enabled) return;
+      if (disposed || !enabled || playbackCount.current % 2 === 0) return;
       try {
         const status = narration.currentStatus;
         if (!status) return;
-        if (video.currentTime < 0.3 && status.currentTime > 0.5) restart();
-        else if (status.didJustFinish || (status.duration > 0 && status.currentTime >= status.duration - 0.15)) restart();
-        else safeMediaAction(() => narration.play());
+        if (status.didJustFinish || (status.duration > 0 && status.currentTime >= status.duration - 0.15)) return;
+        safeMediaAction(() => narration.play());
       } catch {}
     };
     try {
@@ -44,7 +44,9 @@ export function useMovementNarration(order: number, video: VideoPlayer, enabled 
       if (currentTime + 0.7 < lastVideoTime) {
         try {
           const endedNaturally = video.duration > 0 && lastVideoTime >= video.duration - 1;
-          if (!endedNaturally || !narration.currentStatus?.playing) restart();
+          pause();
+          if (endedNaturally) playbackCount.current += 1;
+          if (endedNaturally && playbackCount.current % 2 === 1) restart();
         } catch {}
       }
       lastVideoTime = currentTime;

@@ -47,23 +47,24 @@
   overflow-y: auto;
   padding: 14px;
 }
-.quickSteps { display: grid; gap: 14px; list-style: none; margin: 18px 0; padding: 0; }
-.quickSteps li { align-items: flex-start; color: rgba(243,238,229,.78); display: flex; font-size: 13px; gap: 10px; line-height: 1.5; }
+.quickSteps { display: grid; gap: 11px; list-style: none; margin: 14px 0 22px; padding: 0; }
+.quickSteps li { align-items: flex-start; color: var(--site-text); display: flex; font-size: 13px; gap: 10px; line-height: 1.5; }
 .quickSteps i { align-items: center; background: color-mix(in srgb, var(--shen-accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--shen-accent) 30%, transparent); border-radius: 50%; color: var(--line); display: inline-flex; flex: 0 0 25px; font-size: 11px; font-style: normal; font-weight: 800; height: 25px; justify-content: center; }
-.practiceActions { display: grid; gap: 8px; margin-top: auto; }
+.practiceActions { display: grid; gap: 9px; margin-top: auto; }
 .practiceActions button { align-items: center; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; color: var(--site-text); cursor: pointer; display: flex; font-size: 13px; font-weight: 750; justify-content: space-between; min-height: 46px; padding: 0 13px; }
 .practiceActions button:hover, .practiceActions .practiceActive { background: color-mix(in srgb, var(--shen-accent) 12%, transparent); border-color: color-mix(in srgb, var(--shen-accent) 46%, transparent); color: var(--line); }
 .practiceActions .practiceStart { background: linear-gradient(115deg, var(--shen-button-start), var(--shen-button-end)); border-color: var(--shen-button-primary); box-shadow: 0 8px 24px rgba(94, 171, 178, .2); color: var(--site-accent-ink); font-weight: 850; }
 .practiceActions .practiceStart:hover, .practiceActions .practiceStart:focus-visible, .practiceActions .practiceStart.practiceActive { background: linear-gradient(115deg, var(--shen-button-primary), var(--shen-button-start)); border-color: var(--shen-button-primary); box-shadow: 0 10px 28px rgba(103, 190, 193, .35); color: var(--site-accent-ink); }
-.practiceActions .photosButton { border-color:color-mix(in srgb, var(--shen-gold) 35%, transparent); color:var(--shen-gold); }
-.practiceActions .completeButton { border-color:color-mix(in srgb,var(--site-accent) 65%,transparent); color:var(--site-accent); justify-content:center; font-size:14px; }
-.practiceActions .completeButton:disabled { background:color-mix(in srgb,var(--shen-accent) 14%,transparent); color:var(--site-accent); cursor:default; opacity:.85; }
-.targetSetting { display:grid; gap:8px; padding:12px 13px; border:1px solid color-mix(in srgb, var(--shen-accent) 28%, transparent); border-radius:12px; background:color-mix(in srgb, var(--shen-accent) 7%, transparent); color:#f3eee5; }
+.practiceActions .completeButton { border-color:color-mix(in srgb,var(--site-accent) 45%,transparent); color:var(--site-accent); justify-content:center; font-size:14px; min-height:44px; }
+.completeNotice { display:grid; gap:4px; padding:12px 14px; border:1px solid color-mix(in srgb,var(--site-accent) 50%,transparent); border-radius:13px; background:color-mix(in srgb,var(--shen-accent) 13%,transparent); color:var(--site-text); font-size:12px; line-height:1.4; }
+.completeNotice strong { color:var(--site-accent); font-size:14px; }
+.targetSetting { display:grid; gap:7px; margin-top:11px; padding:15px 2px 4px; border-top:1px solid var(--site-line); color:var(--site-text); }
 .targetSetting > span { display:flex; justify-content:space-between; font-size:12px; font-weight:800; }
 .targetSetting strong { color:var(--site-accent); }
 .targetSetting input { width:100%; accent-color:var(--site-accent); cursor:pointer; }
-.targetSetting small { color:#c2c9bc; font-size:11px; line-height:1.4; }
-.photosButton span { display:grid; min-width:25px; height:25px; place-items:center; border-radius:50%; background:color-mix(in srgb, var(--shen-gold) 15%, transparent); font-size:11px; }
+.targetSetting small { color:var(--site-muted); font-size:11px; line-height:1.4; }
+.practiceActions .photosButton { border:0; border-top:1px solid var(--site-line); border-radius:0; background:none; color:var(--site-text); font-size:12px; font-weight:650; margin-top:10px; min-height:40px; padding:10px 2px 0; }
+.photosButton span { color:var(--site-accent); font-size:11px; font-weight:800; }
 .cameraHint { color: rgba(243,238,229,.52); font-size: 10px; line-height: 1.5; margin-top: 10px; }
 .saveError { color:#f4a785; font-size:11px; line-height:1.4; }
 .cameraStage { background: #080d0b; border: 1px solid rgba(215,168,88,.16); border-radius: 18px; height: 680px; overflow: hidden; position: relative; }
@@ -435,9 +436,7 @@
     overflow: visible;
     padding: 8px;
   }
-  .railHead {
-    display: none;
-  }
+  .railHead { border:0; padding:14px 8px 0; }
   .stage {
     order: 1;
   }

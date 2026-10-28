@@ -155,7 +155,6 @@ export function BodyLinesScreen() {
   }, []);
   const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [miniCameraOpen, setMiniCameraOpen] = useState(false);
-  const [narrationEnabled, setNarrationEnabled] = useState(true);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [showFirstVisitTips, setShowFirstVisitTips] = useState(false);
   useEffect(() => {
@@ -248,11 +247,11 @@ export function BodyLinesScreen() {
   const playNarration = useCallback((restart = false) => {
     const audio = narrationRef.current;
     const video = demoVideoRef.current;
-    if (!audio || !video || !narrationEnabled || playbackCountRef.current % 2 === 0) return;
+    if (!audio || !video || playbackCountRef.current % 2 === 0) return;
     if (restart) audio.currentTime = 0;
     else if (audio.ended) return;
     void audio.play().catch(() => {});
-  }, [narrationEnabled]);
+  }, []);
   const playNarratedVideo = useCallback((restart = false) => {
     const video = demoVideoRef.current;
     if (!video) return;
@@ -309,21 +308,19 @@ export function BodyLinesScreen() {
       <div className={styles.workspace}>
         <aside className={styles.rail} aria-label="Hareket adımları">
           <div className={styles.railHead}>
-            <span>HAREKET {String(movementOrder).padStart(2, "0")}</span>
-            <b>3 ADIM</b>
+            <span>HAREKETİ NASIL YAPARSIN?</span>
           </div>
           <ol className={styles.quickSteps}>
             {movementSteps.map((step, index) => <li key={step}><i>{index + 1}</i><span>{step}</span></li>)}
           </ol>
           <div className={styles.practiceActions}>
             {videoPlaying && <button onClick={() => { demoVideoRef.current?.pause(); narrationRef.current?.pause(); }} type="button">Videoyu Durdur <span>■</span></button>}
-            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "Kameranı Aç ve Başla"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
+            <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "▣ Kameranı Aç ve Başla"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
             {showFirstVisitTips && <div className={styles.guideTip}><b>2/3 · Kendin dene</b><p>Bu düğme kameranı açar. Hocayı takip ederken canlı uyumunu görürsün.</p></div>}
-            <button className={styles.completeButton} disabled={completedHere} onClick={completeCurrentForm} type="button">{completedHere ? "✓ Form tamamlandı" : "✓ Formu Tamamladım"}</button>
+            {completedHere ? <div className={styles.completeNotice} role="status"><strong>✓ Form tamamlandı</strong><span>Bu hareket yolculuğuna eklendi. Dilersen kamerayla tekrar deneyebilirsin.</span></div> : <button className={styles.completeButton} onClick={completeCurrentForm} type="button">✓ Formu Tamamladım</button>}
             {showFirstVisitTips && <div className={styles.guideTip}><b>3/3 · Formu tamamla</b><p>Hedef uyuma ulaştığında form otomatik tamamlanır. İstersen bu düğmeyle kendin de tamamlandı olarak işaretleyebilirsin.</p><button onClick={dismissFirstVisitTips} type="button">Anladım, ipuçlarını kapat</button></div>}
-            {!miniCameraOpen && <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={25} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score-v2",String(value)); }} /><small>Bu hedefe ulaştığında form otomatik tamamlanır.</small></label>}
-            <button aria-pressed={!narrationEnabled} onClick={() => { if (narrationEnabled) narrationRef.current?.pause(); else if (videoPlaying && playbackCountRef.current % 2 === 1 && !narrationRef.current?.ended) void narrationRef.current?.play().catch(() => {}); setNarrationEnabled((enabled) => !enabled); }} type="button">{narrationEnabled ? "Sesli Yönergeleri Kapat" : "Sesli Yönergeleri Aç"}</button>
-            <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
+            {!miniCameraOpen && <label className={styles.targetSetting}><span>Otomatik tamamlama hedefi <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={25} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score-v2",String(value)); }} /><small>Hedefe ulaştığında form kendiliğinden tamamlanır.</small></label>}
+            <button aria-label={`Bu formun fotoğrafları, ${currentPhotos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">▧ Bu formun fotoğrafları <span>Görüntüle →</span></button>
           </div>
           {photoSaveError ? <small className={styles.saveError} role="alert">Fotoğraf saklanamadı. Tarayıcı depolamasını kontrol et.</small> : null}
         </aside>

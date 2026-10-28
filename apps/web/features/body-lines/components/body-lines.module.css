@@ -178,6 +178,12 @@
 .videoStartOverlay span { font-size:24px; line-height:1; }
 .videoStartOverlay strong { font-size:13px; font-weight:800; white-space:nowrap; }
 .videoStartOverlay:focus-visible { outline:3px solid #fff; outline-offset:3px; }
+.guideTip { border:1px solid color-mix(in srgb,var(--site-accent) 60%,transparent); border-radius:13px; background:color-mix(in srgb,var(--site-surface-raised) 93%,transparent); box-shadow:0 10px 30px rgba(0,0,0,.22); color:var(--site-text); padding:11px 12px; }
+.guideTip b { color:var(--site-accent); font-size:11px; letter-spacing:.06em; }
+.guideTip p { font-size:12px; line-height:1.45; margin:5px 0 0; }
+.guideTip button, .practiceActions .guideTip button, .formJourney .guideTip button { background:none; border:0; color:var(--site-accent); cursor:pointer; display:inline; font:inherit; font-size:11px; font-weight:800; min-height:0; margin-top:8px; padding:0; text-align:left; }
+.guideTip button:focus-visible { outline:2px solid var(--site-accent); outline-offset:3px; }
+.videoGuideTip { bottom:12px; left:10px; position:absolute; right:10px; z-index:4; }
 .videoUnavailable { bottom: 20px; color: var(--site-text); font-size: 12px; left: 22px; position: absolute; z-index: 3; }
 .miniCameraButton { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:46px; margin-top:10px; padding:0 15px; border:1px solid color-mix(in srgb, var(--site-accent) 56%, transparent); border-radius:12px; background:color-mix(in srgb, var(--shen-accent) 12%, transparent); color:var(--site-text); cursor:pointer; font-size:13px; font-weight:850; }
 .miniCameraButton:hover,.miniCameraButton:focus-visible,.miniCameraButton[aria-pressed="true"] { background:color-mix(in srgb, var(--site-accent) 21%, transparent); border-color:var(--site-accent); }

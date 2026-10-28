@@ -157,6 +157,14 @@ export function BodyLinesScreen() {
   const [miniCameraOpen, setMiniCameraOpen] = useState(false);
   const [narrationEnabled, setNarrationEnabled] = useState(true);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const [showFirstVisitTips, setShowFirstVisitTips] = useState(false);
+  useEffect(() => {
+    try { setShowFirstVisitTips(window.localStorage.getItem("shibashi-form-guide-v1") !== "done"); } catch { setShowFirstVisitTips(true); }
+  }, []);
+  const dismissFirstVisitTips = () => {
+    setShowFirstVisitTips(false);
+    try { window.localStorage.setItem("shibashi-form-guide-v1", "done"); } catch {}
+  };
   const [targetScore, setTargetScore] = useState(25);
   const demoVideoRef = useRef<HTMLVideoElement>(null);
   const narrationRef = useRef<HTMLAudioElement>(null);
@@ -309,6 +317,7 @@ export function BodyLinesScreen() {
           </ol>
           <div className={styles.formJourney} aria-label={`${movementOrder}. form yolculuğu`}>
             <strong>FORM YOLCULUĞUN</strong>
+            {showFirstVisitTips && <div className={styles.guideTip}><b>3/3 · İlerlemeni gör</b><p>Video başlayınca “Hocayı izledim”, kamerayı açınca “Kamerayla denedim” işaretlenir. Hedef uyuma ulaşırsan form tamamlanır; istersen kendin de işaretleyebilirsin.</p><button onClick={dismissFirstVisitTips} type="button">Anladım, ipuçlarını kapat</button></div>}
             <div><span>{currentFormSteps.watched ? "✓" : "○"}</span> Hocayı izledim</div>
             <div><span>{currentFormSteps.attempted ? "✓" : "○"}</span> Kamerayla denedim</div>
             <button aria-pressed={completedHere} onClick={completeCurrentForm} type="button"><span>{completedHere ? "✓" : "○"}</span> Formu tamamladım</button>
@@ -317,6 +326,7 @@ export function BodyLinesScreen() {
           <div className={styles.practiceActions}>
             {videoPlaying && <button onClick={() => { demoVideoRef.current?.pause(); narrationRef.current?.pause(); }} type="button">Videoyu Durdur <span>■</span></button>}
             <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "Kameranı Aç ve Başla"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
+            {showFirstVisitTips && <div className={styles.guideTip}><b>2/3 · Kendin dene</b><p>Bu düğme kameranı açar. Hocayı takip ederken canlı uyumunu görürsün.</p></div>}
             <button aria-pressed={!narrationEnabled} onClick={() => { if (narrationEnabled) narrationRef.current?.pause(); else if (videoPlaying && playbackCountRef.current % 2 === 1 && !narrationRef.current?.ended) void narrationRef.current?.play().catch(() => {}); setNarrationEnabled((enabled) => !enabled); }} type="button">{narrationEnabled ? "Sesli Yönergeleri Kapat" : "Sesli Yönergeleri Aç"}</button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
           </div>
@@ -378,6 +388,7 @@ export function BodyLinesScreen() {
                 />
                 )}
                 {!videoUnavailable && !videoPlaying && <button aria-label="Hareketi Başlat" className={styles.videoStartOverlay} onClick={startFullscreenVideo} type="button"><span aria-hidden="true">▶</span><strong>Hareketi Başlat</strong></button>}
+                {showFirstVisitTips && !videoPlaying && !videoUnavailable && <div className={`${styles.guideTip} ${styles.videoGuideTip}`}><b>1/3 · Önce hocayı izle</b><p>“Hareketi Başlat” videoyu tam ekranda açar. Hazır olduğunda dokun.</p><button onClick={dismissFirstVisitTips} type="button">İpuçlarını geç</button></div>}
               </div>
             <audio key={movement.order} preload="auto" ref={narrationRef} src={`/audio/shibashi-18/shibashi_${String(movement.order).padStart(2, "0")}.mp3`} />
             {videoUnavailable ? <span className={styles.videoUnavailable}>Video şu anda açılamıyor. Hareketi yeniden seçerek tekrar deneyebilirsin.</span> : null}

@@ -2,10 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Alert, Image, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Line } from 'react-native-svg';
@@ -96,6 +96,10 @@ function MovementStage({ order, completed, onComplete, onNext, onPhoto }: { orde
   const player = useVideoPlayer(shibashiVideos[order], instance => { instance.loop = true; instance.muted = true; safeMediaAction(() => instance.play()); });
   const [narrationEnabled, setNarrationEnabled] = useState(true);
   useMovementNarration(order, player, narrationEnabled);
+  useFocusEffect(useCallback(() => () => {
+    safeMediaAction(() => player.pause());
+    void Speech.stop();
+  }, [player]));
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const bridgeRef = useRef<MediaPipePoseBridgeRef>(null);

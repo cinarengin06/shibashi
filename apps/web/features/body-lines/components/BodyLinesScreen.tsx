@@ -160,6 +160,20 @@ export function BodyLinesScreen() {
   const [targetScore, setTargetScore] = useState(70);
   const demoVideoRef = useRef<HTMLVideoElement>(null);
   const narrationRef = useRef<HTMLAudioElement>(null);
+  useLayoutEffect(() => {
+    const stopMedia = () => {
+      demoVideoRef.current?.pause();
+      narrationRef.current?.pause();
+    };
+    const onVisibilityChange = () => { if (document.hidden) stopMedia(); };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', stopMedia);
+    return () => {
+      stopMedia();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', stopMedia);
+    };
+  }, []);
   const lastDemoTimeRef = useRef(0);
   const [photos, setPhotos] = useState<PracticeSnapshot[]>([]);
   const [galleryOpen, setGalleryOpen] = useState(false);

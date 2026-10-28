@@ -52,6 +52,7 @@ export function useMovementNarration(order: number, video: VideoPlayer, enabled 
     if (video.playing && enabled) resume(); else pause();
     return () => {
       disposed = true;
+      pause();
       playingSubscription.remove();
       timeSubscription.remove();
     };

@@ -183,7 +183,7 @@
 .guideTip { border:1px solid color-mix(in srgb,var(--site-accent) 60%,transparent); border-radius:13px; background:color-mix(in srgb,var(--site-surface-raised) 93%,transparent); box-shadow:0 10px 30px rgba(0,0,0,.22); color:var(--site-text); padding:11px 12px; }
 .guideTip b { color:var(--site-accent); font-size:11px; letter-spacing:.06em; }
 .guideTip p { font-size:12px; line-height:1.45; margin:5px 0 0; }
-.guideTip button, .practiceActions .guideTip button, .formJourney .guideTip button { background:none; border:0; color:var(--site-accent); cursor:pointer; display:inline; font:inherit; font-size:11px; font-weight:800; min-height:0; margin-top:8px; padding:0; text-align:left; }
+.guideTip button, .practiceActions .guideTip button { background:none; border:0; color:var(--site-accent); cursor:pointer; display:inline; font:inherit; font-size:11px; font-weight:800; min-height:0; margin-top:8px; padding:0; text-align:left; }
 .guideTip button:focus-visible { outline:2px solid var(--site-accent); outline-offset:3px; }
 .videoGuideTip { bottom:12px; left:10px; position:absolute; right:10px; z-index:4; }
 .videoUnavailable { bottom: 20px; color: var(--site-text); font-size: 12px; left: 22px; position: absolute; z-index: 3; }
@@ -443,7 +443,6 @@
   }
   .quickSteps { order: 1; }
   .practiceActions { margin-top: 0; order: 2; }
-  .formJourney { order: 3; }
   .targetSetting, .saveError { order: 4; }
   .visual {
     min-height: 510px;
@@ -471,14 +470,6 @@
     transition: none;
   }
 }
-.formJourney { display:grid; gap:10px; margin:14px; padding:14px; border:1px solid color-mix(in srgb,var(--site-accent) 35%,transparent); border-radius:14px; background:color-mix(in srgb,var(--site-accent) 8%,transparent); font-size:13px; }
-.formJourney strong { color:var(--site-accent); font-size:11px; letter-spacing:.15em; }
-.formJourney span, .formJourney button { color:var(--site-text); }
-.formJourney button { background:none; border:0; cursor:pointer; font:inherit; padding:0; text-align:left; }
-.formJourney button:hover { color:var(--site-accent); }
-.formJourney button span { color:var(--site-accent); font-weight:700; margin-right:5px; }
-.formJourney div span { color:var(--site-accent); font-weight:700; margin-right:5px; }
-.formJourney small { color:var(--site-muted); line-height:1.4; }
 .inlinePhotos { margin:24px auto; max-width:1400px; padding:22px; border:1px solid color-mix(in srgb,var(--site-accent) 25%,transparent); border-radius:18px; background:var(--site-surface); }
 .inlinePhotos > p { color:var(--site-muted); }
 .tileProgress { background:rgba(3,15,10,.78); border-radius:8px; color:#b8e4ba; font-size:10px; font-weight:700; padding:4px 6px; position:absolute; right:7px; top:7px; z-index:2; }

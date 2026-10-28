@@ -315,18 +315,12 @@ export function BodyLinesScreen() {
           <ol className={styles.quickSteps}>
             {movementSteps.map((step, index) => <li key={step}><i>{index + 1}</i><span>{step}</span></li>)}
           </ol>
-          <div className={styles.formJourney} aria-label={`${movementOrder}. form yolculuğu`}>
-            <strong>FORM YOLCULUĞUN</strong>
-            {showFirstVisitTips && <div className={styles.guideTip}><b>3/3 · İlerlemeni gör</b><p>Video başlayınca “Hocayı izledim”, kamerayı açınca “Kamerayla denedim” işaretlenir. Hedef uyuma ulaşırsan form tamamlanır; istersen kendin de işaretleyebilirsin.</p><button onClick={dismissFirstVisitTips} type="button">Anladım, ipuçlarını kapat</button></div>}
-            <div><span>{currentFormSteps.watched ? "✓" : "○"}</span> Hocayı izledim</div>
-            <div><span>{currentFormSteps.attempted ? "✓" : "○"}</span> Kamerayla denedim</div>
-            <div><span>{completedHere ? "✓" : "○"}</span> Form tamamlandı</div>
-          </div>
           <div className={styles.practiceActions}>
             {videoPlaying && <button onClick={() => { demoVideoRef.current?.pause(); narrationRef.current?.pause(); }} type="button">Videoyu Durdur <span>■</span></button>}
             <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "Kameranı Aç ve Başla"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
             {showFirstVisitTips && <div className={styles.guideTip}><b>2/3 · Kendin dene</b><p>Bu düğme kameranı açar. Hocayı takip ederken canlı uyumunu görürsün.</p></div>}
             <button className={styles.completeButton} disabled={completedHere} onClick={completeCurrentForm} type="button">{completedHere ? "✓ Form tamamlandı" : "✓ Formu Tamamladım"}</button>
+            {showFirstVisitTips && <div className={styles.guideTip}><b>3/3 · Formu tamamla</b><p>Hedef uyuma ulaştığında form otomatik tamamlanır. İstersen bu düğmeyle kendin de tamamlandı olarak işaretleyebilirsin.</p><button onClick={dismissFirstVisitTips} type="button">Anladım, ipuçlarını kapat</button></div>}
             {!miniCameraOpen && <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={25} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score-v2",String(value)); }} /><small>Bu hedefe ulaştığında form otomatik tamamlanır.</small></label>}
             <button aria-pressed={!narrationEnabled} onClick={() => { if (narrationEnabled) narrationRef.current?.pause(); else if (videoPlaying && playbackCountRef.current % 2 === 1 && !narrationRef.current?.ended) void narrationRef.current?.play().catch(() => {}); setNarrationEnabled((enabled) => !enabled); }} type="button">{narrationEnabled ? "Sesli Yönergeleri Kapat" : "Sesli Yönergeleri Aç"}</button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>

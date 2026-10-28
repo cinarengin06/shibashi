@@ -305,7 +305,7 @@ export function BodyLinesScreen() {
             {!completedHere ? <small>Hedef uyuma ulaşırsan otomatik tamamlanır; istersen buradan işaretleyebilirsin.</small> : null}
           </div>
           <div className={styles.practiceActions}>
-            <button disabled={videoUnavailable} onClick={() => { if (videoPlaying) { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } else playNarratedVideo(); }} type="button">{videoPlaying ? "Videoyu Durdur" : "Hareketi Başlat"} <span>{videoPlaying ? "■" : "▶"}</span></button>
+            {videoPlaying && <button onClick={() => { demoVideoRef.current?.pause(); narrationRef.current?.pause(); }} type="button">Videoyu Durdur <span>■</span></button>}
             <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "Pratik Yap"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
             <button aria-pressed={!narrationEnabled} onClick={() => { if (narrationEnabled) narrationRef.current?.pause(); else if (videoPlaying) void narrationRef.current?.play().catch(() => {}); setNarrationEnabled((enabled) => !enabled); }} type="button">{narrationEnabled ? "Sesli Yönergeleri Kapat" : "Sesli Yönergeleri Aç"}</button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
@@ -341,8 +341,7 @@ export function BodyLinesScreen() {
                 ) : (
                 <video
                   aria-label={`${movement.sourceTitle} hoca videosu`}
-                  autoPlay
-                  controls
+                  controls={videoPlaying}
                   key={movement.order}
                   loop
                   muted
@@ -370,6 +369,7 @@ export function BodyLinesScreen() {
                   src={`/videos/shibashi/${movement.order}.mp4`}
                 />
                 )}
+                {!videoUnavailable && !videoPlaying && <button aria-label="Hareketi Başlat" className={styles.videoStartOverlay} onClick={() => playNarratedVideo()} type="button"><span aria-hidden="true">▶</span><strong>Hareketi Başlat</strong></button>}
               </div>
             <audio key={movement.order} preload="auto" ref={narrationRef} src={`/audio/shibashi-18/shibashi_${String(movement.order).padStart(2, "0")}.mp3`} />
             {videoUnavailable ? <span className={styles.videoUnavailable}>Video şu anda açılamıyor. Hareketi yeniden seçerek tekrar deneyebilirsin.</span> : null}

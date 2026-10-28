@@ -94,6 +94,7 @@ function MovementStage({ order, completed, onComplete, onNext, onPhoto }: { orde
   const movement = meridianMovements.find(item => item.order === order) ?? meridianMovements[0];
   const reference = references[String(order)];
   const player = useVideoPlayer(shibashiVideos[order], instance => { instance.loop = true; instance.muted = true; });
+  const videoViewRef = useRef<VideoView>(null);
   const [narrationEnabled, setNarrationEnabled] = useState(true);
   useMovementNarration(order, player, narrationEnabled);
   useFocusEffect(useCallback(() => () => {
@@ -241,9 +242,9 @@ function MovementStage({ order, completed, onComplete, onNext, onPhoto }: { orde
     <View style={s.titleRow}><Text style={s.title}>{movement.sourceTitle}</Text><Text style={[s.energyTag,{color:energyTag.quality==='Yang'?'#F6CF8A':'#A7DDF1',borderColor:energyTag.quality==='Yang'?'#C68A4C':'#6BAFC5'}]}>{energyTag.quality} · {energyTag.action}</Text></View>
     <View style={[s.mediaRow,(phase === 'watch' || phase === 'mini') && s.mediaOnly]}>
       <View style={s.media} onLayout={event => { const {width,height}=event.nativeEvent.layout; setMiniBounds(current => current.width===width && current.height===height ? current : {width,height}); }}>
-        <VideoView player={player} style={s.video} contentFit="contain" nativeControls={videoPlaying && (phase==='watch'||phase==='mini')} surfaceType="textureView"/>
+        <VideoView ref={videoViewRef} player={player} style={s.video} contentFit="contain" nativeControls={videoPlaying && (phase==='watch'||phase==='mini')} surfaceType="textureView"/>
         <Text style={s.mediaLabel}>HOCA</Text>
-        {(phase==='watch'||phase==='mini') && !videoPlaying && <Pressable accessibilityRole="button" accessibilityLabel="Hareketi Başlat" onPress={() => safeMediaAction(() => player.play())} style={s.playOverlay}><Ionicons name="play" size={27} color={colors.ink}/><Text style={s.playOverlayText}>Hareketi Başlat</Text></Pressable>}
+        {(phase==='watch'||phase==='mini') && !videoPlaying && <Pressable accessibilityRole="button" accessibilityLabel="Hareketi Başlat" onPress={() => { safeMediaAction(() => player.play()); void videoViewRef.current?.enterFullscreen().catch(() => {}); }} style={s.playOverlay}><Ionicons name="play" size={27} color={colors.ink}/><Text style={s.playOverlayText}>Hareketi Başlat</Text></Pressable>}
         {phase==='mini' && <MovableMiniCamera bounds={miniBounds} cameraRef={cameraRef} onClose={closeMini} score={score} target={target} succeeded={succeeded} pose={pose} jointScores={jointScores} imageSize={poseImageSize}/>}
         {phase==='mini' && <View pointerEvents="none" style={s.teacherScore}><Text style={s.teacherScoreLabel}>CANLI UYUM</Text><Text style={[s.teacherScoreValue,{color:score!==null&&score>=target?colors.jade:colors.cream}]}>{score===null?'—':`%${score}`}</Text></View>}
       </View>

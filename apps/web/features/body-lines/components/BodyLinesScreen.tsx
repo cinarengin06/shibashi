@@ -252,6 +252,13 @@ export function BodyLinesScreen() {
     playNarration(restart);
     void video.play().catch(() => {});
   }, [playNarration]);
+  const startFullscreenVideo = useCallback(() => {
+    const video = demoVideoRef.current;
+    if (!video) return;
+    if (video.requestFullscreen) void video.requestFullscreen().catch(() => {});
+    else (video as HTMLVideoElement & { webkitEnterFullscreen?: () => void }).webkitEnterFullscreen?.();
+    playNarratedVideo();
+  }, [playNarratedVideo]);
   const chooseMovement = useCallback((order: number) => {
     demoVideoRef.current?.pause();
     narrationRef.current?.pause();
@@ -370,7 +377,7 @@ export function BodyLinesScreen() {
                   src={`/videos/shibashi/${movement.order}.mp4`}
                 />
                 )}
-                {!videoUnavailable && !videoPlaying && <button aria-label="Hareketi Başlat" className={styles.videoStartOverlay} onClick={() => playNarratedVideo()} type="button"><span aria-hidden="true">▶</span><strong>Hareketi Başlat</strong></button>}
+                {!videoUnavailable && !videoPlaying && <button aria-label="Hareketi Başlat" className={styles.videoStartOverlay} onClick={startFullscreenVideo} type="button"><span aria-hidden="true">▶</span><strong>Hareketi Başlat</strong></button>}
               </div>
             <audio key={movement.order} preload="auto" ref={narrationRef} src={`/audio/shibashi-18/shibashi_${String(movement.order).padStart(2, "0")}.mp3`} />
             {videoUnavailable ? <span className={styles.videoUnavailable}>Video şu anda açılamıyor. Hareketi yeniden seçerek tekrar deneyebilirsin.</span> : null}

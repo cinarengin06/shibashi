@@ -13,9 +13,9 @@ import type { ShenId } from "../../types";
 
 const bottomTabs = [
   { route: "index", label: "Ana Sayfam" },
+  { route: "main-map", label: "Gelişim Haritam" },
   { route: "moves", label: "18 Form" },
   { route: "posture", label: "Postür" },
-  { route: "main-map", label: "Gelişim Haritam" },
   { route: "journal", label: "İstatistiklerim" },
 ] as const;
 type BottomTabRoute = (typeof bottomTabs)[number]["route"];

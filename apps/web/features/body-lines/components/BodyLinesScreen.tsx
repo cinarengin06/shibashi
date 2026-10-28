@@ -374,9 +374,14 @@ export function BodyLinesScreen() {
                     const audio = narrationRef.current;
                     if (audio && video.currentTime + 0.7 < lastDemoTimeRef.current) {
                       const naturalLoop = video.duration > 0 && lastDemoTimeRef.current >= video.duration - 1;
-                      audio.pause();
-                      if (naturalLoop) playbackCountRef.current += 1;
-                      if (naturalLoop && playbackCountRef.current % 2 === 1 && !video.paused) playNarration(true);
+                      if (naturalLoop) {
+                        playbackCountRef.current += 1;
+                        // The first form's narration outlasts its video. Let it finish on the silent second loop.
+                        if (playbackCountRef.current % 2 === 1 && !video.paused) {
+                          audio.pause();
+                          playNarration(true);
+                        }
+                      } else audio.pause();
                     }
                     lastDemoTimeRef.current = video.currentTime;
                   }}

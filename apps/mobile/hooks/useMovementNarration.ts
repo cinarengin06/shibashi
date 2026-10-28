@@ -44,9 +44,11 @@ export function useMovementNarration(order: number, video: VideoPlayer, enabled 
       if (currentTime + 0.7 < lastVideoTime) {
         try {
           const endedNaturally = video.duration > 0 && lastVideoTime >= video.duration - 1;
-          pause();
-          if (endedNaturally) playbackCount.current += 1;
-          if (endedNaturally && playbackCount.current % 2 === 1) restart();
+          if (endedNaturally) {
+            playbackCount.current += 1;
+            // Keep longer narration playing through the silent second video loop.
+            if (playbackCount.current % 2 === 1) { pause(); restart(); }
+          } else pause();
         } catch {}
       }
       lastVideoTime = currentTime;

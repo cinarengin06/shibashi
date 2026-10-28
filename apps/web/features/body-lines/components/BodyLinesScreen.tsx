@@ -320,17 +320,17 @@ export function BodyLinesScreen() {
             {showFirstVisitTips && <div className={styles.guideTip}><b>3/3 · İlerlemeni gör</b><p>Video başlayınca “Hocayı izledim”, kamerayı açınca “Kamerayla denedim” işaretlenir. Hedef uyuma ulaşırsan form tamamlanır; istersen kendin de işaretleyebilirsin.</p><button onClick={dismissFirstVisitTips} type="button">Anladım, ipuçlarını kapat</button></div>}
             <div><span>{currentFormSteps.watched ? "✓" : "○"}</span> Hocayı izledim</div>
             <div><span>{currentFormSteps.attempted ? "✓" : "○"}</span> Kamerayla denedim</div>
-            <button aria-pressed={completedHere} onClick={completeCurrentForm} type="button"><span>{completedHere ? "✓" : "○"}</span> Formu tamamladım</button>
-            {!completedHere ? <small>Hedef uyuma ulaşırsan otomatik tamamlanır; istersen buradan işaretleyebilirsin.</small> : null}
+            <div><span>{completedHere ? "✓" : "○"}</span> Form tamamlandı</div>
           </div>
           <div className={styles.practiceActions}>
             {videoPlaying && <button onClick={() => { demoVideoRef.current?.pause(); narrationRef.current?.pause(); }} type="button">Videoyu Durdur <span>■</span></button>}
             <button aria-pressed={miniCameraOpen} className={styles.practiceStart} disabled={videoUnavailable} onClick={() => { if (!miniCameraOpen) { playNarratedVideo(); setFormSteps(markFormStep(movementOrder, "attempted", user?.id)); } else { demoVideoRef.current?.pause(); narrationRef.current?.pause(); } setMiniCameraOpen((open) => !open); }} type="button">{miniCameraOpen ? "Pratiği Bitir" : "Kameranı Aç ve Başla"}<span>{miniCameraOpen ? "×" : "↗"}</span></button>
             {showFirstVisitTips && <div className={styles.guideTip}><b>2/3 · Kendin dene</b><p>Bu düğme kameranı açar. Hocayı takip ederken canlı uyumunu görürsün.</p></div>}
+            <button className={styles.completeButton} disabled={completedHere} onClick={completeCurrentForm} type="button">{completedHere ? "✓ Form tamamlandı" : "✓ Formu Tamamladım"}</button>
+            {!miniCameraOpen && <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={25} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score-v2",String(value)); }} /><small>Bu hedefe ulaştığında form otomatik tamamlanır.</small></label>}
             <button aria-pressed={!narrationEnabled} onClick={() => { if (narrationEnabled) narrationRef.current?.pause(); else if (videoPlaying && playbackCountRef.current % 2 === 1 && !narrationRef.current?.ended) void narrationRef.current?.play().catch(() => {}); setNarrationEnabled((enabled) => !enabled); }} type="button">{narrationEnabled ? "Sesli Yönergeleri Kapat" : "Sesli Yönergeleri Aç"}</button>
             <button aria-label={`Fotoğraflarım, ${photos.length} kayıt`} className={styles.photosButton} onClick={() => setGalleryOpen(true)} type="button">📷 Fotoğraflarım <span>{photos.length}</span></button>
           </div>
-          {miniCameraOpen ? <label className={styles.targetSetting}><span>Hedef uyum <strong>%{targetScore}</strong></span><input aria-label="Hedef uyum yüzdesi" min={25} max={100} step={5} type="range" value={targetScore} onChange={(event) => { const value=Number(event.target.value); setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score-v2",String(value)); }} /><small>Bu değere ulaştığında üç fotoğraf kaydedilir.</small></label> : null}
           {photoSaveError ? <small className={styles.saveError} role="alert">Fotoğraf saklanamadı. Tarayıcı depolamasını kontrol et.</small> : null}
         </aside>
         <section className={styles.stage}>
@@ -397,7 +397,7 @@ export function BodyLinesScreen() {
               </div>
             <audio key={movement.order} preload="auto" ref={narrationRef} src={`/audio/shibashi-18/shibashi_${String(movement.order).padStart(2, "0")}.mp3`} />
             {videoUnavailable ? <span className={styles.videoUnavailable}>Video şu anda açılamıyor. Hareketi yeniden seçerek tekrar deneyebilirsin.</span> : null}
-            {miniCameraOpen ? <MovementCameraPractice active compact movementOrder={String(movement.order).padStart(2, "0")} movementName={movement.sourceTitle} retryKey={0} onClose={() => setMiniCameraOpen(false)} onComplete={onTargetReached} onTargetReached={onTargetReached} onPhotoCaptured={savePhoto} teacherVideoRef={demoVideoRef} targetScoreOverride={targetScore} /> : null}
+            {miniCameraOpen ? <MovementCameraPractice active compact movementOrder={String(movement.order).padStart(2, "0")} movementName={movement.sourceTitle} retryKey={0} onClose={() => setMiniCameraOpen(false)} onComplete={onTargetReached} onTargetReached={onTargetReached} onPhotoCaptured={savePhoto} teacherVideoRef={demoVideoRef} targetScoreOverride={targetScore} onTargetScoreChange={(value) => { setTargetScore(value); window.localStorage.setItem("shibashi-learning-target-score-v2",String(value)); }} /> : null}
           </div>
         </section>
         <MovementDetail movement={movement} />

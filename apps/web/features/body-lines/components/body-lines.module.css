@@ -56,6 +56,8 @@
 .practiceActions .practiceStart { background: linear-gradient(115deg, var(--shen-button-start), var(--shen-button-end)); border-color: var(--shen-button-primary); box-shadow: 0 8px 24px rgba(94, 171, 178, .2); color: var(--site-accent-ink); font-weight: 850; }
 .practiceActions .practiceStart:hover, .practiceActions .practiceStart:focus-visible, .practiceActions .practiceStart.practiceActive { background: linear-gradient(115deg, var(--shen-button-primary), var(--shen-button-start)); border-color: var(--shen-button-primary); box-shadow: 0 10px 28px rgba(103, 190, 193, .35); color: var(--site-accent-ink); }
 .practiceActions .photosButton { border-color:color-mix(in srgb, var(--shen-gold) 35%, transparent); color:var(--shen-gold); }
+.practiceActions .completeButton { border-color:color-mix(in srgb,var(--site-accent) 65%,transparent); color:var(--site-accent); justify-content:center; font-size:14px; }
+.practiceActions .completeButton:disabled { background:color-mix(in srgb,var(--shen-accent) 14%,transparent); color:var(--site-accent); cursor:default; opacity:.85; }
 .targetSetting { display:grid; gap:8px; padding:12px 13px; border:1px solid color-mix(in srgb, var(--shen-accent) 28%, transparent); border-radius:12px; background:color-mix(in srgb, var(--shen-accent) 7%, transparent); color:#f3eee5; }
 .targetSetting > span { display:flex; justify-content:space-between; font-size:12px; font-weight:800; }
 .targetSetting strong { color:var(--site-accent); }

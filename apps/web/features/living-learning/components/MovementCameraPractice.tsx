@@ -21,7 +21,7 @@ type MiniGeometry = { left: number; top: number; width: number; height: number }
 type MiniGesture = { pointerId: number; mode: "move" | "nw" | "ne" | "sw" | "se"; startX: number; startY: number; start: MiniGeometry };
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 
-export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete, onTargetReached, onPhotoCaptured, compact = false, teacherVideoRef, onClose, targetScoreOverride }: {
+export function MovementCameraPractice({ active, movementOrder, movementName, retryKey, onComplete, onTargetReached, onPhotoCaptured, compact = false, teacherVideoRef, onClose, targetScoreOverride, onTargetScoreChange }: {
   active: boolean;
   movementOrder: string;
   movementName: string;
@@ -33,6 +33,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
   teacherVideoRef?: RefObject<HTMLVideoElement | null>;
   onClose?: () => void;
   targetScoreOverride?: number;
+  onTargetScoreChange?: (value: number) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const teacherRef = useRef<HTMLVideoElement>(null);
@@ -435,7 +436,7 @@ export function MovementCameraPractice({ active, movementOrder, movementName, re
         <div className={styles.movementScoreControls}>
           <label className={styles.movementTargetControl}>
             <span>HEDEF UYUM <strong>%{targetScore}</strong></span>
-            <input aria-label="Hedef uyum yüzdesi; dolu kısım canlı uyumu gösterir" max={100} min={0} onChange={(event) => { const value = Number(event.target.value); thresholdRef.current = value; setTargetScore(value); window.localStorage.setItem(scoreStorageKey, String(value)); }} step={5} type="range" value={targetScore} />
+            <input aria-label="Hedef uyum yüzdesi; dolu kısım canlı uyumu gösterir" max={100} min={25} onChange={(event) => { const value = Number(event.target.value); thresholdRef.current = value; setTargetScore(value); window.localStorage.setItem(scoreStorageKey, String(value)); onTargetScoreChange?.(value); }} step={5} type="range" value={targetScore} />
           </label>
         </div>
         <div className={styles.movementPracticeStatus}>

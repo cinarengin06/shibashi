@@ -177,9 +177,9 @@
 }
 .videoFrame { aspect-ratio: 9 / 16; }
 .videoFrame video { display: block; height: 100%; width: 100%; object-fit: contain; }
-.videoStartOverlay { align-items:center; background:rgba(220,185,118,.95); border:1px solid rgba(255,255,255,.65); border-radius:16px; box-shadow:0 12px 38px rgba(0,0,0,.45); color:#102019; cursor:pointer; display:flex; flex-direction:column; gap:5px; left:50%; min-height:80px; min-width:170px; padding:12px 17px; position:absolute; top:50%; transform:translate(-50%,-50%); z-index:3; }
-.videoStartOverlay span { font-size:24px; line-height:1; }
-.videoStartOverlay strong { font-size:13px; font-weight:800; white-space:nowrap; }
+.videoStartOverlay { align-items:center; background:rgba(7,19,14,.92); border:1px solid color-mix(in srgb,var(--site-accent) 62%,transparent); border-radius:999px; box-shadow:0 12px 38px rgba(0,0,0,.38); color:var(--site-accent); cursor:pointer; display:flex; gap:9px; left:50%; min-height:53px; padding:6px 16px 6px 9px; position:absolute; top:50%; transform:translate(-50%,-50%); z-index:3; }
+.videoStartOverlay span { align-items:center; background:color-mix(in srgb,var(--site-accent) 12%,transparent); border:1px solid color-mix(in srgb,var(--site-accent) 45%,transparent); border-radius:50%; display:flex; font-size:14px; height:33px; justify-content:center; line-height:1; padding-left:2px; width:33px; }
+.videoStartOverlay strong { font-size:12px; font-weight:800; white-space:nowrap; }
 .videoStartOverlay:focus-visible { outline:3px solid #fff; outline-offset:3px; }
 .guideTip { border:1px solid color-mix(in srgb,var(--site-accent) 60%,transparent); border-radius:13px; background:color-mix(in srgb,var(--site-surface-raised) 93%,transparent); box-shadow:0 10px 30px rgba(0,0,0,.22); color:var(--site-text); padding:11px 12px; }
 .guideTip b { color:var(--site-accent); font-size:11px; letter-spacing:.06em; }
@@ -461,7 +461,7 @@
     gap: 8px;
   }
   .stageTop strong {
-    font-size: 22px;
+    font-size: 19px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

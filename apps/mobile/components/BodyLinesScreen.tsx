@@ -238,7 +238,7 @@ function MovementStage({ order, completed, onComplete, onNext, onPhoto }: { orde
   const energyTag = getMovementEnergyTag(order);
   return <View style={[s.stage,{backgroundColor:theme.surface,borderColor:`${theme.primary}55`}]}>
     {phase!=='watch' && phase!=='result' && <KeepAwakeWhileCamera />}
-    <Text style={[s.number,{color:theme.primary}]}>HAREKET {String(order).padStart(2,'0')} / 18</Text><View style={s.titleRow}><Text style={s.title}>{movement.sourceTitle}</Text><Text style={[s.energyTag,{color:energyTag.quality==='Yang'?'#F6CF8A':'#A7DDF1',borderColor:energyTag.quality==='Yang'?'#C68A4C':'#6BAFC5'}]}>{energyTag.quality} · {energyTag.action}</Text></View>
+    <View style={s.titleRow}><Text style={s.title}>{movement.sourceTitle}</Text><Text style={[s.energyTag,{color:energyTag.quality==='Yang'?'#F6CF8A':'#A7DDF1',borderColor:energyTag.quality==='Yang'?'#C68A4C':'#6BAFC5'}]}>{energyTag.quality} · {energyTag.action}</Text></View>
     <View style={[s.mediaRow,(phase === 'watch' || phase === 'mini') && s.mediaOnly]}>
       <View style={s.media} onLayout={event => { const {width,height}=event.nativeEvent.layout; setMiniBounds(current => current.width===width && current.height===height ? current : {width,height}); }}>
         <VideoView player={player} style={s.video} contentFit="contain" nativeControls={videoPlaying && (phase==='watch'||phase==='mini')} surfaceType="textureView"/>

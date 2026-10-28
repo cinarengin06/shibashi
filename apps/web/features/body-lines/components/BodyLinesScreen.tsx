@@ -326,7 +326,6 @@ export function BodyLinesScreen() {
               ←
             </button>
             <div>
-              <span>HAREKET {String(movement.order).padStart(2, "0")}</span>
               <div className={styles.stageTitleLine}><strong>{movement.sourceTitle}</strong><small className={energyTag.quality === "Yang" ? styles.yangTag : styles.yinTag} title="Hareketin baskın öğretim niteliği">{energyTag.quality} · {energyTag.action}</small></div>
             </div>
             <button
